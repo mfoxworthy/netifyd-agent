@@ -280,7 +280,7 @@ AC_CHECK_FUNC([pthread_attr_setaffinity_np], [
 ])
 
 # Get git revision
-if test -d ".git"; then :
+if test -e ".git"; then :
     GIT_TAG=`git log -1 --format=%h`
     GIT_DATE=`git log -1 --format=%cd`
     GIT_DATE_ISO8601=`git log -1 --format=%ci`
