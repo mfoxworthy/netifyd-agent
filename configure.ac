@@ -280,7 +280,7 @@ AC_CHECK_FUNC([pthread_attr_setaffinity_np], [
 ])
 
 # Get git revision
-if test -d ".git"; then :
+if test -e ".git"; then :
     GIT_TAG=`git log -1 --format=%h`
     GIT_DATE=`git log -1 --format=%cd`
     GIT_DATE_ISO8601=`git log -1 --format=%ci`
@@ -308,6 +308,7 @@ AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git
 AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init deploy/openwrt/files/netifyd.config])
 AC_CONFIG_FILES([libnetifyd.pc])
 AC_CONFIG_FILES([Makefile src/Makefile include/Makefile doc/Makefile tests/Makefile deploy/Makefile])
+AC_CONFIG_FILES([deploy/buildroot/netifyd.mk])
 AC_CONFIG_FILES([deploy/debian/Makefile])
 AC_CONFIG_FILES([deploy/edgeos/Makefile])
 AC_CONFIG_FILES([deploy/freebsd/Makefile-10x deploy/freebsd/Makefile-11x deploy/freebsd/Makefile-11x-debug deploy/freebsd/Makefile-12x])
