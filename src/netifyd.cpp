@@ -1254,7 +1254,7 @@ static void nd_json_add_stats(json &parent,
 static void nd_json_process_flows(
     const string &tag, json &parent, nd_flow_map *flows, bool add_flows)
 {
-    time_t now = time(NULL) * 1000;
+    uint64_t now = time(NULL) * 1000;
     uint32_t purged = 0, expired = 0, detection_complete = 0, total = 0;
 
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
