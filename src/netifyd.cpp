@@ -1255,7 +1255,7 @@ static void nd_json_process_flows(
     const string &tag, json &parent, nd_flow_map *flows, bool add_flows)
 {
     time_t now = time(NULL) * 1000;
-    size_t purged = 0, expired = 0, detection_complete = 0, total = 0;
+    uint32_t purged = 0, expired = 0, detection_complete = 0, total = 0;
 
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
@@ -1288,6 +1288,9 @@ static void nd_json_process_flows(
         time_t ttl = (
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
+
+        nd_debug_printf("%s: Purge flow?  %llus old, ttl: %llu.\n",
+            i->second->iface->second.c_str(), now - i->second->ts_last_seen, ttl);
 
         if (i->second->ts_last_seen + ttl < now) {
 
@@ -1376,7 +1379,7 @@ static void nd_json_process_flows(
     }
 
     nd_debug_printf(
-        "%s: Purged %llu of %llu flow(s), expired: %llu, in progress: %llu\n",
+        "%s: Purged %lu of %lu flow(s), expired: %lu, in progress: %lu\n",
         tag.c_str(), purged, total, expired, total - detection_complete
     );
 }
