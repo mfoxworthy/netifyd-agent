@@ -1289,15 +1289,15 @@ static void nd_json_process_flows(
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-        nd_debug_printf("%s: Purge value sizes: sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d.\n",
+        nd_debug_printf("%s: Purge value sizes: sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d, sizeof(%d).\n",
             i->second->iface->second.c_str(),
-            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(now));
+            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(now),
+            sizeof(unsigned long long));
 
-        nd_debug_printf("%s: Purge flow?  %llus old, ttl: %llu (%llu <? %llu): sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d.\n",
+        nd_debug_printf("%s: Purge flow?  %llus old, ttl: %lu (%llu <? %llu)\n",
             i->second->iface->second.c_str(),
-            now - i->second->ts_last_seen, ttl,
-            i->second->ts_last_seen + ttl, now,
-            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(time_t));
+            (unsigned long long)(now - i->second->ts_last_seen), (unsigned long)ttl,
+            (unsigned long long)(i->second->ts_last_seen + ttl), (unsigned long long)now);
 
         if (i->second->ts_last_seen + ttl < now) {
 
