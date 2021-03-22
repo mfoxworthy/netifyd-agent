@@ -210,8 +210,8 @@ static void nd_config_init(void)
     nd_config.sink_connect_timeout = ND_SINK_CONNECT_TIMEOUT;
     nd_config.sink_xfer_timeout = ND_SINK_XFER_TIMEOUT;
     nd_config.ttl_dns_entry = ND_TTL_IDLE_DHC_ENTRY;
-    nd_config.ttl_idle_flow = ND_TTL_IDLE_FLOW * 1000;
-    nd_config.ttl_idle_tcp_flow = ND_TTL_IDLE_TCP_FLOW * 1000;
+    nd_config.ttl_idle_flow = ND_TTL_IDLE_FLOW;
+    nd_config.ttl_idle_tcp_flow = ND_TTL_IDLE_TCP_FLOW;
     nd_config.update_interval = ND_STATS_INTERVAL;
     nd_config.update_imf = 1;
     nd_config.ca_capture_base = 0;
@@ -331,9 +331,9 @@ static int nd_config_load(void)
     nd_config.sink_max_post_errors = (unsigned)reader.GetInteger(
         "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
 
-    nd_config.ttl_idle_flow = 1000 * (unsigned)reader.GetInteger(
+    nd_config.ttl_idle_flow = (unsigned)reader.GetInteger(
         "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
-    nd_config.ttl_idle_tcp_flow = 1000 * (unsigned)reader.GetInteger(
+    nd_config.ttl_idle_tcp_flow = (unsigned)reader.GetInteger(
         "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
 
     ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS,
@@ -1285,16 +1285,14 @@ static void nd_json_process_flows(
             detection_complete++;
         }
 
+        uint32_t last_seen = i->second->ts_last_seen / 1000;
         uint32_t ttl = (
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
-        ) ? (nd_config.ttl_idle_flow / 1000) : (nd_config.ttl_idle_tcp_flow / 1000);
+        ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-        uint32_t last_seen = i->second->ts_last_seen / 1000;
-
-        nd_debug_printf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
-            i->second->iface->second.c_str(),
-            now - last_seen, ttl,
-            last_seen + ttl, now);
+//        nd_debug_printf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
+//            i->second->iface->second.c_str(),
+//            now - last_seen, ttl, last_seen + ttl, now);
 
         if (last_seen + ttl < now) {
 
