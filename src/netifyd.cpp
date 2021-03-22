@@ -1289,10 +1289,11 @@ static void nd_json_process_flows(
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-        nd_debug_printf("%s: Purge flow?  %llus old, ttl: %llu (%llu <? %llu): sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d.\n",
-            i->second->iface->second.c_str(), now - i->second->ts_last_seen, ttl,
+        nd_debug_printf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu): sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d.\n",
+            i->second->iface->second.c_str(),
+            now - i->second->ts_last_seen, ttl,
             i->second->ts_last_seen + ttl, now,
-            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(now));
+            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(time_t));
 
         if (i->second->ts_last_seen + ttl < now) {
 
