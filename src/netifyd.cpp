@@ -1254,7 +1254,7 @@ static void nd_json_add_stats(json &parent,
 static void nd_json_process_flows(
     const string &tag, json &parent, nd_flow_map *flows, bool add_flows)
 {
-    uint64_t now = time(NULL) * 1000;
+    uint32_t now = time(NULL);
     uint32_t purged = 0, expired = 0, detection_complete = 0, total = 0;
 
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
@@ -1285,24 +1285,25 @@ static void nd_json_process_flows(
             detection_complete++;
         }
 
-        time_t ttl = (
+        uint32_t ttl = (
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-        nd_debug_printf("%s: Purge value sizes: sizeof(ts_last_seen): %d, sizeof(ttl): %d, sizeof(now): %d, sizeof(%d).\n",
+        uint32_t last_seen = i->second->ts_last_seen / 1000;
+
+        nd_debug_printf("%s: Purge value sizes: sizeof(last_seen): %d, sizeof(ttl): %d, sizeof(now): %d, sizeof(%d).\n",
             i->second->iface->second.c_str(),
-            sizeof(i->second->ts_last_seen), sizeof(ttl), sizeof(now),
-            sizeof(unsigned long long));
+            sizeof(last_seen), sizeof(ttl), sizeof(now));
 
-        nd_debug_printf("%s: Purge flow?  %llus old, ttl: %lu (%llu <? %llu)\n",
+        nd_debug_printf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
             i->second->iface->second.c_str(),
-            (unsigned long long)(now - i->second->ts_last_seen), (unsigned long)ttl,
-            (unsigned long long)(i->second->ts_last_seen + ttl), (unsigned long long)now);
+            now - last_seen, ttl,
+            last_seen + ttl, now);
 
-        if (i->second->ts_last_seen + ttl < now) {
+        if (last_seen + ttl < now) {
 
-//            nd_debug_printf("%s: Purge flow, %llus old, ttl: %llu.\n",
-//                i->second->iface->second.c_str(), now - i->second->ts_last_seen, ttl);
+//            nd_debug_printf("%s: Purge flow, %lus old, ttl: %lu.\n",
+//                i->second->iface->second.c_str(), now - last_seen, ttl);
 
             if (i->second->flags.detection_complete == false &&
                 i->second->flags.detection_expired == false) {
