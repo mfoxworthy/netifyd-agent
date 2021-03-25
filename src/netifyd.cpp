@@ -2888,6 +2888,8 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_PLUGINS
     if (nd_plugin_start_services() < 0)
         return 1;
+    if (nd_plugin_start_detections() < 0)
+        return 1;
 #endif
 
     memset(&sigev, 0, sizeof(struct sigevent));
@@ -3036,6 +3038,7 @@ int main(int argc, char *argv[])
 
 #ifdef _ND_USE_PLUGINS
     nd_plugin_stop_services();
+    nd_plugin_stop_detections();
 
     nd_plugin_stop_tasks();
     nd_plugin_reap_tasks();
