@@ -295,8 +295,9 @@ typedef struct nd_global_config_t {
     vector<pair<regex *, string> > privacy_regex;
     nd_device_filter device_filters;
 #ifdef _ND_USE_PLUGINS
-    map<string, string> services;
-    map<string, string> tasks;
+    map<string, string> plugin_services;
+    map<string, string> plugin_tasks;
+    map<string, string> plugin_detections;
 #endif
     map<string, string> custom_headers;
 } nd_global_config;

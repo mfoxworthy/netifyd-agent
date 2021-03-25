@@ -57,11 +57,10 @@ using namespace std;
 #endif
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-flow.h"
 
 // Enable flow hash cache debug logging
 //#define _ND_DEBUG_FHC 1
-
-#include "nd-flow.h"
 
 extern nd_global_config nd_config;
 extern nd_device_ethers device_ethers;

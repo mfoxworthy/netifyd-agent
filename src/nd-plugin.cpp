@@ -38,6 +38,10 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
+#define __FAVOR_BSD 1
+#include <netinet/tcp.h>
+#undef __FAVOR_BSD
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
@@ -48,9 +52,13 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-ndpi.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-thread.h"
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-flow.h"
 #include "nd-plugin.h"
 
 ndPlugin::ndPlugin(const string &tag)
@@ -64,7 +72,15 @@ ndPlugin::~ndPlugin()
     nd_debug_printf("Plugin destroyed: %s\n", tag.c_str());
 }
 
-void ndPlugin::SetParams(const string uuid_dispatch, const ndJsonPluginParams &params)
+ndPluginSink::ndPluginSink(const string &tag)
+    : ndPlugin(tag) { }
+
+ndPluginSink::~ndPluginSink()
+{
+    nd_debug_printf("Plugin sink destroyed: %s\n", tag.c_str());
+}
+
+void ndPluginSink::SetParams(const string uuid_dispatch, const ndJsonPluginParams &params)
 {
     Lock();
 
@@ -76,7 +92,7 @@ void ndPlugin::SetParams(const string uuid_dispatch, const ndJsonPluginParams &p
     Unlock();
 }
 
-bool ndPlugin::PopParams(string &uuid_dispatch, ndJsonPluginParams &params)
+bool ndPluginSink::PopParams(string &uuid_dispatch, ndJsonPluginParams &params)
 {
     bool popped = false;
 
@@ -96,7 +112,7 @@ bool ndPlugin::PopParams(string &uuid_dispatch, ndJsonPluginParams &params)
     return popped;
 }
 
-void ndPlugin::GetReplies(
+void ndPluginSink::GetReplies(
     ndPluginFiles &files, ndPluginFiles &data, ndPluginReplies &replies)
 {
     Lock();
@@ -120,26 +136,26 @@ void ndPlugin::GetReplies(
     Unlock();
 }
 
-void ndPlugin::PushFile(const string &tag, const string &filename)
+void ndPluginSink::PushFile(const string &tag, const string &filename)
 {
     files[tag] = filename;
 }
 
-void ndPlugin::PushData(const string &tag, const string &data)
+void ndPluginSink::PushData(const string &tag, const string &data)
 {
     this->data[tag] = data;
 }
 
-void ndPlugin::PushReply(
+void ndPluginSink::PushReply(
     const string &uuid_dispatch, const string &key, const string &value)
 {
     replies[uuid_dispatch][key] = value;
 }
 
 ndPluginService::ndPluginService(const string &tag)
-    : ndPlugin(tag)
+    : ndPluginSink(tag)
 {
-    type = TYPE_SERVICE;
+    type = ndPlugin::TYPE_SINK_SERVICE;
     nd_debug_printf("Plugin service initialized: %s\n", tag.c_str());
 }
 
@@ -149,9 +165,9 @@ ndPluginService::~ndPluginService()
 }
 
 ndPluginTask::ndPluginTask(const string &tag)
-    : ndPlugin(tag)
+    : ndPluginSink(tag)
 {
-    type = TYPE_TASK;
+    type = ndPlugin::TYPE_SINK_TASK;
     nd_debug_printf("Plugin task initialized: %s\n", tag.c_str());
 }
 
@@ -166,18 +182,30 @@ void ndPluginTask::SetParams(const string uuid_dispatch, const ndJsonPluginParam
     this->uuid_dispatch = uuid_dispatch;
     Unlock();
 
-    ndPlugin::SetParams(uuid_dispatch, params);
+    ndPluginSink::SetParams(uuid_dispatch, params);
 }
 
 bool ndPluginTask::PopParams(ndJsonPluginParams &params)
 {
     string uuid_dispatch;
-    return ndPlugin::PopParams(uuid_dispatch, params);
+    return ndPluginSink::PopParams(uuid_dispatch, params);
 }
 
 void ndPluginTask::PushReply(const string &key, const string &value)
 {
-    ndPlugin::PushReply(uuid_dispatch, key, value);
+    ndPluginSink::PushReply(uuid_dispatch, key, value);
+}
+
+ndPluginDetection::ndPluginDetection(const string &tag)
+    : ndPlugin(tag)
+{
+    type = ndPlugin::TYPE_DETECTION;
+    nd_debug_printf("Plugin detection initialized: %s\n", tag.c_str());
+}
+
+ndPluginDetection::~ndPluginDetection()
+{
+    nd_debug_printf("Plugin detection destroyed: %s\n", tag.c_str());
 }
 
 ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)

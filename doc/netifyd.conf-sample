@@ -59,10 +59,13 @@ private_external_addresses = <yes/no>
 [watches]
 <name> = <file path>
 
-[services]
+[plugin_services]
 <name> = <plugin library>
 
-[tasks]
+[plugin_tasks]
+<name> = <plugin library>
+
+[plugin_detections]
 <name> = <plugin library>
 
 [sink_headers]

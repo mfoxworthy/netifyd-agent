@@ -50,6 +50,9 @@ public:
 #ifdef _ND_USE_CONNTRACK
         ndConntrackThread *thread_conntrack,
 #endif
+#ifdef _ND_USE_PLUGINS
+        const nd_plugins &plugin_detections,
+#endif
         nd_devices &devices,
         ndDNSHintCache *dhc = NULL,
         ndFlowHashCache *fhc = NULL,
@@ -74,6 +77,9 @@ protected:
     ndSocketThread *thread_socket;
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack;
+#endif
+#ifdef _ND_USE_PLUGINS
+    const nd_plugins &plugins;
 #endif
     struct ndpi_detection_module_struct *ndpi;
     uint32_t custom_proto_base;

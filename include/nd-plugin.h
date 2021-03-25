@@ -27,8 +27,9 @@
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
         if (p == NULL) return NULL; \
-        if (p->GetType() != ndPlugin::TYPE_TASK && \
-            p->GetType() != ndPlugin::TYPE_SERVICE) { \
+        if (p->GetType() != ndPlugin::TYPE_SINK_TASK && \
+            p->GetType() != ndPlugin::TYPE_SINK_SERVICE && \
+            p->GetType() != ndPlugin::TYPE_DETECTION) { \
                 nd_printf("Invalid plugin type detected during init: %s\n", \
                     tag.c_str()); \
                 delete p; \
@@ -61,11 +62,22 @@ public:
     enum ndPluginType
     {
         TYPE_BASE,
-        TYPE_SERVICE,
-        TYPE_TASK,
+        TYPE_SINK_SERVICE,
+        TYPE_SINK_TASK,
+        TYPE_DETECTION,
     };
 
     ndPluginType GetType(void) { return type; };
+
+protected:
+    ndPluginType type;
+};
+
+class ndPluginSink : public ndPlugin
+{
+public:
+    ndPluginSink(const string &tag);
+    virtual ~ndPluginSink();
 
     virtual void SetParams(const string uuid_dispatch, const ndJsonPluginParams &params);
 
@@ -88,21 +100,31 @@ protected:
         Unlock();
     }
 
-    ndPluginType type;
     ndPluginFiles files;
     ndPluginFiles data;
     ndPluginParams params;
     ndPluginReplies replies;
 };
 
-class ndPluginService : public ndPlugin
+class ndPluginDetection : public ndPlugin
+{
+public:
+    ndPluginDetection(const string &tag);
+    virtual ~ndPluginDetection();
+
+    virtual void ProcessFlow(const ndFlow *flow) const = 0;
+
+protected:
+};
+
+class ndPluginService : public ndPluginSink
 {
 public:
     ndPluginService(const string &tag);
     virtual ~ndPluginService();
 };
 
-class ndPluginTask : public ndPlugin
+class ndPluginTask : public ndPluginSink
 {
 public:
     ndPluginTask(const string &tag);

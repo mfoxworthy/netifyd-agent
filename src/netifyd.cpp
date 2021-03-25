@@ -124,6 +124,7 @@ static ndSocketThread *thread_socket = NULL;
 #ifdef _ND_USE_PLUGINS
 static nd_plugins plugin_services;
 static nd_plugins plugin_tasks;
+static nd_plugins plugin_detections;
 #endif
 static char *nd_conf_filename = NULL;
 #ifdef _ND_USE_CONNTRACK
@@ -513,8 +514,9 @@ static int nd_config_load(void)
 #endif
 #ifdef _ND_USE_PLUGINS
     // Plugins section
-    reader.GetSection("services", nd_config.services);
-    reader.GetSection("tasks", nd_config.tasks);
+    reader.GetSection("plugin_services", nd_config.plugin_services);
+    reader.GetSection("plugin_tasks", nd_config.plugin_tasks);
+    reader.GetSection("plugin_detections", nd_config.plugin_detections);
 #endif
     reader.GetSection("sink_headers", nd_config.custom_headers);
     return 0;
@@ -781,6 +783,9 @@ static int nd_start_detection_threads(void)
 #ifdef _ND_USE_CONNTRACK
                 (! ND_USE_CONNTRACK) ?  NULL : thread_conntrack,
 #endif
+#ifdef _ND_USE_PLUGINS
+                plugin_detections,
+#endif
                 devices,
                 dns_hint_cache,
                 flow_hash_cache,
@@ -836,10 +841,10 @@ static int nd_reload_detection_threads(void)
 
 #ifdef _ND_USE_PLUGINS
 
-static int nd_start_services(void)
+static int nd_plugin_start_services(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.services.begin();
-        i != nd_config.services.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config.plugin_services.begin();
+        i != nd_config.plugin_services.end(); i++) {
         try {
             plugin_services[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_services[i->first]->GetPlugin()->Create();
@@ -858,7 +863,7 @@ static int nd_start_services(void)
     return 0;
 }
 
-static void nd_stop_services(void)
+static void nd_plugin_stop_services(void)
 {
     for (nd_plugins::iterator i = plugin_services.begin();
         i != plugin_services.end(); i++) {
@@ -875,7 +880,7 @@ static void nd_stop_services(void)
     plugin_services.clear();
 }
 
-static int nd_dispatch_service_param(
+static int nd_plugin_dispatch_service_param(
     const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
 {
     int rc = 0;
@@ -909,12 +914,12 @@ static int nd_dispatch_service_param(
     return rc;
 }
 
-static int nd_start_task(
+static int nd_plugin_start_task(
     const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
 {
-    map<string, string>::const_iterator task_iter = nd_config.tasks.find(name);
+    map<string, string>::const_iterator task_iter = nd_config.plugin_tasks.find(name);
 
-    if (task_iter == nd_config.tasks.end()) {
+    if (task_iter == nd_config.plugin_tasks.end()) {
         nd_printf("Unable to initialize plugin; task not found: %s\n",
             name.c_str());
         return -1;
@@ -955,7 +960,7 @@ static int nd_start_task(
     return 0;
 }
 
-static void nd_stop_tasks(void)
+static void nd_plugin_stop_tasks(void)
 {
     for (nd_plugins::iterator i = plugin_tasks.begin();
         i != plugin_tasks.end(); i++) {
@@ -968,7 +973,7 @@ static void nd_stop_tasks(void)
     }
 }
 
-static void nd_reap_tasks(void)
+static void nd_plugin_reap_tasks(void)
 {
     for (nd_plugins::iterator i = plugin_tasks.begin();
         i != plugin_tasks.end(); i++) {
@@ -983,6 +988,45 @@ static void nd_reap_tasks(void)
 
         plugin_tasks.erase(i);
     }
+}
+
+static int nd_plugin_start_detections(void)
+{
+    for (map<string, string>::const_iterator i = nd_config.plugin_detections.begin();
+        i != nd_config.plugin_detections.end(); i++) {
+        try {
+            plugin_detections[i->first] = new ndPluginLoader(i->second, i->first);
+            plugin_detections[i->first]->GetPlugin()->Create();
+        }
+        catch (ndPluginException &e) {
+            nd_printf("Error loading detection plugin: %s\n", e.what());
+            return 1;
+        }
+        catch (ndThreadException &e) {
+            nd_printf("Error starting detection plugin: %s %s: %s\n",
+                i->first.c_str(), i->second.c_str(), e.what());
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static void nd_plugin_stop_detections(void)
+{
+    for (nd_plugins::iterator i = plugin_detections.begin();
+        i != plugin_detections.end(); i++) {
+
+        ndPluginDetection *detection = reinterpret_cast<ndPluginDetection *>(
+            i->second->GetPlugin()
+        );
+        detection->Terminate();
+        delete detection;
+
+        delete i->second;
+    }
+
+    plugin_detections.clear();
 }
 
 #endif // _USE_ND_PLUGINS
@@ -1029,11 +1073,11 @@ static int nd_sink_process_responses(void)
 
                 if (iter_params != response->plugin_params.end()) {
                     const ndJsonPluginParams &params(iter_params->second);
-                    nd_dispatch_service_param(i->second, i->first, params);
+                    nd_plugin_dispatch_service_param(i->second, i->first, params);
                 }
                 else {
                     const ndJsonPluginParams params;
-                    nd_dispatch_service_param(i->second, i->first, params);
+                    nd_plugin_dispatch_service_param(i->second, i->first, params);
                 }
             }
 
@@ -1046,11 +1090,11 @@ static int nd_sink_process_responses(void)
 
                 if (iter_params != response->plugin_params.end()) {
                     const ndJsonPluginParams &params(iter_params->second);
-                    nd_start_task(i->second, i->first, params);
+                    nd_plugin_start_task(i->second, i->first, params);
                 }
                 else {
                     const ndJsonPluginParams params;
-                    nd_start_task(i->second, i->first, params);
+                    nd_plugin_start_task(i->second, i->first, params);
                 }
             }
 #endif
@@ -1480,26 +1524,26 @@ static void nd_json_add_plugin_replies(
     json &json_plugin_service_replies,
     json &json_plugin_task_replies, json &json_data)
 {
-    vector<ndPlugin *> plugins;
+    vector<ndPluginSink *> plugins;
 
     for (nd_plugins::const_iterator i = plugin_services.begin();
         i != plugin_services.end(); i++)
-        plugins.push_back(i->second->GetPlugin());
+        plugins.push_back(reinterpret_cast<ndPluginSink *>(i->second->GetPlugin()));
     for (nd_plugins::const_iterator i = plugin_tasks.begin();
         i != plugin_tasks.end(); i++)
-        plugins.push_back(i->second->GetPlugin());
+        plugins.push_back(reinterpret_cast<ndPluginSink *>(i->second->GetPlugin()));
 
-    for (vector<ndPlugin *>::const_iterator i = plugins.begin();
+    for (vector<ndPluginSink *>::const_iterator i = plugins.begin();
         i != plugins.end(); i++) {
 
         json *parent = NULL;
 
         switch ((*i)->GetType()) {
 
-        case ndPlugin::TYPE_SERVICE:
+        case ndPlugin::TYPE_SINK_SERVICE:
             parent = &json_plugin_service_replies;
             break;
-        case ndPlugin::TYPE_TASK:
+        case ndPlugin::TYPE_SINK_TASK:
             parent = &json_plugin_task_replies;
             break;
 
@@ -2638,8 +2682,9 @@ int main(int argc, char *argv[])
 
         nd_config.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        nd_config.services.clear();
-        nd_config.tasks.clear();
+        nd_config.plugin_services.clear();
+        nd_config.plugin_tasks.clear();
+        nd_config.plugin_detections.clear();
 #endif
         nd_config.dhc_save = ndDHC_DISABLED;
         nd_config.fhc_save = ndFHC_DISABLED;
@@ -2841,7 +2886,7 @@ int main(int argc, char *argv[])
     }
 
 #ifdef _ND_USE_PLUGINS
-    if (nd_start_services() < 0)
+    if (nd_plugin_start_services() < 0)
         return 1;
 #endif
 
@@ -2911,7 +2956,7 @@ int main(int argc, char *argv[])
 #endif
             nd_dump_stats();
 #ifdef _ND_USE_PLUGINS
-            nd_reap_tasks();
+            nd_plugin_reap_tasks();
 #endif
             if (dns_hint_cache)
                 dns_hint_cache->purge();
@@ -2990,10 +3035,10 @@ int main(int argc, char *argv[])
     nd_destroy();
 
 #ifdef _ND_USE_PLUGINS
-    nd_stop_services();
+    nd_plugin_stop_services();
 
-    nd_stop_tasks();
-    nd_reap_tasks();
+    nd_plugin_stop_tasks();
+    nd_plugin_reap_tasks();
 #endif
 
     if (thread_sink) {

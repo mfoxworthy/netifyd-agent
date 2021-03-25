@@ -92,6 +92,7 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-dhc.h"
 #include "nd-signal.h"
+#include "nd-plugin.h"
 #include "nd-detection.h"
 
 // Enable flow hash cache debug logging
@@ -120,6 +121,9 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack,
 #endif
+#ifdef _ND_USE_PLUGINS
+    const nd_plugins &plugin_detections,
+#endif
     nd_devices &devices,
     ndDNSHintCache *dhc,
     ndFlowHashCache *fhc,
@@ -129,6 +133,9 @@ ndDetectionThread::ndDetectionThread(
     thread_socket(thread_socket),
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(thread_conntrack),
+#endif
+#ifdef _ND_USE_PLUGINS
+    plugins(plugin_detections),
 #endif
     ndpi(NULL), custom_proto_base(0),
     devices(devices),
@@ -809,6 +816,14 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         entry->flow->release();
         entry->flow->flags.detection_complete = true;
+
+        for (nd_plugins::const_iterator i = plugins.begin();
+            i != plugins.end(); i++) {
+            const ndPluginDetection *p = reinterpret_cast<const ndPluginDetection *>(
+                i->second->GetPlugin()
+            );
+            p->ProcessFlow(entry->flow);
+        }
     }
 }
 
