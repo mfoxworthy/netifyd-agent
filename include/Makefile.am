@@ -6,7 +6,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = nd-json-response-code.txt.in pcap-compat
+EXTRA_DIST = nd-json-response-code.txt.in nlohmann pcap-compat
 
 netifyincludedir = $(includedir)/netifyd
 netifyinclude_HEADERS = nd-base64.h nd-conntrack.h nd-capture.h \
@@ -14,6 +14,12 @@ netifyinclude_HEADERS = nd-base64.h nd-conntrack.h nd-capture.h \
 	nd-json-response-code.h nd-ndpi.h nd-netlink.h nd-plugin.h \
 	nd-sha1.h nd-sink.h nd-signal.h nd-socket.h nd-thread.h \
 	nd-util.h netifyd.h
+
+pcapcompatincludedir = $(includedir)/netifyd/pcap-compat
+pcapcompatinclude_HEADERS = pcap-compat/sll.h pcap-compat/vlan.h
+
+nlohmannincludedir = $(includedir)/netifyd/nlohmann
+nlohmanninclude_HEADERS = nlohmann/json.hpp
 
 BUILT_SOURCES = nd-json-response-code.h
 CLEANFILES = nd-json-response-code.h

@@ -57,9 +57,6 @@ esac
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
 PKG_CHECK_MODULES([ZLIB], [zlib])
 
-NLOHMANN_JSON_CPPFLAGS="-I ${ac_abs_confdir}/libs/json/single_include"
-AC_SUBST(NLOHMANN_JSON_CPPFLAGS)
-
 # Parameters: --with/without
 AC_ARG_WITH([systemdsystemunitdir],
      [AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files])],,
