@@ -123,7 +123,6 @@ touch %{EXTRA_DIST}
 make install DESTDIR=%{buildroot}
 
 rm -rf %{buildroot}/%{_bindir}
-rm -rf %{buildroot}/%{_includedir}/libndpi*
 rm -rf %{buildroot}/%{_libdir}/libndpi*
 rm -rf %{buildroot}/%{_libdir}/pkgconfig/libndpi*
 
@@ -203,6 +202,7 @@ exit 0
 %files devel
 %defattr(-,root,root)
 %{_includedir}/%{name}
+%{_includedir}/libndpi*
 %{_libdir}/pkgconfig/lib%{name}.pc
 %{_libdir}/lib%{name}.a
 %{_libdir}/lib%{name}.la

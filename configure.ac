@@ -301,6 +301,10 @@ AC_DEFINE_UNQUOTED(GIT_RELEASE, "${GIT_RELEASE}", [GIT Release])
 AC_DEFINE_UNQUOTED(GIT_DATE, "${GIT_DATE}", [Last GIT change])
 AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git])
 
+# Get nDPI version
+NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
+AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
+
 # Output files
 AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init deploy/openwrt/files/netifyd.config])
 AC_CONFIG_FILES([libnetifyd.pc])
