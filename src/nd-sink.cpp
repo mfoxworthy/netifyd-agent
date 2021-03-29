@@ -297,8 +297,10 @@ void ndSinkThread::Terminate(void)
 
     Lock();
 
-    if ((rc = pthread_cond_broadcast(&uploads_cond)) != 0)
+    if ((rc = pthread_cond_broadcast(&uploads_cond)) != 0) {
+        Unlock();
         throw ndSinkThreadException(strerror(rc));
+    }
 
     terminate = true;
 
@@ -317,8 +319,10 @@ void ndSinkThread::QueuePush(const string &json)
 
     uploads.push(json);
 
-    if ((rc = pthread_cond_broadcast(&uploads_cond)) != 0)
+    if ((rc = pthread_cond_broadcast(&uploads_cond)) != 0) {
+        Unlock();
         throw ndSinkThreadException(strerror(rc));
+    }
 
     Unlock();
 }

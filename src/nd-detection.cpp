@@ -814,8 +814,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
             entry->flow->print();
 
-        entry->flow->release();
         entry->flow->flags.detection_complete = true;
+        entry->flow->release();
 
         for (nd_plugins::iterator i = plugins->begin();
             i != plugins->end(); i++) {

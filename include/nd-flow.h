@@ -63,39 +63,12 @@ public:
 
     uint16_t vlan_id;
 
-    struct {
-#ifdef HAVE_ATOMIC
-        atomic<uint8_t> ip_nat;
-        atomic<uint8_t> tcp_fin;
-        atomic<uint8_t> dhc_hit;
-        atomic<uint8_t> detection_complete;
-        atomic<uint8_t> detection_expiring;
-        atomic<uint8_t> detection_expired;
-        atomic<uint8_t> detection_guessed;
-#else
-        uint8_t ip_nat:1;
-        uint8_t tcp_fin:1;
-        uint8_t dhc_hit:1;
-        uint8_t detection_complete:1;
-        uint8_t detection_expiring:1;
-        uint8_t detection_expired:1;
-        uint8_t detection_guessed:1;
-#endif
-    } flags;
-
     tcp_seq tcp_last_seq;
 
-#ifdef _ND_USE_CONNTRACK
-    uint32_t ct_id;
-    uint32_t ct_mark;
-#endif
     uint64_t ts_first_seen;
     uint64_t ts_first_update;
     uint64_t ts_last_seen;
-#ifdef _ND_USE_NETLINK
-    ndNetlinkAddressType lower_type;
-    ndNetlinkAddressType upper_type;
-#endif
+
     enum {
         LOWER_UNKNOWN = 0x00,
         LOWER_LOCAL = 0x01,
@@ -140,27 +113,6 @@ public:
     };
 
     uint8_t tunnel_type;
-
-    union {
-        struct {
-            uint8_t version;
-            uint8_t ip_version;
-            uint32_t lower_teid;
-            uint32_t upper_teid;
-#ifdef _ND_USE_NETLINK
-            ndNetlinkAddressType lower_type;
-            ndNetlinkAddressType upper_type;
-#endif
-            struct sockaddr_storage lower_addr;
-            struct sockaddr_storage upper_addr;
-            char lower_ip[INET6_ADDRSTRLEN];
-            char upper_ip[INET6_ADDRSTRLEN];
-            uint16_t lower_port;
-            uint16_t upper_port;
-            uint8_t lower_map;
-            uint8_t other_type;
-        } gtp;
-    };
 
     uint64_t lower_bytes;
     uint64_t upper_bytes;
@@ -261,6 +213,58 @@ public:
 
     nd_flow_capture capture;
     char capture_filename[sizeof(ND_FLOW_CAPTURE_TEMPLATE)];
+
+    // Start of conditional members.  These must be at the end or else access
+    // from plugins compiled without various options will have incorrect
+    // addresses
+#ifdef _ND_USE_CONNTRACK
+    uint32_t ct_id;
+    uint32_t ct_mark;
+#endif
+#ifdef _ND_USE_NETLINK
+    ndNetlinkAddressType lower_type;
+    ndNetlinkAddressType upper_type;
+#endif
+    struct {
+#ifdef HAVE_ATOMIC
+        atomic<uint8_t> ip_nat;
+        atomic<uint8_t> tcp_fin;
+        atomic<uint8_t> dhc_hit;
+        atomic<uint8_t> detection_complete;
+        atomic<uint8_t> detection_expiring;
+        atomic<uint8_t> detection_expired;
+        atomic<uint8_t> detection_guessed;
+#else
+        uint8_t ip_nat:1;
+        uint8_t tcp_fin:1;
+        uint8_t dhc_hit:1;
+        uint8_t detection_complete:1;
+        uint8_t detection_expiring:1;
+        uint8_t detection_expired:1;
+        uint8_t detection_guessed:1;
+#endif
+    } flags;
+
+    union {
+        struct {
+            uint8_t version;
+            uint8_t ip_version;
+            uint32_t lower_teid;
+            uint32_t upper_teid;
+#ifdef _ND_USE_NETLINK
+            ndNetlinkAddressType lower_type;
+            ndNetlinkAddressType upper_type;
+#endif
+            struct sockaddr_storage lower_addr;
+            struct sockaddr_storage upper_addr;
+            char lower_ip[INET6_ADDRSTRLEN];
+            char upper_ip[INET6_ADDRSTRLEN];
+            uint16_t lower_port;
+            uint16_t upper_port;
+            uint8_t lower_map;
+            uint8_t other_type;
+        } gtp;
+    };
 
     ndFlow(nd_ifaces::iterator iface);
     ndFlow(const ndFlow &flow);

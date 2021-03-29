@@ -112,7 +112,7 @@ public:
     ndPluginDetection(const string &tag);
     virtual ~ndPluginDetection();
 
-    virtual void ProcessFlow(const ndFlow *flow) = 0;
+    virtual void ProcessFlow(ndFlow *flow) = 0;
 
 protected:
 };

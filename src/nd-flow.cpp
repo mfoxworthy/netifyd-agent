@@ -68,12 +68,7 @@ extern nd_device_ethers device_ethers;
 ndFlow::ndFlow(nd_ifaces::iterator iface)
     : iface(iface), dpi_thread_id(-1), pkt(NULL),
     ip_version(0), ip_protocol(0), vlan_id(0),
-    flags{},
-#ifdef _ND_USE_CONNTRACK
-    ct_id(0), ct_mark(0),
-#endif
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
-    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
     lower_mac{}, upper_mac{}, lower_addr{}, upper_addr{},
     lower_addr4(NULL), lower_addr6(NULL), upper_addr4(NULL), upper_addr6(NULL),
@@ -88,7 +83,14 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     digest_lower{}, digest_mdata{},
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
-    capture_filename{}
+    capture_filename{},
+#ifdef _ND_USE_CONNTRACK
+    ct_id(0), ct_mark(0),
+#endif
+#ifdef _ND_USE_NETLINK
+    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
+#endif
+    flags{}
 {
     lower_addr4 = (struct sockaddr_in *)&lower_addr;
     lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
@@ -102,13 +104,8 @@ ndFlow::ndFlow(const ndFlow &flow)
     : iface(flow.iface), dpi_thread_id(-1), pkt(NULL),
     ip_version(flow.ip_version), ip_protocol(flow.ip_protocol),
     vlan_id(flow.vlan_id),
-    flags{},
-#ifdef _ND_USE_CONNTRACK
-    ct_id(0), ct_mark(0),
-#endif
     ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update),
     ts_last_seen(flow.ts_last_seen),
-    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
     lower_addr(flow.lower_addr), upper_addr(flow.upper_addr),
     lower_ip{}, upper_ip{},
@@ -121,7 +118,14 @@ ndFlow::ndFlow(const ndFlow &flow)
     ndpi_flow(NULL), id_src(NULL), id_dst(NULL),
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
-    capture_filename{}
+    capture_filename{},
+#ifdef _ND_USE_CONNTRACK
+    ct_id(0), ct_mark(0),
+#endif
+#ifdef _ND_USE_NETLINK
+    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
+#endif
+    flags{}
 {
     memcpy(lower_mac, flow.lower_mac, ETH_ALEN);
     memcpy(upper_mac, flow.upper_mac, ETH_ALEN);
