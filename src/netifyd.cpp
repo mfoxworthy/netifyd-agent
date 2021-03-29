@@ -784,7 +784,7 @@ static int nd_start_detection_threads(void)
                 (! ND_USE_CONNTRACK) ?  NULL : thread_conntrack,
 #endif
 #ifdef _ND_USE_PLUGINS
-                plugin_detections,
+                &plugin_detections,
 #endif
                 devices,
                 dns_hint_cache,

@@ -122,7 +122,7 @@ ndDetectionThread::ndDetectionThread(
     ndConntrackThread *thread_conntrack,
 #endif
 #ifdef _ND_USE_PLUGINS
-    const nd_plugins &plugin_detections,
+    nd_plugins *plugin_detections,
 #endif
     nd_devices &devices,
     ndDNSHintCache *dhc,
@@ -817,9 +817,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         entry->flow->release();
         entry->flow->flags.detection_complete = true;
 
-        for (nd_plugins::const_iterator i = plugins.begin();
-            i != plugins.end(); i++) {
-            const ndPluginDetection *p = reinterpret_cast<const ndPluginDetection *>(
+        for (nd_plugins::iterator i = plugins->begin();
+            i != plugins->end(); i++) {
+            ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
                 i->second->GetPlugin()
             );
             p->ProcessFlow(entry->flow);
