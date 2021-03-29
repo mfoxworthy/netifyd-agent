@@ -80,6 +80,13 @@ endef
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/@PACKAGE_TARNAME@
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/@PACKAGE_TARNAME@/*.h $(1)/usr/include/@PACKAGE_TARNAME@
+	$(INSTALL_DIR) $(1)/usr/include/netifyd/pcap-compat
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/pcap-compat/*.h $(1)/usr/include/netifyd/pcap-compat
+	$(INSTALL_DIR) $(1)/usr/include/netifyd/nlohmann
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/nlohmann/*.hpp $(1)/usr/include/netifyd/nlohmann
+	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0
+	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0/libndpi
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/libndpi-2.9.0/libndpi/*.h $(1)/usr/include/libndpi-2.9.0/libndpi
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.{a,so*} $(1)/usr/lib/
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
