@@ -29,7 +29,9 @@ void *nd_mem_alloc(size_t size);
 void nd_mem_free(void *ptr);
 
 void nd_printf(const char *format, ...);
+void nd_printf(const char *format, va_list ap);
 void nd_debug_printf(const char *format, ...);
+void nd_debug_printf(const char *format, va_list ap);
 void nd_flow_printf(const char *format, ...);
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
@@ -46,6 +48,9 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary = true
 
 int nd_sha1_file(const string &filename, uint8_t *digest);
 void nd_sha1_to_string(const uint8_t *digest_bin, string &digest_str);
+
+bool nd_string_to_mac(const string &src, uint8_t *mac);
+sa_family_t nd_string_to_ip(const string &src, sockaddr_storage *ip);
 
 void nd_iface_name(const string &iface, string &result);
 void nd_capture_filename(const string &iface, string &result);

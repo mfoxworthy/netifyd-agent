@@ -434,6 +434,8 @@ static int nd_config_load(void)
         string mac_addr = reader.Get("privacy_filter", os.str(), "");
 
         if (mac_addr.size() == 0) break;
+
+        /*
         if (mac_addr.size() != ND_STR_ETHALEN) continue;
 
         uint8_t mac[ETH_ALEN], *p = mac;
@@ -441,8 +443,13 @@ static int nd_config_load(void)
         for (int j = 0; j < ND_STR_ETHALEN; j += 3, p++)
             sscanf(a + j, "%2hhx", p);
         p = new uint8_t[ETH_ALEN];
-        memcpy(p, mac, ETH_ALEN);
-        nd_config.privacy_filter_mac.push_back(p);
+        */
+        uint8_t mac[ETH_ALEN];
+        if (nd_string_to_mac(mac_addr, mac)) {
+            uint8_t *p = new uint8_t[ETH_ALEN];
+            memcpy(p, mac, ETH_ALEN);
+            nd_config.privacy_filter_mac.push_back(p);
+        }
     }
 
     for (int i = 0; ; i++) {

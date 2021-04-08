@@ -144,12 +144,17 @@ extern pthread_mutex_t *nd_printf_mutex;
 
 void nd_printf(const char *format, ...)
 {
-    pthread_mutex_lock(nd_printf_mutex);
-
     va_list ap;
     va_start(ap, format);
-    vsyslog(LOG_DAEMON | LOG_INFO, format, ap);
+    nd_printf(format, ap);
     va_end(ap);
+}
+
+void nd_printf(const char *format, va_list ap)
+{
+    pthread_mutex_lock(nd_printf_mutex);
+
+    vsyslog(LOG_DAEMON | LOG_INFO, format, ap);
 
     pthread_mutex_unlock(nd_printf_mutex);
 }
@@ -158,12 +163,20 @@ void nd_debug_printf(const char *format, ...)
 {
     if (ND_DEBUG) {
 
-        pthread_mutex_lock(nd_printf_mutex);
-
         va_list ap;
         va_start(ap, format);
-        vfprintf(stderr, format, ap);
+        nd_debug_printf(format, ap);
         va_end(ap);
+    }
+}
+
+void nd_debug_printf(const char *format, va_list ap)
+{
+    if (ND_DEBUG) {
+
+        pthread_mutex_lock(nd_printf_mutex);
+
+        vfprintf(stderr, format, ap);
 
         pthread_mutex_unlock(nd_printf_mutex);
     }
@@ -343,6 +356,34 @@ void nd_sha1_to_string(const uint8_t *digest_bin, string &digest_str)
         sprintf(p, "%02x", digest_bin[i]);
 
     digest_str.assign(_digest);
+}
+
+bool nd_string_to_mac(const string &src, uint8_t *mac)
+{
+    if (src.size() != ND_STR_ETHALEN) return false;
+
+    uint8_t *p = mac;
+    const char *s = src.c_str();
+
+    for (int i = 0; i < ND_STR_ETHALEN; i += 3, p++) {
+        if (sscanf(s + i, "%2hhx", p) != 1) return false;
+    }
+
+    return true;
+}
+
+sa_family_t nd_string_to_ip(const string &src, sockaddr_storage *ip)
+{
+    sa_family_t family = AF_UNSPEC;
+    struct sockaddr_in *ipv4 = reinterpret_cast<struct sockaddr_in *>(ip);
+    struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(ip);
+
+    if (inet_pton(AF_INET, src.c_str(), &ipv4->sin_addr) == 1)
+        family = AF_INET;
+    else if (inet_pton(AF_INET6, src.c_str(), &ipv6->sin6_addr) == 1)
+        family = AF_INET6;
+
+    return family;
 }
 
 void nd_iface_name(const string &iface, string &result)
