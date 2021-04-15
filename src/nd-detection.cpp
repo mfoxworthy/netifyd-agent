@@ -142,7 +142,8 @@ ndDetectionThread::ndDetectionThread(
     dhc(dhc), fhc(fhc),
     flows(0)
 {
-    ndpi = nd_ndpi_init(tag, custom_proto_base);
+    ndpi = nd_ndpi_init(tag);
+    custom_proto_base = ndpi_get_custom_proto_base();
 
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);
@@ -199,7 +200,8 @@ ndDetectionThread::~ndDetectionThread()
 void ndDetectionThread::Reload(void)
 {
     if (ndpi != NULL) nd_ndpi_free(ndpi);
-    ndpi = nd_ndpi_init(tag, custom_proto_base);
+    ndpi = nd_ndpi_init(tag);
+    custom_proto_base = ndpi_get_custom_proto_base();
 
     if (ndpi == NULL) throw ndDetectionThreadException(strerror(ENOMEM));
 }

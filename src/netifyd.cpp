@@ -107,8 +107,6 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-signal.h"
 
-#define ND_STR_ETHALEN     (ETH_ALEN * 2 + ETH_ALEN - 1)
-
 static bool nd_terminate = false;
 static nd_ifaces ifaces;
 static nd_devices devices;
@@ -1931,7 +1929,8 @@ static void nd_dump_protocols(void)
 
     ndpi_global_init();
 
-    ndpi = nd_ndpi_init("netifyd", custom_proto_base);
+    ndpi = nd_ndpi_init("netifyd");
+    custom_proto_base = ndpi_get_custom_proto_base();
 
     for (unsigned i = 0; i < (unsigned)ndpi->ndpi_num_supported_protocols; i++)
         printf("%4d: %s\n", i, ndpi->proto_defaults[i].proto_name);

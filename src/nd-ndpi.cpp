@@ -55,65 +55,121 @@ using namespace std;
 
 extern nd_global_config nd_config;
 
+static pthread_mutex_t *ndpi_init_lock = NULL;
 static pthread_mutex_t *ndpi_host_automa_lock = NULL;
 static struct ndpi_detection_module_struct *ndpi_parent = NULL;
+static uint32_t ndpi_custom_proto_base = 0;
 
 void ndpi_global_init(void)
 {
     struct stat path_sink_config_stat;
+    struct ndpi_detection_module_struct *np = NULL;
 
-    set_ndpi_malloc(nd_mem_alloc);
-    set_ndpi_free(nd_mem_free);
-
-    ndpi_parent = ndpi_init_detection_module();
-
-    if (ndpi_parent == NULL)
-        throw ndThreadException("Detection module initialization failure");
-
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-    ndpi_parent->ndpi_log_level = NDPI_LOG_TRACE;
-    //ndpi_parent->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
-    set_ndpi_debug_function(ndpi_parent, nd_ndpi_debug_printf);
-#endif
-
-    if (ndpi_parent->host_automa.ac_automa == NULL)
-        throw ndThreadException("Detection host_automa initialization failure");
-
-    ndpi_host_automa_lock = new pthread_mutex_t;
-    if (pthread_mutex_init(ndpi_host_automa_lock, NULL) != 0)
-        throw ndThreadException("Unable to initialize pthread_mutex");
-    ndpi_parent->host_automa.lock = ndpi_host_automa_lock;
-
-    if (ndpi_parent->protocols_ptree == NULL) {
-        ndpi_parent->protocols_ptree = ndpi_init_ptree(32); // 32-bit for IPv4
-        if (ndpi_parent->protocols_ptree == NULL)
-            throw ndThreadException("Unable to initialize proto_ptree");
+    if (ndpi_init_lock == NULL) {
+        ndpi_init_lock = new pthread_mutex_t;
+        if (pthread_mutex_init(ndpi_init_lock, NULL) != 0)
+            throw ndThreadException("Unable to initialize pthread_mutex (init)");
     }
 
-    ndpi_init_string_based_protocols(ndpi_parent);
+    if (pthread_mutex_lock(ndpi_init_lock) != 0)
+        throw ndThreadException("Unable to lock pthread_mutex (init)");
 
-    NDPI_PROTOCOL_BITMASK proto_all;
-    NDPI_BITMASK_SET_ALL(proto_all);
+    try {
+        set_ndpi_malloc(nd_mem_alloc);
+        set_ndpi_free(nd_mem_free);
 
-    ndpi_set_protocol_detection_bitmask2(ndpi_parent, &proto_all);
+        np = ndpi_init_detection_module();
 
-    if (nd_config.path_sink_config != NULL &&
-        stat(nd_config.path_sink_config, &path_sink_config_stat) == 0) {
-        nd_debug_printf("Loading custom protocols from%s: %s\n",
-            ND_OVERRIDE_SINK_CONFIG ? " override" : "",
-            nd_config.path_sink_config);
-        ndpi_load_protocols_file(ndpi_parent, nd_config.path_sink_config);
+        if (np == NULL)
+            throw ndThreadException("Detection module initialization failure");
+
+        ndpi_custom_proto_base = np->ndpi_num_supported_protocols;
+
+    #ifdef NDPI_ENABLE_DEBUG_MESSAGES
+        np->ndpi_log_level = NDPI_LOG_TRACE;
+        //np->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
+        set_ndpi_debug_function(np, nd_ndpi_debug_printf);
+    #endif
+
+        if (np->host_automa.ac_automa == NULL)
+            throw ndThreadException("Detection host_automa initialization failure");
+
+        ndpi_host_automa_lock = new pthread_mutex_t;
+        if (pthread_mutex_init(ndpi_host_automa_lock, NULL) != 0)
+            throw ndThreadException("Unable to initialize pthread_mutex (host automa)");
+        np->host_automa.lock = ndpi_host_automa_lock;
+
+        if (np->protocols_ptree == NULL) {
+            np->protocols_ptree = ndpi_init_ptree(32); // 32-bit for IPv4
+            if (np->protocols_ptree == NULL)
+                throw ndThreadException("Unable to initialize proto_ptree");
+        }
+
+        ndpi_init_string_based_protocols(np);
+
+        NDPI_PROTOCOL_BITMASK proto_all;
+        NDPI_BITMASK_SET_ALL(proto_all);
+
+        ndpi_set_protocol_detection_bitmask2(np, &proto_all);
+
+        if (nd_config.path_sink_config != NULL &&
+            stat(nd_config.path_sink_config, &path_sink_config_stat) == 0) {
+            nd_debug_printf("Loading custom protocols from%s: %s\n",
+                ND_OVERRIDE_SINK_CONFIG ? " override" : "",
+                nd_config.path_sink_config);
+            ndpi_load_protocols_file(np, nd_config.path_sink_config);
+        }
+
+        ndpi_parent = np;
+
+    } catch (...) {
+        if (pthread_mutex_unlock(ndpi_init_lock) != 0)
+            nd_debug_printf("Unable to unlock pthread_mutex (init)\n");
+        throw;
     }
+
+    if (pthread_mutex_unlock(ndpi_init_lock) != 0)
+        throw ndThreadException("Unable to unlock pthread_mutex (init)");
 }
 
 void ndpi_global_destroy(void)
 {
-    pthread_mutex_destroy(ndpi_host_automa_lock);
-    delete ndpi_host_automa_lock;
-    ndpi_host_automa_lock = NULL;
+    struct ndpi_detection_module_struct *np = ndpi_parent;
 
-    ndpi_exit_detection_module(ndpi_parent);
-    ndpi_parent = NULL;
+    if (np != NULL && ndpi_init_lock != NULL) {
+        try {
+            if (pthread_mutex_lock(ndpi_init_lock) != 0)
+                throw ndThreadException("Unable to lock pthread_mutex (init)");
+
+            ndpi_parent = NULL;
+
+            pthread_mutex_destroy(ndpi_host_automa_lock);
+            delete ndpi_host_automa_lock;
+            ndpi_host_automa_lock = NULL;
+
+            ndpi_exit_detection_module(np);
+
+        } catch (...) {
+            if (pthread_mutex_unlock(ndpi_init_lock) != 0)
+                nd_debug_printf("Unable to unlock pthread_mutex (init)\n");
+            throw;
+        }
+    }
+
+    if (pthread_mutex_unlock(ndpi_init_lock) != 0)
+        throw ndThreadException("Unable to unlock pthread_mutex (init)");
+}
+
+void ndpi_global_init_lock(void)
+{
+    if (ndpi_init_lock == NULL || pthread_mutex_lock(ndpi_init_lock) != 0)
+        throw ndThreadException("Unable to lock pthread_mutex (init)");
+}
+
+void ndpi_global_init_unlock(void)
+{
+    if (ndpi_init_lock == NULL || pthread_mutex_unlock(ndpi_init_lock) != 0)
+        throw ndThreadException("Unable to unlock pthread_mutex (init)");
 }
 
 struct ndpi_detection_module_struct *ndpi_get_parent(void)
@@ -121,8 +177,12 @@ struct ndpi_detection_module_struct *ndpi_get_parent(void)
     return ndpi_parent;
 }
 
-struct ndpi_detection_module_struct *nd_ndpi_init(
-    const string &tag __attribute__((unused)), uint32_t &custom_proto_base)
+uint32_t ndpi_get_custom_proto_base(void)
+{
+    return ndpi_custom_proto_base;
+}
+
+struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute__((unused)))
 {
     struct ndpi_detection_module_struct *ndpi = NULL;
 
@@ -130,8 +190,6 @@ struct ndpi_detection_module_struct *nd_ndpi_init(
 
     if (ndpi == NULL)
         throw ndThreadException("Detection module initialization failure");
-
-    custom_proto_base = ndpi->ndpi_num_supported_protocols;
 
     // Set nDPI preferences
     ndpi_set_detection_preferences(ndpi, ndpi_pref_http_dont_dissect_response, 0);

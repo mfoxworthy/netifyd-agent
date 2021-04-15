@@ -22,12 +22,15 @@
 void ndpi_global_init(void);
 void ndpi_global_destroy(void);
 
-struct ndpi_detection_module_struct *nd_ndpi_init(
-    const string &tag, uint32_t &custom_proto_base);
+void ndpi_global_init_lock(void);
+void ndpi_global_init_unlock(void);
+
+struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag);
 
 void nd_ndpi_free(struct ndpi_detection_module_struct *ndpi);
 
 struct ndpi_detection_module_struct *ndpi_get_parent(void);
+uint32_t ndpi_get_custom_proto_base(void);
 
 #endif // _ND_NDPI_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
