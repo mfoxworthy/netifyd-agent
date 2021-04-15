@@ -108,7 +108,7 @@ AC_ARG_ENABLE([conntrack],
 AS_IF([test "x$enable_conntrack" = "xyes"], [
     AC_DEFINE([_ND_USE_CONNTRACK], [1],
         [Define to enable connection tracking support.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_USE_CONNTRACK=1"
+    ND_DEFINES+=" -D_ND_USE_CONNTRACK=1"
     AM_CONDITIONAL(USE_CONNTRACK, true)
     PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
     PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.4])
@@ -124,7 +124,7 @@ AC_ARG_ENABLE([inotify],
 AS_IF([test "x$enable_inotify" = "xyes"], [
     AC_DEFINE([_ND_USE_INOTIFY], [1],
         [Define to enable inotify file watch support.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_USE_INOTIFY=1"
+    ND_DEFINES+=" -D_ND_USE_INOTIFY=1"
     AM_CONDITIONAL(USE_INOTIFY, true)
     AC_CHECK_HEADERS([sys/inotify.h], [], AC_MSG_ERROR([inotify header(s) not found.]))
 ], [
@@ -150,7 +150,7 @@ case "${host_os}" in
         AC_CHECK_HEADERS([linux/netlink.h], [], AC_MSG_ERROR([netlink header(s) not found.]))
         ;;
 esac
-ND_DEFINES="${ND_DEFINES} -D_ND_USE_NETLINK=1"
+ND_DEFINES+=" -D_ND_USE_NETLINK=1"
 ], [
     AM_CONDITIONAL(USE_NETLINK, false)
 ])
@@ -163,7 +163,7 @@ AC_ARG_ENABLE([plugins],
 AS_IF([test "x$enable_plugins" = "xyes"], [
     AC_DEFINE([_ND_USE_PLUGINS], [1],
         [Define to enable Netify Plugin support.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_USE_PLUGINS=1"
+    ND_DEFINES+=" -D_ND_USE_PLUGINS=1"
     AC_CHECK_HEADERS([dlfcn.h], [], AC_MSG_ERROR([dlfcn.h header(s) not found.]))
     case "${host_os}" in
         linux*)
@@ -188,7 +188,7 @@ AS_IF([test "x$enable_libtcmalloc" = "xyes"], [
 
     AC_DEFINE([_ND_USE_LIBTCMALLOC], [1],
         [Define to enable Thread Caching malloc support.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_USE_LIBTCMALLOC=1"
+    ND_DEFINES+=" -D_ND_USE_LIBTCMALLOC=1"
 
     PKG_CHECK_MODULES([LIBTCMALLOC], [libtcmalloc_minimal], [
         AM_CONDITIONAL(USE_LIBTCMALLOC, true)
@@ -220,7 +220,7 @@ AC_ARG_ENABLE([lean-and-mean],
 AS_IF([test "x$enable_lean_and_mean" = "xyes"], [
     AC_DEFINE([_ND_LEAN_AND_MEAN], [1],
         [Define to build smallest possible binary.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_LEAN_AND_MEAN=1"
+    ND_DEFINES+=" -D_ND_LEAN_AND_MEAN=1"
     AM_CONDITIONAL(ENABLE_LEAN_AND_MEAN, true)
 ], [
     AM_CONDITIONAL(ENABLE_LEAN_AND_MEAN, false)
@@ -234,7 +234,7 @@ AC_ARG_ENABLE([watchdogs],
 AS_IF([test "x$enable_watchdogs" = "xyes"], [
     AC_DEFINE([_ND_USE_WATCHDOGS], [1],
         [Define to enable run-time watchdogs support.])
-    ND_DEFINES="${ND_DEFINES} -D_ND_USE_WATCHDOGS=1"
+    ND_DEFINES+=" -D_ND_USE_WATCHDOGS=1"
     AM_CONDITIONAL(USE_WATCHDOGS, true)
 ], [
     AM_CONDITIONAL(USE_WATCHDOGS, false)
@@ -255,13 +255,6 @@ AC_CHECK_HEADERS([netinet/in.h netinet/ip.h netinet/tcp.h netinet/udp.h], [], AC
 # Check for optional header files.
 AC_CHECK_HEADERS([atomic endian.h pthread_np.h sys/cpuset.h sys/endian.h linux/ppp_defs.h net/ppp_defs.h stdalign.h])
 AC_CHECK_HEADERS([pcap/sll.h pcap/vlan.h])
-
-# Convience substitutions
-AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])
-AC_SUBST([volatilestatedir], [$localstatedir/run/$PACKAGE_TARNAME])
-
-# Defines substitution for pkg-config
-AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
 # Check for optional parameters
 
@@ -318,6 +311,19 @@ AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git
 # Get nDPI version
 NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
 AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
+
+# Convience substitutions
+AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])
+AC_SUBST([volatilestatedir], [$localstatedir/run/$PACKAGE_TARNAME])
+
+# Defines substitution for pkg-config
+ND_DEFINES+=" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"
+ND_DEFINES+=" -D'ND_DATADIR=\"$datadir/$PACKAGE_TARNAME\"'"
+ND_DEFINES+=" -D'ND_PERSISTENT_STATEDIR=\"$persistentstatedir\"'"
+ND_DEFINES+=" -D'ND_PID_FILE_NAME=\"$volatilestatedir/$PACKAGE_TARNAME.pid\"'"
+ND_DEFINES+=" -D'ND_VOLATILE_STATEDIR=\"$volatilestatedir\"'"
+
+AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
 # Output files
 AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init deploy/openwrt/files/netifyd.config])
