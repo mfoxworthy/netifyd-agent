@@ -257,11 +257,11 @@ bool ndNetlink::ProcessEvent(void)
     unsigned added_net = 0, removed_net = 0, added_addr = 0, removed_addr = 0;
 
     while ((bytes = recv(nd, buffer, ND_NETLINK_BUFSIZ, 0)) > 0) {
-//        nd_debug_printf("Read %ld netlink bytes.\n", bytes);
+//        nd_dprintf("Read %ld netlink bytes.\n", bytes);
         for (nlh = (struct nlmsghdr *)buffer;
             NLMSG_OK(nlh, bytes); nlh = NLMSG_NEXT(nlh, bytes)) {
 #if 0
-            nd_debug_printf(
+            nd_dprintf(
                 "NLMSG: %hu, len: %u (%u, %u), flags: 0x%x, seq: %u, pid: %u\n",
                 nlh->nlmsg_type, nlh->nlmsg_len,
                 NLMSG_HDRLEN, NLMSG_LENGTH(nlh->nlmsg_len),
@@ -269,22 +269,22 @@ bool ndNetlink::ProcessEvent(void)
 #endif
             switch(nlh->nlmsg_type) {
             case NLMSG_DONE:
-//              nd_debug_printf("End of multi-part message.\n");
+//              nd_dprintf("End of multi-part message.\n");
                 break;
             case RTM_NEWROUTE:
-//              nd_debug_printf("New route.\n");
+//              nd_dprintf("New route.\n");
                 if (AddNetwork(nlh)) added_net++;
                 break;
             case RTM_DELROUTE:
-//              nd_debug_printf("Removed route.\n");
+//              nd_dprintf("Removed route.\n");
                 if (RemoveNetwork(nlh)) removed_net++;
                 break;
             case RTM_NEWADDR:
-//              nd_debug_printf("New interface address.\n");
+//              nd_dprintf("New interface address.\n");
                 if (AddAddress(nlh)) added_addr++;
                 break;
             case RTM_DELADDR:
-//              nd_debug_printf("Removed interface address.\n");
+//              nd_dprintf("Removed interface address.\n");
                 if (RemoveAddress(nlh)) removed_addr++;
                 break;
             case NLMSG_ERROR:
@@ -298,17 +298,17 @@ bool ndNetlink::ProcessEvent(void)
                 nd_printf("Netlink overrun!\n");
                 return false;
             default:
-                nd_debug_printf("Ignored netlink message: %04x\n", nlh->nlmsg_type);
+                nd_dprintf("Ignored netlink message: %04x\n", nlh->nlmsg_type);
             }
         }
     }
 #ifndef _ND_LEAN_AND_MEAN
     if (ND_DEBUG) {
         if (added_net || removed_net) {
-            nd_debug_printf("Networks added: %d, removed: %d\n", added_net, removed_net);
+            nd_dprintf("Networks added: %d, removed: %d\n", added_net, removed_net);
         }
         if (added_addr || removed_addr) {
-            nd_debug_printf("Addresses added: %d, removed: %d\n", added_addr, removed_addr);
+            nd_dprintf("Addresses added: %d, removed: %d\n", added_addr, removed_addr);
         }
 
         if (added_net || removed_net || added_addr || removed_addr) Dump();
@@ -548,7 +548,7 @@ bool ndNetlink::InNetwork(sa_family_t family, uint8_t length,
         }
     }
 
-//    nd_debug_printf("%s: true\n\n", __PRETTY_FUNCTION__);
+//    nd_dprintf("%s: true\n\n", __PRETTY_FUNCTION__);
 
     return true;
 }
@@ -602,7 +602,7 @@ bool ndNetlink::ParseMessage(struct rtmsg *rtm, size_t offset,
     addr.network.ss_family = AF_UNSPEC;
 
     if (rtm->rtm_type != RTN_UNICAST) {
-//        nd_debug_printf("Ignorning non-unicast route.\n");
+//        nd_dprintf("Ignorning non-unicast route.\n");
         return false;
     }
 
@@ -614,7 +614,7 @@ bool ndNetlink::ParseMessage(struct rtmsg *rtm, size_t offset,
         if (rtm->rtm_dst_len == 0 || rtm->rtm_dst_len == 128) return false;
         break;
     default:
-        nd_debug_printf(
+        nd_dprintf(
             "WARNING: Ignorning non-IPv4/6 route message: %04hx\n", rtm->rtm_family);
         return false;
     }
@@ -624,58 +624,58 @@ bool ndNetlink::ParseMessage(struct rtmsg *rtm, size_t offset,
     if (nd_debug) {
         switch (rtm->rtm_type) {
         case RTN_UNSPEC:
-            nd_debug_printf("         Type: Unknown\n");
+            nd_dprintf("         Type: Unknown\n");
             break;
         case RTN_UNICAST:
-            nd_debug_printf("         Type: Gateway or direct route\n");
+            nd_dprintf("         Type: Gateway or direct route\n");
             break;
         case RTN_LOCAL:
-            nd_debug_printf("         Type: Local interface route\n");
+            nd_dprintf("         Type: Local interface route\n");
             break;
         case RTN_BROADCAST:
-            nd_debug_printf("         Type: Local broadcast route\n");
+            nd_dprintf("         Type: Local broadcast route\n");
             break;
         case RTN_ANYCAST:
-            nd_debug_printf("         Type: Local broadcast route (unicast)\n");
+            nd_dprintf("         Type: Local broadcast route (unicast)\n");
             break;
         case RTN_MULTICAST:
-            nd_debug_printf("         Type: Multicast route\n");
+            nd_dprintf("         Type: Multicast route\n");
             break;
         case RTN_BLACKHOLE:
-            nd_debug_printf("         Type: Packet dropping route\n");
+            nd_dprintf("         Type: Packet dropping route\n");
             break;
         case RTN_UNREACHABLE:
-            nd_debug_printf("         Type: An unreachable destination\n");
+            nd_dprintf("         Type: An unreachable destination\n");
             break;
         case RTN_PROHIBIT:
-            nd_debug_printf("         Type: Packet rejection route\n");
+            nd_dprintf("         Type: Packet rejection route\n");
             break;
         case RTN_THROW:
-            nd_debug_printf("         Type: Continue routing lookup in next table\n");
+            nd_dprintf("         Type: Continue routing lookup in next table\n");
             break;
         case RTN_NAT:
-            nd_debug_printf("         Type: NAT rule\n");
+            nd_dprintf("         Type: NAT rule\n");
             break;
         case RTN_XRESOLVE:
-            nd_debug_printf("         Type: External resolver (not impl)\n");
+            nd_dprintf("         Type: External resolver (not impl)\n");
             break;
         }
 
-        nd_debug_printf("  Dest length: %hhu\n", rtm->rtm_dst_len);
-        nd_debug_printf("Source length: %hhu\n", rtm->rtm_src_len);
-        nd_debug_printf("   TOS filter: %hhu\n", rtm->rtm_tos);
-        nd_debug_printf("Routing table: %s\n",
+        nd_dprintf("  Dest length: %hhu\n", rtm->rtm_dst_len);
+        nd_dprintf("Source length: %hhu\n", rtm->rtm_src_len);
+        nd_dprintf("   TOS filter: %hhu\n", rtm->rtm_tos);
+        nd_dprintf("Routing table: %s\n",
             (rtm->rtm_table == RT_TABLE_UNSPEC) ? "Unknown" :
                 (rtm->rtm_table == RT_TABLE_DEFAULT) ? "Default" :
                 (rtm->rtm_table == RT_TABLE_MAIN) ? "Main" :
                 (rtm->rtm_table == RT_TABLE_LOCAL) ? "Local" : "User");
-        nd_debug_printf("     Protocol: %s\n",
+        nd_dprintf("     Protocol: %s\n",
             (rtm->rtm_protocol == RTPROT_UNSPEC) ? "Unknown" :
                 (rtm->rtm_protocol == RTPROT_REDIRECT) ? "Redirect" :
                 (rtm->rtm_protocol == RTPROT_KERNEL) ? "Kernel" :
                 (rtm->rtm_protocol == RTPROT_BOOT) ? "Boot" :
                 (rtm->rtm_protocol == RTPROT_STATIC) ? "Static" : "???");
-        nd_debug_printf("        Scope: %s\n",
+        nd_dprintf("        Scope: %s\n",
             (rtm->rtm_scope == RT_SCOPE_UNIVERSE) ? "Global" :
                 (rtm->rtm_scope == RT_SCOPE_SITE) ? "Interior local" :
                 (rtm->rtm_scope == RT_SCOPE_LINK) ? "Route on this link" :
@@ -801,7 +801,7 @@ bool ndNetlink::ParseMessage(struct ifaddrmsg *addrm, size_t offset,
         }
     }
 
-//    nd_debug_printf("%s: %sddress set\n", ifname, (addr_set) ? "A" : "No a");
+//    nd_dprintf("%s: %sddress set\n", ifname, (addr_set) ? "A" : "No a");
     return addr_set;
 }
 
@@ -879,13 +879,13 @@ bool ndNetlink::RemoveNetwork(struct nlmsghdr *nlh)
     if (ParseMessage(
         static_cast<struct rtmsg *>(NLMSG_DATA(nlh)),
         RTM_PAYLOAD(nlh), iface, addr) == false) {
-//        nd_debug_printf("Remove network parse error\n");
+//        nd_dprintf("Remove network parse error\n");
         return false;
     }
 
     ndNetlinkNetworks::iterator i = networks.find(iface);
     if (i == networks.end()) {
-        nd_debug_printf("WARNING: Couldn't find interface in networks map: %s\n",
+        nd_dprintf("WARNING: Couldn't find interface in networks map: %s\n",
             iface.c_str());
         return false;
     }
@@ -907,10 +907,10 @@ bool ndNetlink::RemoveNetwork(struct nlmsghdr *nlh)
     pthread_mutex_unlock(lock->second);
 
 //    if (nd_debug) {
-//        nd_debug_printf("WARNING: Couldn't find network address in map: %s, ",
+//        nd_dprintf("WARNING: Couldn't find network address in map: %s, ",
 //            iface.c_str());
 //        nd_print_address(&addr.network);
-//        nd_debug_printf("/%hhu\n", addr.length);
+//        nd_dprintf("/%hhu\n", addr.length);
 //    }
 
     return removed;
@@ -1008,7 +1008,7 @@ bool ndNetlink::RemoveAddress(struct nlmsghdr *nlh)
 
     ndNetlinkAddresses::iterator i = addresses.find(iface);
     if (i == addresses.end()) {
-        nd_debug_printf("WARNING: Couldn't find interface in addresses map: %s\n",
+        nd_dprintf("WARNING: Couldn't find interface in addresses map: %s\n",
             iface.c_str());
         return false;
     }
@@ -1041,9 +1041,9 @@ void ndNetlink::Dump(void)
         i != networks.end(); i++) {
         for (vector<ndNetlinkNetworkAddr *>::iterator j = i->second.begin();
             j != i->second.end(); j++) {
-            nd_debug_printf("%s: net ", i->first.c_str());
+            nd_dprintf("%s: net ", i->first.c_str());
             nd_print_address(&(*j)->network);
-            nd_debug_printf("/%hhu\n", (*j)->length);
+            nd_dprintf("/%hhu\n", (*j)->length);
         }
     }
 
@@ -1051,9 +1051,9 @@ void ndNetlink::Dump(void)
         i != addresses.end(); i++) {
         for (vector<struct sockaddr_storage *>::iterator j = i->second.begin();
             j != i->second.end(); j++) {
-            nd_debug_printf("%s: addr ", i->first.c_str());
+            nd_dprintf("%s: addr ", i->first.c_str());
             nd_print_address((*j));
-            nd_debug_printf("\n");
+            nd_dprintf("\n");
         }
     }
 #endif
@@ -1063,28 +1063,28 @@ void ndNetlink::PrintType(const string &prefix, const ndNetlinkAddressType &type
 {
     switch (type) {
     case ndNETLINK_ATYPE_UNKNOWN:
-        nd_debug_printf("%s: address is: UNKNOWN\n", prefix.c_str());
+        nd_dprintf("%s: address is: UNKNOWN\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_LOCALIP:
-        nd_debug_printf("%s: address is: LOCALIP\n", prefix.c_str());
+        nd_dprintf("%s: address is: LOCALIP\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_LOCALNET:
-        nd_debug_printf("%s: address is: LOCALNET\n", prefix.c_str());
+        nd_dprintf("%s: address is: LOCALNET\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_PRIVATE:
-        nd_debug_printf("%s: address is: PRIVATE\n", prefix.c_str());
+        nd_dprintf("%s: address is: PRIVATE\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_MULTICAST:
-        nd_debug_printf("%s: address is: MULTICAST\n", prefix.c_str());
+        nd_dprintf("%s: address is: MULTICAST\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_BROADCAST:
-        nd_debug_printf("%s: address is: BROADCAST\n", prefix.c_str());
+        nd_dprintf("%s: address is: BROADCAST\n", prefix.c_str());
         break;
     case ndNETLINK_ATYPE_ERROR:
-        nd_debug_printf("%s: address is: ERROR!\n", prefix.c_str());
+        nd_dprintf("%s: address is: ERROR!\n", prefix.c_str());
         break;
     default:
-        nd_debug_printf("%s: address is: Unhandled!\n", prefix.c_str());
+        nd_dprintf("%s: address is: Unhandled!\n", prefix.c_str());
         break;
     }
 }

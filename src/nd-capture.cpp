@@ -284,12 +284,12 @@ size_t ndPacketQueue::push(struct pcap_pkthdr *pkt_header, const uint8_t *pkt_da
     pkt_queue_size += (sizeof(struct pcap_pkthdr) + pkt_header->caplen);
 
 #ifdef _ND_LOG_PACKET_QUEUE
-    nd_debug_printf("%s: packet queue push, new size: %lu\n",
+    nd_dprintf("%s: packet queue push, new size: %lu\n",
         tag.c_str(), pkt_queue_size);
 #endif
     if (pkt_queue_size >= nd_config.max_packet_queue) {
 
-        nd_debug_printf("%s: packet queue full: %lu\n",
+        nd_dprintf("%s: packet queue full: %lu\n",
             tag.c_str(), pkt_queue_size);
 
         size_t target = nd_config.max_packet_queue / ND_PKTQ_FLUSH_DIVISOR;
@@ -311,7 +311,7 @@ bool ndPacketQueue::front(
     *pkt_header = pkt_queue.front().first;
     *pkt_data = pkt_queue.front().second;
 #ifdef _ND_LOG_PACKET_QUEUE
-    nd_debug_printf("%s: packet queue front.\n", tag.c_str());
+    nd_dprintf("%s: packet queue front.\n", tag.c_str());
 #endif
     return true;
 }
@@ -331,7 +331,7 @@ void ndPacketQueue::pop(const string &oper)
     pkt_queue.pop();
 
 #ifdef _ND_LOG_PACKET_QUEUE
-    nd_debug_printf("%s: packet queue %s: %lu\n",
+    nd_dprintf("%s: packet queue %s: %lu\n",
         tag.c_str(), oper.c_str(), pkt_queue_size);
 #endif
 }
@@ -360,7 +360,7 @@ ndCaptureThread::ndCaptureThread(
     nd_iface_name(iface->second, tag);
     nd_capture_filename(iface->second, pcap_file);
     if (pcap_file.size())
-        nd_debug_printf("%s: capture file: %s\n", tag.c_str(), pcap_file.c_str());
+        nd_dprintf("%s: capture file: %s\n", tag.c_str(), pcap_file.c_str());
 
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);
@@ -369,14 +369,14 @@ ndCaptureThread::ndCaptureThread(
     nd_private_ipaddr(private_addr, private_addrs.second);
 
     memcpy(this->dev_mac, dev_mac, ETH_ALEN);
-    nd_debug_printf(
+    nd_dprintf(
         "%s: hwaddr: %02hhx:%02hhx:%02hhx:%02hhx:%02hx:%02hhx\n",
         tag.c_str(),
         dev_mac[0], dev_mac[1], dev_mac[2],
         dev_mac[3], dev_mac[4], dev_mac[5]
     );
 
-    nd_debug_printf("%s: capture thread created.\n", tag.c_str());
+    nd_dprintf("%s: capture thread created.\n", tag.c_str());
 }
 
 ndCaptureThread::~ndCaptureThread()
@@ -385,7 +385,7 @@ ndCaptureThread::~ndCaptureThread()
 
     if (pcap != NULL) pcap_close(pcap);
 
-    nd_debug_printf("%s: capture thread destroyed.\n", tag.c_str());
+    nd_dprintf("%s: capture thread destroyed.\n", tag.c_str());
 }
 
 void *ndCaptureThread::Entry(void)
@@ -402,7 +402,7 @@ void *ndCaptureThread::Entry(void)
             }
 
             if (! (ifr.ifr_flags & IFF_UP)) {
-                nd_debug_printf("%s: WARNING: interface is down.\n",
+                nd_dprintf("%s: WARNING: interface is down.\n",
                     tag.c_str());
                 sleep(1);
                 continue;
@@ -415,7 +415,7 @@ void *ndCaptureThread::Entry(void)
 
             pcap_datalink_type = pcap_datalink(pcap);
 
-            nd_debug_printf("%s: capture started on CPU: %lu\n",
+            nd_dprintf("%s: capture started on CPU: %lu\n",
                 tag.c_str(), cpu >= 0 ? cpu : 0);
         }
 
@@ -472,7 +472,7 @@ void *ndCaptureThread::Entry(void)
                     if (id == (uint32_t)ND_SIG_CONNECT)
                         dump_flows = true;
                     else {
-                        nd_debug_printf("%s: Unknown IPC ID: %u (ND_SIG_CONNECT: %u).\n",
+                        nd_dprintf("%s: Unknown IPC ID: %u (ND_SIG_CONNECT: %u).\n",
                             tag.c_str(), id, ND_SIG_CONNECT);
                     }
                 }
@@ -515,7 +515,7 @@ void *ndCaptureThread::Entry(void)
                 pcap_fd = -1;
                 break;
             case -2:
-                nd_debug_printf(
+                nd_dprintf(
                     "%s: end of capture file: %s, flushing queued packets: %lu\n",
                     tag.c_str(), pcap_file.c_str(), pkt_queue.size());
                 pcap_close(pcap);
@@ -528,7 +528,7 @@ void *ndCaptureThread::Entry(void)
     }
     while (terminate == false || ! pkt_queue.empty());
 
-    nd_debug_printf(
+    nd_dprintf(
         "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
 #if 0
     nd_flow_map::iterator i = flows->begin();
@@ -571,7 +571,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
 
     if (pcap_file.size()) {
         if ((pcap_new = pcap_open_offline(pcap_file.c_str(), pcap_errbuf)) != NULL) {
-            nd_debug_printf("%s: reading from capture file: %s: v%d.%d\n",
+            nd_dprintf("%s: reading from capture file: %s: v%d.%d\n",
                 tag.c_str(), pcap_file.c_str(),
                 pcap_major_version(pcap_new), pcap_minor_version(pcap_new));
         }
@@ -586,7 +586,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
             int *pcap_tstamp_types, count;
             if ((count = pcap_list_tstamp_types(pcap_new, &pcap_tstamp_types)) > 0) {
                 for (int i = 0; i < count; i++) {
-                    nd_debug_printf("%s: tstamp_type: %s\n", tag.c_str(),
+                    nd_dprintf("%s: tstamp_type: %s\n", tag.c_str(),
                         pcap_tstamp_type_val_to_name(pcap_tstamp_types[i]));
                     if (pcap_tstamp_types[i] == PCAP_TSTAMP_ADAPTER)
                         adapter = true;
@@ -609,7 +609,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
-            nd_debug_printf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
+            nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
         nd_device_filter::const_iterator i = nd_config.device_filters.find(tag);
 
@@ -671,7 +671,7 @@ void ndCaptureThread::DumpFlows(void)
         flow_count++;
     }
 
-    nd_debug_printf("%s: dumped %lu flow(s).\n", tag.c_str(), flow_count);
+    nd_dprintf("%s: dumped %lu flow(s).\n", tag.c_str(), flow_count);
 }
 
 // XXX: Not thread-safe!
@@ -717,7 +717,7 @@ void ndCaptureThread::ProcessPacket(void)
 
     if (ND_REPLAY_DELAY && ts_pkt_last && pcap_file.size()) {
         useconds_t delay = useconds_t(ts_pkt - ts_pkt_last) * 1000;
-        //nd_debug_printf("%s: pkt delay: %lu\n", tag.c_str(), delay);
+        //nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
         if (delay) {
             pthread_mutex_unlock(&lock);
             usleep(delay);
@@ -746,7 +746,7 @@ void ndCaptureThread::ProcessPacket(void)
 #ifdef _ND_LOG_PKT_DISCARD
         stats->pkt.discard++;
         stats->pkt.discard_bytes += pkt_header->caplen;
-        nd_debug_printf("%s: discard: Unsupported BSD loopback encapsulation type: %lu\n",
+        nd_dprintf("%s: discard: Unsupported BSD loopback encapsulation type: %lu\n",
             tag.c_str(), ntohl(*((uint32_t *)pkt_data)));
 #endif
             return;
@@ -769,7 +769,7 @@ void ndCaptureThread::ProcessPacket(void)
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: STP protocol.\n", tag.c_str());
+            nd_dprintf("%s: discard: STP protocol.\n", tag.c_str());
 #endif
             return;
         }
@@ -793,7 +793,7 @@ void ndCaptureThread::ProcessPacket(void)
         stats->pkt.discard++;
         stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-        nd_debug_printf("%s: discard: Unsupported datalink type: 0x%x\n",
+        nd_dprintf("%s: discard: Unsupported datalink type: 0x%x\n",
             tag.c_str(), (unsigned)pcap_datalink_type);
 #endif
         return;
@@ -833,7 +833,7 @@ void ndCaptureThread::ProcessPacket(void)
                 stats->pkt.discard++;
                 stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-                nd_debug_printf("%s: discard: unsupported PPP protocol: 0x%04hx\n",
+                nd_dprintf("%s: discard: unsupported PPP protocol: 0x%04hx\n",
                     tag.c_str(), ppp_proto);
 #endif
                 return;
@@ -846,7 +846,7 @@ void ndCaptureThread::ProcessPacket(void)
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: PPPoE discovery protocol.\n", tag.c_str());
+            nd_dprintf("%s: discard: PPPoE discovery protocol.\n", tag.c_str());
 #endif
             return;
         }
@@ -880,7 +880,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: header too small\n", tag.c_str());
+            nd_dprintf("%s: discard: header too small\n", tag.c_str());
 #endif
             return;
         }
@@ -891,7 +891,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: fragmented 0x3FFF\n", tag.c_str());
+            nd_dprintf("%s: discard: fragmented 0x3FFF\n", tag.c_str());
 #endif
             return;
         }
@@ -902,7 +902,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: fragmented 0x1FFF\n", tag.c_str());
+            nd_dprintf("%s: discard: fragmented 0x1FFF\n", tag.c_str());
 #endif
             return;
         }
@@ -911,7 +911,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: l3_len[%hu] > (pkt_header->caplen[%hu] - l2_len[%hu])(%hu)\n",
+            nd_dprintf("%s: discard: l3_len[%hu] > (pkt_header->caplen[%hu] - l2_len[%hu])(%hu)\n",
                 tag.c_str(), l3_len, pkt_header->caplen, l2_len, pkt_header->caplen - l2_len);
 #endif
             return;
@@ -921,7 +921,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: (pkt_header->caplen[%hu] - l2_len[%hu](%hu)) < hdr_ip->ip_len[%hu]\n",
+            nd_dprintf("%s: discard: (pkt_header->caplen[%hu] - l2_len[%hu](%hu)) < hdr_ip->ip_len[%hu]\n",
                 tag.c_str(), pkt_header->caplen, l2_len, pkt_header->caplen - l2_len, ntohs(hdr_ip->ip_len));
 #endif
             return;
@@ -964,7 +964,7 @@ nd_process_ip:
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_debug_printf("%s: discard: Error walking IPv6 extensions.\n", tag.c_str());
+            nd_dprintf("%s: discard: Error walking IPv6 extensions.\n", tag.c_str());
 #endif
             return;
         }
@@ -1005,7 +1005,7 @@ nd_process_ip:
         stats->pkt.discard++;
         stats->pkt.discard_bytes += pkt_header->caplen;
 #ifdef _ND_LOG_PKT_DISCARD
-        nd_debug_printf("%s: discard: invalid IP protocol version: %hhx\n",
+        nd_dprintf("%s: discard: invalid IP protocol version: %hhx\n",
             tag.c_str(), pkt_data[l2_len]);
 #endif
         return;
@@ -1092,7 +1092,7 @@ nd_process_ip:
                 }
 #if 0
                 else {
-                    nd_debug_printf("%s: unsupported GTPv1 message type: 0x%hhx (%hhu)\n",
+                    nd_dprintf("%s: unsupported GTPv1 message type: 0x%hhx (%hhu)\n",
                         tag.c_str(), hdr_gtpv1->type, hdr_gtpv1->type);
                 }
 #endif
@@ -1102,11 +1102,11 @@ nd_process_ip:
                 hdr_gtpv2 = reinterpret_cast<const struct nd_gtpv2_header_t *>(
                     l4 + sizeof(struct udphdr)
                 );
-                nd_debug_printf("%s: unimplemented GTP version (TODO): %u\n",
+                nd_dprintf("%s: unimplemented GTP version (TODO): %u\n",
                     tag.c_str(), hdr_gtpv1->flags.version);
             }
             else {
-                nd_debug_printf("%s: unsupported GTP version: %u\n",
+                nd_dprintf("%s: unsupported GTP version: %u\n",
                     tag.c_str(), hdr_gtpv1->flags.version);
             }
         }
@@ -1182,7 +1182,7 @@ nd_process_ip:
 
     default:
         // Non-TCP/UDP protocols, ex: ICMP...
-        //nd_debug_printf("%s: non TCP/UDP protocol: %d\n", tag.c_str(), flow.ip_protocol);
+        //nd_dprintf("%s: non TCP/UDP protocol: %d\n", tag.c_str(), flow.ip_protocol);
         break;
     }
 
@@ -1355,7 +1355,7 @@ nd_process_ip:
                     // Flow exists...  update stats and return.
                     *fi.first->second += *nf;
 
-                    nd_debug_printf("%s: delete rehashed DNS flow: %lu packets, detection complete: %s\n",
+                    nd_dprintf("%s: delete rehashed DNS flow: %lu packets, detection complete: %s\n",
                         tag.c_str(), nf->total_packets, (nf->flags.detection_complete) ? "yes" : "no");
                     delete nf;
 
@@ -1388,7 +1388,7 @@ nd_process_ip:
             );
         }
         else {
-            nd_debug_printf("ERROR: CPU thread ID not found: %hd\n", nf->dpi_thread_id);
+            nd_dprintf("ERROR: CPU thread ID not found: %hd\n", nf->dpi_thread_id);
             throw ndCaptureThreadException("CPU thread ID not found!");
         }
     }
@@ -1405,7 +1405,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
 
     if (rc < 0) {
 #ifdef _ND_LOG_DHC
-        nd_debug_printf(
+        nd_dprintf(
             "%s: dns initparse error: %s, length: %hu\n",
             tag.c_str(), strerror(errno), length);
 #endif
@@ -1414,7 +1414,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
 
     if (ns_msg_getflag(ns_h, ns_f_rcode) != ns_r_noerror) {
 #ifdef _ND_LOG_DHC
-        nd_debug_printf(
+        nd_dprintf(
             "%s: dns response code: %hu\n", tag.c_str(),
             ns_msg_getflag(ns_h, ns_f_rcode));
 #endif
@@ -1422,7 +1422,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
     }
 
 #ifdef _ND_LOG_DHC
-    nd_debug_printf(
+    nd_dprintf(
         "%s: type: %d, dns queries: %hu, answers: %hu\n",
         tag.c_str(), ns_msg_getflag(ns_h, ns_f_qr),
         ns_msg_count(ns_h, ns_s_qd), ns_msg_count(ns_h, ns_s_an));
@@ -1431,7 +1431,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
     for (uint16_t i = 0; i < ns_msg_count(ns_h, ns_s_qd); i++) {
         if (ns_parserr(&ns_h, ns_s_qd, i, &rr)) {
 #ifdef _ND_LOG_DHC
-            nd_debug_printf(
+            nd_dprintf(
                 "%s: dns error parsing QD RR %hu of %hu.\n", tag.c_str(),
                 i + 1, ns_msg_count(ns_h, ns_s_qd));
 #endif
@@ -1440,13 +1440,13 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
 
 #ifdef _ND_LOG_DHC
         if (ns_rr_type(rr) != ns_t_a && ns_rr_type(rr) != ns_t_aaaa) {
-            nd_debug_printf("%s: Skipping QD RR type: %d\n",
+            nd_dprintf("%s: Skipping QD RR type: %d\n",
                 tag.c_str(), ns_rr_type(rr));
             continue;
         }
 #endif
 #ifdef _ND_LOG_DHC
-        nd_debug_printf("%s: QD RR type: %d, name: %s\n",
+        nd_dprintf("%s: QD RR type: %d, name: %s\n",
             tag.c_str(), ns_rr_type(rr), ns_rr_name(rr));
 #endif
         *host = ns_rr_name(rr);
@@ -1465,14 +1465,14 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
     for (uint16_t i = 0; i < ns_msg_count(ns_h, ns_s_an); i++) {
         if (ns_parserr(&ns_h, ns_s_an, i, &rr)) {
 #ifdef _ND_LOG_DHC
-            nd_debug_printf(
+            nd_dprintf(
                 "%s: dns error parsing AN RR %hu of %hu.\n", tag.c_str(),
                 i + 1, ns_msg_count(ns_h, ns_s_an));
 #endif
             continue;
         }
 #ifdef _ND_LOG_DHC
-        nd_debug_printf("%s: AN RR type: %d\n", tag.c_str(), ns_rr_type(rr));
+        nd_dprintf("%s: AN RR type: %d\n", tag.c_str(), ns_rr_type(rr));
 #endif
         if (ns_rr_type(rr) != ns_t_a && ns_rr_type(rr) != ns_t_aaaa)
             continue;
@@ -1495,7 +1495,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
             inet_ntop(AF_INET6, &addr6, addr, INET6_ADDRSTRLEN);
         }
 
-        nd_debug_printf(
+        nd_dprintf(
             "%s: dns RR %s address: %s, ttl: %u, rlen: %hu: %s\n",
             tag.c_str(), *host,
             (ns_rr_type(rr) == ns_t_a) ? "A" : "AAAA",

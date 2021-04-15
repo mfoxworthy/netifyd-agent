@@ -188,7 +188,7 @@ void ndFlow::hash(const string &device,
     sha1_write(&ctx, (const char *)&lower_port, sizeof(lower_port));
     sha1_write(&ctx, (const char *)&upper_port, sizeof(upper_port));
 
-//    nd_debug_printf("hash: %s, %hhu, %hhu, %hu, [%hhx%hhx%hhx%hhx%hhx%hhx], [%hhx%hhx%hhx%hhx%hhx%hhx], %hhu, %hhu\n",
+//    nd_dprintf("hash: %s, %hhu, %hhu, %hu, [%hhx%hhx%hhx%hhx%hhx%hhx], [%hhx%hhx%hhx%hhx%hhx%hhx], %hhu, %hhu\n",
 //        device.c_str(), ip_version, ip_protocol, vlan_id,
 //        lower_mac[0], lower_mac[1], lower_mac[2], lower_mac[3], lower_mac[4], lower_mac[5],
 //        upper_mac[0], upper_mac[1], upper_mac[2], upper_mac[3], upper_mac[4], upper_mac[5],
@@ -254,7 +254,7 @@ int ndFlow::dump(pcap_t *pcap, const uint8_t *digest)
     pcap_dumper_t *pcap_dumper = pcap_dump_open(pcap, capture_filename);
 
     if (pcap_dumper == NULL) {
-        nd_debug_printf("%s: pcap_dump_open: %s: %s\n",
+        nd_dprintf("%s: pcap_dump_open: %s: %s\n",
             __PRETTY_FUNCTION__, capture_filename, "unknown");
         return -1;
     }
@@ -509,7 +509,7 @@ void ndFlow::print(void)
     if (ND_DEBUG &&
         detected_protocol.master_protocol == NDPI_PROTOCOL_SSL &&
         flags.detection_guessed == false && ssl.version == 0x0000) {
-        nd_debug_printf("%s: SSL with no SSL/TLS verison.\n", iface->second.c_str());
+        nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface->second.c_str());
     }
 }
 

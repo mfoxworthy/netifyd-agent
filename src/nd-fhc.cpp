@@ -82,19 +82,19 @@ void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
     nd_fhc_map::const_iterator i = lookup.find(lower_hash);
 
     if (i != lookup.end()) {
-        nd_debug_printf("WARNING: Found existing hash in flow hash cache on push.\n");
+        nd_dprintf("WARNING: Found existing hash in flow hash cache on push.\n");
     }
     else {
         if (lookup.size() == cache_size) {
 //#if _ND_DEBUG_FHC
-            nd_debug_printf("Purging old flow hash cache entries.\n");
+            nd_dprintf("Purging old flow hash cache entries.\n");
 //#endif
             for (size_t n = 0; n < cache_size / nd_config.fhc_purge_divisor; n++) {
                 pair<string, string> j = index.back();
 
                 nd_fhc_map::iterator k = lookup.find(j.first);
                 if (k == lookup.end()) {
-                    nd_debug_printf("WARNING: flow hash cache index not found in map\n");
+                    nd_dprintf("WARNING: flow hash cache index not found in map\n");
                 }
                 else
                     lookup.erase(k);
@@ -106,7 +106,7 @@ void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
         index.push_front(make_pair(lower_hash, upper_hash));
         lookup[lower_hash] = index.begin();
 #if _ND_DEBUG_FHC
-        nd_debug_printf("Flow hash cache entries: %lu\n", lookup.size());
+        nd_dprintf("Flow hash cache entries: %lu\n", lookup.size());
 #endif
     }
 
@@ -170,7 +170,7 @@ void ndFlowHashCache::save(void)
     }
     fclose(hf);
 
-    nd_debug_printf("Saved %lu flow hash cache entries.\n", index.size ());
+    nd_dprintf("Saved %lu flow hash cache entries.\n", index.size ());
 }
 
 void ndFlowHashCache::load(void)
@@ -207,7 +207,7 @@ void ndFlowHashCache::load(void)
         fclose(hf);
     }
 
-    nd_debug_printf("Loaded %lu flow hash cache entries.\n", index.size());
+    nd_dprintf("Loaded %lu flow hash cache entries.\n", index.size());
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

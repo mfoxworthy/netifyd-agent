@@ -77,27 +77,27 @@ static int nd_curl_debug(CURL *ch __attribute__((unused)),
     switch (type) {
     case CURLINFO_TEXT:
         buffer.assign(data, size);
-        nd_debug_printf("%s: %s", thread->GetTag().c_str(), buffer.c_str());
+        nd_dprintf("%s: %s", thread->GetTag().c_str(), buffer.c_str());
         break;
     case CURLINFO_HEADER_IN:
         buffer.assign(data, size);
-        nd_debug_printf("%s: <-- %s", thread->GetTag().c_str(), buffer.c_str());
+        nd_dprintf("%s: <-- %s", thread->GetTag().c_str(), buffer.c_str());
         break;
     case CURLINFO_HEADER_OUT:
         buffer.assign(data, size);
-        nd_debug_printf("%s: --> %s", thread->GetTag().c_str(), buffer.c_str());
+        nd_dprintf("%s: --> %s", thread->GetTag().c_str(), buffer.c_str());
         break;
     case CURLINFO_DATA_IN:
-        nd_debug_printf("%s: <-- %lu data bytes\n", thread->GetTag().c_str(), size);
+        nd_dprintf("%s: <-- %lu data bytes\n", thread->GetTag().c_str(), size);
         break;
     case CURLINFO_DATA_OUT:
-        nd_debug_printf("%s: --> %lu data bytes\n", thread->GetTag().c_str(), size);
+        nd_dprintf("%s: --> %lu data bytes\n", thread->GetTag().c_str(), size);
         break;
     case CURLINFO_SSL_DATA_IN:
-        nd_debug_printf("%s: <-- %lu SSL bytes\n", thread->GetTag().c_str(), size);
+        nd_dprintf("%s: <-- %lu SSL bytes\n", thread->GetTag().c_str(), size);
         break;
     case CURLINFO_SSL_DATA_OUT:
-        nd_debug_printf("%s: --> %lu SSL bytes\n", thread->GetTag().c_str(), size);
+        nd_dprintf("%s: --> %lu SSL bytes\n", thread->GetTag().c_str(), size);
         break;
     default:
         break;
@@ -244,7 +244,7 @@ void *ndSinkThread::Entry(void)
 {
     int rc;
 
-    nd_debug_printf("%s: thread started.\n", tag.c_str());
+    nd_dprintf("%s: thread started.\n", tag.c_str());
 
     while (terminate == false) {
         Lock();
@@ -473,13 +473,13 @@ void ndSinkThread::Upload(void)
     if (++update_count == update_imf || post_errors > 0)
         update_count = 0;
     else {
-        nd_debug_printf("%s: payload upload delay: %u of %u\n",
+        nd_dprintf("%s: payload upload delay: %u of %u\n",
             tag.c_str(), update_count, update_imf);
         return;
     }
 
     do {
-        nd_debug_printf("%s: payload %lu/%lu (%d of %d bytes)...\n",
+        nd_dprintf("%s: payload %lu/%lu (%d of %d bytes)...\n",
             tag.c_str(), ++xfer, total, pending.front().second.size(), pending_size);
 
         if (! pending.front().first)
@@ -533,7 +533,7 @@ void ndSinkThread::Upload(void)
         curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
 
         if (content_type == NULL) {
-            nd_debug_printf("%s: Missing content type.\n", tag.c_str());
+            nd_dprintf("%s: Missing content type.\n", tag.c_str());
 
             ndJsonResponse *response = new ndJsonResponse(
                 ndJSON_RESP_INVALID_CONTENT_TYPE,
@@ -546,7 +546,7 @@ void ndSinkThread::Upload(void)
                 PushResponse(response);
         }
         else if (content_length == 0.0f) {
-            nd_debug_printf("%s: Zero-length content length.\n", tag.c_str());
+            nd_dprintf("%s: Zero-length content length.\n", tag.c_str());
 
             ndJsonResponse *response = new ndJsonResponse(
                 ndJSON_RESP_INVALID_RESPONSE,
@@ -560,7 +560,7 @@ void ndSinkThread::Upload(void)
         }
         else if (strcasecmp("application/json", content_type) != 0) {
 
-            nd_debug_printf("%s: Unexpected content type.\n", tag.c_str());
+            nd_dprintf("%s: Unexpected content type.\n", tag.c_str());
 
             ndJsonResponse *response = new ndJsonResponse(
                 ndJSON_RESP_INVALID_CONTENT_TYPE,
@@ -589,7 +589,7 @@ void ndSinkThread::Upload(void)
                     fwrite(pending.front().second.data(),
                         1, pending.front().second.size(), hf);
                     fclose(hf);
-                    nd_debug_printf(
+                    nd_dprintf(
                         "%s: wrote rejected payload to: %s\n",
                         tag.c_str(), ND_JSON_FILE_BAD_SEND);
                 }
@@ -659,7 +659,7 @@ string ndSinkThread::Deflate(const string &data)
 
     if (ND_DEBUG || ND_DEBUG_UPLOAD) {
 
-        nd_debug_printf(
+        nd_dprintf(
             "%s: payload compressed: %lu -> %lu: %.1f%%\n",
             tag.c_str(), data.size(), buffer.size(),
             100.0f - ((float)buffer.size() * 100.0f / (float)data.size())
@@ -725,7 +725,7 @@ void ndSinkThread::ProcessResponse(void)
         }
 
         if (response->update_imf > 0 && response->update_imf != update_imf) {
-            nd_debug_printf("%s: changing update multiplier from: %u"
+            nd_dprintf("%s: changing update multiplier from: %u"
                 " to: %u\n", tag.c_str(), update_imf, response->update_imf);
             update_imf = response->update_imf;
         }
@@ -749,7 +749,7 @@ void ndSinkThread::ProcessResponse(void)
     }
 
     if (response != NULL) {
-        nd_debug_printf("%s: [%d] %s\n", tag.c_str(),
+        nd_dprintf("%s: [%d] %s\n", tag.c_str(),
             response->resp_code,
             (response->resp_message.size() > 0) ?
                 response->resp_message.c_str() : "(no message)");

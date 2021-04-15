@@ -114,7 +114,7 @@ void ndpi_global_init(void)
 
         if (nd_config.path_sink_config != NULL &&
             stat(nd_config.path_sink_config, &path_sink_config_stat) == 0) {
-            nd_debug_printf("Loading custom protocols from%s: %s\n",
+            nd_dprintf("Loading custom protocols from%s: %s\n",
                 ND_OVERRIDE_SINK_CONFIG ? " override" : "",
                 nd_config.path_sink_config);
             ndpi_load_protocols_file(np, nd_config.path_sink_config);
@@ -124,7 +124,7 @@ void ndpi_global_init(void)
 
     } catch (...) {
         if (pthread_mutex_unlock(ndpi_init_lock) != 0)
-            nd_debug_printf("Unable to unlock pthread_mutex (init)\n");
+            nd_dprintf("Unable to unlock pthread_mutex (init)\n");
         throw;
     }
 
@@ -151,7 +151,7 @@ void ndpi_global_destroy(void)
 
         } catch (...) {
             if (pthread_mutex_unlock(ndpi_init_lock) != 0)
-                nd_debug_printf("Unable to unlock pthread_mutex (init)\n");
+                nd_dprintf("Unable to unlock pthread_mutex (init)\n");
             throw;
         }
     }

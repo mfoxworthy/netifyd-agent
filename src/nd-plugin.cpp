@@ -64,12 +64,12 @@ using namespace std;
 ndPlugin::ndPlugin(const string &tag)
     : ndThread(tag, -1), type(TYPE_BASE)
 {
-    nd_debug_printf("Plugin initialized: %s\n", tag.c_str());
+    nd_dprintf("Plugin initialized: %s\n", tag.c_str());
 }
 
 ndPlugin::~ndPlugin()
 {
-    nd_debug_printf("Plugin destroyed: %s\n", tag.c_str());
+    nd_dprintf("Plugin destroyed: %s\n", tag.c_str());
 }
 
 ndPluginSink::ndPluginSink(const string &tag)
@@ -77,7 +77,7 @@ ndPluginSink::ndPluginSink(const string &tag)
 
 ndPluginSink::~ndPluginSink()
 {
-    nd_debug_printf("Plugin sink destroyed: %s\n", tag.c_str());
+    nd_dprintf("Plugin sink destroyed: %s\n", tag.c_str());
 }
 
 void ndPluginSink::SetParams(const string uuid_dispatch, const ndJsonPluginParams &params)
@@ -156,24 +156,24 @@ ndPluginService::ndPluginService(const string &tag)
     : ndPluginSink(tag)
 {
     type = ndPlugin::TYPE_SINK_SERVICE;
-    nd_debug_printf("Plugin service initialized: %s\n", tag.c_str());
+    nd_dprintf("Plugin service initialized: %s\n", tag.c_str());
 }
 
 ndPluginService::~ndPluginService()
 {
-    nd_debug_printf("Plugin service destroyed: %s\n", tag.c_str());
+    nd_dprintf("Plugin service destroyed: %s\n", tag.c_str());
 }
 
 ndPluginTask::ndPluginTask(const string &tag)
     : ndPluginSink(tag)
 {
     type = ndPlugin::TYPE_SINK_TASK;
-    nd_debug_printf("Plugin task initialized: %s\n", tag.c_str());
+    nd_dprintf("Plugin task initialized: %s\n", tag.c_str());
 }
 
 ndPluginTask::~ndPluginTask()
 {
-    nd_debug_printf("Plugin task destroyed: %s\n", tag.c_str());
+    nd_dprintf("Plugin task destroyed: %s\n", tag.c_str());
 }
 
 void ndPluginTask::SetParams(const string uuid_dispatch, const ndJsonPluginParams &params)
@@ -200,12 +200,12 @@ ndPluginDetection::ndPluginDetection(const string &tag)
     : ndPlugin(tag)
 {
     type = ndPlugin::TYPE_DETECTION;
-    nd_debug_printf("Plugin detection initialized: %s\n", tag.c_str());
+    nd_dprintf("Plugin detection initialized: %s\n", tag.c_str());
 }
 
 ndPluginDetection::~ndPluginDetection()
 {
-    nd_debug_printf("Plugin detection destroyed: %s\n", tag.c_str());
+    nd_dprintf("Plugin detection destroyed: %s\n", tag.c_str());
 }
 
 ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
@@ -233,12 +233,12 @@ ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
         throw ndPluginException(tag, "ndPluginInit");
     }
 
-    nd_debug_printf("Plugin loaded: %s: %s\n", tag.c_str(), so_name.c_str());
+    nd_dprintf("Plugin loaded: %s: %s\n", tag.c_str(), so_name.c_str());
 }
 
 ndPluginLoader::~ndPluginLoader()
 {
-    nd_debug_printf("Plugin dereferenced: %s\n", so_name.c_str());
+    nd_dprintf("Plugin dereferenced: %s\n", so_name.c_str());
     if (so_handle != NULL) dlclose(so_handle);
 }
 

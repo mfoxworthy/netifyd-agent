@@ -159,18 +159,18 @@ void nd_printf(const char *format, va_list ap)
     pthread_mutex_unlock(nd_printf_mutex);
 }
 
-void nd_debug_printf(const char *format, ...)
+void nd_dprintf(const char *format, ...)
 {
     if (ND_DEBUG) {
 
         va_list ap;
         va_start(ap, format);
-        nd_debug_printf(format, ap);
+        nd_dprintf(format, ap);
         va_end(ap);
     }
 }
 
-void nd_debug_printf(const char *format, va_list ap)
+void nd_dprintf(const char *format, va_list ap)
 {
     if (ND_DEBUG) {
 
@@ -238,14 +238,14 @@ void nd_print_address(const struct sockaddr_storage *addr)
             _addr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
         break;
     default:
-        nd_debug_printf("(unsupported AF:%x)", addr->ss_family);
+        nd_dprintf("(unsupported AF:%x)", addr->ss_family);
         return;
     }
 
     if (rc == 0)
-        nd_debug_printf("%s", _addr);
+        nd_dprintf("%s", _addr);
     else
-        nd_debug_printf("???");
+        nd_dprintf("???");
 }
 
 void nd_print_binary(uint32_t byte)
@@ -257,7 +257,7 @@ void nd_print_binary(uint32_t byte)
     for (i = 0x80000000; i > 0; i >>= 1)
         strcat(b, ((byte & i) == i) ? "1" : "0");
 
-    nd_debug_printf("%s", b);
+    nd_dprintf("%s", b);
 }
 
 void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
@@ -429,10 +429,10 @@ void nd_private_ipaddr(uint8_t index, struct sockaddr_storage &addr)
 
     switch (rc) {
     case -1:
-        nd_debug_printf("Invalid private address family.\n");
+        nd_dprintf("Invalid private address family.\n");
         break;
     case 0:
-        nd_debug_printf("Invalid private address: %s\n", os.str().c_str());
+        nd_dprintf("Invalid private address: %s\n", os.str().c_str());
         break;
     }
 }
@@ -634,7 +634,7 @@ int nd_file_load(const string &filename, string &data)
         if (errno != ENOENT)
             throw runtime_error(strerror(errno));
         else {
-            nd_debug_printf("Unable to load file: %s: %s\n",
+            nd_dprintf("Unable to load file: %s: %s\n",
                 filename.c_str(), strerror(errno));
             return -1;
         }

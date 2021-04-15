@@ -152,7 +152,7 @@ ndConntrackThread::ndConntrackThread(int16_t cpu)
 
     DumpConntrackTable();
 
-    nd_debug_printf("%s: Created.\n", tag.c_str());
+    nd_dprintf("%s: Created.\n", tag.c_str());
 }
 
 ndConntrackThread::~ndConntrackThread()
@@ -168,7 +168,7 @@ ndConntrackThread::~ndConntrackThread()
     for (nd_ct_flow_map::const_iterator i = ct_flow_map.begin();
         i != ct_flow_map.end(); i++) delete i->second;
 
-    nd_debug_printf("%s: Destroyed.\n", tag.c_str());
+    nd_dprintf("%s: Destroyed.\n", tag.c_str());
 }
 
 void ndConntrackThread::DumpConntrackTable(void)
@@ -227,7 +227,7 @@ void ndConntrackThread::DumpConntrackTable(void)
 
     mnl_socket_close(nl);
 
-    nd_debug_printf("%s: Loaded %lu conntrack entries.\n",
+    nd_dprintf("%s: Loaded %lu conntrack entries.\n",
         tag.c_str(), ct_id_map.size());
 }
 
@@ -262,7 +262,7 @@ void *ndConntrackThread::Entry(void)
         }
     }
 
-    nd_debug_printf("%s: Exit.\n", tag.c_str());
+    nd_dprintf("%s: Exit.\n", tag.c_str());
     return NULL;
 }
 
@@ -283,7 +283,7 @@ void ndConntrackThread::ProcessConntrackEvent(
 #ifdef _ND_DEBUG_CONNTRACK
         id_iter = ct_id_map.find(id);
         if (id_iter != ct_id_map.end()) {
-            nd_debug_printf("%s: [N:%u] ID exists for new flow.\n",
+            nd_dprintf("%s: [N:%u] ID exists for new flow.\n",
                 tag.c_str(), id);
         }
 #endif
@@ -301,7 +301,7 @@ void ndConntrackThread::ProcessConntrackEvent(
         flow_iter = ct_flow_map.find(ct_flow->digest);
         if (flow_iter != ct_flow_map.end()) {
 #ifdef _ND_DEBUG_CONNTRACK
-            nd_debug_printf("%s: [N:%u] Digest found in flow map.\n",
+            nd_dprintf("%s: [N:%u] Digest found in flow map.\n",
                 tag.c_str(), id);
 #endif
             delete flow_iter->second;
@@ -318,7 +318,7 @@ void ndConntrackThread::ProcessConntrackEvent(
 
         flow_iter = ct_flow_map.find(id_iter->second);
         if (flow_iter == ct_flow_map.end()) {
-            nd_debug_printf("%s: [U:%u] Digest not found in flow map.\n",
+            nd_dprintf("%s: [U:%u] Digest not found in flow map.\n",
                 tag.c_str(), id);
             ct_id_map.erase(id_iter);
             goto Unlock_ProcessConntrackEvent;
@@ -330,7 +330,7 @@ void ndConntrackThread::ProcessConntrackEvent(
 
         if (ct_flow->digest != id_iter->second) {
 #ifdef _ND_DEBUG_CONNTRACK
-            nd_debug_printf("%s: [U:%u] Flow hash updated.\n",
+            nd_dprintf("%s: [U:%u] Flow hash updated.\n",
                 tag.c_str(), id);
 #endif
             ct_flow_map.erase(flow_iter);
@@ -364,7 +364,7 @@ void ndConntrackThread::ProcessConntrackEvent(
 #if 0
         char buffer[1024];
         nfct_snprintf(buffer, sizeof(buffer), ct, type, NFCT_O_PLAIN, NFCT_OF_TIME);
-        nd_debug_printf("%s: %02x [%u] %s\n", tag.c_str(), type, id, buffer);
+        nd_dprintf("%s: %02x [%u] %s\n", tag.c_str(), type, id, buffer);
 #endif
     }
 #endif
@@ -595,7 +595,7 @@ void ndConntrackThread::ClassifyFlow(ndFlow *flow)
             {
                 string flow_text;
                 PrintFlow(ct_flow, flow_text, false, true);
-                nd_debug_printf("%s: %s\n", tag.c_str(), flow_text.c_str());
+                nd_dprintf("%s: %s\n", tag.c_str(), flow_text.c_str());
             }
 #endif
             if (memcmp(sa_orig_src, sa_repl_dst, sizeof(struct sockaddr_in)) ||
@@ -623,7 +623,7 @@ void ndConntrackThread::ClassifyFlow(ndFlow *flow)
             {
                 string flow_text;
                 PrintFlow(ct_flow, flow_text, false, true);
-                nd_debug_printf("%s: %s\n", tag.c_str(), flow_text.c_str());
+                nd_dprintf("%s: %s\n", tag.c_str(), flow_text.c_str());
             }
 #endif
             if (memcmp(sa6_orig_src, sa6_repl_dst, sizeof(struct sockaddr_in6)) ||
@@ -666,7 +666,7 @@ void ndConntrackThread::DumpStats(void)
 {
     Lock();
 
-    nd_debug_printf("%s: entries: ids: %lu, flows: %lu\n",
+    nd_dprintf("%s: entries: ids: %lu, flows: %lu\n",
         tag.c_str(), ct_id_map.size(), ct_flow_map.size());
 
     Unlock();

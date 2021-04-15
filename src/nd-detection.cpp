@@ -152,7 +152,7 @@ ndDetectionThread::ndDetectionThread(
     nd_private_ipaddr(private_addr, private_addrs.second);
 #if 0
     memcpy(this->dev_mac, dev_mac, ETH_ALEN);
-    nd_debug_printf(
+    nd_dprintf(
         "%s: hwaddr: %02hhx:%02hhx:%02hhx:%02hhx:%02hx:%02hhx\n",
         dev.c_str(),
         dev_mac[0], dev_mac[1], dev_mac[2],
@@ -172,7 +172,7 @@ ndDetectionThread::ndDetectionThread(
     if ((rc = pthread_mutex_init(&pkt_queue_cond_mutex, NULL)) != 0)
         throw ndDetectionThreadException(strerror(rc));
 
-    nd_debug_printf("%s: detection thread created on CPU: %hu, custom_proto_base: %u.\n",
+    nd_dprintf("%s: detection thread created on CPU: %hu, custom_proto_base: %u.\n",
         tag.c_str(), cpu, custom_proto_base);
 }
 
@@ -193,7 +193,7 @@ ndDetectionThread::~ndDetectionThread()
 
     if (ndpi != NULL) nd_ndpi_free(ndpi);
 
-    nd_debug_printf("%s: detection thread destroyed, %u flows processed.\n",
+    nd_dprintf("%s: detection thread destroyed, %u flows processed.\n",
         tag.c_str(), flows);
 }
 
@@ -243,13 +243,13 @@ void *ndDetectionThread::Entry(void)
     while (terminate == false);
 
     if (pkt_queue.size() > 0) {
-        nd_debug_printf("%s: detection thread ending, flushing queued packets: %lu\n",
+        nd_dprintf("%s: detection thread ending, flushing queued packets: %lu\n",
             tag.c_str(), pkt_queue.size());
 
         ProcessPacketQueue(terminate);
     }
 
-    nd_debug_printf("%s: detection thread ended on CPU: %hu\n", tag.c_str(), cpu);
+    nd_dprintf("%s: detection thread ended on CPU: %hu\n", tag.c_str(), cpu);
 
     return NULL;
 }
@@ -299,7 +299,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         flows++;
 
         if (entry->flow->flags.detection_expired) {
-            nd_debug_printf("%s: TODO: Asked to process expired flow!\n", tag.c_str());
+            nd_dprintf("%s: TODO: Asked to process expired flow!\n", tag.c_str());
             //throw ndDetectionThreadException("Asked to process expired flow");
             return;
         }
@@ -337,7 +337,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         entry->flow->detection_packets++;
     }
 
-//    nd_debug_printf("%s: %hhu.%hhu\n", tag.c_str(),
+//    nd_dprintf("%s: %hhu.%hhu\n", tag.c_str(),
 //        entry->flow->detected_protocol.master_protocol,
 //        entry->flow->detected_protocol.app_protocol);
 
@@ -633,7 +633,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 if (memcmp(entry->flow->digest_mdata, flow_digest_mdata.c_str(),
                     SHA1_DIGEST_LENGTH)) {
 #ifdef _ND_LOG_FHC
-                    nd_debug_printf("%s: Resurrected flow metadata hash from cache.\n",
+                    nd_dprintf("%s: Resurrected flow metadata hash from cache.\n",
                         tag.c_str());
 #endif
                     memcpy(entry->flow->digest_mdata, flow_digest_mdata.c_str(),

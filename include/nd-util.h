@@ -30,8 +30,8 @@ void nd_mem_free(void *ptr);
 
 void nd_printf(const char *format, ...);
 void nd_printf(const char *format, va_list ap);
-void nd_debug_printf(const char *format, ...);
-void nd_debug_printf(const char *format, va_list ap);
+void nd_dprintf(const char *format, ...);
+void nd_dprintf(const char *format, va_list ap);
 void nd_flow_printf(const char *format, ...);
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES

@@ -628,7 +628,7 @@ static void nd_init(void)
         flows[(*i).second] = new nd_flow_map;
 #ifdef HAVE_CXX11
         flows[(*i).second]->reserve(ND_HASH_BUCKETS_FLOWS);
-        nd_debug_printf("%s: flows_map, buckets: %lu, max_load: %f\n",
+        nd_dprintf("%s: flows_map, buckets: %lu, max_load: %f\n",
             (*i).second.c_str(),
             flows[(*i).second]->bucket_count(),
             flows[(*i).second]->max_load_factor());
@@ -772,7 +772,7 @@ static int nd_start_detection_threads(void)
                 nd_config.ca_detection_cores <= 0
             ) ? (int16_t)nda_stats.cpus : nd_config.ca_detection_cores;
 
-        nd_debug_printf("Creating %hd detection threads at offset: %hd\n", cpus, cpu);
+        nd_dprintf("Creating %hd detection threads at offset: %hd\n", cpus, cpu);
 
         for (int16_t i = 0; i < cpus; i++) {
             ostringstream os;
@@ -984,7 +984,7 @@ static void nd_plugin_reap_tasks(void)
         i != plugin_tasks.end(); i++) {
         if (! i->second->GetPlugin()->HasTerminated()) continue;
 
-        nd_debug_printf("Reaping task plugin: %s: %s\n",
+        nd_dprintf("Reaping task plugin: %s: %s\n",
             i->second->GetPlugin()->GetTag().c_str(),
             i->first.c_str());
 
@@ -1339,13 +1339,13 @@ static void nd_json_process_flows(
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-//        nd_debug_printf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
+//        nd_dprintf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
 //            i->second->iface->second.c_str(),
 //            now - last_seen, ttl, last_seen + ttl, now);
 
         if (last_seen + ttl < now) {
 
-//            nd_debug_printf("%s: Purge flow, %lus old, ttl: %lu.\n",
+//            nd_dprintf("%s: Purge flow, %lus old, ttl: %lu.\n",
 //                i->second->iface->second.c_str(), now - last_seen, ttl);
 
             if (i->second->flags.detection_complete == false &&
@@ -1429,7 +1429,7 @@ static void nd_json_process_flows(
         else i++;
     }
 
-    nd_debug_printf(
+    nd_dprintf(
         "%s: Purged %lu of %lu flow(s), expired: %lu, in progress: %lu\n",
         tag.c_str(), purged, total, expired, total - detection_complete
     );
@@ -1553,7 +1553,7 @@ static void nd_json_add_plugin_replies(
             break;
 
         default:
-            nd_debug_printf("%s: Unsupported plugin type: %d\n",
+            nd_dprintf("%s: Unsupported plugin type: %d\n",
                 __PRETTY_FUNCTION__, (*i)->GetType());
         }
 
@@ -1563,7 +1563,7 @@ static void nd_json_add_plugin_replies(
         ndPluginReplies replies;
         (*i)->GetReplies(files, data, replies);
 
-        nd_debug_printf("%s: files: %ld, data: %ld, replies: %ld\n",
+        nd_dprintf("%s: files: %ld, data: %ld, replies: %ld\n",
             __PRETTY_FUNCTION__, files.size(), data.size(), replies.size());
 
         if (! replies.size()) continue;
@@ -1608,77 +1608,77 @@ static void nd_print_stats(void)
     string uptime;
     nd_uptime(nda_stats.ts_now.tv_sec - nda_stats.ts_epoch.tv_sec, uptime);
 
-    nd_debug_printf("\n");
-    nd_debug_printf("Cumulative Packet Totals [Uptime: %s]:\n",
+    nd_dprintf("\n");
+    nd_dprintf("Cumulative Packet Totals [Uptime: %s]:\n",
         uptime.c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.raw, false);
-    nd_debug_printf("%12s: %s ", "Wire", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "Wire", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.eth, false);
-    nd_debug_printf("%12s: %s ", "ETH", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "ETH", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.vlan, false);
-    nd_debug_printf("%12s: %s\n", "VLAN", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "VLAN", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip, false);
-    nd_debug_printf("%12s: %s ", "IP", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "IP", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip4, false);
-    nd_debug_printf("%12s: %s ", "IPv4", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "IPv4", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip6, false);
-    nd_debug_printf("%12s: %s\n", "IPv6", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "IPv6", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.icmp + pkt_totals.pkt.igmp, false);
-    nd_debug_printf("%12s: %s ", "ICMP/IGMP", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "ICMP/IGMP", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.udp, false);
-    nd_debug_printf("%12s: %s ", "UDP", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "UDP", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.tcp, false);
-    nd_debug_printf("%12s: %s\n", "TCP", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "TCP", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.mpls, false);
-    nd_debug_printf("%12s: %s ", "MPLS", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "MPLS", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.pppoe, false);
-    nd_debug_printf("%12s: %s\n", "PPPoE", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "PPPoE", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.frags, false);
-    nd_debug_printf("%12s: %s ", "Frags", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "Frags", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.discard, false);
-    nd_debug_printf("%12s: %s ", "Discarded", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "Discarded", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.maxlen);
-    nd_debug_printf("%12s: %s\n", "Largest", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "Largest", (*nd_stats_os).str().c_str());
 
-    nd_debug_printf("\nCumulative Byte Totals:\n");
+    nd_dprintf("\nCumulative Byte Totals:\n");
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.wire_bytes);
-    nd_debug_printf("%12s: %s\n", "Wire", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "Wire", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip_bytes);
-    nd_debug_printf("%12s: %s ", "IP", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "IP", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip4_bytes);
-    nd_debug_printf("%12s: %s ", "IPv4", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s ", "IPv4", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.ip6_bytes);
-    nd_debug_printf("%12s: %s\n", "IPv6", (*nd_stats_os).str().c_str());
+    nd_dprintf("%12s: %s\n", "IPv6", (*nd_stats_os).str().c_str());
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.discard_bytes);
-    nd_debug_printf("%39s: %s ", "Discarded", (*nd_stats_os).str().c_str());
+    nd_dprintf("%39s: %s ", "Discarded", (*nd_stats_os).str().c_str());
 
     (*nd_stats_os).str("");
     (*nd_stats_os) << setw(8) << nda_stats.flows;
 
-    nd_debug_printf("%12s: %s (%s%d)", "Flows", (*nd_stats_os).str().c_str(),
+    nd_dprintf("%12s: %s (%s%d)", "Flows", (*nd_stats_os).str().c_str(),
         (nda_stats.flows > nda_stats.flows_prev) ? "+" : "",
         int(nda_stats.flows - nda_stats.flows_prev));
 
-    nd_debug_printf("\n\n");
+    nd_dprintf("\n\n");
 #endif // _ND_LEAN_AND_MEAN
 }
 
@@ -1730,14 +1730,14 @@ static void nd_load_ethers(void)
             string key;
             key.assign((const char *)mac, ETH_ALEN);
             device_ethers[key] = name;
-            //nd_debug_printf("%2lu: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx (%s): %s\n", line,
+            //nd_dprintf("%2lu: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx (%s): %s\n", line,
             //    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ether, name);
         }
     }
 
     fclose(fh);
 
-    nd_debug_printf("Loaded %lu entries from: %s\n",
+    nd_dprintf("Loaded %lu entries from: %s\n",
         device_ethers.size(), ND_ETHERS_FILE_NAME);
 }
 #endif
@@ -2282,7 +2282,7 @@ static void nd_add_device_addresses(nd_device_addr &device_addresses)
             continue;
         }
 
-        nd_debug_printf("%s: %s: address: %s, length: %hu\n",
+        nd_dprintf("%s: %s: address: %s, length: %hu\n",
             __PRETTY_FUNCTION__, (*i).first.c_str(), address, _length);
 
         bit = (int)_length;
@@ -2725,7 +2725,7 @@ int main(int argc, char *argv[])
 
     nd_check_agent_uuid();
 #ifndef _ND_LEAN_AND_MEAN
-    nd_debug_printf("Flow entry size: %lu\n", sizeof(struct ndFlow) +
+    nd_dprintf("Flow entry size: %lu\n", sizeof(struct ndFlow) +
         sizeof(struct ndpi_flow_struct) + sizeof(struct ndpi_id_struct) * 2);
 #endif
     if (! ND_DEBUG) {
@@ -2861,7 +2861,7 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    nd_debug_printf("Online CPU cores: %ld\n", nda_stats.cpus);
+    nd_dprintf("Online CPU cores: %ld\n", nda_stats.cpus);
 
     try {
         if (thread_socket != NULL)
@@ -2883,7 +2883,7 @@ int main(int argc, char *argv[])
     }
     else if (thread_socket != NULL && ND_WAIT_FOR_CLIENT) {
         do {
-            nd_debug_printf("Waiting for a client to connect...\n");
+            nd_dprintf("Waiting for a client to connect...\n");
             sleep(1);
         } while(thread_socket->GetClientCount() == 0);
 
@@ -2938,16 +2938,16 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_UPDATE) {
-            nd_debug_printf("Caught signal: [%d] %s: Update\n", sig, strsignal(sig));
+            nd_dprintf("Caught signal: [%d] %s: Update\n", sig, strsignal(sig));
         }
         else if (sig == ND_SIG_SINK_REPLY) {
-            nd_debug_printf("Caught signal: [%d] %s: Process sink reply\n", sig, strsignal(sig));
+            nd_dprintf("Caught signal: [%d] %s: Process sink reply\n", sig, strsignal(sig));
         }
         else if (sig == ND_SIG_CONNECT) {
-            nd_debug_printf("Caught signal: [%d] %s: Client connected\n", sig, strsignal(sig));
+            nd_dprintf("Caught signal: [%d] %s: Client connected\n", sig, strsignal(sig));
         }
         else {
-            nd_debug_printf("Caught signal: [%d] %s\n", sig, strsignal(sig));
+            nd_dprintf("Caught signal: [%d] %s\n", sig, strsignal(sig));
         }
 
         if (sig == SIGINT || sig == SIGTERM) {
@@ -3004,7 +3004,7 @@ int main(int argc, char *argv[])
 
         if (sig == ND_SIG_SINK_REPLY) {
             if (ND_USE_SINK && nd_sink_process_responses() < 0) {
-                nd_debug_printf("nd_sink_process_responses failed!\n");
+                nd_dprintf("nd_sink_process_responses failed!\n");
                 break;
             }
 
@@ -3079,7 +3079,7 @@ int main(int argc, char *argv[])
 
     nd_ifaddrs_free(nd_interface_addrs);
 
-    nd_debug_printf("Normal exit.\n");
+    nd_dprintf("Normal exit.\n");
     pthread_mutex_destroy(nd_printf_mutex);
     delete nd_printf_mutex;
 

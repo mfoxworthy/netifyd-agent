@@ -188,7 +188,7 @@ size_t ndDNSHintCache::purge(void)
     }
 
     if (purged > 0 && remaining > 0)
-        nd_debug_printf("Purged %u DNS cache entries, %u active.\n", purged, remaining);
+        nd_dprintf("Purged %u DNS cache entries, %u active.\n", purged, remaining);
 
     return purged;
 }
@@ -239,7 +239,7 @@ void ndDNSHintCache::load(void)
             loaded++;
         }
 
-        nd_debug_printf("Loaded %u of %u DNS cache entries.\n",
+        nd_dprintf("Loaded %u of %u DNS cache entries.\n",
             map_ar.size(), loaded);
 
         pthread_mutex_unlock(&lock);
@@ -285,7 +285,7 @@ void ndDNSHintCache::save(void)
         pthread_mutex_unlock(&lock);
     }
 
-    nd_debug_printf("Saved %u of %u DNS cache entries.\n",
+    nd_dprintf("Saved %u of %u DNS cache entries.\n",
         saved, map_ar.size());
 
     fclose(hf);

@@ -102,7 +102,7 @@ extern nd_global_config nd_config;
 ndSocketLocal::ndSocketLocal(ndSocket *base, const string &node)
     : base(base), valid(false)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
     struct sockaddr_un *sa_un = new struct sockaddr_un;
 
     base->node = node;
@@ -126,7 +126,7 @@ ndSocketLocal::ndSocketLocal(ndSocket *base, const string &node)
 
 ndSocketLocal::~ndSocketLocal()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
     if (valid && base->type == ndSOCKET_TYPE_SERVER)
         unlink(base->node.c_str());
 }
@@ -146,7 +146,7 @@ int ndSocketLocal::IsValid(void)
 #else
 int ndSocketLocal::IsValid(void)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     struct stat socket_stat;
 
@@ -199,7 +199,7 @@ ndSocketRemote::ndSocketRemote(
     ndSocket *base, const string &node, const string &service)
     : base(base)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     base->node = node;
     base->service = service;
@@ -209,13 +209,13 @@ ndSocketRemote::ndSocketRemote(
 
 ndSocketRemote::~ndSocketRemote()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketClient::ndSocketClient(ndSocket *base)
     : base(base)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     base->type = ndSOCKET_TYPE_CLIENT;
 }
@@ -226,7 +226,7 @@ ndSocketClient::~ndSocketClient()
 
 ndSocket *ndSocketServer::Accept(void)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
     ndSocket *peer = NULL;
     int peer_sd = -1;
     socklen_t peer_sa_size = 0;
@@ -254,7 +254,7 @@ ndSocket *ndSocketServer::Accept(void)
             if (peer == NULL)
                 throw ndSocketSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
 
-            nd_debug_printf("%s: peer: %s\n", __PRETTY_FUNCTION__, base->node.c_str());
+            nd_dprintf("%s: peer: %s\n", __PRETTY_FUNCTION__, base->node.c_str());
         }
         else {
             char node[NI_MAXHOST], service[NI_MAXSERV];
@@ -271,7 +271,7 @@ ndSocket *ndSocketServer::Accept(void)
             if (peer == NULL)
                 throw ndSocketSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
 
-            nd_debug_printf("%s: peer: %s:%s\n", __PRETTY_FUNCTION__, node, service);
+            nd_dprintf("%s: peer: %s:%s\n", __PRETTY_FUNCTION__, node, service);
         }
 
         peer->sd = peer_sd;
@@ -298,58 +298,58 @@ ndSocket *ndSocketServer::Accept(void)
 ndSocketServer::ndSocketServer(ndSocket *base)
     : base(base)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
     base->type = ndSOCKET_TYPE_SERVER;
 }
 
 ndSocketServer::~ndSocketServer()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketClientLocal::ndSocketClientLocal(const string &node)
     : ndSocketClient(this), ndSocketLocal(this, node)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
 }
 
 ndSocketClientLocal::~ndSocketClientLocal()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketServerLocal::ndSocketServerLocal(const string &node)
     : ndSocketServer(this), ndSocketLocal(this, node)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketServerLocal::~ndSocketServerLocal()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketClientRemote::ndSocketClientRemote(const string &node, const string &service)
     : ndSocketClient(this), ndSocketRemote(this, node, service)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketClientRemote::~ndSocketClientRemote()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketServerRemote::ndSocketServerRemote(const string &node, const string &service)
     : ndSocketServer(this), ndSocketRemote(this, node, service)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketServerRemote::~ndSocketServerRemote()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocket::ndSocket()
@@ -357,7 +357,7 @@ ndSocket::ndSocket()
     type(ndSOCKET_TYPE_NULL), state(ndSOCKET_STATE_INIT),
     bytes_in(0), bytes_out(0)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocket::ndSocket(const string &node)
@@ -365,7 +365,7 @@ ndSocket::ndSocket(const string &node)
     node(node), type(ndSOCKET_TYPE_NULL), state(ndSOCKET_STATE_INIT),
     bytes_in(0), bytes_out(0)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocket::ndSocket(const string &host, const string &service)
@@ -374,12 +374,12 @@ ndSocket::ndSocket(const string &host, const string &service)
     type(ndSOCKET_TYPE_NULL), state(ndSOCKET_STATE_INIT),
     bytes_in(0), bytes_out(0)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 }
 
 ndSocket::~ndSocket()
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
     if (sd != -1) close(sd);
     if (sa != NULL) delete sa;
 }
@@ -389,7 +389,7 @@ ssize_t ndSocket::Read(uint8_t *buffer, ssize_t length)
     uint8_t *p = buffer;
     ssize_t bytes_read = 0, bytes_remaining = length;
 
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     do {
         ssize_t rc = read(sd, p, bytes_remaining);
@@ -417,7 +417,7 @@ ssize_t ndSocket::Write(const uint8_t *buffer, ssize_t length)
     const uint8_t *p = buffer;
     ssize_t bytes_wrote = 0, bytes_remaining = length;
 
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     do {
         ssize_t rc = write(sd, p, bytes_remaining);
@@ -444,7 +444,7 @@ void ndSocket::SetBlockingMode(bool enable)
 {
     int flags;
 
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     if (enable == false) {
         flags = fcntl(sd, F_GETFL);
@@ -465,7 +465,7 @@ void ndSocket::SetBlockingMode(bool enable)
 
 void ndSocket::Create(void)
 {
-    //nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    //nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     if (family == AF_UNSPEC) {
         struct addrinfo hints;
@@ -578,7 +578,7 @@ void ndSocket::Create(void)
         }
     }
 
-    nd_debug_printf("%s: created\n", __PRETTY_FUNCTION__);
+    nd_dprintf("%s: created\n", __PRETTY_FUNCTION__);
 }
 
 ndSocketBuffer::ndSocketBuffer()
@@ -612,7 +612,7 @@ size_t ndSocketBuffer::BufferQueueFlush(void)
 
         if (bytes_wrote < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                //nd_debug_printf("Unable to flush buffer queue to client socket: %s\n",
+                //nd_dprintf("Unable to flush buffer queue to client socket: %s\n",
                 //    strerror(errno));
                 break;
             }
@@ -771,7 +771,7 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
     catch (exception &e) {
         Unlock();
 
-        nd_debug_printf("%s: Exception while sending JSON: %s\n",
+        nd_dprintf("%s: Exception while sending JSON: %s\n",
             tag.c_str(), e.what());
 
         delete client;
@@ -788,7 +788,7 @@ void ndSocketThread::ClientHangup(ndSocketClientMap::iterator &ci)
 {
     ndSocketBufferMap::iterator bi;
 
-    nd_debug_printf("%s\n", __PRETTY_FUNCTION__);
+    nd_dprintf("%s\n", __PRETTY_FUNCTION__);
 
     delete ci->second;
     bi = buffers.find(ci->first);
@@ -827,7 +827,7 @@ void *ndSocketThread::Entry(void)
     ndSocketServerMap::iterator si;
     ndSocketBufferMap::iterator bi;
 
-    nd_debug_printf("%s: started\n", __PRETTY_FUNCTION__);
+    nd_dprintf("%s: started\n", __PRETTY_FUNCTION__);
 
     while (! terminate) {
         int rc_read = -1, rc_write = -1;

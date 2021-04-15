@@ -189,7 +189,7 @@ void ndThread::SendIPC(uint32_t id)
     bytes_wrote = send(fd_ipc[1], &id, sizeof(uint32_t), 0);
 
     if (bytes_wrote != sizeof(uint32_t)) {
-        nd_debug_printf("%s: Failed to send IPC message: %s\n",
+        nd_dprintf("%s: Failed to send IPC message: %s\n",
             tag.c_str(), strerror(errno));
     }
 }
@@ -202,7 +202,7 @@ uint32_t ndThread::RecvIPC(void)
     bytes_read = recv(fd_ipc[0], &id, sizeof(uint32_t), 0);
 
     if (bytes_read != sizeof(uint32_t)) {
-        nd_debug_printf("%s: Failed to receive IPC message: %s\n",
+        nd_dprintf("%s: Failed to receive IPC message: %s\n",
             tag.c_str(), strerror(errno));
     }
 
