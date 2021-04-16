@@ -793,6 +793,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             );
         }
 
+        entry->flow->update_lower_maps();
+
         if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
             entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN)) {
             json j;

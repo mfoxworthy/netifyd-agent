@@ -513,6 +513,22 @@ void ndFlow::print(void)
     }
 }
 
+void ndFlow::update_lower_maps(void)
+{
+    if (lower_map == LOWER_UNKNOWN)
+        get_lower_map(lower_type, upper_type, lower_map, other_type);
+
+    switch (tunnel_type) {
+    case TUNNEL_GTP:
+        if (gtp.lower_map == LOWER_UNKNOWN) {
+            get_lower_map(
+                gtp.lower_type, gtp.upper_type, gtp.lower_map, gtp.other_type
+            );
+        }
+    break;
+    }
+}
+
 void ndFlow::get_lower_map(
 #ifdef _ND_USE_NETLINK
     ndNetlinkAddressType lt,
@@ -624,12 +640,6 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
     j["last_seen_at"] = ts_last_seen;
 
-#ifndef _ND_USE_NETLINK
-    _other_type = "unsupported";
-#else
-    if (lower_map == LOWER_UNKNOWN)
-        get_lower_map(lower_type, upper_type, lower_map, other_type);
-
     switch (lower_map) {
     case LOWER_LOCAL:
         _lower_mac = "local_mac";
@@ -681,14 +691,14 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     if (encode_includes & ENCODE_METADATA) {
         j["ip_nat"] = (bool)flags.ip_nat;
         j["dhc_hit"] = (bool)flags.dhc_hit;
-    #ifdef _ND_USE_CONNTRACK
+#ifdef _ND_USE_CONNTRACK
         j["ct_id"] = ct_id;
         j["ct_mark"] = ct_mark;
-    #endif
+#endif
         j["ip_version"] = (unsigned)ip_version;
         j["ip_protocol"] = (unsigned)ip_protocol;
         j["vlan_id"] = (unsigned)vlan_id;
-    #ifndef _ND_LEAN_AND_MEAN
+#ifndef _ND_LEAN_AND_MEAN
         // 10.110.80.1: address is: PRIVATE
         // 67.204.229.236: address is: LOCALIP
         if (ND_DEBUG && _other_type == "unknown") {
@@ -696,8 +706,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
             ndNetlink::PrintType(upper_ip, upper_type);
             //exit(1);
         }
-    #endif
-    #endif
+#endif
         j["other_type"] = _other_type;
 
         switch (origin) {
@@ -850,13 +859,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     }
 
     if (encode_includes & ENCODE_TUNNELS) {
+        string _lower_teid = "local_teid", _upper_teid = "other_teid";
+
         switch (tunnel_type) {
         case TUNNEL_GTP:
-            if (gtp.lower_map == LOWER_UNKNOWN)
-                get_lower_map(gtp.lower_type, gtp.upper_type, gtp.lower_map, gtp.other_type);
-
-            string _lower_teid = "local_teid", _upper_teid = "other_teid";
-
             switch (gtp.lower_map) {
             case LOWER_LOCAL:
                 _lower_ip = "local_ip";

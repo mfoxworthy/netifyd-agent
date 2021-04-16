@@ -300,6 +300,7 @@ public:
 
     void print(void);
 
+    void update_lower_maps(void);
     void get_lower_map(
 #ifdef _ND_USE_NETLINK
         ndNetlinkAddressType lt,
