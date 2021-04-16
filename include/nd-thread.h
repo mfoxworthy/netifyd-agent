@@ -74,7 +74,12 @@ protected:
 #endif
     pthread_mutex_t lock;
 
-    int fd_ipc[2];
+    enum {
+        IPC_PE_READ,
+        IPC_PE_WRITE,
+        IPC_PE_MAX
+    };
+    int fd_ipc[IPC_PE_MAX];
 
     int Join(void);
 };
