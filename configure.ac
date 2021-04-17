@@ -29,6 +29,9 @@ AC_PATH_PROG([bash], [bash], [false])
 AC_PATH_PROG([osc], [osc])
 AM_CONDITIONAL([HAVE_OSC], [test x$osc != x])
 
+# Defines we will pass to pkg-config:
+ND_DEFINES="-D NDPI_LIB_COMPILATION=1"
+
 AS_IF([test "x$ac_cv_path_bash" != "xfalse"], [
     AC_SUBST([ND_PATH_BASH], [$ac_cv_path_bash])
 ], [
@@ -92,13 +95,11 @@ AC_ARG_WITH([libcurl-zlib],
      [with_libcurl_zlib=yes])
 
 AS_IF([test "x$with_libcurl_zlib" != "xno"], [
+    ND_DEFINES+=" -D_ND_WITH_LIBCURL_ZLIB=1"
     AC_DEFINE([_ND_WITH_LIBCURL_ZLIB], [1], [Define if libcurl is GZIP capable.])
 ])
 
 # Parameters: --enable/disable
-
-# Defines we will pass to pkg-config:
-ND_DEFINES="-D NDPI_LIB_COMPILATION=1"
 
 AC_ARG_ENABLE([conntrack],
     [AS_HELP_STRING([--enable-conntrack], [Enable connection tracking support [default=yes]])],
