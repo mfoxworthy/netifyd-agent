@@ -16,7 +16,7 @@ DIST_SUBDIRS = $(SUBDIRS)
 
 EXTRA_DIST = LICENSE autogen.sh debian/compat \
 	util/generate-json-include.sh util/generate-protocol-csv.sh \
-	libs/gperftools libs/json
+	libs/gperftools
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir) \
