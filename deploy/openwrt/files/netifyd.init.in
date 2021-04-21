@@ -25,7 +25,7 @@ start_@PACKAGE_TARNAME@() {
 
     config_get_bool autoconfig "$instance" autoconfig 1
 
-    if [ "$autoconfig" -gt 0 ] ; then
+    if [ "$autoconfig" -gt 0 ]; then
         NETIFYD_AUTODETECT=yes
         interfaces="$(auto_detect_options)"
     else
