@@ -527,6 +527,14 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         switch (ndpi_proto) {
 
         case NDPI_PROTOCOL_MDNS:
+            for (size_t i = 0;
+                i < strlen((const char *)entry->flow->ndpi_flow->protos.mdns.answer); i++) {
+                if (! isprint(entry->flow->ndpi_flow->protos.mdns.answer[i])) {
+                    // XXX: Sanitize mdns.answer of non-printable characters.
+                    entry->flow->ndpi_flow->protos.mdns.answer[i] = 'X';
+                }
+            }
+
             snprintf(
                 entry->flow->mdns.answer, ND_FLOW_MDNS_ANSLEN,
                 "%s", entry->flow->ndpi_flow->protos.mdns.answer
