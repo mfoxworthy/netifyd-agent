@@ -531,7 +531,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 i < strlen((const char *)entry->flow->ndpi_flow->protos.mdns.answer); i++) {
                 if (! isprint(entry->flow->ndpi_flow->protos.mdns.answer[i])) {
                     // XXX: Sanitize mdns.answer of non-printable characters.
-                    entry->flow->ndpi_flow->protos.mdns.answer[i] = 'X';
+                    entry->flow->ndpi_flow->protos.mdns.answer[i] = '_';
                 }
             }
 
