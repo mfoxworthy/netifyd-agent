@@ -51,6 +51,7 @@ void nd_sha1_to_string(const uint8_t *digest_bin, string &digest_str);
 
 bool nd_string_to_mac(const string &src, uint8_t *mac);
 sa_family_t nd_string_to_ip(const string &src, sockaddr_storage *ip);
+bool nd_ip_to_string(const sockaddr_storage &ip, string &dst);
 
 void nd_iface_name(const string &iface, string &result);
 void nd_capture_filename(const string &iface, string &result);

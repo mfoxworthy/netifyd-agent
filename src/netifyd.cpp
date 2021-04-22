@@ -67,6 +67,10 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#ifndef AF_LINK
+#define AF_LINK AF_PACKET
+#endif
+
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #endif
@@ -1197,8 +1201,7 @@ void nd_json_protocols(string &json_string)
 
 static void nd_json_add_interfaces(json &parent)
 {
-    uint8_t mac[ETH_ALEN];
-    char mac_addr[ND_STR_ETHALEN + 1];
+    nd_ifaddrs_update(nd_interface_addrs);
 
     for (nd_ifaces::const_iterator i = ifaces.begin(); i != ifaces.end(); i++) {
         string iface_name;
@@ -1208,15 +1211,45 @@ static void nd_json_add_interfaces(json &parent)
 
         jo["role"] = (i->first) ? "LAN" : "WAN";
 
-        if (! nd_ifaddrs_get_mac(nd_interface_addrs, i->second, mac))
-            memset(mac, 0, ETH_ALEN);
+        vector<string> addrs;
+        bool found_mac = false;
+        string iface_lookup = iface_name;
+        auto iface_it = nd_interface_addrs.find(iface_lookup);
 
-        snprintf(mac_addr, sizeof(mac_addr),
-            "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-        );
+        while (iface_it != nd_interface_addrs.end()) {
 
-        jo["mac"] = mac_addr;
+            for (auto addr_it = iface_it->second->begin();
+                addr_it != iface_it->second->end(); addr_it++) {
+
+                string ip;
+                if (! found_mac && (*addr_it)->family == AF_LINK) {
+                    char mac_addr[ND_STR_ETHALEN + 1];
+                    snprintf(mac_addr, sizeof(mac_addr),
+                        "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+                        (*addr_it)->mac[0], (*addr_it)->mac[1], (*addr_it)->mac[2],
+                        (*addr_it)->mac[3], (*addr_it)->mac[4], (*addr_it)->mac[5]
+                    );
+                    jo["mac"] = mac_addr;
+                    found_mac = true;
+                }
+                else if (((*addr_it)->family == AF_INET
+                    || (*addr_it)->family == AF_INET6)
+                    && nd_ip_to_string((*addr_it)->ip, ip)) {
+                    addrs.push_back(ip);
+                }
+            }
+
+            auto nld_it = device_netlink.find(iface_lookup);
+            if (nld_it == device_netlink.end()) break;
+
+            iface_lookup = nld_it->second;
+            iface_it = nd_interface_addrs.find(iface_lookup);
+        }
+
+        if (! found_mac)
+            jo["mac"] = "00:00:00:00:00:00";
+
+        jo["addr"] = addrs;
 
         parent[iface_name] = jo;
     }
