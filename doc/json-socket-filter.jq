@@ -23,7 +23,8 @@ def flow_print:
             .["other_ip"],
             .["other_port"],
             .["detected_protocol_name"],
-            .["detected_application_name"]
+            .["detected_application_name"],
+            .["host_server_name"]
         ] |
         map(tostring);
 
