@@ -174,6 +174,13 @@ void ndFlow::hash(const string &device,
             (const char *)&lower_addr4->sin_addr, sizeof(struct in_addr));
         sha1_write(&ctx,
             (const char *)&upper_addr4->sin_addr, sizeof(struct in_addr));
+
+        if (lower_addr4->sin_addr.s_addr == 0 &&
+            upper_addr4->sin_addr.s_addr == 0xffffffff) {
+            // XXX: Hash in lower MAC for ethernet broadcasts (DHCPv4).
+            sha1_write(&ctx, (const char *)&lower_mac, ETH_ALEN);
+        }
+
         break;
     case 6:
         sha1_write(&ctx,
