@@ -68,15 +68,15 @@ By default, flows that have failed to have their "master" or Layer 7 protocol de
 .PP
 Sockets; declare any of the following paramters as arrays with a starting index[\fIn\fR] of zero.
 .PP
-\fBsocket_path\fR[\fIn\fR]=\fIPATH\fR
+\fBlisten_path\fR[\fIn\fR]=\fIPATH\fR
 .PP
 Create a UNIX-domain socket at \fIPATH\fR for incoming client connections.
 .PP
-\fBsocket_address\fR[\fIn\fR]\fR=\fIADDRESS\fR
+\fBlisten_address\fR[\fIn\fR]\fR=\fIADDRESS\fR
 .PP
 Create and bind a TCP/IP socket on \fIADDRESS\fR for incoming network connections.
 .PP
-\fBsocket_port\fR[\fIn\fR]\fR=[\fISERVICE\fR|\fIPORT\fR]
+\fBlisten_port\fR[\fIn\fR]\fR=[\fISERVICE\fR|\fIPORT\fR]
 .PP
 For TCP/IP sockets, you can specify a corresponding \fISERVICE\fR or \fIPORT\fR.  If not specified, the default TCP port 7150 is used.
 .SS Privacy Filter
