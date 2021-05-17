@@ -44,6 +44,7 @@ start_@PACKAGE_TARNAME@() {
     procd_open_instance
     procd_set_param command $PROG -R $options $interfaces
     procd_set_param file /etc/@PACKAGE_TARNAME@.conf
+    procd_set_param term_timeout 20
     procd_set_param respawn
     procd_close_instance
 }
