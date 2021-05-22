@@ -33,7 +33,7 @@ function append_ifopts() {
 	        ;;
 	    *)
 	        if [ $filter -gt 0 ]; then
-	            a=${a#\"}; a=${a%\"}: a=${a#\'}; a=${a%\'}
+	            a=${a#\"}; a=${a%\"}; a=${a#\'}; a=${a%\'}
 	            filter_expr="$filter_expr $a"
 	        else
 	            procd_append_param command $a
