@@ -74,7 +74,7 @@ endif
 
 define Build/Configure
 	(cd $(PKG_BUILD_DIR); ./autogen.sh)
-	$(call Build/Configure/Default,$(CONFIGURE_ARGS))
+	$(call Build/Configure/Default)
 endef
 
 define Build/InstallDev

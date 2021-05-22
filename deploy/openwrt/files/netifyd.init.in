@@ -11,52 +11,52 @@ USE_PROCD=1
 PROG=/usr/sbin/@PACKAGE_TARNAME@
 
 start_@PACKAGE_TARNAME@() {
-    local autoconfig enabled instance
+	local autoconfig enabled instance
 
-    instance="$1"
-    config_get_bool enabled "$instance" enabled 0
-    [ "$enabled" -eq 0 ] && return 0
+	instance="$1"
+	config_get_bool enabled "$instance" enabled 0
+	[ "$enabled" -eq 0 ] && return 0
 
-    source /usr/share/@PACKAGE_TARNAME@/functions.sh
-    load_modules
+	source /usr/share/@PACKAGE_TARNAME@/functions.sh
+	load_modules
 
-    procd_open_instance
-    procd_set_param file /etc/@PACKAGE_TARNAME@.conf
-    procd_set_param term_timeout 20
-    procd_set_param respawn
-    procd_set_param command $PROG -R
+	procd_open_instance
+	procd_set_param file /etc/@PACKAGE_TARNAME@.conf
+	procd_set_param term_timeout 20
+	procd_set_param respawn
+	procd_set_param command $PROG -R
 
-    config_get_bool autoconfig "$instance" autoconfig 1
+	config_get_bool autoconfig "$instance" autoconfig 1
 
-    if [ "$autoconfig" -gt 0 ]; then
-        NETIFYD_AUTODETECT=yes
-        procd_append_param command "$(auto_detect_options)"
-    fi
+	if [ "$autoconfig" -gt 0 ]; then
+	    NETIFYD_AUTODETECT=yes
+	    procd_append_param command "$(auto_detect_options)"
+	fi
 
-    function append_internal_if() {
-        procd_append_param command -I "$1"
-    }
+	function append_internal_if() {
+	    procd_append_param command -I "$1"
+	}
 
-    config_list_foreach "$instance" internal_if append_internal_if
+	config_list_foreach "$instance" internal_if append_internal_if
 
-    function append_external_if() {
-        procd_append_param command -E "$1"
-    }
+	function append_external_if() {
+	    procd_append_param command -E "$1"
+	}
 
-    config_list_foreach "$instance" external_if append_external_if
+	config_list_foreach "$instance" external_if append_external_if
 
-    function append_option() {
-        procd_append_param command "$1"
-    }
+	function append_option() {
+	    procd_append_param command "$1"
+	}
 
-    config_list_foreach "$instance" options append_option
+	config_list_foreach "$instance" options append_option
 
-    procd_close_instance
+	procd_close_instance
 }
 
 start_service() {
-    [ ! -d /var/run/@PACKAGE_TARNAME@ ] && mkdir -p /var/run/@PACKAGE_TARNAME@
+	[ ! -d /var/run/@PACKAGE_TARNAME@ ] && mkdir -p /var/run/@PACKAGE_TARNAME@
 
-    config_load @PACKAGE_TARNAME@
-    config_foreach start_@PACKAGE_TARNAME@ @PACKAGE_TARNAME@
+	config_load @PACKAGE_TARNAME@
+	config_foreach start_@PACKAGE_TARNAME@ @PACKAGE_TARNAME@
 }
