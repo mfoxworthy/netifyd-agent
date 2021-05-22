@@ -10,6 +10,50 @@ STOP=50
 USE_PROCD=1
 PROG=/usr/sbin/@PACKAGE_TARNAME@
 
+function append_params() {
+	procd_append_param command $@
+}
+
+function append_ifopts() {
+	local filter=0
+	local filter_expr=
+
+	for a in $1; do
+	    case $a in
+	    -F|--device-filter)
+	        filter=1
+	        procd_append_param command $a
+	        ;;
+	    -*)
+	        if [ $filter -gt 0 ]; then
+	            procd_append_param command "${filter_expr#\ }"
+	            filter=0; filter_expr=
+	        fi
+	        procd_append_param command $a
+	        ;;
+	    *)
+	        if [ $filter -gt 0 ]; then
+	            a=${a#\"}; a=${a%\"}: a=${a#\'}; a=${a%\'}
+	            filter_expr="$filter_expr $a"
+	        else
+	            procd_append_param command $a
+	        fi
+	    esac
+	done
+
+	if [ $filter -gt 0 ]; then
+	    procd_append_param command "${filter_expr#\ }"
+	fi
+}
+
+function append_internal_if() {
+	append_ifopts "-I $@"
+}
+
+function append_external_if() {
+	append_ifopts "-E $@"
+}
+
 start_@PACKAGE_TARNAME@() {
 	local autoconfig enabled instance
 
@@ -26,6 +70,8 @@ start_@PACKAGE_TARNAME@() {
 	procd_set_param respawn
 	procd_set_param command $PROG -R
 
+	config_list_foreach "$instance" options append_params
+
 	config_get_bool autoconfig "$instance" autoconfig 1
 
 	if [ "$autoconfig" -gt 0 ]; then
@@ -33,23 +79,8 @@ start_@PACKAGE_TARNAME@() {
 	    procd_append_param command "$(auto_detect_options)"
 	fi
 
-	function append_internal_if() {
-	    procd_append_param command -I "$1"
-	}
-
 	config_list_foreach "$instance" internal_if append_internal_if
-
-	function append_external_if() {
-	    procd_append_param command -E "$1"
-	}
-
 	config_list_foreach "$instance" external_if append_external_if
-
-	function append_option() {
-	    procd_append_param command "$1"
-	}
-
-	config_list_foreach "$instance" options append_option
 
 	procd_close_instance
 }
