@@ -55,7 +55,7 @@ function append_external_if() {
 }
 
 start_@PACKAGE_TARNAME@() {
-	local autoconfig enabled instance
+	local autoconfig enabled instance options
 
 	instance="$1"
 	config_get_bool enabled "$instance" enabled 0
@@ -76,7 +76,8 @@ start_@PACKAGE_TARNAME@() {
 
 	if [ "$autoconfig" -gt 0 ]; then
 	    NETIFYD_AUTODETECT=yes
-	    procd_append_param command "$(auto_detect_options)"
+	    options="$(auto_detect_options)"
+	    [ ! -z "$options" ] && procd_append_param command $options
 	fi
 
 	config_list_foreach "$instance" internal_if append_internal_if
