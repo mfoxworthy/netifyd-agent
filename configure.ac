@@ -309,9 +309,9 @@ AC_DEFINE_UNQUOTED(GIT_RELEASE, "${GIT_RELEASE}", [GIT Release])
 AC_DEFINE_UNQUOTED(GIT_DATE, "${GIT_DATE}", [Last GIT change])
 AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git])
 
-# Get nDPI CFLAGS
-NDPI_CFLAGS=`PKG_CONFIG_PATH=./libs/ndpi/ pkg-config --cflags libndpi`
-AC_SUBST([NDPI_CFLAGS], "${NDPI_CFLAGS}")
+# Get nDPI version
+NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
+AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
 
 # Convience substitutions
 AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])
