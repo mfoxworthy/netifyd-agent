@@ -416,6 +416,8 @@ static int nd_config_load(void)
                 make_pair(socket_node, socket_port));
             continue;
         }
+
+        break;
     }
 
     for (int i = 0; ; i++) {
