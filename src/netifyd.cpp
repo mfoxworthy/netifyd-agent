@@ -1359,27 +1359,7 @@ static void nd_json_process_flows(
 
     while (i != flows->end()) {
 
-        bool added = false;
-
         total++;
-
-        if (i->second->flags.detection_complete) {
-
-            if (add_flows && i->second->ts_first_update &&
-                (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat == false)) {
-
-                json jf;
-                i->second->json_encode(jf);
-
-                parent.push_back(jf);
-
-                added = true;
-            }
-
-            i->second->reset();
-
-            detection_complete++;
-        }
 
         uint32_t last_seen = i->second->ts_last_seen / 1000;
         uint32_t ttl = (
@@ -1407,7 +1387,7 @@ static void nd_json_process_flows(
                 continue;
             }
 
-            if (add_flows && added == false &&
+            if (add_flows &&
                 i->second->detected_protocol.master_protocol == 0 &&
                 (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat == false)) {
 
@@ -1473,7 +1453,25 @@ static void nd_json_process_flows(
 
             purged++;
         }
-        else i++;
+        else {
+            if (i->second->flags.detection_complete) {
+
+                if (add_flows && i->second->ts_first_update &&
+                    (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat == false)) {
+
+                    json jf;
+                    i->second->json_encode(jf);
+
+                    parent.push_back(jf);
+                }
+
+                i->second->reset();
+
+                detection_complete++;
+            }
+
+            i++;
+        }
     }
 
     nd_dprintf(
