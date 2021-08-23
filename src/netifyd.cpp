@@ -416,14 +416,15 @@ static int nd_config_load(void)
                 make_pair(socket_node, socket_port));
             continue;
         }
-        else {
-            os.str("");
-            os << "listen_path[" << i << "]";
-            socket_node = reader.Get("socket", os.str(), "");
-            if (socket_node.size() > 0) {
-                nd_config.socket_path.push_back(socket_node);
-                continue;
-            }
+    }
+
+    for (int i = 0; ; i++) {
+        ostringstream os;
+        os << "listen_path[" << i << "]";
+        string socket_node = reader.Get("socket", os.str(), "");
+        if (socket_node.size() > 0) {
+            nd_config.socket_path.push_back(socket_node);
+            continue;
         }
 
         break;
