@@ -312,6 +312,20 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
     }
 }
 
+static inline void nd_ltrim(string &s)
+{
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !isspace(ch);
+    }));
+}
+
+static inline void nd_rtrim(string &s)
+{
+    s.erase(find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !isspace(ch);
+    }).base(), s.end());
+}
+
 int nd_sha1_file(const string &filename, uint8_t *digest)
 {
     sha1 ctx;
@@ -463,24 +477,72 @@ void nd_private_ipaddr(uint8_t index, struct sockaddr_storage &addr)
 
 bool nd_load_uuid(string &uuid, const char *path, size_t length)
 {
+    struct stat sb;
     char _uuid[length + 1];
-    FILE *fh = fopen(path, "r");
 
-    if (fh == NULL) {
-        if (ND_DEBUG || errno != ENOENT)
-            nd_printf("Error loading uuid: %s: %s\n", path, strerror(errno));
+    if (stat(path, &sb) == -1) {
+        if (errno != ENOENT) {
+            nd_printf("Error loading uuid: %s: %s\n",
+                path, strerror(errno));
+        }
         return false;
     }
 
-    if (fread((void *)_uuid, 1, length, fh) != length) {
+    if (! S_ISREG(sb.st_mode)) {
+        nd_printf("Error loading uuid: %s: %s\n",
+            path, "Not a regular file");
+        return false;
+    }
+
+    if (sb.st_mode & S_IXUSR) {
+        FILE *ph = popen(path, "r");
+
+        if (ph == NULL) {
+            if (ND_DEBUG || errno != ENOENT) {
+                nd_printf("Error loading uuid from pipe: %s: %s\n",
+                    path, strerror(errno));
+            }
+            return false;
+        }
+
+        size_t bytes = 0;
+
+        bytes = fread((void *)_uuid, 1, length, ph);
+
+        int rc = pclose(ph);
+
+        if (bytes <= 0 || rc != 0) {
+            nd_printf("Error loading uuid from pipe: %s: %s: %d\n",
+                path, "Invalid pipe read", rc);
+            return false;
+        }
+    }
+    else {
+        FILE *fh = fopen(path, "r");
+
+        if (fh == NULL) {
+            if (ND_DEBUG || errno != ENOENT) {
+                nd_printf("Error loading uuid from file: %s: %s\n",
+                    path, strerror(errno));
+            }
+            return false;
+        }
+
+        if (fread((void *)_uuid, 1, length, fh) != length) {
+            fclose(fh);
+            nd_printf("Error reading uuid from file: %s: %s\n",
+                path, strerror(errno));
+            return false;
+        }
+
         fclose(fh);
-        nd_printf("Error reading uuid: %s: %s\n", path, strerror(errno));
-        return false;
+
+        _uuid[length] = '\0';
     }
 
-    fclose(fh);
-    _uuid[length] = '\0';
     uuid.assign(_uuid);
+
+    nd_rtrim(uuid);
 
     return true;
 }
