@@ -516,6 +516,8 @@ bool nd_load_uuid(string &uuid, const char *path, size_t length)
                 path, "Invalid pipe read", rc);
             return false;
         }
+
+        _uuid[bytes - 1] = '\0';
     }
     else {
         FILE *fh = fopen(path, "r");
