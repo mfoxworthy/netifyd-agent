@@ -49,6 +49,10 @@
 #include <syslog.h>
 #include <fcntl.h>
 
+#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
+#endif
+
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
@@ -3015,7 +3019,10 @@ int main(int argc, char *argv[])
 #endif
             if (dns_hint_cache)
                 dns_hint_cache->purge();
-
+#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
+            // Attempt to release (trim) pages back to OS if supported
+            malloc_trim(0);
+#endif
             if (nd_reap_capture_threads() == 0) {
                 nd_stop_capture_threads();
                 if (thread_sink == NULL ||

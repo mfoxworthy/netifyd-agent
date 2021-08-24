@@ -283,6 +283,9 @@ AC_CHECK_FUNC([pthread_setname_np], [
 AC_CHECK_FUNC([pthread_attr_setaffinity_np], [
     AC_DEFINE([HAVE_PTHREAD_ATTR_SETAFFINITY_NP], [1], [Define if pthread_attr_setaffinity_np is available.])
 ])
+AC_CHECK_FUNC([malloc_trim], [
+    AC_DEFINE([HAVE_MALLOC_TRIM], [1], [Define if malloc_trim is available.])
+])
 
 # Get git revision
 if test -e ".git"; then :
