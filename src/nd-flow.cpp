@@ -67,7 +67,7 @@ extern nd_device_ethers device_ethers;
 
 ndFlow::ndFlow(nd_ifaces::iterator iface)
     : iface(iface), dpi_thread_id(-1), pkt(NULL),
-    ip_version(0), ip_protocol(0), vlan_id(0),
+    ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
     lower_mac{}, upper_mac{}, lower_addr{}, upper_addr{},
@@ -103,7 +103,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
 ndFlow::ndFlow(const ndFlow &flow)
     : iface(flow.iface), dpi_thread_id(-1), pkt(NULL),
     ip_version(flow.ip_version), ip_protocol(flow.ip_protocol),
-    vlan_id(flow.vlan_id),
+    vlan_id(flow.vlan_id), tcp_last_seq(flow.tcp_last_seq),
     ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update),
     ts_last_seen(flow.ts_last_seen),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),

@@ -377,6 +377,7 @@ typedef struct nd_packet_stats_t
         pkt.icmp += rhs.pkt.icmp;
         pkt.igmp += rhs.pkt.igmp;
         pkt.tcp += rhs.pkt.tcp;
+        pkt.tcp_seq_error += rhs.pkt.tcp_seq_error;
         pkt.udp += rhs.pkt.udp;
         pkt.ip_bytes += rhs.pkt.ip_bytes;
         pkt.ip4_bytes += rhs.pkt.ip4_bytes;

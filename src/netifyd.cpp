@@ -1336,6 +1336,7 @@ static void nd_json_add_stats(json &parent,
     parent["largest_bytes"] = stats->pkt.maxlen;
     parent["ip"] = stats->pkt.ip;
     parent["tcp"] = stats->pkt.tcp;
+    parent["tcp_seq_error"] = stats->pkt.tcp_seq_error;
     parent["udp"] = stats->pkt.udp;
     parent["icmp"] = stats->pkt.icmp;
     parent["igmp"] = stats->pkt.igmp;
