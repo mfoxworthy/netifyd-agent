@@ -207,7 +207,7 @@ AS_IF([test "x$enable_libtcmalloc" = "xyes"], [
 
     AM_COND_IF([USE_LIBTCMALLOC_BUNDLED], [
         AC_CONFIG_SUBDIRS([libs/gperftools])
-        AC_MSG_NOTICE([using tcmalloc from bundled gperftools...])
+        AC_MSG_NOTICE([using tcmalloc (gperftools) from bundled libs...])
         AC_DEFINE([HAVE_GPERFTOOLS_MALLOC_EXTENSION_H], [1],
             [Define to 1 if you have the <gperftools/malloc_extension.h> header file.])
     ])
