@@ -11,12 +11,18 @@ if USE_LIBTCMALLOC_BUNDLED
 SUBDIRS_EXTRA += libs/gperftools
 endif
 
+if !USE_LIBTCMALLOC
+if USE_LIBJEMALLOC_BUNDLED
+SUBDIRS_EXTRA += libs/jemalloc
+endif
+endif
+
 SUBDIRS = libs/inih libs/ndpi $(SUBDIRS_EXTRA) include src deploy doc tests
 DIST_SUBDIRS = $(SUBDIRS)
 
 EXTRA_DIST = LICENSE autogen.sh debian/compat \
 	util/generate-json-include.sh util/generate-protocol-csv.sh \
-	libs/gperftools
+	libs/jemalloc libs/gperftools
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir) \

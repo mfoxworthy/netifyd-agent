@@ -676,6 +676,9 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_LIBTCMALLOC
     ident << "; tcmalloc";
 #endif
+#ifdef _ND_USE_LIBJEMALLOC
+    ident << "; jemalloc";
+#endif
     if (ND_SSL_USE_TLSv1) ident << "; ssl-tlsv1";
     if (! ND_SSL_VERIFY) ident << "; ssl-no-verify";
 #ifdef _ND_USE_INOTIFY

@@ -5,7 +5,7 @@ m4_include([m4/ax_pkg_installdir.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.68])
 AC_INIT([Netify Agent], [3.08],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
     [netifyd], [http://www.netify.ai/])
@@ -210,6 +210,40 @@ AS_IF([test "x$enable_libtcmalloc" = "xyes"], [
         AC_MSG_NOTICE([using tcmalloc from bundled gperftools...])
         AC_DEFINE([HAVE_GPERFTOOLS_MALLOC_EXTENSION_H], [1],
             [Define to 1 if you have the <gperftools/malloc_extension.h> header file.])
+    ])
+])
+
+AC_ARG_ENABLE([jemalloc],
+    [AS_HELP_STRING([--enable-jemalloc], [Enable jemalloc support [default=no]])],
+    [],
+    [enable_jemalloc=no])
+
+AM_CONDITIONAL(USE_LIBJEMALLOC, false)
+AM_CONDITIONAL(USE_LIBJEMALLOC_BUNDLED, false)
+
+AS_IF([test "x$enable_jemalloc" = "xyes"], [
+
+    AC_DEFINE([_ND_USE_LIBJEMALLOC], [1],
+        [Define to enable jemalloc support.])
+    ND_DEFINES+=" -D_ND_USE_LIBJEMALLOC=1"
+
+    PKG_CHECK_MODULES([LIBJEMALLOC], [jemalloc], [
+        AM_CONDITIONAL(USE_LIBJEMALLOC, true)
+
+        AC_LANG_PUSH([C++])
+        AC_CHECK_HEADERS([jemalloc/jemalloc.h])
+        AC_LANG_POP([C++])
+    ], [
+        AM_CONDITIONAL(USE_LIBJEMALLOC, true)
+        AM_CONDITIONAL(USE_LIBJEMALLOC_BUNDLED, true)
+
+        LIBJEMALLOC_LIBS="${ac_abs_confdir}/libs/jemalloc/lib/libjemalloc.a"
+        LIBJEMALLOC_CFLAGS="-I ${ac_abs_confdir}/libs/jemalloc/include"
+    ])
+
+    AM_COND_IF([USE_LIBJEMALLOC_BUNDLED], [
+        AC_CONFIG_SUBDIRS([libs/jemalloc])
+        AC_MSG_NOTICE([using jemalloc from bundled libs...])
     ])
 ])
 
