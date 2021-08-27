@@ -59,6 +59,7 @@ CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
 	--enable-lean-and-mean \
 	--disable-libtcmalloc \
+	--enable-jemalloc \
 	--without-systemdsystemunitdir \
 	--without-tmpfilesdir
 
