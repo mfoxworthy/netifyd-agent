@@ -244,6 +244,8 @@ AS_IF([test "x$enable_jemalloc" = "xyes"], [
     AM_COND_IF([USE_LIBJEMALLOC_BUNDLED], [
         AC_CONFIG_SUBDIRS([libs/jemalloc])
         AC_MSG_NOTICE([using jemalloc from bundled libs...])
+        AC_DEFINE([HAVE_JEMALLOC_JEMALLOC_H], [1],
+            [Define to 1 if you have the <jemalloc/jemalloc.h> header file.])
     ])
 ])
 

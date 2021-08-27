@@ -49,10 +49,6 @@
 #include <syslog.h>
 #include <fcntl.h>
 
-#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
-#include <malloc.h>
-#endif
-
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
@@ -81,6 +77,10 @@ using json = nlohmann::json;
 
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
 #include <gperftools/malloc_extension.h>
+#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
+#include <jemalloc/jemalloc.h>
+#elif defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
 #endif
 
 #include "INIReader.h"
@@ -2780,6 +2780,24 @@ int main(int argc, char *argv[])
     nd_dprintf("Flow entry size: %lu\n", sizeof(struct ndFlow) +
         sizeof(struct ndpi_flow_struct) + sizeof(struct ndpi_id_struct) * 2);
 #endif
+#if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
+    bool je_state = false, je_enable = true;
+    size_t je_opt_size = sizeof(bool);
+    const char *je_opt = "thread.tcache.enabled";
+
+    rc = mallctl(
+        je_opt,
+        (void *)&je_state, &je_opt_size,
+        (void *)&je_enable, je_opt_size
+    );
+
+    if (rc != 0)
+        nd_printf("JEMALLOC::mallctl: %s: %d\n", je_opt, rc);
+    else {
+        nd_dprintf("JEMALLOC:mallctl: %s: enabled: %s (%s)\n", je_opt,
+            (je_enable) ? "yes" : "no", (je_state) ? "yes" : "no");
+    }
+#endif
     if (! ND_DEBUG) {
         FILE *hpid = fopen(ND_PID_FILE_NAME, "w+");
 
@@ -3020,9 +3038,12 @@ int main(int argc, char *argv[])
 #endif
             if (dns_hint_cache)
                 dns_hint_cache->purge();
-#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
-            // Attempt to release (trim) pages back to OS if supported
+#if !defined(_ND_USE_LIBTCMALLOC) && !defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_MALLOC_TRIM)
+            // Attempt to release heap back to OS when supported
             malloc_trim(0);
+#endif
+#if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
+            malloc_stats_print(NULL, NULL, "");
 #endif
             if (nd_reap_capture_threads() == 0) {
                 nd_stop_capture_threads();
