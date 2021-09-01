@@ -1167,10 +1167,11 @@ void nd_json_agent_status(json &j)
     j["flow_count_prev"] = nda_stats.flows_prev;
     j["maxrss_kb"] = nda_stats.maxrss_kb;
     j["maxrss_kb_prev"] = nda_stats.maxrss_kb_prev;
-#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
+    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
     j["tcm_kb"] = (unsigned)nda_stats.tcm_alloc_kb;
     j["tcm_kb_prev"] = (unsigned)nda_stats.tcm_alloc_kb_prev;
-#endif // _ND_USE_LIBTCMALLOC
+#endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
     j["dhc_status"] = nda_stats.dhc_status;
     if (nda_stats.dhc_status)
         j["dhc_size"] = nda_stats.dhc_size;
@@ -1805,6 +1806,26 @@ static void nd_dump_stats(void)
         GetNumericProperty("generic.current_allocated_bytes", &tcm_alloc_bytes);
     nda_stats.tcm_alloc_kb_prev = nda_stats.tcm_alloc_kb;
     nda_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
+#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
+    size_t tcm_alloc_bytes = 0;
+    size_t je_opt_size = sizeof(size_t);
+
+    const char *je_opt = "stats.allocated";
+
+    mallctl("thread.tcache.flush", NULL, NULL, NULL, 0);
+
+    int rc = mallctl(
+        je_opt,
+        (void *)&tcm_alloc_bytes, &je_opt_size,
+        NULL, 0
+    );
+
+    nd_dprintf("JEMALLOC: %s: %d: %ld\n", je_opt, rc, tcm_alloc_bytes);
+
+    if (rc == 0) {
+        nda_stats.tcm_alloc_kb_prev = nda_stats.tcm_alloc_kb;
+        nda_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
+    }
 #endif
     struct rusage rusage_data;
     getrusage(RUSAGE_SELF, &rusage_data);
@@ -2102,7 +2123,8 @@ static void nd_status(void)
         fprintf(stderr, "%s-%s CPU time (user / system): %.1fs / %.1fs\n",
             color, ND_C_RESET, cpu_user_delta, cpu_system_delta);
 
-#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
+    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
 #if (SIZEOF_LONG == 4)
         fprintf(stderr, "%s-%s current memory usage: %u kB\n",
             ND_C_GREEN, ND_C_RESET, json_status.stats.tcm_alloc_kb);
@@ -2110,7 +2132,7 @@ static void nd_status(void)
         fprintf(stderr, "%s-%s current memory usage: %lu kB\n",
             ND_C_GREEN, ND_C_RESET, json_status.stats.tcm_alloc_kb);
 #endif
-#endif // _ND_USE_LIBTCMALLOC
+#endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
 #if (SIZEOF_LONG == 4)
         fprintf(stderr, "%s-%s maximum memory usage: %u kB\n",
             ND_C_GREEN, ND_C_RESET, json_status.stats.maxrss_kb);

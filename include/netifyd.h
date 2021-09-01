@@ -320,7 +320,8 @@ typedef struct nd_agent_stats_t
     uint64_t maxrss_kb;
     uint64_t maxrss_kb_prev;
 #endif
-#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
+    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
     size_t tcm_alloc_kb;
     size_t tcm_alloc_kb_prev;
 #endif

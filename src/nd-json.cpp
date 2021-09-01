@@ -109,7 +109,8 @@ void ndJsonStatus::Parse(const string &json_string)
         stats.maxrss_kb = j["maxrss_kb"].get<unsigned>();
         stats.maxrss_kb_prev = j["maxrss_kb_prev"].get<unsigned>();
 
-#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
+    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
         stats.tcm_alloc_kb = j["tcm_kb"].get<unsigned>();
         stats.tcm_alloc_kb_prev = j["tcm_kb_prev"].get<unsigned>();
 #endif // _ND_USE_LIBTCMALLOC

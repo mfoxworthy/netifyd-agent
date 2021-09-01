@@ -208,6 +208,18 @@ ndPluginDetection::~ndPluginDetection()
     nd_dprintf("Plugin detection destroyed: %s\n", tag.c_str());
 }
 
+ndPluginStats::ndPluginStats(const string &tag)
+    : ndPlugin(tag)
+{
+    type = ndPlugin::TYPE_STATS;
+    nd_dprintf("Plugin detection initialized: %s\n", tag.c_str());
+}
+
+ndPluginStats::~ndPluginStats()
+{
+    nd_dprintf("Plugin detection destroyed: %s\n", tag.c_str());
+}
+
 ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
     : so_name(so_name), so_handle(NULL)
 {

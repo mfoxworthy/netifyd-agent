@@ -1362,6 +1362,20 @@ nd_process_ip:
                     return;
                 }
             }
+#else
+            if (is_query && nf->flags.detection_complete) {
+                nf->flags.dhc_hit = 0;
+                nf->flags.detection_complete = 0;
+
+                if (fi.first != flows->end()) {
+                    nf->lower_bytes = flow.lower_bytes;
+                    nf->upper_bytes = flow.upper_bytes;
+                    nf->lower_packets = flow.lower_packets;
+                    nf->upper_packets = flow.upper_packets;
+                    nf->total_packets = flow.total_packets;
+                    nf->detection_packets = 0;
+                }
+            }
 #endif
         }
     }

@@ -67,6 +67,7 @@ public:
         TYPE_SINK_SERVICE,
         TYPE_SINK_TASK,
         TYPE_DETECTION,
+        TYPE_STATS,
     };
 
     ndPluginType GetType(void) { return type; };
@@ -108,17 +109,6 @@ protected:
     ndPluginReplies replies;
 };
 
-class ndPluginDetection : public ndPlugin
-{
-public:
-    ndPluginDetection(const string &tag);
-    virtual ~ndPluginDetection();
-
-    virtual void ProcessFlow(ndFlow *flow) = 0;
-
-protected:
-};
-
 class ndPluginService : public ndPluginSink
 {
 public:
@@ -146,6 +136,28 @@ protected:
     }
 
     string uuid_dispatch;
+};
+
+class ndPluginDetection : public ndPlugin
+{
+public:
+    ndPluginDetection(const string &tag);
+    virtual ~ndPluginDetection();
+
+    virtual void ProcessFlow(ndFlow *flow) = 0;
+
+protected:
+};
+
+class ndPluginStats : public ndPlugin
+{
+public:
+    ndPluginStats(const string &tag);
+    virtual ~ndPluginStats();
+
+    virtual void ProcessStats(const string &iface) = 0;
+
+protected:
 };
 
 #ifdef _ND_INTERNAL
