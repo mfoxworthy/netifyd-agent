@@ -183,8 +183,8 @@ load_pfsense()
 
 load_modules()
 {
-    /sbin/modprobe -q nfnetlink
-    /sbin/modprobe -q nf_conntrack_netlink
+    modprobe nfnetlink >/dev/null 2>&1
+    modprobe nf_conntrack_netlink >/dev/null 2>&1
 }
 
 detect_os()
