@@ -29,7 +29,8 @@
         if (p == NULL) return NULL; \
         if (p->GetType() != ndPlugin::TYPE_SINK_TASK && \
             p->GetType() != ndPlugin::TYPE_SINK_SERVICE && \
-            p->GetType() != ndPlugin::TYPE_DETECTION) { \
+            p->GetType() != ndPlugin::TYPE_DETECTION && \
+            p->GetType() != ndPlugin::TYPE_STATS) { \
                 nd_printf("Invalid plugin type detected during init: %s\n", \
                     tag.c_str()); \
                 delete p; \
@@ -155,7 +156,8 @@ public:
     ndPluginStats(const string &tag);
     virtual ~ndPluginStats();
 
-    virtual void ProcessStats(const string &iface) = 0;
+    virtual void ProcessStats(const nd_packet_stats &pkt_totals) = 0;
+    virtual void ProcessStats(const string &iface, const nd_packet_stats *pkt_stats, const nd_flow_map *flows) = 0;
 
 protected:
 };

@@ -688,6 +688,9 @@ void ndConntrackFlow::Update(struct nf_conntrack *ct)
 {
     updated_at = time(NULL);
 
+    const struct nfct_bitmask *label_mask;
+    label_mask = (const struct nfct_bitmask *)nfct_get_attr(ct, ATTR_CONNLABELS);
+
     mark = nfct_get_attr_u32(ct, ATTR_MARK);
 
     orig_addr_valid[ndCT_DIR_SRC] = false;

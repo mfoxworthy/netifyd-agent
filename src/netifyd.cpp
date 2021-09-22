@@ -131,6 +131,7 @@ static ndSocketThread *thread_socket = NULL;
 static nd_plugins plugin_services;
 static nd_plugins plugin_tasks;
 static nd_plugins plugin_detections;
+static nd_plugins plugin_stats;
 #endif
 static char *nd_conf_filename = NULL;
 #ifdef _ND_USE_CONNTRACK
@@ -533,6 +534,7 @@ static int nd_config_load(void)
     reader.GetSection("plugin_services", nd_config.plugin_services);
     reader.GetSection("plugin_tasks", nd_config.plugin_tasks);
     reader.GetSection("plugin_detections", nd_config.plugin_detections);
+    reader.GetSection("plugin_stats", nd_config.plugin_stats);
 #endif
     reader.GetSection("sink_headers", nd_config.custom_headers);
     return 0;
@@ -1045,6 +1047,45 @@ static void nd_plugin_stop_detections(void)
     plugin_detections.clear();
 }
 
+static int nd_plugin_start_stats(void)
+{
+    for (map<string, string>::const_iterator i = nd_config.plugin_stats.begin();
+        i != nd_config.plugin_stats.end(); i++) {
+        try {
+            plugin_stats[i->first] = new ndPluginLoader(i->second, i->first);
+            plugin_stats[i->first]->GetPlugin()->Create();
+        }
+        catch (ndPluginException &e) {
+            nd_printf("Error loading detection plugin: %s\n", e.what());
+            return 1;
+        }
+        catch (ndThreadException &e) {
+            nd_printf("Error starting detection plugin: %s %s: %s\n",
+                i->first.c_str(), i->second.c_str(), e.what());
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static void nd_plugin_stop_stats(void)
+{
+    for (nd_plugins::iterator i = plugin_stats.begin();
+        i != plugin_stats.end(); i++) {
+
+        ndPluginDetection *detection = reinterpret_cast<ndPluginDetection *>(
+            i->second->GetPlugin()
+        );
+        detection->Terminate();
+        delete detection;
+
+        delete i->second;
+    }
+
+    plugin_stats.clear();
+}
+
 static void nd_plugin_reload(void)
 {
     for (nd_plugins::iterator i = plugin_services.begin();
@@ -1055,6 +1096,9 @@ static void nd_plugin_reload(void)
         i->second->GetPlugin()->Reload();
     for (nd_plugins::iterator i = plugin_detections.begin();
         i != plugin_detections.end(); i++)
+        i->second->GetPlugin()->Reload();
+    for (nd_plugins::iterator i = plugin_stats.begin();
+        i != plugin_stats.end(); i++)
         i->second->GetPlugin()->Reload();
 }
 
@@ -1903,7 +1947,23 @@ static void nd_dump_stats(void)
 
         stats[i->first]->reset();
 
+        for (nd_plugins::iterator i = plugin_stats.begin();
+            i != plugin_stats.end(); i++) {
+            ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+                i->second->GetPlugin()
+            );
+            p->ProcessStats(iface_name, stats[i->first], flows[i->first]);
+        }
+
         i->second->Unlock();
+    }
+
+    for (nd_plugins::iterator i = plugin_stats.begin();
+        i != plugin_stats.end(); i++) {
+        ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+            i->second->GetPlugin()
+        );
+        p->ProcessStats(pkt_totals);
     }
 
     j_status["flow_count"] = nda_stats.flows;
@@ -2765,6 +2825,7 @@ int main(int argc, char *argv[])
         nd_config.plugin_services.clear();
         nd_config.plugin_tasks.clear();
         nd_config.plugin_detections.clear();
+        nd_config.plugin_stats.clear();
 #endif
         nd_config.dhc_save = ndDHC_DISABLED;
         nd_config.fhc_save = ndFHC_DISABLED;
@@ -2988,6 +3049,8 @@ int main(int argc, char *argv[])
         return 1;
     if (nd_plugin_start_detections() < 0)
         return 1;
+    if (nd_plugin_start_stats() < 0)
+        return 1;
 #endif
 
     memset(&sigev, 0, sizeof(struct sigevent));
@@ -3144,6 +3207,7 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_PLUGINS
     nd_plugin_stop_services();
     nd_plugin_stop_detections();
+    nd_plugin_stop_stats();
 
     nd_plugin_stop_tasks();
     nd_plugin_reap_tasks();

@@ -298,6 +298,7 @@ typedef struct nd_global_config_t {
     map<string, string> plugin_services;
     map<string, string> plugin_tasks;
     map<string, string> plugin_detections;
+    map<string, string> plugin_stats;
 #endif
     map<string, string> custom_headers;
 } nd_global_config;
