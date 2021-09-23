@@ -1116,4 +1116,89 @@ void nd_os_detect(string &os)
         os = "unknown";
 }
 
+ndLogDirectory::ndLogDirectory(const string &path, const string &prefix, const string &ext)
+    : path(path), prefix(prefix), ext(ext), hf_cur(NULL) {
+    struct stat sb;
+
+    if (stat(path.c_str(), &sb) == -1) {
+        if (errno == ENOENT) {
+            if (mkdir(path.c_str(), 0750) != 0)
+                throw ndSystemException(__PRETTY_FUNCTION__, path, errno);
+        }
+        else
+            throw ndSystemException(__PRETTY_FUNCTION__, path, errno);
+
+        if (! S_ISDIR(sb.st_mode))
+            throw ndSystemException(__PRETTY_FUNCTION__, path, EINVAL);
+    }
+}
+
+ndLogDirectory::~ndLogDirectory()
+{
+    Close();
+}
+
+FILE *ndLogDirectory::Open(void)
+{
+    if (hf_cur != NULL) {
+        nd_dprintf("Log file already open; close or discard first: %s\n",
+            filename.c_str());
+        return NULL;
+    }
+
+    time_t now = time(NULL);
+    struct tm tm_now;
+
+    tzset();
+    localtime_r(&now, &tm_now);
+
+    char stamp[_ND_LOG_FILE_STAMP_SIZE];
+    strftime(stamp, _ND_LOG_FILE_STAMP_SIZE, _ND_LOG_FILE_STAMP, &tm_now);
+
+    filename = prefix + "-" + stamp + ext;
+    string full_path = path + "/." + filename;
+
+    if (! (hf_cur = fopen(full_path.c_str(), "w"))) {
+        nd_dprintf("Error opening log file: %s: %s\n",
+            full_path.c_str(), strerror(errno));
+        return NULL;
+    }
+
+    return hf_cur;
+}
+
+void ndLogDirectory::Close(void)
+{
+    if (hf_cur != NULL) {
+
+        fclose(hf_cur);
+
+        string src = path + "/." + filename;
+        string dst = path + "/" + filename;
+
+        if (rename(src.c_str(), dst.c_str()) != 0) {
+            nd_dprintf("Error renaming log file: %s -> %s: %s\n",
+                src.c_str(), dst.c_str(), strerror(errno));
+        }
+
+        hf_cur = NULL;
+    }
+}
+
+void ndLogDirectory::Discard(void)
+{
+    if (hf_cur != NULL) {
+
+        string full_path = path + "/." + filename;
+
+        nd_dprintf("Discarding log file: %s\n", full_path.c_str());
+
+        fclose(hf_cur);
+
+        unlink(full_path.c_str());
+
+        hf_cur = NULL;
+    }
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
