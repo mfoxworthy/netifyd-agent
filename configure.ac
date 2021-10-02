@@ -99,6 +99,22 @@ AS_IF([test "x$with_libcurl_zlib" != "xno"], [
     AC_DEFINE([_ND_WITH_LIBCURL_ZLIB], [1], [Define if libcurl is GZIP capable.])
 ])
 
+AC_ARG_WITH([persistentstatedir],
+     [AS_HELP_STRING([--with-persistentstatedir=DIR], [Directory for persistent state files])],,
+     [with_persistentstatedir=auto])
+AS_IF([test "x$with_persistentstatedir" = "xyes" -o "x$with_persistentstatedir" = "xauto"],
+    [AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])])
+AS_IF([test "x$with_persistentstatedir" != "xno"],
+    [AC_SUBST([persistentstatedirj], [$with_persistentstatedir])])
+
+AC_ARG_WITH([volatilestatedir],
+     [AS_HELP_STRING([--with-volatilestatedir=DIR], [Directory for volatile state files])],,
+     [with_volatilestatedir=auto])
+AS_IF([test "x$with_volatilestatedir" = "xyes" -o "x$with_volatilestatedir" = "xauto"],
+    [AC_SUBST([volatilestatedir], [$sysconfdir/netify.d])])
+AS_IF([test "x$with_volatilestatedir" != "xno"],
+    [AC_SUBST([volatilestatedirj], [$with_volatilestatedir])])
+
 # Parameters: --enable/disable
 
 AC_ARG_ENABLE([conntrack],
@@ -352,16 +368,12 @@ AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git
 NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
 AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
 
-# Convience substitutions
-AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])
-AC_SUBST([volatilestatedir], [$localstatedir/run/$PACKAGE_TARNAME])
-
 # Defines substitution for pkg-config
-ND_DEFINES+=" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"
-ND_DEFINES+=" -D'ND_DATADIR=\"$datadir/$PACKAGE_TARNAME\"'"
-ND_DEFINES+=" -D'ND_PERSISTENT_STATEDIR=\"$persistentstatedir\"'"
-ND_DEFINES+=" -D'ND_PID_FILE_NAME=\"$volatilestatedir/$PACKAGE_TARNAME.pid\"'"
-ND_DEFINES+=" -D'ND_VOLATILE_STATEDIR=\"$volatilestatedir\"'"
+ND_DEFINES+=" -DND_CONF_FILE_NAME=\\"$sysconfdir/$PACKAGE_TARNAME.conf\\""
+ND_DEFINES+=" -DND_DATADIR=\\"$datadir/$PACKAGE_TARNAME\\""
+ND_DEFINES+=" -DND_PERSISTENT_STATEDIR=\\"$persistentstatedir\\""
+ND_DEFINES+=" -DND_PID_FILE_NAME=\\"$volatilestatedir/$PACKAGE_TARNAME.pid\\""
+ND_DEFINES+=" -DND_VOLATILE_STATEDIR=\\"$volatilestatedir\\""
 
 AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
