@@ -29,7 +29,7 @@ libnetifyd_la_SOURCES = nd-base64.cpp nd-capture.cpp nd-detection.cpp nd-dhc.cpp
 	nd-fhc.cpp nd-flow.cpp nd-json.cpp nd-ndpi.cpp nd-sha1.c nd-sink.cpp \
 	nd-socket.cpp nd-thread.cpp nd-util.cpp
 
-libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.la
+libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
 if USE_INOTIFY
 libnetifyd_la_SOURCES += nd-inotify.cpp
@@ -50,8 +50,7 @@ endif
 
 sbin_PROGRAMS = netifyd
 netifyd_SOURCES = netifyd.cpp
-netifyd_LDFLAGS = $(LIBCURL_LIBS) $(ZLIB_LIBS)
-netifyd_LDADD = ./libnetifyd.la $(top_srcdir)/libs/inih/libini.la
+netifyd_LDADD = ./libnetifyd.la $(top_srcdir)/libs/inih/libini.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
 if USE_LIBTCMALLOC
 # XXX: Recommended compiler flags

@@ -22,6 +22,7 @@ AC_DEFINE_UNQUOTED([_ND_HOST_CPU], ["${host_cpu}"], [Defines the canonical host.
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
+AC_CHECK_TOOL([STRIP],[strip])
 AM_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG([0.23])
 AX_PKG_INSTALLDIR
@@ -103,17 +104,17 @@ AC_ARG_WITH([persistentstatedir],
      [AS_HELP_STRING([--with-persistentstatedir=DIR], [Directory for persistent state files])],,
      [with_persistentstatedir=auto])
 AS_IF([test "x$with_persistentstatedir" = "xyes" -o "x$with_persistentstatedir" = "xauto"],
-    [AC_SUBST([persistentstatedir], [$sysconfdir/netify.d])])
-AS_IF([test "x$with_persistentstatedir" != "xno"],
-    [AC_SUBST([persistentstatedirj], [$with_persistentstatedir])])
+    AC_SUBST([persistentstatedir], [$sysconfdir/netify.d]),
+    AC_SUBST([persistentstatedir], [$with_persistentstatedir])
+)
 
 AC_ARG_WITH([volatilestatedir],
      [AS_HELP_STRING([--with-volatilestatedir=DIR], [Directory for volatile state files])],,
      [with_volatilestatedir=auto])
 AS_IF([test "x$with_volatilestatedir" = "xyes" -o "x$with_volatilestatedir" = "xauto"],
-    [AC_SUBST([volatilestatedir], [$sysconfdir/netify.d])])
-AS_IF([test "x$with_volatilestatedir" != "xno"],
-    [AC_SUBST([volatilestatedirj], [$with_volatilestatedir])])
+    AC_SUBST([volatilestatedir], [$localstatedir/run/$PACKAGE_TARNAME]),
+    AC_SUBST([volatilestatedir], [$with_volatilestatedir])
+)
 
 # Parameters: --enable/disable
 
@@ -369,11 +370,11 @@ NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
 AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
 
 # Defines substitution for pkg-config
-ND_DEFINES+=" -DND_CONF_FILE_NAME=\\"$sysconfdir/$PACKAGE_TARNAME.conf\\""
-ND_DEFINES+=" -DND_DATADIR=\\"$datadir/$PACKAGE_TARNAME\\""
-ND_DEFINES+=" -DND_PERSISTENT_STATEDIR=\\"$persistentstatedir\\""
-ND_DEFINES+=" -DND_PID_FILE_NAME=\\"$volatilestatedir/$PACKAGE_TARNAME.pid\\""
-ND_DEFINES+=" -DND_VOLATILE_STATEDIR=\\"$volatilestatedir\\""
+ND_DEFINES+=" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"
+ND_DEFINES+=" -D'ND_DATADIR=\"$datadir/$PACKAGE_TARNAME\"'"
+ND_DEFINES+=" -D'ND_PERSISTENT_STATEDIR=\"$persistentstatedir\"'"
+ND_DEFINES+=" -D'ND_PID_FILE_NAME=\"$volatilestatedir/$PACKAGE_TARNAME.pid\"'"
+ND_DEFINES+=" -D'ND_VOLATILE_STATEDIR=\"$volatilestatedir\"'"
 
 AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
