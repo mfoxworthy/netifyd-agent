@@ -25,9 +25,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <sys/types.h>

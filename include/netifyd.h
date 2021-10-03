@@ -267,6 +267,7 @@ typedef struct nd_global_config_t {
     uint32_t flags;
     uint8_t digest_sink_config[SHA1_DIGEST_LENGTH];
     unsigned max_fhc;
+    unsigned max_flows;
     unsigned max_tcp_pkts;
     unsigned max_udp_pkts;
     unsigned sink_max_post_errors;
@@ -360,6 +361,10 @@ typedef struct nd_packet_stats_t
         uint64_t discard_bytes;
         uint64_t queue_dropped;
     } pkt;
+
+    struct flow_t {
+        uint64_t dropped;
+    } flow;
 
     struct pcap_stat pcap_last;
 

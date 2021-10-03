@@ -6,30 +6,31 @@
 # Read the netifyd.conf(5) man page for documentation.
 
 [netifyd]
-uuid = <agent uuid>
-uuid_serial = <agent serial uuid>
-uuid_site = <site uuid>
+capture_unknown_flows = <yes/no>
+enable_sink = <yes/no>
+json_save = <yes/no>
+max_backlog_kb = <amount of payload data to buffer in kilobytes>
+max_flows = <flows>
+max_tcp_pkts = <number of TCP packets to perform DPI on before giving up>
+max_udp_pkts = <number of UDP packets to perform DPI on before giving up>
 path_uuid = <agent uuid path>
 path_uuid_serial = <serial uuid path>
 path_uuid_site = <site uuid path>
-enable_sink = <yes/no>
 sink_connect_timeout = <connect timeout in seconds>
-sink_xfer_timeout = <transfer timeout in seconds>
-url_sink = <sink upload URL>
 sink_max_post_errors = <number of POST errors before reverting to default sink URL>
-update_interval = <update interval in seconds>
-json_save = <yes/no>
-max_backlog_kb = <amount of payload data to buffer in kilobytes>
-ssl_verify = <yes/no>
+sink_xfer_timeout = <transfer timeout in seconds>
 ssl_use_tlsv1 = <yes/no>
-max_tcp_pkts = <number of TCP packets to perform DPI on before giving up>
-max_udp_pkts = <number of UDP packets to perform DPI on before giving up>
+ssl_verify = <yes/no>
 ttl_idle_flow = <idle flow TTL in seconds>
 ttl_idle_tcp_flow = <idle TCP flow TTL in seconds>
-capture_unknown_flows = <yes/no>
+update_interval = <update interval in seconds>
 upload_connect_timeout = <timeout in seconds>
-upload_xfer_timeout = <timeout in seconds>
 upload_nat_flows = <yes/no>
+upload_xfer_timeout = <timeout in seconds>
+url_sink = <sink upload URL>
+uuid = <agent uuid>
+uuid_serial = <agent serial uuid>
+uuid_site = <site uuid>
 
 [flow_hash_cache]
 enable = <yes/no>

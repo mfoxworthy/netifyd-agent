@@ -29,9 +29,7 @@
 #include <unordered_map>
 #include <list>
 #include <vector>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 #include <algorithm>
 
@@ -169,6 +167,9 @@ using namespace std;
 // Enable to log discarded packets
 //#define _ND_LOG_PKT_DISCARD     1
 
+// Enable to log discarded flows
+//#define _ND_LOG_FLOW_DISCARD    1
+
 // Enable DNS response debug logging
 //#define _ND_LOG_DNS_RESPONSE    1
 
@@ -182,6 +183,7 @@ using namespace std;
 #define _ND_DISSECT_GTP       1
 
 extern nd_global_config nd_config;
+extern atomic_uint nd_flow_count;
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -1221,6 +1223,17 @@ nd_process_ip:
         }
     }
     else {
+        if (nd_config.max_flows > 0 && nd_flow_count + 1 > nd_config.max_flows) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->flow.dropped++;
+#ifdef _ND_LOG_FLOW_DISCARD
+            nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
+                tag.c_str(), nd_config.max_flows);
+#endif
+            return;
+        }
+
         nf = new ndFlow(flow);
         if (nf == NULL) throw ndCaptureThreadException(strerror(ENOMEM));
 
@@ -1232,6 +1245,8 @@ nd_process_ip:
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
+
+        nd_flow_count++;
 
         // New flow inserted, initialize...
         nf->ts_first_seen = ts_pkt;

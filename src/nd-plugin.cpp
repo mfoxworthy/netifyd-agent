@@ -22,9 +22,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <unistd.h>

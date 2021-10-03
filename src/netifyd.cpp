@@ -28,9 +28,7 @@
 #include <list>
 #include <vector>
 #include <locale>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <sys/stat.h>
@@ -157,6 +155,8 @@ nd_device_ethers device_ethers;
 nd_global_config nd_config;
 pthread_mutex_t *nd_printf_mutex = NULL;
 
+atomic_uint nd_flow_count;
+
 static void nd_usage(int rc = 0, bool version = false)
 {
     fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
@@ -212,6 +212,7 @@ static void nd_config_init(void)
 #endif
 
     nd_config.max_fhc = ND_MAX_FHC_ENTRIES;
+    nd_config.max_flows = 0;
     nd_config.max_tcp_pkts = ND_MAX_TCP_PKTS;
     nd_config.max_udp_pkts = ND_MAX_UDP_PKTS;
     nd_config.sink_max_post_errors = ND_SINK_MAX_POST_ERRORS;
@@ -346,6 +347,9 @@ static int nd_config_load(void)
 
     ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS,
         reader.GetBoolean("netifyd", "capture_unknown_flows", false));
+
+    nd_config.max_flows = (size_t)reader.GetInteger(
+        "netifyd", "max_flows", 0);
 
     // Threading section
     nd_config.ca_capture_base = (int16_t)reader.GetInteger(
@@ -1504,6 +1508,7 @@ static void nd_json_process_flows(
             i = flows->erase(i);
 
             purged++;
+            nd_flow_count--;
         }
         else {
             if (i->second->flags.detection_complete) {
@@ -1937,6 +1942,14 @@ static void nd_dump_stats(void)
         nd_json_add_stats(js, stats[i->first], &lpc_stat);
         j_status["stats"][iface_name] = js;
 
+        for (nd_plugins::iterator pi = plugin_stats.begin();
+            pi != plugin_stats.end(); pi++) {
+            ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+                pi->second->GetPlugin()
+            );
+            p->ProcessStats(iface_name, stats[i->first], flows[i->first]);
+        }
+
         nd_json_process_flows(
             iface_name,
             jf, flows[i->first],
@@ -1946,14 +1959,6 @@ static void nd_dump_stats(void)
         if (jf.size()) json_flows[iface_name] = jf;
 
         stats[i->first]->reset();
-
-        for (nd_plugins::iterator i = plugin_stats.begin();
-            i != plugin_stats.end(); i++) {
-            ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
-                i->second->GetPlugin()
-            );
-            p->ProcessStats(iface_name, stats[i->first], flows[i->first]);
-        }
 
         i->second->Unlock();
     }
@@ -2527,6 +2532,8 @@ int main(int argc, char *argv[])
     pthread_mutex_init(nd_printf_mutex, NULL);
 
     nd_seed_rng();
+
+    nd_flow_count = 0;
 
     memset(&nda_stats, 0, sizeof(nd_agent_stats));
     nda_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);

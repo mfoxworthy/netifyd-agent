@@ -30,9 +30,7 @@
 #include <queue>
 #include <deque>
 #include <sstream>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <sys/types.h>

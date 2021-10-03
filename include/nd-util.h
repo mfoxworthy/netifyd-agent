@@ -103,13 +103,13 @@ int nd_functions_exec(const string &func, string &output);
 
 void nd_os_detect(string &os);
 
-#define _ND_LOG_FILE_STAMP      "%Y%M%d-%H%M%S"
+#define _ND_LOG_FILE_STAMP      "%Y%m%d-%H%M%S"
 #define _ND_LOG_FILE_STAMP_SIZE sizeof("YYYYMMDD-HHMMSS")
 
 class ndLogDirectory
 {
 public:
-    ndLogDirectory(const string &path, const string &prefix, const string &ext);
+    ndLogDirectory(const string &path, const string &prefix, const string &suffix);
     virtual ~ndLogDirectory();
 
     FILE *Open(void);
@@ -119,7 +119,7 @@ public:
 protected:
     string path;
     string prefix;
-    string ext;
+    string suffix;
 
     FILE *hf_cur;
     string filename;

@@ -1116,8 +1116,8 @@ void nd_os_detect(string &os)
         os = "unknown";
 }
 
-ndLogDirectory::ndLogDirectory(const string &path, const string &prefix, const string &ext)
-    : path(path), prefix(prefix), ext(ext), hf_cur(NULL) {
+ndLogDirectory::ndLogDirectory(const string &path, const string &prefix, const string &suffix)
+    : path(path), prefix(prefix), suffix(suffix), hf_cur(NULL) {
     struct stat sb;
 
     if (stat(path.c_str(), &sb) == -1) {
@@ -1155,7 +1155,7 @@ FILE *ndLogDirectory::Open(void)
     char stamp[_ND_LOG_FILE_STAMP_SIZE];
     strftime(stamp, _ND_LOG_FILE_STAMP_SIZE, _ND_LOG_FILE_STAMP, &tm_now);
 
-    filename = prefix + "-" + stamp + ext;
+    filename = prefix + stamp + suffix;
     string full_path = path + "/." + filename;
 
     if (! (hf_cur = fopen(full_path.c_str(), "w"))) {

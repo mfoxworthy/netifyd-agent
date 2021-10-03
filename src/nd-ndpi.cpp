@@ -23,9 +23,7 @@
 #include <map>
 #include <unordered_map>
 #include <stdexcept>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <stdio.h>

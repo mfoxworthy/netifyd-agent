@@ -23,9 +23,7 @@
 #include <map>
 #include <list>
 #include <vector>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <unordered_map>
 #include <sstream>
 #include <regex>

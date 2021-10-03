@@ -25,9 +25,7 @@
 #include <list>
 #include <vector>
 #include <sstream>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <sys/stat.h>

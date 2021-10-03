@@ -30,9 +30,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#ifdef HAVE_ATOMIC
 #include <atomic>
-#endif
 #include <regex>
 
 #include <arpa/inet.h>

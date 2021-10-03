@@ -226,23 +226,13 @@ public:
     ndNetlinkAddressType upper_type;
 #endif
     struct {
-#ifdef HAVE_ATOMIC
-        atomic<uint8_t> ip_nat;
-        atomic<uint8_t> tcp_fin;
-        atomic<uint8_t> dhc_hit;
-        atomic<uint8_t> detection_complete;
-        atomic<uint8_t> detection_expiring;
-        atomic<uint8_t> detection_expired;
-        atomic<uint8_t> detection_guessed;
-#else
-        uint8_t ip_nat:1;
-        uint8_t tcp_fin:1;
-        uint8_t dhc_hit:1;
-        uint8_t detection_complete:1;
-        uint8_t detection_expiring:1;
-        uint8_t detection_expired:1;
-        uint8_t detection_guessed:1;
-#endif
+        atomic_bool ip_nat;
+        atomic_bool tcp_fin;
+        atomic_bool dhc_hit;
+        atomic_bool detection_complete;
+        atomic_bool detection_expiring;
+        atomic_bool detection_expired;
+        atomic_bool detection_guessed;
     } flags;
 
     union {
