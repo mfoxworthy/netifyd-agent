@@ -484,9 +484,9 @@ void ndFlow::print(void)
         iface_name.c_str(),
         (iface->first) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
-        flags.ip_nat ? 'n' : '-',
-        (flags.detection_guessed) ? 'g' : '-',
-        (flags.dhc_hit) ? 'd' : '-',
+        flags.ip_nat.load() ? 'n' : '-',
+        (flags.detection_guessed.load()) ? 'g' : '-',
+        (flags.dhc_hit.load()) ? 'd' : '-',
         (privacy_mask & PRIVATE_LOWER) ? 'p' :
             (privacy_mask & PRIVATE_UPPER) ? 'P' :
             (privacy_mask & (PRIVATE_LOWER | PRIVATE_UPPER)) ? 'X' :
@@ -513,7 +513,7 @@ void ndFlow::print(void)
 
     if (ND_DEBUG &&
         detected_protocol.master_protocol == NDPI_PROTOCOL_SSL &&
-        flags.detection_guessed == false && ssl.version == 0x0000) {
+        flags.detection_guessed.load() == false && ssl.version == 0x0000) {
         nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface->second.c_str());
     }
 }
@@ -694,8 +694,8 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     }
 
     if (encode_includes & ENCODE_METADATA) {
-        j["ip_nat"] = (bool)flags.ip_nat;
-        j["dhc_hit"] = (bool)flags.dhc_hit;
+        j["ip_nat"] = (bool)flags.ip_nat.load();
+        j["dhc_hit"] = (bool)flags.dhc_hit.load();
 #ifdef _ND_USE_CONNTRACK
         j["ct_id"] = ct_id;
         j["ct_mark"] = ct_mark;
@@ -780,7 +780,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["detected_application_name"] =
             (detected_application_name != NULL) ? detected_application_name : "Unknown";
 
-        j["detection_guessed"] = (unsigned)flags.detection_guessed;
+        j["detection_guessed"] = (unsigned)flags.detection_guessed.load();
 
         if (host_server_name[0] != '\0')
             j["host_server_name"] = host_server_name;

@@ -236,15 +236,15 @@ void *ndDetectionThread::Entry(void)
         if ((rc = pthread_mutex_unlock(&pkt_queue_cond_mutex)) != 0)
             throw ndDetectionThreadException(strerror(rc));
 
-        ProcessPacketQueue(! terminate);
+        ProcessPacketQueue(! ShouldTerminate());
     }
-    while (terminate == false);
+    while (ShouldTerminate() == false);
 
     if (pkt_queue.size() > 0) {
         nd_dprintf("%s: detection thread ending, flushing queued packets: %lu\n",
             tag.c_str(), pkt_queue.size());
 
-        ProcessPacketQueue(terminate);
+        ProcessPacketQueue(ShouldTerminate());
     }
 
     nd_dprintf("%s: detection thread ended on CPU: %hu\n", tag.c_str(), cpu);
@@ -274,7 +274,7 @@ void ndDetectionThread::ProcessPacketQueue(bool flush)
                 if (entry->flow->pkt != NULL) delete [] entry->flow->pkt;
                 entry->flow->pkt = entry->pkt_data;
             }
-            if (! entry->flow->flags.detection_complete)
+            if (! entry->flow->flags.detection_complete.load())
                 ProcessPacket(entry);
             delete entry;
         }
@@ -296,7 +296,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     else {
         flows++;
 
-        if (entry->flow->flags.detection_expired) {
+        if (entry->flow->flags.detection_expired.load()) {
             nd_dprintf("%s: TODO: Asked to process expired flow!\n", tag.c_str());
             //throw ndDetectionThreadException("Asked to process expired flow");
             return;
@@ -322,7 +322,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         id_dst = entry->flow->id_dst;
     }
 
-    if (! entry->flow->flags.detection_expired) {
+    if (! entry->flow->flags.detection_expired.load()) {
         entry->flow->detected_protocol = ndpi_detection_process_packet(
             ndpi,
             entry->flow->ndpi_flow,
@@ -346,7 +346,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             entry->flow->total_packets >= nd_config.max_udp_pkts)
         || (entry->flow->ip_protocol == IPPROTO_TCP &&
             entry->flow->total_packets >= nd_config.max_tcp_pkts)
-        || entry->flow->flags.detection_expired) {
+        || entry->flow->flags.detection_expired.load()) {
 
 #ifdef _ND_USE_NETLINK
         if (ND_USE_NETLINK) {
@@ -411,14 +411,14 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 entry->flow->flags.dhc_hit = dhc->lookup(&entry->flow->upper_addr, hostname);
             }
 #endif
-            if (! entry->flow->flags.dhc_hit) {
+            if (! entry->flow->flags.dhc_hit.load()) {
                 if (entry->flow->origin == ndFlow::ORIGIN_LOWER)
                     entry->flow->flags.dhc_hit = dhc->lookup(&entry->flow->upper_addr, hostname);
                 else if (entry->flow->origin == ndFlow::ORIGIN_UPPER)
                     entry->flow->flags.dhc_hit = dhc->lookup(&entry->flow->lower_addr, hostname);
             }
 
-            if (entry->flow->flags.dhc_hit &&
+            if (entry->flow->flags.dhc_hit.load() &&
                 (entry->flow->ndpi_flow->host_server_name[0] == '\0' ||
                 nd_is_ipaddr((const char *)entry->flow->ndpi_flow->host_server_name))) {
                 snprintf(

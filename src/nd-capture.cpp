@@ -397,7 +397,7 @@ void *ndCaptureThread::Entry(void)
     struct ifreq ifr;
 
     do {
-        if (pcap == NULL && ! terminate) {
+        if (pcap == NULL && ! ShouldTerminate()) {
             if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1) {
                 sleep(1);
                 continue;
@@ -438,7 +438,7 @@ void *ndCaptureThread::Entry(void)
             pkt_queue.pop();
         }
 
-        if (! terminate) {
+        if (! ShouldTerminate()) {
             if (pcap_fd != -1) {
                 int rc, max_fd = 0;
                 struct timeval tv;
@@ -522,13 +522,13 @@ void *ndCaptureThread::Entry(void)
                     tag.c_str(), pcap_file.c_str(), pkt_queue.size());
                 pcap_close(pcap);
                 pcap = NULL;
-                terminate = true;
+                Terminate();
                 pcap_fd = -1;
                 break;
             }
         }
     }
-    while (terminate == false || ! pkt_queue.empty());
+    while (ShouldTerminate() == false || ! pkt_queue.empty());
 
     nd_dprintf(
         "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
@@ -647,7 +647,7 @@ void ndCaptureThread::DumpFlows(void)
 
     for (nd_flow_map::const_iterator i = flows->begin(); i != flows->end(); i++) {
 
-        if (i->second->flags.detection_complete == false) continue;
+        if (i->second->flags.detection_complete.load() == false) continue;
         if (! ND_FLOW_DUMP_UNKNOWN &&
             i->second->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) continue;
 
@@ -1371,14 +1371,14 @@ nd_process_ip:
                     *fi.first->second += *nf;
 
                     nd_dprintf("%s: delete rehashed DNS flow: %lu packets, detection complete: %s\n",
-                        tag.c_str(), nf->total_packets, (nf->flags.detection_complete) ? "yes" : "no");
+                        tag.c_str(), nf->total_packets, (nf->flags.detection_complete.load()) ? "yes" : "no");
                     delete nf;
 
                     return;
                 }
             }
 #else
-            if (is_query && nf->flags.detection_complete) {
+            if (is_query && nf->flags.detection_complete.load()) {
                 nf->flags.dhc_hit = 0;
                 nf->flags.detection_complete = 0;
                 // XXX: Moot...
@@ -1395,7 +1395,7 @@ nd_process_ip:
         }
     }
 
-    if (! nf->flags.detection_complete
+    if (! nf->flags.detection_complete.load()
         || (nf->ip_protocol == IPPROTO_UDP &&
             nf->total_packets <= nd_config.max_udp_pkts)
         || (nf->ip_protocol == IPPROTO_TCP &&

@@ -1419,7 +1419,7 @@ static void nd_json_process_flows(
 
         uint32_t last_seen = i->second->ts_last_seen / 1000;
         uint32_t ttl = (
-            i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin
+            i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin.load()
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
 //        nd_dprintf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
@@ -1431,8 +1431,8 @@ static void nd_json_process_flows(
 //            nd_dprintf("%s: Purge flow, %lus old, ttl: %lu.\n",
 //                i->second->iface->second.c_str(), now - last_seen, ttl);
 
-            if (i->second->flags.detection_complete == false &&
-                i->second->flags.detection_expired == false) {
+            if (i->second->flags.detection_complete.load() == false &&
+                i->second->flags.detection_expired.load() == false) {
 
                 i->second->flags.detection_expired = true;
                 detection_threads[i->second->dpi_thread_id]->QueuePacket(i->second);
@@ -1445,7 +1445,7 @@ static void nd_json_process_flows(
 
             if (add_flows &&
                 i->second->detected_protocol.master_protocol == 0 &&
-                (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat == false)) {
+                (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                 json jf;
                 i->second->json_encode(jf);
@@ -1485,7 +1485,7 @@ static void nd_json_process_flows(
                     j["type"] = "flow_purge";
                     j["reason"] = (
                         i->second->ip_protocol == IPPROTO_TCP &&
-                        i->second->flags.tcp_fin
+                        i->second->flags.tcp_fin.load()
                     ) ? "closed" : (nd_terminate) ? "terminated" : "expired";
                     j["interface"] = i->second->iface->second;
                     j["internal"] = i->second->iface->first;
@@ -1511,10 +1511,10 @@ static void nd_json_process_flows(
             nd_flow_count--;
         }
         else {
-            if (i->second->flags.detection_complete) {
+            if (i->second->flags.detection_complete.load()) {
 
                 if (add_flows && i->second->ts_first_update &&
-                    (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat == false)) {
+                    (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                     json jf;
                     i->second->json_encode(jf);

@@ -244,7 +244,7 @@ void *ndSinkThread::Entry(void)
 
     nd_dprintf("%s: thread started.\n", tag.c_str());
 
-    while (terminate == false) {
+    while (ShouldTerminate() == false) {
         Lock();
 
         if (uploads.size() == 0) {
@@ -283,7 +283,7 @@ void *ndSinkThread::Entry(void)
 
         Unlock();
 
-        if (terminate == false && pending.size() > 0) Upload();
+        if (ShouldTerminate() == false && pending.size() > 0) Upload();
     }
 
     return NULL;
@@ -300,7 +300,7 @@ void ndSinkThread::Terminate(void)
         throw ndSinkThreadException(strerror(rc));
     }
 
-    terminate = true;
+    ndThread::Terminate();
 
     Unlock();
 }
@@ -605,7 +605,7 @@ void ndSinkThread::Upload(void)
         pending_size -= pending.front().second.size();
         pending.pop_front();
 
-        if (pending.size() == 0 || terminate)
+        if (pending.size() == 0 || ShouldTerminate())
             flush_queue = false;
         else {
             Lock();

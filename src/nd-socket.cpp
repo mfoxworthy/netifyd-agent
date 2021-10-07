@@ -827,7 +827,7 @@ void *ndSocketThread::Entry(void)
 
     nd_dprintf("%s: started\n", __PRETTY_FUNCTION__);
 
-    while (! terminate) {
+    while (! ShouldTerminate()) {
         int rc_read = -1, rc_write = -1;
         int max_read_fd = -1, max_write_fd = -1;
 

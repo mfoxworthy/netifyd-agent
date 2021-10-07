@@ -48,11 +48,11 @@ public:
     virtual void Create(void);
     virtual void *Entry(void) = 0;
 
-    virtual void Terminate(void) { terminate = true; }
-    bool ShouldTerminate(void) { return terminate; }
+    virtual inline void Terminate(void) { terminate = true; }
+    inline bool ShouldTerminate(void) { return terminate.load(); }
 
-    void SetTerminated(void) { terminated = true; }
-    bool HasTerminated(void) { return terminated; }
+    inline void SetTerminated(void) { terminated = true; }
+    inline bool HasTerminated(void) { return terminated.load(); }
 
     void Lock(void);
     void Unlock(void);
@@ -65,8 +65,6 @@ protected:
     pthread_t id;
     pthread_attr_t attr;
     long cpu;
-    atomic_bool terminate;
-    atomic_bool terminated;
     pthread_mutex_t lock;
 
     enum {
@@ -77,6 +75,10 @@ protected:
     int fd_ipc[IPC_PE_MAX];
 
     int Join(void);
+
+private:
+    atomic_bool terminate;
+    atomic_bool terminated;
 };
 
 #endif // _ND_THREAD_H

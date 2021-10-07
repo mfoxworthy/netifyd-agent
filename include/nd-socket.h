@@ -230,8 +230,6 @@ public:
     ndSocketThread(int16_t cpu = -1);
     virtual ~ndSocketThread();
 
-    virtual void Terminate(void) { terminate = true; }
-
     void QueueWrite(const string &data);
 
     size_t GetClientCount(void);
