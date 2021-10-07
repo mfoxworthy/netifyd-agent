@@ -3,6 +3,8 @@
 #
 # This is free software, licensed under the GNU General Public License v3.
 
+DEBUG_HOST := gw
+
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
 
@@ -204,8 +206,8 @@ deploy-pfsense:
 	ls -lh deploy/pfsense/work/pkg/*.txz
 
 deploy-debug: all
-	scp src/.libs/netifyd gw:/usr/sbin/
-	scp src/.libs/libnetifyd.so.0.0.0 gw:/usr/lib64/
+	rsync -av --progress --inplace src/.libs/netifyd $(DEBUG_HOST):/usr/sbin/
+	rsync -avl --progress --inplace src/.libs/libnetifyd.so.0.0.0 $(DEBUG_HOST):/usr/lib64/
 
 deploy-debug-archive: all
 	mkdir -p /tmp/netifyd-debug/usr/{sbin,lib64}
