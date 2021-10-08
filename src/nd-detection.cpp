@@ -356,6 +356,14 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 #endif
         if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) {
 
+            if (ntohs(entry->flow->lower_port) == 443 || ntohs(entry->flow->upper_port) == 443) {
+                nd_dprintf("%s: UNKNOWN HTTPS: %hu <> %hu: %lu pkts.\n",
+                    tag.c_str(),
+                    ntohs(entry->flow->lower_port), ntohs(entry->flow->upper_port),
+                    entry->flow->detection_packets
+                );
+            }
+
             entry->flow->flags.detection_guessed = true;
 
             entry->flow->detected_protocol.master_protocol =
@@ -449,29 +457,32 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         // Determine application based on master protocol metadata
         switch (entry->flow->detected_protocol.master_protocol) {
         case NDPI_PROTOCOL_HTTPS:
-        case NDPI_PROTOCOL_SSL:
+        case NDPI_PROTOCOL_TLS:
         case NDPI_PROTOCOL_MAIL_IMAPS:
         case NDPI_PROTOCOL_MAIL_SMTPS:
         case NDPI_PROTOCOL_MAIL_POPS:
         case NDPI_PROTOCOL_SSL_NO_CERT:
         case NDPI_PROTOCOL_OSCAR:
-            if (entry->flow->ndpi_flow->protos.stun_ssl.ssl.client_certificate[0] != '\0') {
+        case NDPI_PROTOCOL_QUIC:
+            if (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
                 entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
                     ndpi,
                     entry->flow->ndpi_flow,
-                    (char *)entry->flow->ndpi_flow->protos.stun_ssl.ssl.client_certificate,
-                    strlen((const char*)entry->flow->ndpi_flow->protos.stun_ssl.ssl.client_certificate),
+                    (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name,
+                    strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name),
                     &npmr);
             }
+#if 0
             if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN &&
-                entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_certificate[0] != '\0') {
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate[0] != '\0') {
                 entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
                     ndpi,
                     entry->flow->ndpi_flow,
-                    (char *)entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_certificate,
-                    strlen((const char*)entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_certificate),
+                    (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate,
+                    strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate),
                     &npmr);
             }
+#endif
             break;
 
         case NDPI_PROTOCOL_SPOTIFY:
@@ -539,24 +550,25 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             );
             break;
 
-        case NDPI_PROTOCOL_SSL:
+        case NDPI_PROTOCOL_TLS:
+        case NDPI_PROTOCOL_QUIC:
             entry->flow->ssl.version =
-                (entry->flow->ndpi_flow->protos.stun_ssl.ssl.version) ?
-                entry->flow->ndpi_flow->protos.stun_ssl.ssl.version :
-                entry->flow->ndpi_flow->protos.stun_ssl.ssl.ssl_version;
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ssl_version;
             entry->flow->ssl.cipher_suite =
-                entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_cipher;
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_cipher;
 
             snprintf(entry->flow->ssl.client_sni, ND_FLOW_TLS_CNLEN,
-                "%s", entry->flow->ndpi_flow->protos.stun_ssl.ssl.client_certificate);
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name);
+/*
             snprintf(entry->flow->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                "%s", entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_certificate);
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate);
             snprintf(entry->flow->ssl.server_organization, ND_FLOW_TLS_ORGLEN,
-                "%s", entry->flow->ndpi_flow->protos.stun_ssl.ssl.server_organization);
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_organization);
+*/
             snprintf(entry->flow->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
-                "%s", entry->flow->ndpi_flow->protos.stun_ssl.ssl.ja3_client);
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_client);
             snprintf(entry->flow->ssl.server_ja3, ND_FLOW_TLS_JA3LEN,
-                "%s", entry->flow->ndpi_flow->protos.stun_ssl.ssl.ja3_server);
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_server);
 
             if (entry->flow->ndpi_flow->l4.tcp.tls_fingerprint_len) {
                 memcpy(entry->flow->ssl.cert_fingerprint,
@@ -567,19 +579,21 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             break;
         case NDPI_PROTOCOL_HTTP:
-            for (size_t i = 0;
-                i < strlen((const char *)entry->flow->ndpi_flow->protos.http.user_agent); i++) {
-                if (! isprint(entry->flow->ndpi_flow->protos.http.user_agent[i])) {
-                    // XXX: Sanitize user_agent of non-printable characters.
-                    entry->flow->ndpi_flow->protos.http.user_agent[i] = '\0';
-                    break;
+            if (entry->flow->ndpi_flow->http.user_agent != NULL) {
+                for (size_t i = 0;
+                    i < strlen((const char *)entry->flow->ndpi_flow->http.user_agent); i++) {
+                    if (! isprint(entry->flow->ndpi_flow->http.user_agent[i])) {
+                        // XXX: Sanitize user_agent of non-printable characters.
+                        entry->flow->ndpi_flow->http.user_agent[i] = '\0';
+                        break;
+                    }
                 }
-            }
 
-            snprintf(
-                entry->flow->http.user_agent, ND_FLOW_UA_LEN,
-                "%s", entry->flow->ndpi_flow->protos.http.user_agent
-            );
+                snprintf(
+                    entry->flow->http.user_agent, ND_FLOW_UA_LEN,
+                    "%s", entry->flow->ndpi_flow->http.user_agent
+                );
+            }
 
             if (entry->flow->ndpi_flow->http.url != NULL) {
                 snprintf(
