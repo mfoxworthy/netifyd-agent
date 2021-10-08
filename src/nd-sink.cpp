@@ -456,7 +456,7 @@ void ndSinkThread::Upload(void)
 
     if (post_errors == nd_config.sink_max_post_errors) {
         free(nd_config.url_sink);
-        nd_config.url_sink = strdup(ND_URL_SINK);
+        nd_config.url_sink = strdup(nd_config.url_sink_provision);
         nd_printf("%s: reverted to default sink URL: %s\n", tag.c_str(),
             nd_config.url_sink);
 

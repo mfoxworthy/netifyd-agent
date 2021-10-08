@@ -114,6 +114,7 @@ using namespace std;
 #include "nd-signal.h"
 
 static bool nd_terminate = false;
+static bool nd_terminate_force = false;
 static nd_ifaces ifaces;
 static nd_devices devices;
 static nd_flows flows;
@@ -196,6 +197,7 @@ static void nd_config_init(void)
     nd_config.path_uuid_serial = NULL;
     nd_config.path_uuid_site = NULL;
     nd_config.url_sink = NULL;
+    nd_config.url_sink_provision = NULL;
     nd_config.uuid = NULL;
     nd_config.uuid_serial = NULL;
     nd_config.uuid_site = NULL;
@@ -294,9 +296,10 @@ static int nd_config_load(void)
         "netifyd", "path_uuid_site", ND_SITE_UUID_PATH);
     nd_config.path_uuid_site = strdup(path_uuid_site.c_str());
 
-    string url_sink = reader.Get(
+    string url_sink_provision = reader.Get(
         "netifyd", "url_sink", ND_URL_SINK);
-    nd_config.url_sink = strdup(url_sink.c_str());
+    nd_config.url_sink_provision = strdup(url_sink_provision.c_str());
+    nd_config.url_sink = strdup(url_sink_provision.c_str());
 
     nd_config.update_interval = (unsigned)reader.GetInteger(
         "netifyd", "update_interval", ND_STATS_INTERVAL);
@@ -3020,8 +3023,12 @@ int main(int argc, char *argv[])
         nd_add_device_addresses(device_addresses);
     }
 #endif
+    nd_init();
 
     nd_dprintf("Online CPU cores: %ld\n", nda_stats.cpus);
+
+    if (nd_start_detection_threads() < 0)
+        return 1;
 
     try {
         if (thread_socket != NULL)
@@ -3031,11 +3038,6 @@ int main(int argc, char *argv[])
         nd_printf("Error starting socket thread: %s\n", e.what());
         return 1;
     }
-
-    nd_init();
-
-    if (nd_start_detection_threads() < 0)
-        return 1;
 
     if (thread_socket == NULL || ! ND_WAIT_FOR_CLIENT) {
         if (nd_start_capture_threads() < 0)
@@ -3086,7 +3088,7 @@ int main(int argc, char *argv[])
     tspec_sigwait.tv_sec = 1;
     tspec_sigwait.tv_nsec = 0;
 
-    while (! nd_terminate || nda_stats.flows > 0) {
+    while (! nd_terminate || (! nd_terminate_force && nda_stats.flows > 0)) {
         int sig;
         siginfo_t si;
 
@@ -3113,7 +3115,14 @@ int main(int argc, char *argv[])
         }
 
         if (sig == SIGINT || sig == SIGTERM) {
-            nd_printf("Shutdown requested, waiting for threads to exit...\n");
+            if (! nd_terminate)
+                nd_printf("Shutdown requested, waiting for threads to exit...\n");
+            else {
+                nd_printf("Shutdown forced, exiting now...\n");
+                nd_terminate_force = true;
+                continue;
+            }
+
             rc = 0;
             nd_terminate = true;
             nd_stop_capture_threads();
@@ -3205,6 +3214,11 @@ int main(int argc, char *argv[])
         nd_printf("Unhandled signal: %s\n", strsignal(sig));
     }
 
+    if (thread_socket) {
+        thread_socket->Terminate();
+        delete thread_socket;
+    }
+
     timer_delete(timer_id);
 
     nd_stop_detection_threads();
@@ -3223,11 +3237,6 @@ int main(int argc, char *argv[])
     if (thread_sink) {
         thread_sink->Terminate();
         delete thread_sink;
-    }
-
-    if (thread_socket) {
-        thread_socket->Terminate();
-        delete thread_socket;
     }
 
 #ifdef _ND_USE_CONNTRACK

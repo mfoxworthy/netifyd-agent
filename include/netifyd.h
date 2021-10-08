@@ -259,6 +259,7 @@ typedef struct nd_global_config_t {
     char *path_uuid_serial;
     char *path_uuid_site;
     char *url_sink;
+    char *url_sink_provision;
     char *uuid;
     char *uuid_serial;
     char *uuid_site;
