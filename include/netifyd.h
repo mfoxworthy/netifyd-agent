@@ -73,8 +73,7 @@
 #define ND_MAX_PKT_QUEUE_KB     8192    // Maximum packet queue size in kB
 #define ND_PKTQ_FLUSH_DIVISOR   10      // Divisor of PKT_QUEUE_KB packets to flush.
 
-#define ND_MAX_TCP_PKTS         10      // Maximum number of TCP packets to process.
-#define ND_MAX_UDP_PKTS         8       // Maximum number of UDP packets to process.
+#define ND_MAX_DETECTION_PKTS   32      // Maximum number of packets to process.
 
 #ifndef ND_VOLATILE_STATEDIR
 #define ND_VOLATILE_STATEDIR    "/var/run/netifyd"
@@ -112,7 +111,7 @@
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 
-#define ND_PCAP_SNAPLEN         1536    // Capture snap length
+#define ND_PCAP_SNAPLEN         65535   // Capture snap length
 #define ND_PCAP_READ_TIMEOUT    500     // Milliseconds
 
 #ifndef ND_URL_SINK
@@ -267,10 +266,10 @@ typedef struct nd_global_config_t {
     size_t max_packet_queue;
     uint32_t flags;
     uint8_t digest_sink_config[SHA1_DIGEST_LENGTH];
+    uint16_t max_capture_length;
+    unsigned max_detection_pkts;
     unsigned max_fhc;
     unsigned max_flows;
-    unsigned max_tcp_pkts;
-    unsigned max_udp_pkts;
     unsigned sink_max_post_errors;
     unsigned sink_connect_timeout;
     unsigned sink_xfer_timeout;
