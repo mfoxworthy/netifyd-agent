@@ -350,8 +350,8 @@ ndCaptureThread::ndCaptureThread(
     : ndThread(iface->second, (long)cpu, true),
     iface(iface), thread_socket(thread_socket),
     capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS),
-    pcap(NULL), pcap_fd(-1), pcap_snaplen(ND_PCAP_SNAPLEN),
-    pcap_datalink_type(0), pkt_header(NULL), pkt_data(NULL),
+    pcap(NULL), pcap_fd(-1), pcap_datalink_type(0),
+    pkt_header(NULL), pkt_data(NULL),
     ts_pkt_last(0),
     flows(flow_map), stats(stats), dhc(dhc),
     pkt_queue(iface->second),
@@ -579,8 +579,10 @@ pcap_t *ndCaptureThread::OpenCapture(void)
         }
     }
     else {
-        pcap_new = pcap_open_live(tag.c_str(),
-            pcap_snaplen, 1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
+        pcap_new = pcap_open_live(
+            tag.c_str(),
+            nd_config.max_capture_length,
+            1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
         );
 #if 0
         if (pcap_new != NULL) {
@@ -1258,6 +1260,20 @@ nd_process_ip:
         else
             nf->origin = ndFlow::ORIGIN_UPPER;
 
+        // Refine according to the lowest port address
+        // XXX: The lowest port is likely the destination.
+        switch (nf->ip_protocol) {
+        case IPPROTO_TCP:
+        case IPPROTO_SCTP:
+        case IPPROTO_UDP:
+        case IPPROTO_UDPLITE:
+            if (ntohs(nf->lower_port) < ntohs(nf->upper_port))
+                nf->origin = ndFlow::ORIGIN_UPPER;
+            else if (ntohs(nf->lower_port) > ntohs(nf->upper_port))
+                nf->origin = ndFlow::ORIGIN_LOWER;
+            break;
+        }
+
         // Try to refine flow origin for TCP flows using SYN/ACK flags
         if (nf->ip_protocol == IPPROTO_TCP) {
 
@@ -1396,10 +1412,7 @@ nd_process_ip:
     }
 
     if (! nf->flags.detection_complete.load()
-        || (nf->ip_protocol == IPPROTO_UDP &&
-            nf->total_packets <= nd_config.max_udp_pkts)
-        || (nf->ip_protocol == IPPROTO_TCP &&
-            nf->total_packets <= nd_config.max_tcp_pkts)) {
+        || (nf->detection_packets <= nd_config.max_detection_pkts)) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;
