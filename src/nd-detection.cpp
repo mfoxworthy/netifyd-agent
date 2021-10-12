@@ -283,6 +283,7 @@ void ndDetectionThread::ProcessPacketQueue(bool flush)
 
 void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 {
+    bool flow_update = false;
     struct ndpi_id_struct *id_src, *id_dst;
     uint16_t ndpi_proto = NDPI_PROTOCOL_UNKNOWN;
     ndpi_protocol_match_result npmr;
@@ -323,7 +324,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     }
 
     if (! entry->flow->flags.detection_expired.load()) {
-        entry->flow->detected_protocol = ndpi_detection_process_packet(
+
+        entry->flow->detection_packets++;
+
+        ndpi_protocol ndpi_rc = ndpi_detection_process_packet(
             ndpi,
             entry->flow->ndpi_flow,
             (const uint8_t *)entry->pkt_data,
@@ -332,38 +336,22 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             id_src,
             id_dst
         );
-        entry->flow->detection_packets++;
+
+        // XXX: Preserve app_protocol.
+        entry->flow->detected_protocol.master_protocol = ndpi_rc.master_protocol;
     }
 
-//    nd_dprintf("%s: %hhu.%hhu\n", tag.c_str(),
-//        entry->flow->detected_protocol.master_protocol,
-//        entry->flow->detected_protocol.app_protocol);
+    bool check_extra_packets = (
+        entry->flow->ndpi_flow->check_extra_packets
+        && entry->flow->detection_packets < nd_config.max_detection_pkts);
 
-    if (entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN
-        || (entry->flow->ip_protocol != IPPROTO_TCP &&
-            entry->flow->ip_protocol != IPPROTO_UDP)
-        || (entry->flow->ip_protocol == IPPROTO_UDP &&
-            entry->flow->total_packets >= nd_config.max_udp_pkts)
-        || (entry->flow->ip_protocol == IPPROTO_TCP &&
-            entry->flow->total_packets >= nd_config.max_tcp_pkts)
-        || entry->flow->flags.detection_expired.load()) {
+    if (! entry->flow->flags.detection_init.load() && (
+        entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN
+        || entry->flow->detection_packets == nd_config.max_detection_pkts
+        || entry->flow->flags.detection_expired.load())) {
 
-#ifdef _ND_USE_NETLINK
-        if (ND_USE_NETLINK) {
-            entry->flow->lower_type = netlink->ClassifyAddress(&entry->flow->lower_addr);
-            entry->flow->upper_type = netlink->ClassifyAddress(&entry->flow->upper_addr);
-        }
-#endif
-        if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) {
-
-            if (ntohs(entry->flow->lower_port) == 443 || ntohs(entry->flow->upper_port) == 443) {
-                nd_dprintf("%s: UNKNOWN HTTPS: %hu <> %hu: %lu pkts.\n",
-                    tag.c_str(),
-                    ntohs(entry->flow->lower_port), ntohs(entry->flow->upper_port),
-                    entry->flow->detection_packets
-                );
-            }
-
+        if (! entry->flow->flags.detection_guessed.load()
+            && entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) {
             entry->flow->flags.detection_guessed = true;
 
             entry->flow->detected_protocol.master_protocol =
@@ -375,41 +363,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     ntohs(entry->flow->upper_port)
             );
         }
-        else if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_SSDP) {
-            if (entry->flow->ndpi_flow->packet.packet_lines_parsed_complete) {
-                string buffer;
-                for (unsigned i = 0;
-                    i < entry->flow->ndpi_flow->packet.parsed_lines; i++) {
 
-                    buffer.assign(
-                        (const char *)entry->flow->ndpi_flow->packet.line[i].ptr,
-                        entry->flow->ndpi_flow->packet.line[i].len
-                    );
-
-                    size_t n = buffer.find_first_of(":");
-                    if (n != string::npos && n > 0) {
-                        string key = buffer.substr(0, n);
-                        for_each(key.begin(), key.end(), [](char & c) {
-                            c = ::tolower(c);
-                        });
-
-                        if (key != "user-agent" && key != "server" &&
-                            ! (key.size() > 2 && key[0] == 'x' && key[1] == '-'))
-                            continue;
-
-                        string value = buffer.substr(n);
-                        value.erase(value.begin(),
-                            find_if(value.begin(), value.end(), [](int c) {
-                                return !isspace(c) && c != ':';
-                            })
-                        );
-
-                        entry->flow->ssdp.headers[key] = value;
-                    }
-                }
-            }
+#ifdef _ND_USE_NETLINK
+        if (ND_USE_NETLINK) {
+            entry->flow->lower_type = netlink->ClassifyAddress(&entry->flow->lower_addr);
+            entry->flow->upper_type = netlink->ClassifyAddress(&entry->flow->upper_addr);
         }
-
+#endif
         if (dhc != NULL) {
             string hostname;
 #ifdef _ND_USE_NETLINK
@@ -472,17 +432,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name),
                     &npmr);
             }
-#if 0
-            if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN &&
-                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate[0] != '\0') {
-                entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
-                    ndpi,
-                    entry->flow->ndpi_flow,
-                    (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate,
-                    strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate),
-                    &npmr);
-            }
-#endif
             break;
 
         case NDPI_PROTOCOL_SPOTIFY:
@@ -618,6 +567,40 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", entry->flow->ndpi_flow->protos.ssh.client_signature);
             snprintf(entry->flow->ssh.server_agent, ND_FLOW_SSH_UALEN,
                 "%s", entry->flow->ndpi_flow->protos.ssh.server_signature);
+            break;
+        case NDPI_PROTOCOL_SSDP:
+            if (entry->flow->ndpi_flow->packet.packet_lines_parsed_complete) {
+                string buffer;
+                for (unsigned i = 0;
+                    i < entry->flow->ndpi_flow->packet.parsed_lines; i++) {
+
+                    buffer.assign(
+                        (const char *)entry->flow->ndpi_flow->packet.line[i].ptr,
+                        entry->flow->ndpi_flow->packet.line[i].len
+                    );
+
+                    size_t n = buffer.find_first_of(":");
+                    if (n != string::npos && n > 0) {
+                        string key = buffer.substr(0, n);
+                        for_each(key.begin(), key.end(), [](char & c) {
+                            c = ::tolower(c);
+                        });
+
+                        if (key != "user-agent" && key != "server" &&
+                            ! (key.size() > 2 && key[0] == 'x' && key[1] == '-'))
+                            continue;
+
+                        string value = buffer.substr(n);
+                        value.erase(value.begin(),
+                            find_if(value.begin(), value.end(), [](int c) {
+                                return !isspace(c) && c != ':';
+                            })
+                        );
+
+                        entry->flow->ssdp.headers[key] = value;
+                    }
+                }
+            }
             break;
         case NDPI_PROTOCOL_BITTORRENT:
             if (entry->flow->ndpi_flow->protos.bittorrent.hash_valid) {
@@ -815,6 +798,61 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         entry->flow->update_lower_maps();
 
+        flow_update = true;
+        entry->flow->flags.detection_init = true;
+    }
+    else if (entry->flow->flags.detection_init.load()) {
+        // Flows with extra packet processing...
+        entry->flow->flags.detection_updated = false;
+
+        ndpi_proto = entry->flow->master_protocol();
+
+        switch (ndpi_proto) {
+
+        case NDPI_PROTOCOL_TLS:
+        case NDPI_PROTOCOL_QUIC:
+            if (entry->flow->ssl.cipher_suite == 0 &&
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_cipher != 0) {
+                entry->flow->ssl.cipher_suite =
+                    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_cipher;
+
+                flow_update = true;
+                entry->flow->flags.detection_updated = true;
+            }
+#if 0
+        nd_dprintf("--> PROCESS EXTRA PACKETS: hello: %s\n",
+            (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.hello_processed) ?
+            "yes" : "no");
+
+        if (entry->flow->ip_protocol != IPPROTO_TCP ||
+            ! entry->flow->ndpi_flow->l4.tcp.tls.certificate_processed) return;
+
+            if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN &&
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate[0] != '\0') {
+                entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
+                    ndpi,
+                    entry->flow->ndpi_flow,
+                    (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate,
+                    strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate),
+                    &npmr);
+            }
+#endif
+        }
+    }
+
+    if (flow_update) {
+
+        if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
+            entry->flow->print();
+
+        for (nd_plugins::iterator i = plugins->begin();
+            i != plugins->end(); i++) {
+            ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
+                i->second->GetPlugin()
+            );
+            p->ProcessFlow(entry->flow);
+        }
+
         if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
             entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN)) {
             json j;
@@ -835,18 +873,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             thread_socket->QueueWrite(json_string);
         }
 
-        if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
-            entry->flow->print();
-
-        entry->flow->flags.detection_complete = true;
-        entry->flow->release();
-
-        for (nd_plugins::iterator i = plugins->begin();
-            i != plugins->end(); i++) {
-            ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
-                i->second->GetPlugin()
-            );
-            p->ProcessFlow(entry->flow);
+        // Flow detection complete.
+        if (! check_extra_packets) {
+            entry->flow->flags.detection_complete = true;
+            entry->flow->release();
         }
     }
 }
