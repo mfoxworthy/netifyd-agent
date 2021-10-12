@@ -1411,7 +1411,7 @@ static void nd_json_process_flows(
     const string &tag, json &parent, nd_flow_map *flows, bool add_flows)
 {
     uint32_t now = time(NULL);
-    uint32_t purged = 0, expired = 0, detection_complete = 0, total = 0;
+    uint32_t purged = 0, expired = 0, active = 0, total = 0;
 
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
@@ -1435,7 +1435,7 @@ static void nd_json_process_flows(
 //            nd_dprintf("%s: Purge flow, %lus old, ttl: %lu.\n",
 //                i->second->iface->second.c_str(), now - last_seen, ttl);
 
-            if (i->second->flags.detection_complete.load() == false &&
+            if (i->second->flags.detection_init.load() == false &&
                 i->second->flags.detection_expired.load() == false) {
 
                 i->second->flags.detection_expired = true;
@@ -1515,7 +1515,7 @@ static void nd_json_process_flows(
             nd_flow_count--;
         }
         else {
-            if (i->second->flags.detection_complete.load()) {
+            if (i->second->flags.detection_init.load()) {
 
                 if (add_flows && i->second->ts_first_update &&
                     (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
@@ -1528,7 +1528,7 @@ static void nd_json_process_flows(
 
                 i->second->reset();
 
-                detection_complete++;
+                active++;
             }
 
             i++;
@@ -1536,8 +1536,8 @@ static void nd_json_process_flows(
     }
 
     nd_dprintf(
-        "%s: Purged %lu of %lu flow(s), expired: %lu, in progress: %lu\n",
-        tag.c_str(), purged, total, expired, total - detection_complete
+        "%s: Purged %lu of %lu flow(s), active: %lu, expired: %lu, awaiting detection: %lu\n",
+        tag.c_str(), purged, total, active, expired, total - active
     );
 }
 
