@@ -213,10 +213,9 @@ static void nd_config_init(void)
     nd_config.flags |= ndGF_USE_NETLINK;
 #endif
 
+    nd_config.max_detection_pkts = ND_MAX_DETECTION_PKTS;
     nd_config.max_fhc = ND_MAX_FHC_ENTRIES;
     nd_config.max_flows = 0;
-    nd_config.max_tcp_pkts = ND_MAX_TCP_PKTS;
-    nd_config.max_udp_pkts = ND_MAX_UDP_PKTS;
     nd_config.sink_max_post_errors = ND_SINK_MAX_POST_ERRORS;
     nd_config.sink_connect_timeout = ND_SINK_CONNECT_TIMEOUT;
     nd_config.sink_xfer_timeout = ND_SINK_XFER_TIMEOUT;
@@ -334,11 +333,13 @@ static int nd_config_load(void)
     ND_GF_SET_FLAG(ndGF_SSL_USE_TLSv1,
         reader.GetBoolean("netifyd", "ssl_use_tlsv1", false));
 
-    nd_config.max_tcp_pkts = (unsigned)reader.GetInteger(
-        "netifyd", "max_tcp_pkts", ND_MAX_TCP_PKTS);
+    nd_config.max_capture_length = (uint16_t)reader.GetInteger(
+        "netifyd", "max_capture_length", ND_PCAP_SNAPLEN);
 
-    nd_config.max_udp_pkts = (unsigned)reader.GetInteger(
-        "netifyd", "max_udp_pkts", ND_MAX_UDP_PKTS);
+    // TODO: Deprecated:
+    // max_tcp_pkts, max_udp_pkts
+    nd_config.max_detection_pkts = (unsigned)reader.GetInteger(
+        "netifyd", "max_detection_pkts", ND_MAX_DETECTION_PKTS);
 
     nd_config.sink_max_post_errors = (unsigned)reader.GetInteger(
         "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
