@@ -229,10 +229,12 @@ public:
         atomic_bool ip_nat;
         atomic_bool tcp_fin;
         atomic_bool dhc_hit;
+        atomic_bool detection_init;
         atomic_bool detection_complete;
         atomic_bool detection_expiring;
         atomic_bool detection_expired;
         atomic_bool detection_guessed;
+        atomic_bool detection_updated;
     } flags;
 
     union {

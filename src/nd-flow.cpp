@@ -389,7 +389,7 @@ bool ndFlow::has_ssh_server_agent(void)
 bool ndFlow::has_ssl_client_sni(void)
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        (master_protocol() == NDPI_PROTOCOL_TLS || master_protocol() == NDPI_PROTOCOL_QUIC) &&
         ssl.client_sni[0] != '\0'
     );
 }
@@ -480,11 +480,12 @@ void ndFlow::print(void)
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
 
     nd_flow_printf(
-        "%s: [%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s%s%s\n",
+        "%s: [%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s%s%s\n",
         iface_name.c_str(),
         (iface->first) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
         flags.ip_nat.load() ? 'n' : '-',
+        (flags.detection_updated.load()) ? 'u' : '-',
         (flags.detection_guessed.load()) ? 'g' : '-',
         (flags.dhc_hit.load()) ? 'd' : '-',
         (privacy_mask & PRIVATE_LOWER) ? 'p' :
@@ -781,7 +782,8 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["detected_application_name"] =
             (detected_application_name != NULL) ? detected_application_name : "Unknown";
 
-        j["detection_guessed"] = (unsigned)flags.detection_guessed.load();
+        j["detection_guessed"] = flags.detection_guessed.load();
+        j["detection_updated"] = flags.detection_updated.load();
 
         if (host_server_name[0] != '\0')
             j["host_server_name"] = host_server_name;
