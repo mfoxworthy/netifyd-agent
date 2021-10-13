@@ -158,32 +158,6 @@ pthread_mutex_t *nd_printf_mutex = NULL;
 
 atomic_uint nd_flow_count;
 
-static void nd_usage(int rc = 0, bool version = false)
-{
-    fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
-    if (version) {
-        fprintf(stderr, "\nThis application uses nDPI v%s\n"
-            "http://www.ntop.org/products/deep-packet-inspection/ndpi/\n", ndpi_revision());
-        fprintf(stderr, "\n  This program comes with ABSOLUTELY NO WARRANTY.\n"
-            "  This is free software, and you are welcome to redistribute it\n"
-            "  under certain conditions according to the GNU General Public\n"
-            "  License version 3, or (at your option) any later version.\n");
-#ifdef PACKAGE_BUGREPORT
-        fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
-#endif
-    }
-    else {
-        fprintf(stderr, "Basic options:\n"
-            "\t--status\tdisplay agent status\n"
-            "\t--provision\tprovision agent\n"
-            "\t--enable-sink\tenable/disable sink uploads\n"
-            "\t--disable-sink\n\n"
-            "See netifyd(8) and netifyd.conf(5) for further help.\n");
-    }
-
-    exit(rc);
-}
-
 static void nd_config_init(void)
 {
     nd_conf_filename = strdup(ND_CONF_FILE_NAME);
@@ -589,6 +563,108 @@ static int nd_config_set_option(int option)
         printf("Configuration modified: %s\n", nd_conf_filename);
 
     return 0;
+}
+
+static void nd_usage(int rc = 0, bool version = false)
+{
+    fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
+    if (version) {
+        fprintf(stderr, "\nThis application uses nDPI v%s\n"
+            "http://www.ntop.org/products/deep-packet-inspection/ndpi/\n", ndpi_revision());
+        fprintf(stderr, "\n  This program comes with ABSOLUTELY NO WARRANTY.\n"
+            "  This is free software, and you are welcome to redistribute it\n"
+            "  under certain conditions according to the GNU General Public\n"
+            "  License version 3, or (at your option) any later version.\n");
+#ifdef PACKAGE_BUGREPORT
+        fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
+#endif
+#ifdef _ND_USE_PLUGINS
+        if (nd_conf_filename == NULL)
+            nd_conf_filename = strdup(ND_CONF_FILE_NAME);
+
+        nd_config_load();
+
+        ND_GF_SET_FLAG(ndGF_QUIET, true);
+
+        if (nd_config.plugin_services.size())
+            fprintf(stderr, "\nService plugins:\n");
+
+        for (auto i : nd_config.plugin_services) {
+
+            string plugin_version("?.?.?");
+
+            try {
+                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
+                loader->GetPlugin()->GetVersion(plugin_version);
+            }
+            catch (...) { }
+
+            fprintf(stderr, "  %s: %s: v%s\n",
+                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
+        }
+
+        if (nd_config.plugin_tasks.size())
+            fprintf(stderr, "\nTask plugins:\n");
+
+        for (auto i : nd_config.plugin_tasks) {
+
+            string plugin_version("?.?.?");
+
+            try {
+                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
+                loader->GetPlugin()->GetVersion(plugin_version);
+            }
+            catch (...) { }
+
+            fprintf(stderr, "  %s: %s: v%s\n",
+                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
+        }
+
+        if (nd_config.plugin_detections.size())
+            fprintf(stderr, "\nDetection plugins:\n");
+
+        for (auto i : nd_config.plugin_detections) {
+
+            string plugin_version("?.?.?");
+
+            try {
+                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
+                loader->GetPlugin()->GetVersion(plugin_version);
+            }
+            catch (...) { }
+
+            fprintf(stderr, "  %s: %s: v%s\n",
+                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
+        }
+
+        if (nd_config.plugin_stats.size())
+            fprintf(stderr, "\nStatistics plugins:\n");
+
+        for (auto i : nd_config.plugin_stats) {
+
+            string plugin_version("?.?.?");
+
+            try {
+                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
+                loader->GetPlugin()->GetVersion(plugin_version);
+            }
+            catch (...) { }
+
+            fprintf(stderr, "  %s: %s: v%s\n",
+                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
+        }
+#endif
+    }
+    else {
+        fprintf(stderr, "\nBasic options:\n"
+            "  --status\tdisplay agent status\n"
+            "  --provision\tprovision agent\n"
+            "  --enable-sink\tenable/disable sink uploads\n"
+            "  --disable-sink\n\n"
+            "See netifyd(8) and netifyd.conf(5) for further help.\n");
+    }
+
+    exit(rc);
 }
 
 static void nd_force_reset(void)

@@ -17,7 +17,7 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20210420
+#define _ND_PLUGIN_VER  0x20211013
 
 #define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
 #define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
@@ -61,6 +61,8 @@ public:
     virtual void *Entry(void) = 0;
 
     virtual void Reload(void) = 0;
+
+    virtual void GetVersion(const string &version) = 0;
 
     enum ndPluginType
     {
