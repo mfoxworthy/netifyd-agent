@@ -62,7 +62,7 @@ public:
 
     virtual void Reload(void) = 0;
 
-    virtual void GetVersion(const string &version) = 0;
+    virtual void GetVersion(string &version) = 0;
 
     enum ndPluginType
     {
