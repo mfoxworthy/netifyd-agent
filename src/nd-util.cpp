@@ -144,6 +144,8 @@ extern pthread_mutex_t *nd_printf_mutex;
 
 void nd_printf(const char *format, ...)
 {
+    if (ND_QUIET) return;
+
     va_list ap;
     va_start(ap, format);
     nd_printf(format, ap);
@@ -152,6 +154,8 @@ void nd_printf(const char *format, ...)
 
 void nd_printf(const char *format, va_list ap)
 {
+    if (ND_QUIET) return;
+
     pthread_mutex_lock(nd_printf_mutex);
 
     vsyslog(LOG_DAEMON | LOG_INFO, format, ap);
@@ -161,25 +165,23 @@ void nd_printf(const char *format, va_list ap)
 
 void nd_dprintf(const char *format, ...)
 {
-    if (ND_DEBUG) {
+    if (! ND_DEBUG) return;
 
-        va_list ap;
-        va_start(ap, format);
-        nd_dprintf(format, ap);
-        va_end(ap);
-    }
+    va_list ap;
+    va_start(ap, format);
+    nd_dprintf(format, ap);
+    va_end(ap);
 }
 
 void nd_dprintf(const char *format, va_list ap)
 {
-    if (ND_DEBUG) {
+    if (! ND_DEBUG) return;
 
-        pthread_mutex_lock(nd_printf_mutex);
+    pthread_mutex_lock(nd_printf_mutex);
 
-        vfprintf(stderr, format, ap);
+    vfprintf(stderr, format, ap);
 
-        pthread_mutex_unlock(nd_printf_mutex);
-    }
+    pthread_mutex_unlock(nd_printf_mutex);
 }
 
 void nd_flow_printf(const char *format, ...)

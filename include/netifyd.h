@@ -198,7 +198,7 @@ enum nd_global_flags {
     ndGF_DEBUG = 0x1,
     ndGF_DEBUG_UPLOAD = 0x2,
     ndGF_DEBUG_WITH_ETHERS = 0x4,
-    ndGF_FREE_0x8 = 0x8,
+    ndGF_QUIET = 0x8,
     ndGF_OVERRIDE_SINK_CONFIG = 0x10,
     ndGF_CAPTURE_UNKNOWN_FLOWS = 0x20,
     ndGF_PRIVATE_EXTADDR = 0x40,
@@ -224,6 +224,7 @@ enum nd_global_flags {
 #define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
 #define ND_DEBUG_UPLOAD (nd_config.flags & ndGF_DEBUG_UPLOAD)
 #define ND_DEBUG_WITH_ETHERS (nd_config.flags & ndGF_DEBUG_WITH_ETHERS)
+#define ND_QUIET (nd_config.flags & ndGF_QUIET)
 #define ND_OVERRIDE_SINK_CONFIG (nd_config.flags & ndGF_OVERRIDE_SINK_CONFIG)
 #define ND_CAPTURE_UNKNOWN_FLOWS (nd_config.flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
 #define ND_PRIVATE_EXTADDR (nd_config.flags & ndGF_PRIVATE_EXTADDR)
