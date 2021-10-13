@@ -311,7 +311,6 @@ uint16_t ndFlow::master_protocol(void)
     case NDPI_PROTOCOL_MAIL_IMAPS:
     case NDPI_PROTOCOL_MAIL_POPS:
     case NDPI_PROTOCOL_MAIL_SMTPS:
-    case NDPI_PROTOCOL_OSCAR:
     case NDPI_PROTOCOL_TLS:
     case NDPI_PROTOCOL_SSL_NO_CERT:
     case NDPI_PROTOCOL_TOR:

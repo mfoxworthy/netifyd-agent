@@ -422,7 +422,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         case NDPI_PROTOCOL_MAIL_SMTPS:
         case NDPI_PROTOCOL_MAIL_POPS:
         case NDPI_PROTOCOL_SSL_NO_CERT:
-        case NDPI_PROTOCOL_OSCAR:
         case NDPI_PROTOCOL_QUIC:
             if (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
                 entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
