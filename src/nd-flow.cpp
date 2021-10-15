@@ -149,6 +149,10 @@ ndFlow::~ndFlow()
         free(detected_application_name);
         detected_application_name = NULL;
     }
+    if (has_ssl_server_names()) {
+        free(ssl.server_names);
+        ssl.server_names = NULL;
+    }
 }
 
 void ndFlow::hash(const string &device,
@@ -210,10 +214,6 @@ void ndFlow::hash(const string &device,
         if (has_ssl_client_sni()) {
             sha1_write(&ctx,
                 ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_TLS_CNLEN));
-        }
-        if (has_ssl_server_cn()) {
-            sha1_write(&ctx,
-                ssl.server_cn, strnlen(ssl.server_cn, ND_FLOW_TLS_CNLEN));
         }
         if (has_bt_info_hash()) {
             sha1_write(&ctx, bt.info_hash, ND_FLOW_BTIHASH_LEN);
@@ -393,11 +393,11 @@ bool ndFlow::has_ssl_client_sni(void)
     );
 }
 
-bool ndFlow::has_ssl_server_cn(void)
+bool ndFlow::has_ssl_server_names(void)
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
-        ssl.server_cn[0] != '\0'
+        ssl.server_names_length > 0 && ssl.server_names != '\0'
     );
 }
 
@@ -479,7 +479,7 @@ void ndFlow::print(void)
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
 
     nd_flow_printf(
-        "%s: [%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s%s%s\n",
+        "%s: [%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
         iface_name.c_str(),
         (iface->first) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
@@ -502,11 +502,9 @@ void ndFlow::print(void)
         (host_server_name[0] != '\0' || has_mdns_answer()) ? " H: " : "",
         (host_server_name[0] != '\0' || has_mdns_answer()) ?
             has_mdns_answer() ? mdns.answer : host_server_name : "",
-        (has_ssl_client_sni() || has_ssl_server_cn()) ? " SSL" : "",
+        (has_ssl_client_sni()) ? " SSL" : "",
         (has_ssl_client_sni()) ? " C: " : "",
         (has_ssl_client_sni()) ? ssl.client_sni : "",
-        (has_ssl_server_cn()) ? " S: " : "",
-        (has_ssl_server_cn()) ? ssl.server_cn : "",
         (has_bt_info_hash()) ? " BT-IH: " : "",
         (has_bt_info_hash()) ? digest.c_str() : ""
     );
@@ -826,8 +824,17 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
             if (has_ssl_client_sni())
                 j["ssl"]["client_sni"] = ssl.client_sni;
 
-            if (has_ssl_server_cn())
-                j["ssl"]["server_cn"] = ssl.server_cn;
+            if (has_ssl_server_names()) {
+                vector<string> names;
+                stringstream ss(ssl.server_names);
+                while (ss.good()) {
+                    string name;
+                    getline(ss, name, ',');
+                    names.push_back(name);
+                }
+
+                j["ssl"]["server_names"] = names;
+            }
 
             if (has_ssl_server_organization())
                 j["ssl"]["organization"] = ssl.server_organization;

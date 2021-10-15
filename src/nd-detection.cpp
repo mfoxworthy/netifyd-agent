@@ -92,6 +92,7 @@ using namespace std;
 #include "nd-signal.h"
 #include "nd-plugin.h"
 #include "nd-detection.h"
+#include "nd-tls-alpn.h"
 
 // Enable flow hash cache debug logging
 //#define _ND_LOG_FHC             1
@@ -507,23 +508,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             snprintf(entry->flow->ssl.client_sni, ND_FLOW_TLS_CNLEN,
                 "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name);
-/*
-            snprintf(entry->flow->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate);
-            snprintf(entry->flow->ssl.server_organization, ND_FLOW_TLS_ORGLEN,
-                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_organization);
-*/
             snprintf(entry->flow->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
                 "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_client);
-            snprintf(entry->flow->ssl.server_ja3, ND_FLOW_TLS_JA3LEN,
-                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_server);
-
-            if (entry->flow->ndpi_flow->l4.tcp.tls_fingerprint_len) {
-                memcpy(entry->flow->ssl.cert_fingerprint,
-                    entry->flow->ndpi_flow->l4.tcp.tls_sha1_certificate_fingerprint,
-                    ND_FLOW_TLS_HASH_LEN);
-                entry->flow->ssl.cert_fingerprint_found = true;
-            }
 
             break;
         case NDPI_PROTOCOL_HTTP:
@@ -804,9 +790,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         // Flows with extra packet processing...
         entry->flow->flags.detection_updated = false;
 
-        ndpi_proto = entry->flow->master_protocol();
-
-        switch (ndpi_proto) {
+        switch (entry->flow->master_protocol()) {
 
         case NDPI_PROTOCOL_TLS:
         case NDPI_PROTOCOL_QUIC:
@@ -818,7 +802,98 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 flow_update = true;
                 entry->flow->flags.detection_updated = true;
             }
+
+            if (entry->flow->ssl.server_ja3[0] == '\0' &&
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_server[0] != '\0') {
+                snprintf(entry->flow->ssl.server_ja3, ND_FLOW_TLS_JA3LEN, "%s",
+                    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_server);
+                flow_update = true;
+                entry->flow->flags.detection_updated = true;
+            }
+
+            if (! entry->flow->ssl.cert_fingerprint_found &&
+                entry->flow->ndpi_flow->l4.tcp.tls.fingerprint_set) {
+                memcpy(entry->flow->ssl.cert_fingerprint,
+                    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.sha1_certificate_fingerprint,
+                    ND_FLOW_TLS_HASH_LEN);
+                flow_update = true;
+                entry->flow->ssl.cert_fingerprint_found = true;
+                entry->flow->flags.detection_updated = true;
+            }
+
+            if (entry->flow->ssl.server_names_length <
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names_len &&
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names) {
+                entry->flow->ssl.server_names_length = entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names_len;
+                entry->flow->ssl.server_names = (char *)realloc(
+                    (void *)entry->flow->ssl.server_names,
+                    entry->flow->ssl.server_names_length
+                );
+                if (entry->flow->ssl.server_names == NULL)
+                    throw ndDetectionThreadException(strerror(ENOMEM));
+                memcpy(
+                    entry->flow->ssl.server_names,
+                    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names,
+                    entry->flow->ssl.server_names_length
+                );
+                flow_update = true;
+                entry->flow->flags.detection_updated = true;
+            }
+
+            if (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.alpn) {
+
+                //nd_dprintf("%s: TLS ALPN: %s\n", tag.c_str(),
+                //    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.alpn);
+                stringstream ss(
+                    entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.alpn
+                );
+
+                while (ss.good()) {
+                    string alpn;
+                    getline(ss, alpn, ',');
+
+                    //nd_dprintf("%s: TLS ALPN: search for: %s\n", tag.c_str(),
+                    //    alpn.c_str());
+
+                    for (int i = 0; ; i++) {
+                        if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
+                        if (strncmp(alpn.c_str(),
+                            nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
+                        if (nd_alpn_proto_map[i].proto_id ==
+                                entry->flow->detected_protocol.master_protocol)
+                            continue;
+                        entry->flow->detected_protocol.master_protocol =
+                            nd_alpn_proto_map[i].proto_id;
+
+                        char *alpn_protocol = strdup(
+                            ndpi_get_proto_name(ndpi,
+                                entry->flow->detected_protocol.master_protocol
+                            )
+                        );
+
+                        nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
+                            tag.c_str(), alpn.c_str(),
+                            entry->flow->detected_protocol_name, alpn_protocol);
+
+                        free(entry->flow->detected_protocol_name);
+                        entry->flow->detected_protocol_name = alpn_protocol;
+
+                        flow_update = true;
+                        entry->flow->flags.detection_updated = true;
+                        break;
+                    }
+                }
+
+                free(entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.alpn);
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.alpn = NULL;
+            }
 #if 0
+/*
+            snprintf(entry->flow->ssl.server_cn, ND_FLOW_TLS_CNLEN,
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate);
+            snprintf(entry->flow->ssl.server_organization, ND_FLOW_TLS_ORGLEN,
+                "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_organization);
+*/
         nd_dprintf("--> PROCESS EXTRA PACKETS: hello: %s\n",
             (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.hello_processed) ?
             "yes" : "no");
@@ -838,6 +913,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 #endif
         }
     }
+
+    // Flow detection complete.
+    if (entry->flow->flags.detection_init.load() && ! check_extra_packets)
+        entry->flow->flags.detection_complete = true;
 
     if (flow_update) {
 
@@ -871,13 +950,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             thread_socket->QueueWrite(json_string);
         }
-
-        // Flow detection complete.
-        if (! check_extra_packets) {
-            entry->flow->flags.detection_complete = true;
-            entry->flow->release();
-        }
     }
+
+    if (entry->flow->flags.detection_complete.load())
+        entry->flow->release();
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
