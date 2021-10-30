@@ -92,3 +92,7 @@ start_service() {
 	config_load @PACKAGE_TARNAME@
 	config_foreach start_@PACKAGE_TARNAME@ @PACKAGE_TARNAME@
 }
+
+reload_service() {
+	procd_send_signal @PACKAGE_TARNAME@
+}
