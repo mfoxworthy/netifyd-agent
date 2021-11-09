@@ -723,7 +723,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 (entry->flow->lower_type == ndNETLINK_ATYPE_UNKNOWN &&
                 entry->flow->upper_type == ndNETLINK_ATYPE_LOCALIP)) {
 
-                thread_conntrack->ClassifyFlow(entry->flow);
+                // Update flow with any collected information from the
+                // connection tracker (CT ID, mark, NAT'd).
+                thread_conntrack->UpdateFlow(entry->flow);
             }
         }
 #endif
