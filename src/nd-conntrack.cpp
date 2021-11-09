@@ -526,7 +526,7 @@ void ndConntrackThread::PrintFlow(ndFlow *flow, string &text)
     text = os.str();
 }
 
-void ndConntrackThread::ClassifyFlow(ndFlow *flow)
+void ndConntrackThread::UpdateFlow(ndFlow *flow)
 {
     sha1 ctx;
     string digest;
@@ -579,6 +579,11 @@ void ndConntrackThread::ClassifyFlow(ndFlow *flow)
 
         ndConntrackFlow *ct_flow = flow_iter->second;
 
+        flow->ct_id = ct_flow->id;
+        flow->ct_mark = ct_flow->mark;
+
+        ct_flow->updated_at = time(NULL);
+
         switch (ct_flow->l3_proto) {
         case AF_INET:
             sa_orig_src = reinterpret_cast<struct sockaddr_in *>(
@@ -597,14 +602,8 @@ void ndConntrackThread::ClassifyFlow(ndFlow *flow)
             }
 #endif
             if (memcmp(sa_orig_src, sa_repl_dst, sizeof(struct sockaddr_in)) ||
-                memcmp(sa_orig_dst, sa_repl_src, sizeof(struct sockaddr_in))) {
+                memcmp(sa_orig_dst, sa_repl_src, sizeof(struct sockaddr_in)))
                 flow->flags.ip_nat = true;
-#ifdef _ND_USE_CONNTRACK
-                flow->ct_id = ct_flow->id;
-                flow->ct_mark = ct_flow->mark;
-#endif
-                ct_flow->updated_at = time(NULL);
-            }
 
             break;
 
@@ -625,14 +624,8 @@ void ndConntrackThread::ClassifyFlow(ndFlow *flow)
             }
 #endif
             if (memcmp(sa6_orig_src, sa6_repl_dst, sizeof(struct sockaddr_in6)) ||
-                memcmp(sa6_orig_dst, sa6_repl_src, sizeof(struct sockaddr_in6))) {
+                memcmp(sa6_orig_dst, sa6_repl_src, sizeof(struct sockaddr_in6)))
                 flow->flags.ip_nat = true;
-#ifdef _ND_USE_CONNTRACK
-                flow->ct_id = ct_flow->id;
-                flow->ct_mark = ct_flow->mark;
-#endif
-                ct_flow->updated_at = time(NULL);
-            }
 
             break;
         }
@@ -685,9 +678,6 @@ ndConntrackFlow::ndConntrackFlow(uint32_t id, struct nf_conntrack *ct)
 void ndConntrackFlow::Update(struct nf_conntrack *ct)
 {
     updated_at = time(NULL);
-
-    const struct nfct_bitmask *label_mask;
-    label_mask = (const struct nfct_bitmask *)nfct_get_attr(ct, ATTR_CONNLABELS);
 
     mark = nfct_get_attr_u32(ct, ATTR_MARK);
 

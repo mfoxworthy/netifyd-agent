@@ -97,7 +97,7 @@ public:
     void ProcessConntrackEvent(
         enum nf_conntrack_msg_type type, struct nf_conntrack *ct);
 
-    void ClassifyFlow(ndFlow *flow);
+    void UpdateFlow(ndFlow *flow);
     void PurgeFlows(void);
 
 #ifdef _ND_DEBUG_CONNTRACK
