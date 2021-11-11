@@ -17,7 +17,7 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20211013
+#define _ND_PLUGIN_VER  0x20211111
 
 #define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
 #define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
@@ -60,9 +60,15 @@ public:
 
     virtual void *Entry(void) = 0;
 
-    virtual void Reload(void) = 0;
-
     virtual void GetVersion(string &version) = 0;
+
+    enum ndPluginEvent
+    {
+        EVENT_RELOAD,
+        EVENT_STATUS_UPDATE
+    };
+
+    virtual void ProcessEvent(ndPluginEvent event, void *param = NULL) { };
 
     enum ndPluginType
     {
