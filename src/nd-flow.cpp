@@ -297,7 +297,7 @@ void ndFlow::release(void)
     capture.clear();
 }
 
-uint16_t ndFlow::master_protocol(void)
+uint16_t ndFlow::master_protocol(void) const
 {
     uint16_t proto = (detected_protocol.master_protocol !=
         NDPI_PROTOCOL_UNKNOWN) ?
@@ -334,7 +334,7 @@ uint16_t ndFlow::master_protocol(void)
     return proto;
 }
 
-bool ndFlow::has_dhcp_fingerprint(void)
+bool ndFlow::has_dhcp_fingerprint(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_DHCP ||
@@ -343,7 +343,7 @@ bool ndFlow::has_dhcp_fingerprint(void)
     );
 }
 
-bool ndFlow::has_dhcp_class_ident(void)
+bool ndFlow::has_dhcp_class_ident(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_DHCP ||
@@ -352,7 +352,7 @@ bool ndFlow::has_dhcp_class_ident(void)
     );
 }
 
-bool ndFlow::has_http_user_agent(void)
+bool ndFlow::has_http_user_agent(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_HTTP &&
@@ -360,14 +360,14 @@ bool ndFlow::has_http_user_agent(void)
     );
 }
 
-bool ndFlow::has_http_url(void)
+bool ndFlow::has_http_url(void) const
 {
     return (
         http.url[0] != '\0'
     );
 }
 
-bool ndFlow::has_ssh_client_agent(void)
+bool ndFlow::has_ssh_client_agent(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_SSH ||
@@ -376,7 +376,7 @@ bool ndFlow::has_ssh_client_agent(void)
     );
 }
 
-bool ndFlow::has_ssh_server_agent(void)
+bool ndFlow::has_ssh_server_agent(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_SSH ||
@@ -385,7 +385,7 @@ bool ndFlow::has_ssh_server_agent(void)
     );
 }
 
-bool ndFlow::has_ssl_client_sni(void)
+bool ndFlow::has_ssl_client_sni(void) const
 {
     return (
         (master_protocol() == NDPI_PROTOCOL_TLS || master_protocol() == NDPI_PROTOCOL_QUIC) &&
@@ -393,7 +393,7 @@ bool ndFlow::has_ssl_client_sni(void)
     );
 }
 
-bool ndFlow::has_ssl_server_names(void)
+bool ndFlow::has_ssl_server_names(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
@@ -401,7 +401,7 @@ bool ndFlow::has_ssl_server_names(void)
     );
 }
 
-bool ndFlow::has_ssl_server_organization(void)
+bool ndFlow::has_ssl_server_organization(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
@@ -409,7 +409,7 @@ bool ndFlow::has_ssl_server_organization(void)
     );
 }
 
-bool ndFlow::has_ssl_client_ja3(void)
+bool ndFlow::has_ssl_client_ja3(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
@@ -417,7 +417,7 @@ bool ndFlow::has_ssl_client_ja3(void)
     );
 }
 
-bool ndFlow::has_ssl_server_ja3(void)
+bool ndFlow::has_ssl_server_ja3(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
@@ -425,7 +425,7 @@ bool ndFlow::has_ssl_server_ja3(void)
     );
 }
 
-bool ndFlow::has_bt_info_hash(void)
+bool ndFlow::has_bt_info_hash(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_BITTORRENT ||
@@ -434,7 +434,7 @@ bool ndFlow::has_bt_info_hash(void)
     );
 }
 
-bool ndFlow::has_mdns_answer(void)
+bool ndFlow::has_mdns_answer(void) const
 {
     return (
         (detected_protocol.master_protocol == NDPI_PROTOCOL_MDNS ||
@@ -443,7 +443,7 @@ bool ndFlow::has_mdns_answer(void)
     );
 }
 
-bool ndFlow::has_ssdp_headers(void)
+bool ndFlow::has_ssdp_headers(void) const
 {
     return (
         detected_protocol.master_protocol == NDPI_PROTOCOL_SSDP &&
@@ -451,7 +451,7 @@ bool ndFlow::has_ssdp_headers(void)
     );
 }
 
-void ndFlow::print(void)
+void ndFlow::print(void) const
 {
     const char *lower_name = lower_ip, *upper_name = upper_ip;
 

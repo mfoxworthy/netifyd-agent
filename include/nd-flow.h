@@ -275,22 +275,22 @@ public:
 
     void release(void);
 
-    uint16_t master_protocol(void);
+    uint16_t master_protocol(void) const;
 
-    bool has_dhcp_fingerprint(void);
-    bool has_dhcp_class_ident(void);
-    bool has_http_user_agent(void);
-    bool has_http_url(void);
-    bool has_ssh_client_agent(void);
-    bool has_ssh_server_agent(void);
-    bool has_ssl_client_sni(void);
-    bool has_ssl_server_names(void);
-    bool has_ssl_server_organization(void);
-    bool has_ssl_client_ja3(void);
-    bool has_ssl_server_ja3(void);
-    bool has_bt_info_hash(void);
-    bool has_mdns_answer(void);
-    bool has_ssdp_headers(void);
+    bool has_dhcp_fingerprint(void) const;
+    bool has_dhcp_class_ident(void) const;
+    bool has_http_user_agent(void) const;
+    bool has_http_url(void) const;
+    bool has_ssh_client_agent(void) const;
+    bool has_ssh_server_agent(void) const;
+    bool has_ssl_client_sni(void) const;
+    bool has_ssl_server_names(void) const;
+    bool has_ssl_server_organization(void) const;
+    bool has_ssl_client_ja3(void) const;
+    bool has_ssl_server_ja3(void) const;
+    bool has_bt_info_hash(void) const;
+    bool has_mdns_answer(void) const;
+    bool has_ssdp_headers(void) const;
 
     void print(void);
 

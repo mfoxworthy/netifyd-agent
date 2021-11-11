@@ -3212,6 +3212,7 @@ int main(int argc, char *argv[])
             inotify->RefreshWatches();
 #endif
             nd_dump_stats();
+            nd_plugin_event(ndPlugin::EVENT_STATUS_UPDATE);
 #ifdef _ND_USE_PLUGINS
             nd_plugin_reap_tasks();
 #endif
