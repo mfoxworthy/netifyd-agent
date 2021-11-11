@@ -207,7 +207,7 @@ deploy-pfsense:
 
 deploy-debug: all
 	rsync -av --progress --inplace src/.libs/netifyd $(DEBUG_HOST):/usr/sbin/
-	rsync -avl --progress --inplace src/.libs/libnetifyd.so.0.0.0 $(DEBUG_HOST):/usr/lib64/
+	rsync -avl --progress --inplace src/.libs/libnetifyd.so* $(DEBUG_HOST):/usr/lib64/
 
 deploy-debug-archive: all
 	mkdir -p /tmp/netifyd-debug/usr/{sbin,lib64}
