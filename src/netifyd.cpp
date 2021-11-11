@@ -1170,20 +1170,21 @@ static void nd_plugin_stop_stats(void)
     plugin_stats.clear();
 }
 
-static void nd_plugin_reload(void)
+static void nd_plugin_event(
+    ndPlugin::ndPluginEvent event, void *param = NULL)
 {
     for (nd_plugins::iterator i = plugin_services.begin();
         i != plugin_services.end(); i++)
-        i->second->GetPlugin()->Reload();
+        i->second->GetPlugin()->ProcessEvent(event, param);
     for (nd_plugins::iterator i = plugin_tasks.begin();
         i != plugin_tasks.end(); i++)
-        i->second->GetPlugin()->Reload();
+        i->second->GetPlugin()->ProcessEvent(event, param);
     for (nd_plugins::iterator i = plugin_detections.begin();
         i != plugin_detections.end(); i++)
-        i->second->GetPlugin()->Reload();
+        i->second->GetPlugin()->ProcessEvent(event, param);
     for (nd_plugins::iterator i = plugin_stats.begin();
         i != plugin_stats.end(); i++)
-        i->second->GetPlugin()->Reload();
+        i->second->GetPlugin()->ProcessEvent(event, param);
 }
 
 #endif // _USE_ND_PLUGINS
@@ -3272,7 +3273,7 @@ int main(int argc, char *argv[])
         }
 
         if (sig == SIGHUP) {
-            nd_plugin_reload();
+            nd_plugin_event(ndPlugin::EVENT_RELOAD);
             continue;
         }
 
