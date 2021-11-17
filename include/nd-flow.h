@@ -292,7 +292,7 @@ public:
     bool has_mdns_answer(void) const;
     bool has_ssdp_headers(void) const;
 
-    void print(void);
+    void print(void) const;
 
     void update_lower_maps(void);
     void get_lower_map(
