@@ -103,7 +103,7 @@
 #define ND_JSON_FILE_GROUP      "wheel"
 #endif
 #define ND_JSON_FILE_MODE       0600
-#define ND_JSON_FILE_REQUEST    ND_VOLATILE_STATEDIR "/sink-request.json"
+#define ND_JSON_FILE_EXPORT     ND_VOLATILE_STATEDIR "/sink-request.json"
 #define ND_JSON_FILE_RESPONSE   ND_VOLATILE_STATEDIR "/sink-response.json"
 #define ND_JSON_FILE_BAD_SEND   ND_VOLATILE_STATEDIR "/sink-bad-request.json"
 #define ND_JSON_FILE_BAD_RECV   ND_VOLATILE_STATEDIR "/sink-bad-response.json"
@@ -210,7 +210,7 @@ enum nd_global_flags {
     ndGF_USE_SINK = 0x1000,
     ndGF_USE_DHC = 0x2000,
     ndGF_USE_FHC = 0x4000,
-    ndGF_JSON_SAVE = 0x8000,
+    ndGF_EXPORT_JSON = 0x8000,
     ndGF_VERBOSE = 0x10000,
     ndGF_REPLAY_DELAY = 0x20000,
     ndGF_REMAIN_IN_FOREGROUND = 0x40000,
@@ -235,7 +235,7 @@ enum nd_global_flags {
 #define ND_USE_SINK (nd_config.flags & ndGF_USE_SINK)
 #define ND_USE_DHC (nd_config.flags & ndGF_USE_DHC)
 #define ND_USE_FHC (nd_config.flags & ndGF_USE_FHC)
-#define ND_JSON_SAVE (nd_config.flags & ndGF_JSON_SAVE)
+#define ND_EXPORT_JSON (nd_config.flags & ndGF_EXPORT_JSON)
 #define ND_VERBOSE (nd_config.flags & ndGF_VERBOSE)
 #define ND_REPLAY_DELAY (nd_config.flags & ndGF_REPLAY_DELAY)
 #define ND_REMAIN_IN_FOREGROUND (nd_config.flags & ndGF_REMAIN_IN_FOREGROUND)
@@ -254,7 +254,7 @@ enum nd_global_flags {
 typedef struct nd_global_config_t {
     char *path_config;
     char *path_sink_config;
-    char *path_json;
+    char *path_export_json;
     char *path_uuid;
     char *path_uuid_serial;
     char *path_uuid_site;

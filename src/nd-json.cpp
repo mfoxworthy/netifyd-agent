@@ -143,7 +143,7 @@ void ndJsonStatus::Parse(const string &json_string)
 void ndJsonResponse::Parse(const string &json_string)
 {
     try {
-        if (ND_JSON_SAVE)
+        if (ND_EXPORT_JSON)
             nd_json_save_to_file(json_string, ND_JSON_FILE_RESPONSE);
 
         json j = json::parse(json_string);
