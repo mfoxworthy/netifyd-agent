@@ -165,7 +165,7 @@ static void nd_config_init(void)
     nd_config.h_flow = stderr;
 
     nd_config.path_config = NULL;
-    nd_config.path_json = NULL;
+    nd_config.path_export_json = NULL;
     nd_config.path_sink_config = strdup(ND_CONF_SINK_PATH);
     nd_config.path_uuid = NULL;
     nd_config.path_uuid_serial = NULL;
@@ -285,8 +285,12 @@ static int nd_config_load(void)
     ND_GF_SET_FLAG(ndGF_UPLOAD_NAT_FLOWS, reader.GetBoolean(
         "netifyd", "upload_nat_flows", false));
 
-    ND_GF_SET_FLAG(ndGF_JSON_SAVE,
-        reader.GetBoolean("netifyd", "json_save", false));
+    ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
+        reader.GetBoolean("netifyd", "export_json", false));
+    if (! ND_EXPORT_JSON) {
+        ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
+            reader.GetBoolean("netifyd", "json_save", false));
+    }
 
     nd_config.max_backlog = reader.GetInteger(
         "netifyd", "max_backlog_kb", ND_MAX_BACKLOG_KB) * 1024;
@@ -2033,7 +2037,7 @@ static void nd_dump_stats(void)
         nd_json_process_flows(
             iface_name,
             jf, flows[i->first],
-            (ND_USE_SINK || ND_JSON_SAVE)
+            (ND_USE_SINK || ND_EXPORT_JSON)
         );
 
         if (jf.size()) json_flows[iface_name] = jf;
@@ -2072,7 +2076,7 @@ static void nd_dump_stats(void)
             e.what());
     }
 
-    if (ND_USE_SINK || ND_JSON_SAVE) j["flows"] = json_flows;
+    if (ND_USE_SINK || ND_EXPORT_JSON) j["flows"] = json_flows;
 
 #ifdef _ND_USE_PLUGINS
     if (ND_USE_SINK) {
@@ -2086,7 +2090,7 @@ static void nd_dump_stats(void)
     }
 #endif
 
-    if (ND_USE_SINK || ND_JSON_SAVE)
+    if (ND_USE_SINK || ND_EXPORT_JSON)
         nd_json_to_string(j, json_string, ND_DEBUG);
 
     if (ND_USE_SINK) {
@@ -2123,12 +2127,12 @@ static void nd_dump_stats(void)
     }
 
     try {
-        if (ND_JSON_SAVE)
-            nd_json_save_to_file(json_string, nd_config.path_json);
+        if (ND_EXPORT_JSON)
+            nd_json_save_to_file(json_string, nd_config.path_export_json);
     }
     catch (runtime_error &e) {
-        nd_printf("Error writing JSON playload to file: %s: %s\n",
-            nd_config.path_json, e.what());
+        nd_printf("Error writing JSON export playload to file: %s: %s\n",
+            nd_config.path_export_json, e.what());
     }
 
     if (ND_DEBUG) {
@@ -2634,7 +2638,7 @@ int main(int argc, char *argv[])
         { "help", 0, 0, 'h' },
         { "internal", 1, 0, 'I' },
         { "interval", 1, 0, 'i' },
-        { "json", 1, 0, 'j' },
+        { "export-json", 1, 0, 'j' },
         { "protocols", 0, 0, 'P' },
         { "provision", 0, 0, 'p' },
         { "remain-in-foreground", 0, 0, 'R' },
@@ -2792,7 +2796,7 @@ int main(int argc, char *argv[])
             nd_config.update_interval = atoi(optarg);
             break;
         case 'j':
-            nd_config.path_json = strdup(optarg);
+            nd_config.path_export_json = strdup(optarg);
             break;
         case 'l':
             nd_config.flags &= ~ndGF_USE_NETLINK;
@@ -2882,8 +2886,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (nd_config.path_json == NULL)
-        nd_config.path_json = strdup(ND_JSON_FILE_REQUEST);
+    if (nd_config.path_export_json == NULL)
+        nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
 
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
@@ -2904,7 +2908,7 @@ int main(int argc, char *argv[])
         ND_GF_SET_FLAG(ndGF_USE_DHC, true);
         ND_GF_SET_FLAG(ndGF_USE_FHC, true);
         ND_GF_SET_FLAG(ndGF_USE_SINK, false);
-        ND_GF_SET_FLAG(ndGF_JSON_SAVE, false);
+        ND_GF_SET_FLAG(ndGF_EXPORT_JSON, false);
         ND_GF_SET_FLAG(ndGF_REMAIN_IN_FOREGROUND, true);
 
         nd_config.update_interval = 1;

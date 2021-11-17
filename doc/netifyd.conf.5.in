@@ -33,9 +33,9 @@ For some platforms it may be necessary to enforce the use of TLSv1.  The default
 .PP
 This option disables host (SNI) and peer certificate verification.  You can use this option for testing against a server with a self-signed certificate.  The default is false.
 .PP
-\fBjson_save\fR=\fIBOOLEAN\fR
+\fBjson_export\fR=\fIBOOLEAN\fR
 .PP
-Enable/disable the \fBjson_save\fR parameter to set whether the current state is output to a JSON file.  The default is false.
+Enable/disable the \fBjson_export\fR parameter to set whether the current state is output to a JSON file during each update interval.  The default is false.
 .PP
 .SS DNS Hint Cache
 DNS hint cache options are set within the [\fBdns_hint_cache\fR] section.
@@ -106,7 +106,7 @@ The following sample configuration file contains most common options with their 
 
 [@PACKAGE_TARNAME@]
 enable_sink = false
-json_save = false
+json_export = false
 max_backlog_kb = 2048
 max_tcp_pkts = 10
 max_udp_pkts = 8

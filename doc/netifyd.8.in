@@ -27,6 +27,7 @@ Optionally, the @PACKAGE_NAME@ can be coupled with a Netify Cloud (\fIhttps://ww
 .IR
 
 .B @PACKAGE_TARNAME@
+[\fB\-v\fR, \fB\-\-verbose\fR]
 [\fB\-d\fR, \fB\-\-debug\fR]
 [\fB\-e\fR, \fB\-\-debug-ether-names\fR]
 [\fB\-D\fR, \fB\-\-debug-uploads\fR]
@@ -35,6 +36,7 @@ Optionally, the @PACKAGE_NAME@ can be coupled with a Netify Cloud (\fIhttps://ww
 [\fB\-c\fR, \fB\-\-config\fR=\fICONFIG\fR]
 [\fB\-s\fR, \fB\-\-serial\fR=\fIUUID\fR]
 [\fB\-C\fR, \fB\-\-sink-conf\fR=\fIFILENAME\fR]
+[\fB\-j\fR, \fB\-\-json-export\fR=\fIFILENAME\fR]
 \fB\-I\fR, \fB\-\-internal\fR=\fIINTERFACE\fR [capture device opts...] [\fB\-I\fR, \fB\-\-internal\fR=\fIINTERFACE\fR]...
 \fB\-E\fR, \fB\-\-external\fR=\fIINTERFACE\fR [capture device opts...] [\fB\-E\fR, \fB\-\-external\fR=\fIINTERFACE\fR]...
 .IR
@@ -59,6 +61,9 @@ Display the current protocol and service ID list.
 .TP
 .BR \-U ", " \-\-uuidgen
 Generate a client UUID.
+.TP
+.BR \-v ", " \-\-verbose
+When running in foreground mode, enabling verbose mode will display each flow detection as they complete.
 .TP
 .BR \-d ", " \-\-debug
 Enable debug mode.  Remain in the foreground and emit debug messages.
@@ -86,6 +91,9 @@ Specify a client serial number (UUID).  Used for device identification with the 
 .TP
 .BR \-f ", " \-\-sink-conf=\fIFILENAME\fR
 Specify an alternate Netify Cloud Sink configuration file.
+.TP
+.BR \-j ", " \-\-json-export=\fIFILENAME\fR
+JSON encode flow and application state and write it to this file every update interval.  \fBNOTE:\fR the \fIjson_export\fR option must be enabled in @PACKAGE_TARNAME@.conf(5) for this payload to be written.
 .TP
 .BR \-I ", " \-\-internal=\fIINTERFACE\fR
 Capture packets on this internal (LAN) interface.  Can be specified more than once for multiple interfaces.
