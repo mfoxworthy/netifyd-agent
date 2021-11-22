@@ -1500,7 +1500,10 @@ static void nd_json_process_flows(
 
     while (i != flows->end()) {
 
-        total++;
+        if (i->second->iface->second != tag) {
+            i++;
+            continue;
+        }
 
         uint32_t last_seen = i->second->ts_last_seen / 1000;
         uint32_t ttl = (
