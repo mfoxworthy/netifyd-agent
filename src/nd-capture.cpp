@@ -392,6 +392,7 @@ ndCaptureThread::~ndCaptureThread()
 
 void *ndCaptureThread::Entry(void)
 {
+    int rc;
     bool dump_flows = false;
 
     struct ifreq ifr;
@@ -440,7 +441,7 @@ void *ndCaptureThread::Entry(void)
 
         if (! ShouldTerminate()) {
             if (pcap_fd != -1) {
-                int rc, max_fd = 0;
+                int max_fd = 0;
                 struct timeval tv;
                 fd_set fds_read;
 
@@ -482,14 +483,11 @@ void *ndCaptureThread::Entry(void)
                 if (! FD_ISSET(pcap_fd, &fds_read)) continue;
             }
 
-            switch (pcap_next_ex(pcap, &pkt_header, &pkt_data)) {
-            case 0:
-                break;
-            case 1:
-                if (pthread_mutex_trylock(&lock) != 0) {
+            while (ShouldTerminate() == false &&
+                (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
 
+                if (pthread_mutex_trylock(&lock) != 0)
                     stats->pkt.queue_dropped += pkt_queue.push(pkt_header, pkt_data);
-                }
                 else {
                     bool from_queue = false;
 
@@ -509,14 +507,15 @@ void *ndCaptureThread::Entry(void)
 
                     if (from_queue) pkt_queue.pop();
                 }
-                break;
-            case -1:
+            }
+
+            if (rc == -1) {
                 nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
                 pcap_close(pcap);
                 pcap = NULL;
                 pcap_fd = -1;
-                break;
-            case -2:
+            }
+            else if (rc == -2) {
                 nd_dprintf(
                     "%s: end of capture file: %s, flushing queued packets: %lu\n",
                     tag.c_str(), pcap_file.c_str(), pkt_queue.size());
@@ -524,7 +523,6 @@ void *ndCaptureThread::Entry(void)
                 pcap = NULL;
                 Terminate();
                 pcap_fd = -1;
-                break;
             }
         }
     }
