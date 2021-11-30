@@ -56,8 +56,6 @@ public:
 
     int16_t dpi_thread_id;
 
-    uint8_t *pkt;
-
     uint8_t ip_version;
     uint8_t ip_protocol;
 

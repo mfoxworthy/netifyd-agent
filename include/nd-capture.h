@@ -83,6 +83,8 @@ protected:
     int pcap_datalink_type;
     struct pcap_pkthdr *pkt_header;
     const uint8_t *pkt_data;
+    time_t tv_epoch;
+    uint64_t ts_pkt_first;
     uint64_t ts_pkt_last;
     nd_private_addr private_addrs;
 

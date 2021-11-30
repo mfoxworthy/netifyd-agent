@@ -271,12 +271,11 @@ void ndDetectionThread::ProcessPacketQueue(bool flush)
         Unlock();
 
         if (entry != NULL) {
-            if (entry->pkt_data) {
-                if (entry->flow->pkt != NULL) delete [] entry->flow->pkt;
-                entry->flow->pkt = entry->pkt_data;
-            }
-            if (! entry->flow->flags.detection_complete.load())
+            if (! entry->flow->flags.detection_complete.load() &&
+                ! entry->flow->flags.detection_expired.load())
                 ProcessPacket(entry);
+
+            delete [] entry->pkt_data;
             delete entry;
         }
     } while (entry != NULL && flush);
@@ -298,12 +297,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     else {
         flows++;
 
-        if (entry->flow->flags.detection_expired.load()) {
-            nd_dprintf("%s: TODO: Asked to process expired flow!\n", tag.c_str());
-            //throw ndDetectionThreadException("Asked to process expired flow");
-            return;
-        }
-
         entry->flow->ndpi_flow = (ndpi_flow_struct *)ndpi_malloc(sizeof(ndpi_flow_struct));
         if (entry->flow->ndpi_flow == NULL)
             throw ndDetectionThreadException(strerror(ENOMEM));
@@ -324,7 +317,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         id_dst = entry->flow->id_dst;
     }
 
-    if (! entry->flow->flags.detection_expired.load()) {
+    if (! entry->flow->flags.detection_expiring.load()) {
 
         entry->flow->detection_packets++;
 
@@ -349,7 +342,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     if (! entry->flow->flags.detection_init.load() && (
         entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN
         || entry->flow->detection_packets == nd_config.max_detection_pkts
-        || entry->flow->flags.detection_expired.load())) {
+        || entry->flow->flags.detection_expiring.load())) {
 
         if (! entry->flow->flags.detection_guessed.load()
             && entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) {
@@ -787,6 +780,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         flow_update = true;
         entry->flow->flags.detection_init = true;
+
+        if (entry->flow->flags.detection_expiring.load()) {
+            entry->flow->flags.detection_expired = true;
+            check_extra_packets = false;
+        }
     }
     else if (entry->flow->flags.detection_init.load()) {
         // Flows with extra packet processing...

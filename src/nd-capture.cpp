@@ -352,7 +352,7 @@ ndCaptureThread::ndCaptureThread(
     capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS),
     pcap(NULL), pcap_fd(-1), pcap_datalink_type(0),
     pkt_header(NULL), pkt_data(NULL),
-    ts_pkt_last(0),
+    tv_epoch(0), ts_pkt_first(0), ts_pkt_last(0),
     flows(flow_map), stats(stats), dhc(dhc),
     pkt_queue(iface->second),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
@@ -571,6 +571,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
 
     if (pcap_file.size()) {
         if ((pcap_new = pcap_open_offline(pcap_file.c_str(), pcap_errbuf)) != NULL) {
+            tv_epoch = time(NULL);
             nd_dprintf("%s: reading from capture file: %s: v%d.%d\n",
                 tag.c_str(), pcap_file.c_str(),
                 pcap_major_version(pcap_new), pcap_minor_version(pcap_new));
@@ -715,17 +716,26 @@ void ndCaptureThread::ProcessPacket(void)
             pkt_header->ts.tv_usec /
             (1000000 / ND_DETECTION_TICKS);
 
-    if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
+    if (pcap_file.size()) {
+        if (ts_pkt_first == 0)
+            ts_pkt_first = ts_pkt;
 
-    if (ND_REPLAY_DELAY && ts_pkt_last && pcap_file.size()) {
-        useconds_t delay = useconds_t(ts_pkt - ts_pkt_last) * 1000;
-        //nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
-        if (delay) {
-            pthread_mutex_unlock(&lock);
-            usleep(delay);
-            pthread_mutex_lock(&lock);
+        ts_pkt = (ts_pkt - ts_pkt_first) + (tv_epoch * 1000);
+
+        if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
+
+        if (ND_REPLAY_DELAY && ts_pkt_last) {
+            useconds_t delay = useconds_t(ts_pkt - ts_pkt_last) * 1000;
+            //nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
+            if (delay) {
+                pthread_mutex_unlock(&lock);
+                usleep(delay);
+                pthread_mutex_lock(&lock);
+            }
         }
     }
+    else
+        if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
     ts_pkt_last = ts_pkt;
 
@@ -1393,8 +1403,8 @@ nd_process_ip:
             }
 #else
             if (is_query && nf->flags.detection_complete.load()) {
-                nf->flags.dhc_hit = 0;
-                nf->flags.detection_complete = 0;
+                nf->flags.dhc_hit = false;
+                nf->flags.detection_complete = false;
                 // XXX: Moot...
                 //if (fi.first != flows->end()) {
                     nf->lower_bytes = flow.lower_bytes;
@@ -1409,8 +1419,9 @@ nd_process_ip:
         }
     }
 
-    if (! nf->flags.detection_complete.load()
-        || (nf->detection_packets <= nd_config.max_detection_pkts)) {
+    if (nf->flags.detection_complete.load() == false &&
+        nf->flags.detection_expired.load() == false &&
+        nf->detection_packets <= nd_config.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

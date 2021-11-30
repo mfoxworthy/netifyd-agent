@@ -1492,42 +1492,32 @@ static void nd_json_process_flows(
     const string &tag, json &parent, nd_flow_map *flows, bool add_flows)
 {
     uint32_t now = time(NULL);
-    uint32_t purged = 0, expired = 0, active = 0, total = 0;
+    size_t purged = 0, expiring = 0, expired = 0, active = 0;
 
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
     nd_flow_map::const_iterator i = flows->begin();
 
     while (i != flows->end()) {
-
-        if (i->second->iface->second != tag) {
-            i++;
-            continue;
-        }
-
         uint32_t last_seen = i->second->ts_last_seen / 1000;
         uint32_t ttl = (
             i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin.load()
         ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-//        nd_dprintf("%s: Purge flow?  %lus old, ttl: %lu (%lu <? %lu)\n",
-//            i->second->iface->second.c_str(),
-//            now - last_seen, ttl, last_seen + ttl, now);
-
         if (last_seen + ttl < now) {
 
-//            nd_dprintf("%s: Purge flow, %lus old, ttl: %lu.\n",
-//                i->second->iface->second.c_str(), now - last_seen, ttl);
-
-            if (i->second->flags.detection_init.load() == false &&
-                i->second->flags.detection_expired.load() == false) {
-
-                i->second->flags.detection_expired = true;
-                detection_threads[i->second->dpi_thread_id]->QueuePacket(i->second);
-
+            if (i->second->flags.detection_expired.load() == true)
                 expired++;
-                i++;
+            else if (i->second->flags.detection_init.load() == false) {
 
+                if (i->second->flags.detection_expiring.load() == false) {
+
+                    expiring++;
+                    i->second->flags.detection_expiring = true;
+                    detection_threads[i->second->dpi_thread_id]->QueuePacket(i->second);
+                }
+
+                i++;
                 continue;
             }
 
@@ -1620,8 +1610,8 @@ static void nd_json_process_flows(
     }
 
     nd_dprintf(
-        "%s: Purged %lu of %lu flow(s), active: %lu, expired: %lu, awaiting detection: %lu\n",
-        tag.c_str(), purged, total, active, expired, total - active
+        "%s: Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, queued: %lu\n",
+        tag.c_str(), purged, flows->size(), active, expiring, expired, flows->size() - active
     );
 }
 

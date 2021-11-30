@@ -64,7 +64,7 @@ extern nd_global_config nd_config;
 extern nd_device_ethers device_ethers;
 
 ndFlow::ndFlow(nd_ifaces::iterator iface)
-    : iface(iface), dpi_thread_id(-1), pkt(NULL),
+    : iface(iface), dpi_thread_id(-1),
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
@@ -99,7 +99,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
 }
 
 ndFlow::ndFlow(const ndFlow &flow)
-    : iface(flow.iface), dpi_thread_id(-1), pkt(NULL),
+    : iface(flow.iface), dpi_thread_id(-1),
     ip_version(flow.ip_version), ip_protocol(flow.ip_protocol),
     vlan_id(flow.vlan_id), tcp_last_seq(flow.tcp_last_seq),
     ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update),
@@ -283,8 +283,8 @@ void ndFlow::reset(void)
 
 void ndFlow::release(void)
 {
-    if (pkt != NULL) { delete [] pkt; pkt = NULL; }
     if (ndpi_flow != NULL) { ndpi_free_flow(ndpi_flow); ndpi_flow = NULL; }
+
     if (id_src != NULL) { delete id_src; id_src = NULL; }
     if (id_dst != NULL) { delete id_dst; id_dst = NULL; }
 
