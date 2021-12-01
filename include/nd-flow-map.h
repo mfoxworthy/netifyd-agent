@@ -42,6 +42,8 @@ public:
     void DumpBucketStats(void);
 #endif
 
+    inline size_t GetBuckets(void) { return buckets; }
+
 protected:
     inline unsigned HashToBucket(const string &digest);
 

@@ -237,6 +237,8 @@ public:
         atomic_bool detection_updated;
     } flags;
 
+    atomic_uint queued;
+
     union {
         struct {
             uint8_t version;

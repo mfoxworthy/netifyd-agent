@@ -88,7 +88,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}
+    flags{}, queued(0)
 {
     lower_addr4 = (struct sockaddr_in *)&lower_addr;
     lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
@@ -123,7 +123,7 @@ ndFlow::ndFlow(const ndFlow &flow)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}
+    flags{}, queued(0)
 {
     memcpy(lower_mac, flow.lower_mac, ETH_ALEN);
     memcpy(upper_mac, flow.upper_mac, ETH_ALEN);

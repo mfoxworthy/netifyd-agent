@@ -81,6 +81,7 @@ using namespace std;
 #endif
 #include "nd-json.h"
 #include "nd-flow.h"
+#include "nd-flow-map.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
@@ -223,6 +224,8 @@ void ndDetectionThread::QueuePacket(ndFlow *flow, uint8_t *pkt_data, uint32_t pk
 
     if ((rc = pthread_cond_broadcast(&pkt_queue_cond)) != 0)
         throw ndDetectionThreadException(strerror(rc));
+
+    flow->queued++;
 }
 
 void *ndDetectionThread::Entry(void)
@@ -274,6 +277,8 @@ void ndDetectionThread::ProcessPacketQueue(bool flush)
             if (! entry->flow->flags.detection_complete.load() &&
                 ! entry->flow->flags.detection_expired.load())
                 ProcessPacket(entry);
+
+            entry->flow->queued--;
 
             delete [] entry->pkt_data;
             delete entry;

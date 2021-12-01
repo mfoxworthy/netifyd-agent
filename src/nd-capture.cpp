@@ -152,6 +152,7 @@ using namespace std;
 #endif
 #include "nd-json.h"
 #include "nd-flow.h"
+#include "nd-flow-map.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
@@ -184,6 +185,7 @@ using namespace std;
 
 extern nd_global_config nd_config;
 extern atomic_uint nd_flow_count;
+extern ndFlowMap *nd_flow_buckets;
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -344,7 +346,7 @@ ndCaptureThread::ndCaptureThread(
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
-    nd_flow_map *flow_map, nd_packet_stats *stats,
+    nd_packet_stats *stats,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     : ndThread(iface->second, (long)cpu, true),
@@ -353,7 +355,7 @@ ndCaptureThread::ndCaptureThread(
     pcap(NULL), pcap_fd(-1), pcap_datalink_type(0),
     pkt_header(NULL), pkt_data(NULL),
     tv_epoch(0), ts_pkt_first(0), ts_pkt_last(0),
-    flows(flow_map), stats(stats), dhc(dhc),
+    stats(stats), dhc(dhc),
     pkt_queue(iface->second),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
@@ -393,7 +395,6 @@ ndCaptureThread::~ndCaptureThread()
 void *ndCaptureThread::Entry(void)
 {
     int rc;
-    bool dump_flows = false;
 
     struct ifreq ifr;
 
@@ -460,23 +461,15 @@ void *ndCaptureThread::Entry(void)
                 if (rc == -1)
                     throw ndCaptureThreadException(strerror(errno));
 
-                if (dump_flows && pthread_mutex_trylock(&lock) == 0) {
-                    if (ND_FLOW_DUMP_ESTABLISHED)
-                        DumpFlows();
-                    dump_flows = false;
-                    pthread_mutex_unlock(&lock);
-                }
-
                 if (rc == 0) continue;
 
+                // TODO: Not currently used, remove?
                 if (FD_ISSET(fd_ipc[0], &fds_read)) {
                     uint32_t id = RecvIPC();
 
-                    if (id == (uint32_t)ND_SIG_CONNECT)
-                        dump_flows = true;
-                    else {
-                        nd_dprintf("%s: Unknown IPC ID: %u (ND_SIG_CONNECT: %u).\n",
-                            tag.c_str(), id, ND_SIG_CONNECT);
+                    switch (id) {
+                    default:
+                        nd_dprintf("%s: Unhandled IPC ID: %u\n", tag.c_str(), id);
                     }
                 }
 
@@ -530,36 +523,7 @@ void *ndCaptureThread::Entry(void)
 
     nd_dprintf(
         "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
-#if 0
-    nd_flow_map::iterator i = flows->begin();
 
-    while (i != flows->end()) {
-
-        if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
-            i->second->detected_protocol.master_protocol > 0)) {
-
-            json j;
-
-            j["type"] = "flow_purge";
-            j["reason"] = "terminate";
-            j["interface"] = tag;
-            j["internal"] = iface->first;
-            j["established"] = false;
-
-            json jf;
-            i->second->json_encode(jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS);
-            j["flow"] = jf;
-
-            string json_string;
-            nd_json_to_string(j, json_string, false);
-            json_string.append("\n");
-
-            thread_socket->QueueWrite(json_string);
-        }
-
-        i++;
-    }
-#endif
     return NULL;
 }
 
@@ -640,45 +604,6 @@ pcap_t *ndCaptureThread::OpenCapture(void)
 
 // XXX: Not thread-safe!
 // XXX: Ensure the object is locked before calling.
-void ndCaptureThread::DumpFlows(void)
-{
-    unsigned flow_count = 0;
-
-    if (! thread_socket) return;
-
-    for (nd_flow_map::const_iterator i = flows->begin(); i != flows->end(); i++) {
-
-        if (i->second->flags.detection_complete.load() == false) continue;
-        if (! ND_FLOW_DUMP_UNKNOWN &&
-            i->second->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) continue;
-
-        json j;
-
-        j["type"] = "flow";
-        j["interface"] = tag;
-        j["interface"] = tag;
-        j["internal"] = iface->first;
-        j["established"] = true;
-
-        json jf;
-        i->second->json_encode(jf, ndFlow::ENCODE_METADATA);
-
-        j["flow"] = jf;
-
-        string json_string;
-        nd_json_to_string(j, json_string, false);
-        json_string.append("\n");
-
-        thread_socket->QueueWrite(json_string);
-
-        flow_count++;
-    }
-
-    nd_dprintf("%s: dumped %lu flow(s).\n", tag.c_str(), flow_count);
-}
-
-// XXX: Not thread-safe!
-// XXX: Ensure the object is locked before calling.
 int ndCaptureThread::GetCaptureStats(struct pcap_stat &stats)
 {
     memset(&stats, 0, sizeof(struct pcap_stat));
@@ -690,7 +615,6 @@ int ndCaptureThread::GetCaptureStats(struct pcap_stat &stats)
 
 void ndCaptureThread::ProcessPacket(void)
 {
-    nd_flow_insert fi;
     ndFlow *nf, flow(iface);
 
     const struct ether_header *hdr_eth = NULL;
@@ -1200,11 +1124,11 @@ nd_process_ip:
 
     flow.hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);
-    fi.first = flows->find(flow_digest);
 
-    if (fi.first != flows->end()) {
+    nf = nd_flow_buckets->Lookup(flow_digest);
+
+    if (nf != NULL) {
         // Flow exists in map.
-        nf = fi.first->second;
 
         if (addr_cmp != nf->direction) {
 #if _ND_DISSECT_GTP
@@ -1249,9 +1173,7 @@ nd_process_ip:
 
         nf->direction = addr_cmp;
 
-        fi = flows->insert(nd_flow_pair(flow_digest, nf));
-
-        if (! fi.second) {
+        if (nd_flow_buckets->Insert(flow_digest, nf) != NULL) {
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
@@ -1405,15 +1327,12 @@ nd_process_ip:
             if (is_query && nf->flags.detection_complete.load()) {
                 nf->flags.dhc_hit = false;
                 nf->flags.detection_complete = false;
-                // XXX: Moot...
-                //if (fi.first != flows->end()) {
-                    nf->lower_bytes = flow.lower_bytes;
-                    nf->upper_bytes = flow.upper_bytes;
-                    nf->lower_packets = flow.lower_packets;
-                    nf->upper_packets = flow.upper_packets;
-                    nf->total_packets = flow.total_packets;
-                    nf->detection_packets = 0;
-                //}
+                nf->lower_bytes = flow.lower_bytes;
+                nf->upper_bytes = flow.upper_bytes;
+                nf->lower_packets = flow.lower_packets;
+                nf->upper_packets = flow.upper_packets;
+                nf->total_packets = flow.total_packets;
+                nf->detection_packets = 0;
             }
 #endif
         }
@@ -1421,7 +1340,8 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.detection_expired.load() == false &&
-        nf->detection_packets <= nd_config.max_detection_pkts) {
+        nf->detection_packets <= nd_config.max_detection_pkts &&
+        nf->queued.load() <= nd_config.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

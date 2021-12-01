@@ -69,6 +69,9 @@ ndFlowMap::ndFlowMap(size_t buckets)
         nd_flow_map *b = new nd_flow_map;
         if (b == NULL)
             throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_map", ENOMEM);
+#ifdef HAVE_CXX11
+        b->reserve(ND_HASH_BUCKETS_FLOWS);
+#endif
         bucket.push_back(b);
         pthread_mutex_t *m = new pthread_mutex_t;
         if (m == NULL)
@@ -85,11 +88,15 @@ ndFlowMap::~ndFlowMap()
         int rc = pthread_mutex_lock(bucket_lock[i]);
         if (rc != 0)
             throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
+        for (auto it = bucket[i]->begin(); it != bucket[i]->end(); it++) delete it->second;
         delete bucket[i];
         pthread_mutex_unlock(bucket_lock[i]);
         pthread_mutex_destroy(bucket_lock[i]);
         delete bucket_lock[i];
     }
+
+    bucket.clear();
+    bucket_lock.clear();
 }
 
 ndFlow *ndFlowMap::Lookup(const string &digest)

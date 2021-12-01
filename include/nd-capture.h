@@ -57,14 +57,12 @@ public:
         const uint8_t *dev_mac,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
-        nd_flow_map *flow_map, nd_packet_stats *stats,
+        nd_packet_stats *stats,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);
     virtual ~ndCaptureThread();
 
     virtual void *Entry(void);
-
-    nd_flow_map *GetFlows(void) { return flows; }
 
     // XXX: Not thread-safe!  Lock before calling...
     int GetCaptureStats(struct pcap_stat &stats);
@@ -88,7 +86,6 @@ protected:
     uint64_t ts_pkt_last;
     nd_private_addr private_addrs;
 
-    nd_flow_map *flows;
     nd_packet_stats *stats;
 
     string flow_digest;
@@ -102,8 +99,6 @@ protected:
     int16_t dpi_thread_id;
 
     pcap_t *OpenCapture(void);
-
-    void DumpFlows(void);
 
     void ProcessPacket(void);
 

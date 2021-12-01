@@ -164,8 +164,9 @@ public:
     ndPluginStats(const string &tag);
     virtual ~ndPluginStats();
 
-    virtual void ProcessStats(const nd_packet_stats &pkt_totals) = 0;
-    virtual void ProcessStats(const string &iface, const nd_packet_stats *pkt_stats, const nd_flow_map *flows) = 0;
+    virtual void ProcessStats(const nd_packet_stats &pkt_totals) { }
+    virtual void ProcessStats(const string &iface, const nd_packet_stats *pkt_stats) { }
+    virtual void ProcessStats(const ndFlowMap *flows) { }
 
 protected:
 };
