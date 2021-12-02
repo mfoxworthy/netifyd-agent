@@ -828,7 +828,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 string name;
                 vector<string> names;
                 stringstream ss(ssl.server_names);
-                while (ss.good() && getline(ss, name, ','))
+                while (getline(ss, name, ','))
                     names.push_back(name);
                 j["ssl"]["server_names"] = names;
             }

@@ -805,7 +805,6 @@ static int nd_start_capture_threads(void)
                 mac,
                 thread_socket,
                 detection_threads,
-                //flows[(*i).second],
                 stats[(*i).second],
                 dns_hint_cache,
                 (i->first) ? 0 : ++private_addr
@@ -824,7 +823,7 @@ static int nd_start_capture_threads(void)
     return 0;
 }
 
-static void nd_stop_capture_threads(void)
+static void nd_stop_capture_threads(bool expire_flows = false)
 {
     if (capture_threads.size() == 0) return;
 
@@ -834,6 +833,25 @@ static void nd_stop_capture_threads(void)
     }
 
     capture_threads.clear();
+
+    if (! expire_flows) return;
+
+    size_t buckets = nd_flow_buckets->GetBuckets();
+
+    for (size_t b = 0; b < buckets; b++) {
+        nd_flow_map *fm = nd_flow_buckets->Acquire(b);
+        nd_flow_map::const_iterator i = fm->begin();
+
+        for (auto it = fm->begin(); it != fm->end(); it++) {
+            if (it->second->flags.detection_expiring.load() == false) {
+
+                it->second->flags.detection_expiring = true;
+                detection_threads[it->second->dpi_thread_id]->QueuePacket(it->second);
+            }
+        }
+
+        nd_flow_buckets->Release(b);
+    }
 }
 
 static size_t nd_reap_capture_threads(void)
@@ -1504,7 +1522,10 @@ static void nd_json_process_flows(
                 i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin.load()
             ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-            if (last_seen + ttl < now) {
+            if (nd_terminate)
+                i->second->flags.detection_expired = true;
+
+            if (last_seen + ttl < now || i->second->flags.detection_expired.load()) {
 
                 if (i->second->flags.detection_expired.load() == true)
                     expired++;
@@ -3179,7 +3200,7 @@ int main(int argc, char *argv[])
             if (errno == EAGAIN || errno == EINTR) continue;
             rc = -1;
             nd_terminate = true;
-            nd_stop_capture_threads();
+            nd_stop_capture_threads(true);
             nd_printf("sigwaitinfo: %s\n", strerror(errno));
             continue;
         }
@@ -3208,7 +3229,7 @@ int main(int argc, char *argv[])
 
             rc = 0;
             nd_terminate = true;
-            nd_stop_capture_threads();
+            nd_stop_capture_threads(true);
             continue;
         }
 
@@ -3231,7 +3252,7 @@ int main(int argc, char *argv[])
             malloc_stats_print(NULL, NULL, "");
 #endif
             if (nd_reap_capture_threads() == 0) {
-                nd_stop_capture_threads();
+                nd_stop_capture_threads(true);
                 if (thread_sink == NULL ||
                     thread_sink->QueuePendingSize() == 0) {
                     nd_printf("Exiting, no remaining capture threads.\n");

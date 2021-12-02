@@ -188,6 +188,10 @@ ndDetectionThread::~ndDetectionThread()
     while (pkt_queue.size()) {
         ndDetectionQueueEntry *entry = pkt_queue.front();
         pkt_queue.pop();
+
+        entry->flow->queued--;
+
+        delete [] entry->pkt_data;
         delete entry;
     }
 
@@ -235,28 +239,34 @@ void *ndDetectionThread::Entry(void)
     do {
         if ((rc = pthread_mutex_lock(&pkt_queue_cond_mutex)) != 0)
             throw ndDetectionThreadException(strerror(rc));
-        if ((rc = pthread_cond_wait(&pkt_queue_cond, &pkt_queue_cond_mutex)) != 0)
+
+        struct timespec ts_cond;
+        if (clock_gettime(CLOCK_MONOTONIC, &ts_cond) != 0)
             throw ndDetectionThreadException(strerror(rc));
+
+        ts_cond.tv_sec += 1;
+
+        if ((rc = pthread_cond_timedwait(
+            &pkt_queue_cond, &pkt_queue_cond_mutex, &ts_cond)) != 0 &&
+            rc != ETIMEDOUT) {
+            throw ndDetectionThreadException(strerror(rc));
+        }
+
         if ((rc = pthread_mutex_unlock(&pkt_queue_cond_mutex)) != 0)
             throw ndDetectionThreadException(strerror(rc));
 
-        ProcessPacketQueue(! ShouldTerminate());
+        ProcessPacketQueue();
     }
     while (ShouldTerminate() == false);
 
-    if (pkt_queue.size() > 0) {
-        nd_dprintf("%s: detection thread ending, flushing queued packets: %lu\n",
-            tag.c_str(), pkt_queue.size());
-
-        ProcessPacketQueue(ShouldTerminate());
-    }
+    ProcessPacketQueue();
 
     nd_dprintf("%s: detection thread ended on CPU: %hu\n", tag.c_str(), cpu);
 
     return NULL;
 }
 
-void ndDetectionThread::ProcessPacketQueue(bool flush)
+void ndDetectionThread::ProcessPacketQueue(void)
 {
     ndDetectionQueueEntry *entry;
 
@@ -283,7 +293,7 @@ void ndDetectionThread::ProcessPacketQueue(bool flush)
             delete [] entry->pkt_data;
             delete entry;
         }
-    } while (entry != NULL && flush);
+    } while (entry != NULL);
 }
 
 void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
@@ -829,10 +839,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             if (entry->flow->ssl.server_names_length <
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names_len &&
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names) {
+
                 entry->flow->ssl.server_names_length = entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names_len;
                 entry->flow->ssl.server_names = (char *)realloc(
                     (void *)entry->flow->ssl.server_names,
-                    entry->flow->ssl.server_names_length
+                    entry->flow->ssl.server_names_length + 1
                 );
                 if (entry->flow->ssl.server_names == NULL)
                     throw ndDetectionThreadException(strerror(ENOMEM));
@@ -841,6 +852,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_names,
                     entry->flow->ssl.server_names_length
                 );
+                entry->flow->ssl.server_names[entry->flow->ssl.server_names_length] = '\0';
+
                 flow_update = true;
                 entry->flow->flags.detection_updated = true;
             }
