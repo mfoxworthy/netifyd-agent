@@ -190,6 +190,7 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
         throw ndThreadException("Detection module initialization failure");
 
     // Set nDPI preferences
+    ndpi_set_detection_preferences(ndpi, ndpi_pref_enable_tls_block_dissection, 1);
     ndpi_set_detection_preferences(ndpi, ndpi_pref_http_dont_dissect_response, 0);
     ndpi_set_detection_preferences(ndpi, ndpi_pref_dns_dont_dissect_response, 0);
     ndpi_set_detection_preferences(ndpi, ndpi_pref_direction_detect_disable, 0);

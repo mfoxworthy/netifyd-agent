@@ -96,11 +96,9 @@ protected:
     pthread_cond_t pkt_queue_cond;
     pthread_mutex_t pkt_queue_cond_mutex;
 
-    unsigned flows;
-#if 0
-    void DumpFlows(void);
-#endif
-    void ProcessPacketQueue(bool flush);
+    size_t flows;
+
+    void ProcessPacketQueue(void);
     void ProcessPacket(ndDetectionQueueEntry *entry);
 };
 

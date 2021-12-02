@@ -26,8 +26,8 @@ endif
 
 lib_LTLIBRARIES = libnetifyd.la
 libnetifyd_la_SOURCES = nd-base64.cpp nd-capture.cpp nd-detection.cpp nd-dhc.cpp \
-	nd-fhc.cpp nd-flow.cpp nd-json.cpp nd-ndpi.cpp nd-sha1.c nd-sink.cpp \
-	nd-socket.cpp nd-thread.cpp nd-util.cpp
+	nd-fhc.cpp nd-flow.cpp nd-flow-map.cpp nd-json.cpp nd-ndpi.cpp nd-sha1.c \
+	nd-sink.cpp nd-socket.cpp nd-thread.cpp nd-util.cpp
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 libnetifyd_la_LDFLAGS = -version-info 1:0:0
 libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.la $(LIBCURL_LIBS) $(ZLIB_LIBS)

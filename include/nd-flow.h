@@ -56,8 +56,6 @@ public:
 
     int16_t dpi_thread_id;
 
-    uint8_t *pkt;
-
     uint8_t ip_version;
     uint8_t ip_protocol;
 
@@ -159,6 +157,8 @@ public:
             uint16_t cipher_suite;
             char client_sni[ND_FLOW_TLS_CNLEN];
             char server_cn[ND_FLOW_TLS_CNLEN];
+            char *server_names;
+            unsigned server_names_length;
             char server_organization[ND_FLOW_TLS_ORGLEN];
             char client_ja3[ND_FLOW_TLS_JA3LEN];
             char server_ja3[ND_FLOW_TLS_JA3LEN];
@@ -229,11 +229,15 @@ public:
         atomic_bool ip_nat;
         atomic_bool tcp_fin;
         atomic_bool dhc_hit;
+        atomic_bool detection_init;
         atomic_bool detection_complete;
         atomic_bool detection_expiring;
         atomic_bool detection_expired;
         atomic_bool detection_guessed;
+        atomic_bool detection_updated;
     } flags;
+
+    atomic_uint queued;
 
     union {
         struct {
@@ -280,7 +284,7 @@ public:
     bool has_ssh_client_agent(void) const;
     bool has_ssh_server_agent(void) const;
     bool has_ssl_client_sni(void) const;
-    bool has_ssl_server_cn(void) const;
+    bool has_ssl_server_names(void) const;
     bool has_ssl_server_organization(void) const;
     bool has_ssl_client_ja3(void) const;
     bool has_ssl_server_ja3(void) const;

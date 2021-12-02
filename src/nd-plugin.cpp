@@ -57,6 +57,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-flow.h"
+#include "nd-flow-map.h"
 #include "nd-plugin.h"
 
 ndPlugin::ndPlugin(const string &tag)
