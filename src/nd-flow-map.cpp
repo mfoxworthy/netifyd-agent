@@ -163,7 +163,18 @@ nd_flow_map *ndFlowMap::Acquire(size_t b)
     return bucket[b];
 }
 
-void ndFlowMap::Release(size_t b)
+const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
+{
+    if (b > buckets) return NULL;
+
+    int rc = pthread_mutex_lock(bucket_lock[b]);
+    if (rc != 0)
+        throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
+
+    return (const nd_flow_map *)bucket[b];
+}
+
+void ndFlowMap::Release(size_t b) const
 {
     if (b > buckets) return;
 

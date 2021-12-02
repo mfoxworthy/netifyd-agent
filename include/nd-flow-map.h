@@ -36,13 +36,14 @@ public:
     bool Delete(const string &digest);
 
     nd_flow_map *Acquire(size_t b);
-    void Release(size_t b);
+    const nd_flow_map *AcquireConst(size_t b) const;
+    void Release(size_t b) const;
 
 #ifndef _ND_LEAN_AND_MEAN
     void DumpBucketStats(void);
 #endif
 
-    inline size_t GetBuckets(void) { return buckets; }
+    inline size_t GetBuckets(void) const { return buckets; }
 
 protected:
     inline unsigned HashToBucket(const string &digest);
