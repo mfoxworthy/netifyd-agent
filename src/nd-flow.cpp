@@ -215,6 +215,10 @@ void ndFlow::hash(const string &device,
             sha1_write(&ctx,
                 ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_TLS_CNLEN));
         }
+        if (has_ssl_server_cn()) {
+            sha1_write(&ctx,
+                ssl.server_cn, strnlen(ssl.server_cn, ND_FLOW_TLS_CNLEN));
+        }
         if (has_bt_info_hash()) {
             sha1_write(&ctx, bt.info_hash, ND_FLOW_BTIHASH_LEN);
         }
@@ -390,6 +394,14 @@ bool ndFlow::has_ssl_client_sni(void) const
     return (
         (master_protocol() == NDPI_PROTOCOL_TLS || master_protocol() == NDPI_PROTOCOL_QUIC) &&
         ssl.client_sni[0] != '\0'
+    );
+}
+
+bool ndFlow::has_ssl_server_cn(void) const
+{
+    return (
+        master_protocol() == NDPI_PROTOCOL_TLS &&
+        ssl.server_cn[0] != '\0'
     );
 }
 
@@ -823,6 +835,9 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
             if (has_ssl_client_sni())
                 j["ssl"]["client_sni"] = ssl.client_sni;
+
+            if (has_ssl_server_cn())
+                j["ssl"]["server_cn"] = ssl.server_cn;
 
             if (has_ssl_server_names()) {
                 string name;

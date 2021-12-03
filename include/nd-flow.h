@@ -284,6 +284,7 @@ public:
     bool has_ssh_client_agent(void) const;
     bool has_ssh_server_agent(void) const;
     bool has_ssl_client_sni(void) const;
+    bool has_ssl_server_cn(void) const;
     bool has_ssl_server_names(void) const;
     bool has_ssl_server_organization(void) const;
     bool has_ssl_client_ja3(void) const;

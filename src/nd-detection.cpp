@@ -518,8 +518,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name);
             snprintf(entry->flow->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
                 "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_client);
-
             break;
+
         case NDPI_PROTOCOL_HTTP:
             if (entry->flow->ndpi_flow->http.user_agent != NULL) {
                 for (size_t i = 0;
@@ -818,6 +818,24 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 entry->flow->flags.detection_updated = true;
             }
 
+            if (entry->flow->ssl.server_cn[0] == '\0' &&
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN != NULL) {
+                snprintf(entry->flow->ssl.server_cn, ND_FLOW_TLS_CNLEN,
+                    "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN);
+                free(entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN);
+                entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN = NULL;
+                if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN) {
+                    entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
+                        ndpi,
+                        entry->flow->ndpi_flow,
+                        (char *)entry->flow->ssl.server_cn,
+                        strlen((const char *)entry->flow->ssl.server_cn),
+                        &npmr);
+                }
+
+                flow_update = true;
+                entry->flow->flags.detection_updated = true;
+            }
             if (entry->flow->ssl.server_ja3[0] == '\0' &&
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_server[0] != '\0') {
                 snprintf(entry->flow->ssl.server_ja3, ND_FLOW_TLS_JA3LEN, "%s",
