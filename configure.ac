@@ -116,6 +116,14 @@ AS_IF([test "x$with_volatilestatedir" = "xyes" -o "x$with_volatilestatedir" = "x
     AC_SUBST([volatilestatedir], [$with_volatilestatedir])
 )
 
+AC_ARG_WITH([conntrack-mdata],
+     [AS_HELP_STRING([--with-conntrack-mdata], [Extract conntrack IDs and marks.])],,
+     [with_conntrack_mdata=no])
+AS_IF([test "x$with_conntrack_mdata" = "xyes"],
+    AC_DEFINE([_ND_WITH_CONNTRACK_MDATA], [1], [Define to extract conntrack metadata.])
+    ND_DEFINES+=" -D_ND_WITH_CONNTRACK_MDATA=1"
+)
+
 # Parameters: --enable/disable
 
 AC_ARG_ENABLE([conntrack],

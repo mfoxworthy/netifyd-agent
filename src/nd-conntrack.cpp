@@ -579,10 +579,12 @@ void ndConntrackThread::UpdateFlow(ndFlow *flow)
 
         ndConntrackFlow *ct_flow = flow_iter->second;
 
+        ct_flow->updated_at = time(NULL);
+
+#if defined(_ND_WITH_CONNTRACK_MDATA)
         flow->ct_id = ct_flow->id;
         flow->ct_mark = ct_flow->mark;
-
-        ct_flow->updated_at = time(NULL);
+#endif
 
         switch (ct_flow->l3_proto) {
         case AF_INET:

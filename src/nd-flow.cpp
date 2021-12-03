@@ -82,7 +82,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
     capture_filename{},
-#ifdef _ND_USE_CONNTRACK
+#if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
 #ifdef _ND_USE_NETLINK
@@ -117,7 +117,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
     capture_filename{},
-#ifdef _ND_USE_CONNTRACK
+#if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
 #ifdef _ND_USE_NETLINK
@@ -707,7 +707,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     if (encode_includes & ENCODE_METADATA) {
         j["ip_nat"] = (bool)flags.ip_nat.load();
         j["dhc_hit"] = (bool)flags.dhc_hit.load();
-#ifdef _ND_USE_CONNTRACK
+#if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         j["ct_id"] = ct_id;
         j["ct_mark"] = ct_mark;
 #endif

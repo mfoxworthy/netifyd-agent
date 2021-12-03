@@ -217,7 +217,7 @@ public:
     // Start of conditional members.  These must be at the end or else access
     // from plugins compiled without various options will have incorrect
     // addresses
-#ifdef _ND_USE_CONNTRACK
+#if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     uint32_t ct_id;
     uint32_t ct_mark;
 #endif
