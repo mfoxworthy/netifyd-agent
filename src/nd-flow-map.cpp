@@ -86,8 +86,6 @@ ndFlowMap::~ndFlowMap()
 {
     for (size_t i = 0; i < buckets; i++) {
         int rc = pthread_mutex_lock(bucket_lock[i]);
-        if (rc != 0)
-            throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
         for (auto it = bucket[i]->begin(); it != bucket[i]->end(); it++) delete it->second;
         delete bucket[i];
         pthread_mutex_unlock(bucket_lock[i]);

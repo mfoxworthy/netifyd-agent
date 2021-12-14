@@ -63,8 +63,8 @@ public:
 protected:
     string tag;
     pthread_t id;
-    pthread_attr_t attr;
     long cpu;
+    pthread_attr_t attr;
     pthread_mutex_t lock;
 
     enum {

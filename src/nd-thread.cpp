@@ -84,8 +84,8 @@ static void *nd_thread_entry(void *param)
 }
 
 ndThread::ndThread(const string &tag, long cpu, bool ipc)
-    : tag(tag), id(0), cpu(cpu), terminate(false), terminated(false),
-    fd_ipc{-1, -1}
+    : tag(tag), id(0), cpu(cpu), fd_ipc{-1, -1},
+    terminate(false), terminated(false)
 {
     int rc;
 
