@@ -72,7 +72,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     lower_addr4(NULL), lower_addr6(NULL), upper_addr4(NULL), upper_addr6(NULL),
     lower_ip{}, upper_ip{},
     lower_port(0), upper_port(0),
-    tunnel_type(TUNNEL_NONE), gtp{},
+    tunnel_type(TUNNEL_NONE),
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0), detected_protocol{},
@@ -88,7 +88,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0)
+    flags{}, queued(0), gtp{}
 {
     lower_addr4 = (struct sockaddr_in *)&lower_addr;
     lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
@@ -108,7 +108,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     lower_addr(flow.lower_addr), upper_addr(flow.upper_addr),
     lower_ip{}, upper_ip{},
     lower_port(flow.lower_port), upper_port(flow.upper_port),
-    tunnel_type(flow.tunnel_type), gtp(flow.gtp),
+    tunnel_type(flow.tunnel_type),
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0), detected_protocol{},
@@ -123,7 +123,7 @@ ndFlow::ndFlow(const ndFlow &flow)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0)
+    flags{}, queued(0), gtp(flow.gtp)
 {
     memcpy(lower_mac, flow.lower_mac, ETH_ALEN);
     memcpy(upper_mac, flow.upper_mac, ETH_ALEN);
@@ -409,7 +409,7 @@ bool ndFlow::has_ssl_server_names(void) const
 {
     return (
         master_protocol() == NDPI_PROTOCOL_TLS &&
-        ssl.server_names_length > 0 && ssl.server_names != '\0'
+        ssl.server_names_length > 0 && ssl.server_names != NULL
     );
 }
 

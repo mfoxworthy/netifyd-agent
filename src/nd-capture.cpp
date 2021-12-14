@@ -476,6 +476,7 @@ void *ndCaptureThread::Entry(void)
                 if (! FD_ISSET(pcap_fd, &fds_read)) continue;
             }
 
+            rc = 0;
             while (ShouldTerminate() == false &&
                 (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
 
