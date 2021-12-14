@@ -696,6 +696,22 @@ string nd_get_version_and_features(void)
     return ident.str();
 }
 
+bool nd_parse_app_tag(const string &tag, unsigned &id, string &name)
+{
+    id = 0;
+    name.clear();
+
+    size_t p;
+    if ((p = tag.find_first_of(".")) != string::npos) {
+        id = (unsigned)strtoul(tag.substr(0, p).c_str(), NULL, 0);
+        name = tag.substr(p + 1);
+
+        return true;
+    }
+
+    return false;
+}
+
 #ifdef _ND_USE_WATCHDOGS
 int nd_touch(const string &filename)
 {

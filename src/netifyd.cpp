@@ -538,6 +538,9 @@ static int nd_config_load(void)
 #define _ND_LO_CA_SINK              8
 #define _ND_LO_CA_SOCKET            9
 #define _ND_LO_WAIT_FOR_CLIENT      10
+#define _ND_LO_DUMP_PROTOS          11
+#define _ND_LO_DUMP_APPS            12
+#define _ND_LO_DUMP_SORT_BY_TAG     13
 
 static int nd_config_set_option(int option)
 {
@@ -574,6 +577,13 @@ static int nd_config_set_option(int option)
 
 static void nd_usage(int rc = 0, bool version = false)
 {
+    if (nd_conf_filename == NULL)
+        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
+
+    nd_config_load();
+
+    ND_GF_SET_FLAG(ndGF_QUIET, true);
+
     fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
     if (version) {
         fprintf(stderr, "\nThis application uses nDPI v%s\n"
@@ -586,13 +596,6 @@ static void nd_usage(int rc = 0, bool version = false)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (nd_conf_filename == NULL)
-            nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
-        nd_config_load();
-
-        ND_GF_SET_FLAG(ndGF_QUIET, true);
-
         if (nd_config.plugin_services.size())
             fprintf(stderr, "\nService plugins:\n");
 
@@ -663,12 +666,61 @@ static void nd_usage(int rc = 0, bool version = false)
 #endif
     }
     else {
-        fprintf(stderr, "\nBasic options:\n"
-            "  --status\tdisplay agent status\n"
-            "  --provision\tprovision agent\n"
-            "  --enable-sink\tenable/disable sink uploads\n"
-            "  --disable-sink\n\n"
-            "See netifyd(8) and netifyd.conf(5) for further help.\n");
+        fprintf(stderr,
+            "\nStatus options:\n"
+            "  -s, --status\n    Display Agent status.\n"
+
+            "\nGlobal options:\n"
+            "  -d, --debug\n    Enable debug output and remain in foreground.\n"
+            "  -e, --debug-ether-names\n    In debug mode, resolve and display addresses from: /etc/ethers\n"
+            "  -D, --debug-upload\n    In debug mode, display debug output for sink server uploads.\n"
+            "  -v, --verbose\n    In debug mode, display real-time flow detections.\n"
+            "  -R, --remain-in-foreground\n    Remain in foreground, don't daemonize (OpenWrt).\n"
+            "  --wait-for-client\n    In debug mode, don't start capture threads until a client connects.\n"
+
+            "\nConfiguration options:\n"
+            "  -u, --uuid\n    Display configured Agent UUID.\n"
+            "  -U, --uuidgen\n    Generate (but don't save) a new Agent UUID.\n"
+            "  -p, --provision\n    Provision Agent (generate and save Agent UUID).\n"
+            "  --enable-sink, --disable-sink\n    Enable/disable sink uploads.\n"
+            "  -c, --config <filename>\n    Specify an alternate Agent configuration.\n"
+            "    Default: %s\n"
+            "  -f, --sink-config <filename>\n    Specify an alternate app and protocol configuration.\n"
+            "    Default: %s\n"
+            "  --force-reset\n    Reset Agent sink configuration options.\n"
+            "    Deletes: %s, %s, %s\n"
+
+#ifndef _ND_LEAN_AND_MEAN
+            "\nDump options:\n"
+            "  --dump-sort-by-tag\n    Sort application/protocol list by tag.\n"
+            "    Default: sort by application/protocol ID.\n"
+            "  -P, --dump-all\n    Dump all applications and protocols.\n"
+            "  --dump-apps\n    Dump applications only.\n"
+            "  --dump-protos\n    Dump protocols only.\n"
+#endif
+            "\nCapture options:\n"
+            "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
+            "  -E, --external <interface>\n    Specify an external (WAN) interface to capture from.\n"
+            "  -A, --device-address <address>\n    Interface/device option: consider address is assigned to interface.\n"
+            "  -F, --device-filter <BPF expression>\n    Interface/device option: attach a BPF filter expression to interface.\n"
+            "  -N, --device-netfilter <interface>\n    Interface/device option: associate Netlink messages from an alternate interface (ex: physdev of PPP interface).\n"
+            "  -t, --disable-conntrack\n    Disable connection tracking thread.\n"
+            "  -l, --disable-netlink\n    Don't process Netlink messages for capture interfaces.\n"
+
+            "\nThreading options:\n"
+            "  --thread-capture-base <offset>\n    Specify a thread affinity base or offset for capture threads.\n"
+            "  --thread-conntrack <cpu>\n    Specify a CPU affinity ID for the conntrack thread.\n"
+            "  --thread-sink <cpu>\n    Specify a CPU affinity ID for the sink upload thread.\n"
+            "  --thread-socket <cpu>\n    Specify a CPU affinity ID for the socket server thread.\n"
+            "  --thread-detection-base <offset>\n    Specify a thread affinity base or offset for detection (DPI) threads.\n"
+            "  --thread-detection-cores <count>\n    Specify the number of detection (DPI) threads to start.\n"
+
+            "\nSee netifyd(8) and netifyd.conf(5) for further options.\n",
+
+            ND_CONF_FILE_NAME,
+            ND_CONF_SINK_PATH,
+            nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
+        );
     }
 
     exit(rc);
@@ -840,7 +892,6 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 
     for (size_t b = 0; b < buckets; b++) {
         nd_flow_map *fm = nd_flow_buckets->Acquire(b);
-        nd_flow_map::const_iterator i = fm->begin();
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
             if (it->second->flags.detection_expiring.load() == false) {
@@ -2167,21 +2218,68 @@ static void nd_dump_stats(void)
 }
 
 #ifndef _ND_LEAN_AND_MEAN
-static void nd_dump_protocols(void)
+enum ndDumpFlags {
+    ndDUMP_NONE = 0x00,
+    ndDUMP_TYPE_PROTOS = 0x01,
+    ndDUMP_TYPE_APPS = 0x02,
+    ndDUMP_TYPE_VALID = 0x04,
+    ndDUMP_SORT_BY_TAG = 0x08,
+    ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS)
+};
+
+static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 {
-    uint32_t custom_proto_base;
+    unsigned custom_proto_base;
     struct ndpi_detection_module_struct *ndpi;
+
+    if (! (type & ndDUMP_TYPE_PROTOS) && ! (type & ndDUMP_TYPE_APPS)) {
+        printf("No filter type specified (application, protocol).\n");
+        return;
+    }
 
     ndpi_global_init();
 
     ndpi = nd_ndpi_init("netifyd");
     custom_proto_base = ndpi_get_custom_proto_base();
 
-    for (unsigned i = 0; i < (unsigned)ndpi->ndpi_num_supported_protocols; i++)
-        printf("%4d: %s\n", i, ndpi->proto_defaults[i].proto_name);
+    map<unsigned, string> protos_by_id;
+    map<string, unsigned> protos_by_tag;
+
+    unsigned i = (type & ndDUMP_TYPE_PROTOS) ? 0 : custom_proto_base;
+    unsigned last = (type & ndDUMP_TYPE_APPS) ?
+        (unsigned)ndpi->ndpi_num_supported_protocols : custom_proto_base;
+
+    for ( ; i < last; i++) {
+        if (! (type & ndDUMP_TYPE_VALID) &&
+            ! strcasecmp("Uninitialized", ndpi->proto_defaults[i].proto_name))
+            continue;
+
+        if ((type & ndDUMP_TYPE_APPS) && ! (type & ndDUMP_TYPE_PROTOS)) {
+            unsigned id;
+            string name;
+
+            if (nd_parse_app_tag(ndpi->proto_defaults[i].proto_name, id, name)) {
+                if (! (type & ndDUMP_SORT_BY_TAG))
+                    protos_by_id[id] = name;
+                else
+                    protos_by_tag[name] = id;
+            }
+        }
+        else {
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                protos_by_id[i] = ndpi->proto_defaults[i].proto_name;
+            else
+                protos_by_tag[ndpi->proto_defaults[i].proto_name] = i;
+        }
+    }
 
     ndpi_free(ndpi);
     ndpi_global_destroy();
+
+    for (auto &proto : protos_by_id)
+        printf("%6u: %s\n", proto.first, proto.second.c_str());
+    for (auto &proto : protos_by_tag)
+        printf("%6u: %s\n", proto.second, proto.first.c_str());
 }
 #endif
 
@@ -2617,6 +2715,7 @@ int main(int argc, char *argv[])
     struct itimerspec itspec_update;
     string last_device;
     nd_device_addr device_addresses;
+    uint8_t dump_flags = ndDUMP_NONE;
 
     setlocale(LC_ALL, "");
 
@@ -2662,7 +2761,6 @@ int main(int argc, char *argv[])
         { "internal", 1, 0, 'I' },
         { "interval", 1, 0, 'i' },
         { "export-json", 1, 0, 'j' },
-        { "protocols", 0, 0, 'P' },
         { "provision", 0, 0, 'p' },
         { "remain-in-foreground", 0, 0, 'R' },
         { "replay-delay", 0, 0, 'r' },
@@ -2687,6 +2785,14 @@ int main(int argc, char *argv[])
         { "thread-socket", 1, 0, _ND_LO_CA_SOCKET },
 
         { "wait-for-client", 0, 0, _ND_LO_WAIT_FOR_CLIENT },
+
+        { "dump-all", 0, 0, 'P' },
+        { "dump-protos", 0, 0, _ND_LO_DUMP_PROTOS },
+        { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
+        { "dump-apps", 0, 0, _ND_LO_DUMP_APPS },
+        { "dump-applications", 0, 0, _ND_LO_DUMP_APPS },
+
+        { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
 
         { NULL, 0, 0, 0 }
     };
@@ -2751,6 +2857,26 @@ int main(int argc, char *argv[])
             nd_config.flags |= ndGF_WAIT_FOR_CLIENT;
             break;
 
+        case _ND_LO_DUMP_SORT_BY_TAG:
+            dump_flags |= ndDUMP_SORT_BY_TAG;
+            break;
+
+        case _ND_LO_DUMP_PROTOS:
+#ifndef _ND_LEAN_AND_MEAN
+            nd_dump_protocols(ndDUMP_TYPE_PROTOS | dump_flags);
+            exit(0);
+#else
+            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            exit(1);
+#endif
+        case _ND_LO_DUMP_APPS:
+#ifndef _ND_LEAN_AND_MEAN
+            nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
+            exit(0);
+#else
+            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            exit(1);
+#endif
         case '?':
             fprintf(stderr, "Try `--help' for more information.\n");
             return 1;
@@ -2838,7 +2964,7 @@ int main(int argc, char *argv[])
             break;
         case 'P':
 #ifndef _ND_LEAN_AND_MEAN
-            nd_dump_protocols();
+            nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
             exit(0);
 #else
             fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
