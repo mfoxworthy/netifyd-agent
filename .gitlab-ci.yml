@@ -114,6 +114,7 @@ centos 8 build:
     - git submodule update --init --recursive
   script:
     # Build environment
+    - ntpdate -d -u time.nist.gov
     - ntpdate -u time.nist.gov
     # Build packages
     - ./autogen.sh
