@@ -682,7 +682,7 @@ void ndCaptureThread::ProcessPacket(void)
         default:
 #ifdef _ND_LOG_PKT_DISCARD
         stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->caplen;
+        stats->pkt.discard_bytes += pkt_header->len;
         nd_dprintf("%s: discard: Unsupported BSD loopback encapsulation type: %lu\n",
             tag.c_str(), ntohl(*((uint32_t *)pkt_data)));
 #endif
@@ -704,7 +704,7 @@ void ndCaptureThread::ProcessPacket(void)
             (hdr_eth->ether_dhost[0] == 0x01 && hdr_eth->ether_dhost[1] == 0x80 &&
             hdr_eth->ether_dhost[2] == 0xC2)) {
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: STP protocol.\n", tag.c_str());
 #endif
@@ -728,7 +728,7 @@ void ndCaptureThread::ProcessPacket(void)
 
     default:
         stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->caplen;
+        stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: Unsupported datalink type: 0x%x\n",
             tag.c_str(), (unsigned)pcap_datalink_type);
@@ -768,7 +768,7 @@ void ndCaptureThread::ProcessPacket(void)
             );
             if (ppp_proto != PPP_IP && ppp_proto != PPP_IPV6) {
                 stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->caplen;
+                stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: unsupported PPP protocol: 0x%04hx\n",
                     tag.c_str(), ppp_proto);
@@ -781,7 +781,7 @@ void ndCaptureThread::ProcessPacket(void)
         else if (type == ETHERTYPE_PPPOEDISC) {
             stats->pkt.pppoe++;
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: PPPoE discovery protocol.\n", tag.c_str());
 #endif
@@ -815,7 +815,7 @@ nd_process_ip:
         if (pkt_header->caplen - l2_len < sizeof(struct ip)) {
             // XXX: header too small
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: header too small\n", tag.c_str());
 #endif
@@ -826,7 +826,7 @@ nd_process_ip:
             // XXX: fragmented packets are not supported
             stats->pkt.frags++;
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: fragmented 0x3FFF\n", tag.c_str());
 #endif
@@ -837,7 +837,7 @@ nd_process_ip:
             // XXX: fragmented packets are not supported
             stats->pkt.frags++;
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: fragmented 0x1FFF\n", tag.c_str());
 #endif
@@ -846,24 +846,26 @@ nd_process_ip:
 
         if (l3_len > (pkt_header->caplen - l2_len)) {
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: l3_len[%hu] > (pkt_header->caplen[%hu] - l2_len[%hu])(%hu)\n",
                 tag.c_str(), l3_len, pkt_header->caplen, l2_len, pkt_header->caplen - l2_len);
 #endif
             return;
         }
+#if 0
+        // XXX: Disabled, drops all large packets.  Investigate.
 
         if ((pkt_header->caplen - l2_len) < ntohs(hdr_ip->ip_len)) {
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: (pkt_header->caplen[%hu] - l2_len[%hu](%hu)) < hdr_ip->ip_len[%hu]\n",
                 tag.c_str(), pkt_header->caplen, l2_len, pkt_header->caplen - l2_len, ntohs(hdr_ip->ip_len));
 #endif
             return;
         }
-
+#endif
         addr_cmp = memcmp(&hdr_ip->ip_src, &hdr_ip->ip_dst, 4);
 
         if (addr_cmp < 0) {
@@ -899,7 +901,7 @@ nd_process_ip:
 
         if (ndpi_handle_ipv6_extension_headers(NULL, &l4, &l4_len, &flow.ip_protocol)) {
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Error walking IPv6 extensions.\n", tag.c_str());
 #endif
@@ -940,7 +942,7 @@ nd_process_ip:
     else {
         // XXX: Warning: unsupported IP protocol version (IPv4/6 only)
         stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->caplen;
+        stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: invalid IP protocol version: %hhx\n",
             tag.c_str(), pkt_data[l2_len]);
@@ -1160,7 +1162,7 @@ nd_process_ip:
     else {
         if (nd_config.max_flows > 0 && nd_flow_count + 1 > nd_config.max_flows) {
             stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->caplen;
+            stats->pkt.discard_bytes += pkt_header->len;
             stats->flow.dropped++;
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
@@ -1267,13 +1269,14 @@ nd_process_ip:
     if (! nf->ts_first_update)
         nf->ts_first_update = ts_pkt;
 
-    if (nf->ip_protocol == IPPROTO_TCP &&
-        (hdr_tcp->th_flags & TH_FIN || hdr_tcp->th_flags & TH_RST)) {
+    if (nf->ip_protocol == IPPROTO_TCP) {
         if (hdr_tcp->th_seq <= nf->tcp_last_seq) {
             stats->pkt.tcp_seq_error++;
             nf->tcp_last_seq = hdr_tcp->th_seq;
         }
-        nf->flags.tcp_fin = true;
+
+        if (hdr_tcp->th_flags & TH_FIN) nf->flags.tcp_fin = true;
+        if (hdr_tcp->th_flags & TH_RST) stats->pkt.tcp_resets++;
     }
 
     if (dhc != NULL && pkt != NULL && pkt_len > sizeof(struct nd_dns_header_t)) {

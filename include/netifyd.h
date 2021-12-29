@@ -354,6 +354,7 @@ typedef struct nd_packet_stats_t
         uint64_t igmp;
         uint64_t tcp;
         uint64_t tcp_seq_error;
+        uint64_t tcp_resets;
         uint64_t udp;
         uint64_t ip_bytes;
         uint64_t ip4_bytes;
@@ -386,6 +387,7 @@ typedef struct nd_packet_stats_t
         pkt.igmp += rhs.pkt.igmp;
         pkt.tcp += rhs.pkt.tcp;
         pkt.tcp_seq_error += rhs.pkt.tcp_seq_error;
+        pkt.tcp_resets += rhs.pkt.tcp_resets;
         pkt.udp += rhs.pkt.udp;
         pkt.ip_bytes += rhs.pkt.ip_bytes;
         pkt.ip4_bytes += rhs.pkt.ip4_bytes;

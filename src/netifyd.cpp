@@ -1531,6 +1531,7 @@ static void nd_json_add_stats(json &parent,
     parent["ip"] = stats->pkt.ip;
     parent["tcp"] = stats->pkt.tcp;
     parent["tcp_seq_error"] = stats->pkt.tcp_seq_error;
+    parent["tcp_resets"] = stats->pkt.tcp_resets;
     parent["udp"] = stats->pkt.udp;
     parent["icmp"] = stats->pkt.icmp;
     parent["igmp"] = stats->pkt.igmp;
@@ -1570,13 +1571,16 @@ static void nd_json_process_flows(
         while (i != fm->end()) {
             uint32_t last_seen = i->second->ts_last_seen / 1000;
             uint32_t ttl = (
-                i->second->ip_protocol != IPPROTO_TCP || i->second->flags.tcp_fin.load()
+                i->second->ip_protocol != IPPROTO_TCP
             ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
             if (nd_terminate)
                 i->second->flags.detection_expired = true;
 
-            if (last_seen + ttl < now || i->second->flags.detection_expired.load()) {
+            if (last_seen + ttl < now ||
+                i->second->flags.detection_expired.load() ||
+                (i->second->ip_protocol == IPPROTO_TCP &&
+                    i->second->flags.tcp_fin.load())) {
 
                 if (i->second->flags.detection_expired.load() == true)
                     expired++;
