@@ -320,7 +320,6 @@ uint16_t ndFlow::master_protocol(void) const
     case NDPI_PROTOCOL_TOR:
     case NDPI_PROTOCOL_UNENCRYPTED_JABBER:
         return NDPI_PROTOCOL_TLS;
-    case NDPI_PROTOCOL_FACEBOOK:
     case NDPI_PROTOCOL_HTTP:
     case NDPI_PROTOCOL_HTTP_CONNECT:
     case NDPI_PROTOCOL_HTTP_PROXY:

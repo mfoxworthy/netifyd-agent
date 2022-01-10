@@ -480,12 +480,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             entry->flow->detected_protocol.app_protocol = ndpi_match_host_proto_id(ndpi, entry->flow->ndpi_flow);
         }
 
-        if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_STUN) {
-            if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_FACEBOOK)
-                entry->flow->detected_protocol.app_protocol = NDPI_PROTOCOL_MESSENGER;
-            else if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_GOOGLE)
+        if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_STUN &&
+            entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_GOOGLE)
                 entry->flow->detected_protocol.app_protocol = NDPI_PROTOCOL_HANGOUT;
-        }
 
         // Additional protocol-specific processing...
         ndpi_proto = entry->flow->master_protocol();
