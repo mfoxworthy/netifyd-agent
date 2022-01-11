@@ -168,29 +168,6 @@ freebsd 12.1 build:
     OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
   <<: *xbsd_build_script
 
-# Shell build
-#------------
-
-.shell_build: &shell_build_script
-  stage: build
-  tags:
-    - shell
-  before_script:
-    # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
-  script:
-    - echo $OS_TEST
-    - exit 1
-
-# Shell Targets
-#--------------
-
-shell build:
-  variables:
-    OS_TEST: "x86_64"
-  <<: *shell_build_script
-
 # -------------------------------------------------------------------------
 # Test stage
 # -------------------------------------------------------------------------
