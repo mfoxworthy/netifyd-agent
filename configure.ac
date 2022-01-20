@@ -6,9 +6,9 @@ m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.68])
-AC_INIT([Netify Agent], [3.11],
+AC_INIT([Netify Agent], [4.1.0],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
-    [netifyd], [http://www.netify.ai/])
+    [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
 AC_CONFIG_SRCDIR([src/netifyd.cpp])
 AC_CONFIG_SUBDIRS([libs/inih libs/ndpi])

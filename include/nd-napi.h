@@ -14,14 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef _ND_SIGNAL_H
-#define _ND_SIGNAL_H
+#ifndef _ND_NAPI_H
+#define _ND_NAPI_H
 
-#define ND_SIG_CONNECT      (SIGRTMIN + 0)
-#define ND_SIG_UPDATE       (SIGRTMIN + 1)
-#define ND_SIG_SINK_REPLY   (SIGRTMIN + 2)
-#define ND_SIG_NAPI_UPDATE  (SIGRTMIN + 3)
-#define ND_SIG_NAPI_UPDATED (SIGRTMIN + 4)
+class ndNetifyApiThread : public ndThread
+{
+public:
+    ndNetifyApiThread();
+    virtual ~ndNetifyApiThread();
 
-#endif // _ND_SIGNAL_H
+    virtual void *Entry(void);
+
+    void AppendData(const char *data, size_t length)
+    {
+        try {
+            body_data.append(data, length);
+        } catch (exception &e) {
+            throw ndThreadException(e.what());
+        }
+    }
+
+protected:
+    unsigned Get(const string &url);
+
+    CURL *ch;
+    struct curl_slist *headers;
+    string body_data;
+
+    ndCategory categories;
+};
+
+#endif // _ND_NAPI_H
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

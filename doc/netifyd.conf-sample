@@ -72,4 +72,29 @@ private_external_addresses = <yes/no>
 [sink_headers]
 <header> = <value>
 
+[netify_api]
+enable_updates = <enable to periodically update metadata (ex: categories)>
+update_interval = <number of seconds between API updates (1 day, 86400, by default)>
+url_api = <Base API URL to use>
+vendor = <Optional two character vendor ID>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # vi: syntax=ini

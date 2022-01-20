@@ -65,7 +65,8 @@ public:
     enum ndPluginEvent
     {
         EVENT_RELOAD,
-        EVENT_STATUS_UPDATE
+        EVENT_STATUS_UPDATE,
+        EVENT_CATEGORIES_UPDATE
     };
 
     virtual void ProcessEvent(ndPluginEvent event, void *param = NULL) { };

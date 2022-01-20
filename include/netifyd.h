@@ -155,7 +155,7 @@
 #define ND_SOCKET_PATH_GROUP    "root"
 
 #ifndef PACKAGE_URL
-#define PACKAGE_URL             "http://www.egloo.ca/"
+#define PACKAGE_URL             "https://www.netify.ai/"
 #endif
 
 #define ND_CONF_SINK_BASE       "netify-sink.conf"
@@ -165,6 +165,10 @@
 
 #define ND_PRIVATE_IPV4         "127.255.0."
 #define ND_PRIVATE_IPV6         "fe:80::ffff:7fff:"
+
+#define ND_API_UPDATE_TTL       (3600 * 24)
+#define ND_API_UPDATE_URL       "https://api.netify.ai/api/v1"
+#define ND_API_VENDOR           "EG"
 
 #include "nd-sha1.h"
 
@@ -206,7 +210,7 @@ enum nd_global_flags {
     ndGF_SSL_VERIFY = 0x100,
     ndGF_USE_CONNTRACK = 0x200,
     ndGF_USE_NETLINK = 0x400,
-    ndGF_FREE_0x800 = 0x800,
+    ndGF_USE_NAPI = 0x800,
     ndGF_USE_SINK = 0x1000,
     ndGF_USE_DHC = 0x2000,
     ndGF_USE_FHC = 0x4000,
@@ -232,6 +236,7 @@ enum nd_global_flags {
 #define ND_SSL_VERIFY (nd_config.flags & ndGF_SSL_VERIFY)
 #define ND_USE_CONNTRACK (nd_config.flags & ndGF_USE_CONNTRACK)
 #define ND_USE_NETLINK (nd_config.flags & ndGF_USE_NETLINK)
+#define ND_USE_NAPI (nd_config.flags & ndGF_USE_NAPI)
 #define ND_USE_SINK (nd_config.flags & ndGF_USE_SINK)
 #define ND_USE_DHC (nd_config.flags & ndGF_USE_DHC)
 #define ND_USE_FHC (nd_config.flags & ndGF_USE_FHC)
@@ -252,12 +257,14 @@ enum nd_global_flags {
 }
 
 typedef struct nd_global_config_t {
+    char *napi_vendor;
     char *path_config;
-    char *path_sink_config;
     char *path_export_json;
+    char *path_sink_config;
     char *path_uuid;
     char *path_uuid_serial;
     char *path_uuid_site;
+    char *url_napi;
     char *url_sink;
     char *url_sink_provision;
     char *uuid;
@@ -277,6 +284,7 @@ typedef struct nd_global_config_t {
     unsigned ttl_dns_entry;
     unsigned ttl_idle_flow;
     unsigned ttl_idle_tcp_flow;
+    unsigned ttl_napi_update;
     unsigned update_interval;
     unsigned update_imf;
     int16_t ca_capture_base;

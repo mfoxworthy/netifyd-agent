@@ -14,14 +14,41 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef _ND_SIGNAL_H
-#define _ND_SIGNAL_H
+#ifndef _ND_CATEGORY_H
+#define _ND_CATEGORY_H
 
-#define ND_SIG_CONNECT      (SIGRTMIN + 0)
-#define ND_SIG_UPDATE       (SIGRTMIN + 1)
-#define ND_SIG_SINK_REPLY   (SIGRTMIN + 2)
-#define ND_SIG_NAPI_UPDATE  (SIGRTMIN + 3)
-#define ND_SIG_NAPI_UPDATED (SIGRTMIN + 4)
+class ndCategory
+{
+public:
+    typedef enum {
+        ndCAT_APP,
+        ndCAT_PROTO,
 
-#endif // _ND_SIGNAL_H
+        ndCAT_MAX
+    } ndCategoryType;
+
+    ndCategory() : last_update(0) { }
+
+    bool Load(void);
+    bool Save(void);
+    void Dump(const string &oper);
+
+    void Parse(ndCategoryType type, json &jdata);
+
+    bool Lookup(ndCategoryType type, const string &name, unsigned id);
+
+    time_t GetLastUpdate(void) { return last_update; }
+
+protected:
+    time_t last_update;
+
+    typedef set<unsigned> nd_id_set;
+    typedef unordered_map <string, nd_id_set> nd_name_lookup;
+    typedef pair<string, nd_id_set> nd_name_lookup_pair;
+
+    nd_name_lookup apps, protos;
+};
+
+#endif // _ND_CATEGORY_H
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -113,6 +113,8 @@ using namespace std;
 #endif
 #include "nd-util.h"
 #include "nd-signal.h"
+#include "nd-category.h"
+#include "nd-napi.h"
 
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
@@ -126,6 +128,7 @@ static nd_packet_stats pkt_totals;
 static ostringstream *nd_stats_os = NULL;
 static ndSinkThread *thread_sink = NULL;
 static ndSocketThread *thread_socket = NULL;
+static ndNetifyApiThread *thread_napi = NULL;
 #ifdef _ND_USE_PLUGINS
 static nd_plugins plugin_services;
 static nd_plugins plugin_tasks;
@@ -524,7 +527,25 @@ static int nd_config_load(void)
     reader.GetSection("plugin_detections", nd_config.plugin_detections);
     reader.GetSection("plugin_stats", nd_config.plugin_stats);
 #endif
+
+    // Sink headers section
     reader.GetSection("sink_headers", nd_config.custom_headers);
+
+    // Netify API section
+    ND_GF_SET_FLAG(ndGF_USE_NAPI,
+        reader.GetBoolean("netify_api", "enable_updates", true));
+
+    nd_config.ttl_napi_update = reader.GetInteger(
+        "netify_api", "update_interval", ND_API_UPDATE_TTL);
+
+    string url_napi = reader.Get(
+        "netify_api", "url_api", ND_API_UPDATE_URL);
+    nd_config.url_napi = strdup(url_napi.c_str());
+
+    string napi_vendor = reader.Get(
+        "netify_api", "vendor", ND_API_VENDOR);
+    nd_config.napi_vendor = strdup(napi_vendor.c_str());
+
     return 0;
 }
 
@@ -2714,7 +2735,7 @@ int main(int argc, char *argv[])
     int rc = 0;
     sigset_t sigset;
     struct sigevent sigev;
-    timer_t timer_id;
+    timer_t timer_update, timer_napi;
     struct timespec tspec_sigwait;
     struct itimerspec itspec_update;
     string last_device;
@@ -3171,6 +3192,8 @@ int main(int argc, char *argv[])
     sigaddset(&sigset, ND_SIG_SINK_REPLY);
     sigaddset(&sigset, ND_SIG_UPDATE);
     sigaddset(&sigset, ND_SIG_CONNECT);
+    sigaddset(&sigset, ND_SIG_NAPI_UPDATE);
+    sigaddset(&sigset, ND_SIG_NAPI_UPDATED);
     sigaddset(&sigset, SIGHUP);
     sigaddset(&sigset, SIGINT);
     sigaddset(&sigset, SIGIO);
@@ -3284,7 +3307,7 @@ int main(int argc, char *argv[])
         do {
             nd_dprintf("Waiting for a client to connect...\n");
             sleep(1);
-        } while(thread_socket->GetClientCount() == 0);
+        } while (thread_socket->GetClientCount() == 0);
 
         if (nd_start_capture_threads() < 0)
             return 1;
@@ -3298,29 +3321,45 @@ int main(int argc, char *argv[])
     if (nd_plugin_start_stats() < 0)
         return 1;
 #endif
-
-    memset(&sigev, 0, sizeof(struct sigevent));
-    sigev.sigev_notify = SIGEV_SIGNAL;
-    sigev.sigev_signo = ND_SIG_UPDATE;
-
     // XXX: Always send an update on start-up...
     nd_dump_stats();
-
-    if (timer_create(CLOCK_REALTIME, &sigev, &timer_id) < 0) {
-        nd_printf("timer_create: %s\n", strerror(errno));
-        return 1;
-    }
 
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) netlink->Refresh();
 #endif
+    memset(&sigev, 0, sizeof(struct sigevent));
+    sigev.sigev_notify = SIGEV_SIGNAL;
+    sigev.sigev_signo = ND_SIG_UPDATE;
+
+    if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
+        nd_printf("timer_create: %s\n", strerror(errno));
+        return 1;
+    }
 
     itspec_update.it_value.tv_sec = nd_config.update_interval;
     itspec_update.it_value.tv_nsec = 0;
     itspec_update.it_interval.tv_sec = nd_config.update_interval;
     itspec_update.it_interval.tv_nsec = 0;
 
-    timer_settime(timer_id, 0, &itspec_update, NULL);
+    timer_settime(timer_update, 0, &itspec_update, NULL);
+
+    if (ND_USE_NAPI) {
+        memset(&sigev, 0, sizeof(struct sigevent));
+        sigev.sigev_notify = SIGEV_SIGNAL;
+        sigev.sigev_signo = ND_SIG_NAPI_UPDATE;
+
+        if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_napi) < 0) {
+            nd_printf("timer_create: %s\n", strerror(errno));
+            return 1;
+        }
+
+        itspec_update.it_value.tv_sec = nd_config.ttl_napi_update;
+        itspec_update.it_value.tv_nsec = 0;
+        itspec_update.it_interval.tv_sec = nd_config.ttl_napi_update;
+        itspec_update.it_interval.tv_nsec = 0;
+
+        timer_settime(timer_napi, 0, &itspec_update, NULL);
+    }
 
     tspec_sigwait.tv_sec = 1;
     tspec_sigwait.tv_nsec = 0;
@@ -3346,6 +3385,9 @@ int main(int argc, char *argv[])
         }
         else if (sig == ND_SIG_CONNECT) {
             nd_dprintf("Caught signal: [%d] %s: Client connected\n", sig, strsignal(sig));
+        }
+        else if (sig == ND_SIG_NAPI_UPDATE) {
+            nd_dprintf("Caught signal: [%d] %s: Netify API update\n", sig, strsignal(sig));
         }
         else {
             nd_dprintf("Caught signal: [%d] %s\n", sig, strsignal(sig));
@@ -3396,7 +3438,6 @@ int main(int argc, char *argv[])
                     continue;
                 }
             }
-
             continue;
         }
 
@@ -3425,13 +3466,30 @@ int main(int argc, char *argv[])
                 nd_dprintf("nd_sink_process_responses failed!\n");
                 break;
             }
-
             continue;
         }
 
         if (sig == ND_SIG_CONNECT) {
             for (nd_capture_threads::const_iterator t = capture_threads.begin();
                 t != capture_threads.end(); t++) (*t).second->SendIPC(ND_SIG_CONNECT);
+            continue;
+        }
+
+        if (sig == ND_SIG_NAPI_UPDATE) {
+            if (thread_napi == NULL) {
+                thread_napi = new ndNetifyApiThread();
+                thread_napi->Create();
+            }
+            continue;
+        }
+
+        if (sig == ND_SIG_NAPI_UPDATED) {
+            if (thread_napi != NULL) {
+                delete thread_napi;
+                thread_napi = NULL;
+
+                nd_plugin_event(ndPlugin::EVENT_CATEGORIES_UPDATE);
+            }
             continue;
         }
 
@@ -3460,7 +3518,8 @@ int main(int argc, char *argv[])
         delete thread_socket;
     }
 
-    timer_delete(timer_id);
+    timer_delete(timer_update);
+    timer_delete(timer_napi);
 
     nd_stop_detection_threads();
 
