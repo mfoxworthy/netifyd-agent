@@ -49,8 +49,6 @@
 
 #include <pcap/pcap.h>
 
-#include <libipset/ipset.h>
-
 #include <curl/curl.h>
 
 #include <nlohmann/json.hpp>
