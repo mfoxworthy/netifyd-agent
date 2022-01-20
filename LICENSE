@@ -7,7 +7,7 @@ source licensing is ideal for student/academic purposes, hobby projects,
 internal research project, or other projects where all open source license
 obligations can be met.
 
-Netifyd uses to the following libraries:
-- nDPI - LGPL license
-- inih -  3-Clause BSD license
-- gperftools - Google license
+Netifyd uses the following libraries:
+ - nDPI - LGPL license
+ - inih -  3-Clause BSD license
+ - gperftools - Google license

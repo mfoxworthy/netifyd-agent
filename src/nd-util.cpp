@@ -314,18 +314,24 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
     }
 }
 
-static inline void nd_ltrim(string &s)
+void nd_ltrim(string &s)
 {
     s.erase(s.begin(), find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !isspace(ch);
     }));
 }
 
-static inline void nd_rtrim(string &s)
+void nd_rtrim(string &s)
 {
     s.erase(find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
         return !isspace(ch);
     }).base(), s.end());
+}
+
+void nd_trim(string &s)
+{
+    nd_ltrim(s);
+    nd_rtrim(s);
 }
 
 int nd_sha1_file(const string &filename, uint8_t *digest)
@@ -689,9 +695,7 @@ string nd_get_version_and_features(void)
 #ifdef HAVE_WORKING_REGEX
     ident << "; regex";
 #endif
-    ident << ")" <<
-        " nDPI/" << ndpi_revision() <<
-        " JSON/" << fixed << showpoint << setprecision(2) << ND_JSON_VERSION;
+    ident << ")";
 
     return ident.str();
 }

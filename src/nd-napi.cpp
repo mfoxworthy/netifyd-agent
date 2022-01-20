@@ -30,6 +30,8 @@
 #include <atomic>
 #include <regex>
 #include <iomanip>
+#include <algorithm>
+#include <cctype>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -114,9 +116,29 @@ static size_t ndNetifyApiThread_read_data(
     char *data, size_t size, size_t nmemb, void *user)
 {
     size_t length = size * nmemb;
-    ndNetifyApiThread *thread_update = reinterpret_cast<ndNetifyApiThread *>(user);
+    ndNetifyApiThread *thread_napi = reinterpret_cast<ndNetifyApiThread *>(user);
 
-    thread_update->AppendData((const char *)data, length);
+    thread_napi->AppendData((const char *)data, length);
+
+    return length;
+}
+
+static size_t ndNetifyApiThread_parse_header(
+    char *data, size_t size, size_t nmemb, void *user)
+{
+    size_t length = size * nmemb;
+
+    // size_t ndNetifyApiThread_parse_header(char*, size_t, size_t, void*): HTTP/1.1 200 OK, 1, 17
+    //nd_dprintf("%s: %s, %u, %u\n", __PRETTY_FUNCTION__, data, size, nmemb);
+
+    if (size != 1 || length == 0) return 0;
+
+    ndNetifyApiThread *thread_napi = reinterpret_cast<ndNetifyApiThread *>(user);
+
+    string header_data;
+    header_data.assign(data, length);
+
+    thread_napi->ParseHeader(header_data);
 
     return length;
 }
@@ -131,15 +153,15 @@ static int ndNetifyApiThread_progress(void *user,
     curl_off_t ultotal __attribute__((unused)), curl_off_t ulnow __attribute__((unused)))
 #endif
 {
-    ndNetifyApiThread *thread_update = reinterpret_cast<ndNetifyApiThread *>(user);
+    ndNetifyApiThread *thread_napi = reinterpret_cast<ndNetifyApiThread *>(user);
 
-    if (thread_update->ShouldTerminate()) return 1;
+    if (thread_napi->ShouldTerminate()) return 1;
 
     return 0;
 }
 
 ndNetifyApiThread::ndNetifyApiThread()
-    : ch(NULL), headers(NULL),
+    : ch(NULL), headers_tx(NULL),
     ndThread("nap-api-update")
 {
     if ((ch = curl_easy_init()) == NULL)
@@ -153,6 +175,9 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     curl_easy_setopt(ch, CURLOPT_WRITEFUNCTION, ndNetifyApiThread_read_data);
     curl_easy_setopt(ch, CURLOPT_WRITEDATA, static_cast<void *>(this));
+
+    curl_easy_setopt(ch, CURLOPT_HEADERFUNCTION, ndNetifyApiThread_parse_header);
+    curl_easy_setopt(ch, CURLOPT_HEADERDATA, static_cast<void *>(this));
 
     curl_easy_setopt(ch, CURLOPT_NOPROGRESS, 0L);
 #if (LIBCURL_VERSION_NUM < 0x073200)
@@ -180,8 +205,8 @@ ndNetifyApiThread::ndNetifyApiThread()
     ostringstream header;
     header << "User-Agent: " << nd_get_version_and_features();
 
-    headers = curl_slist_append(headers, header.str().c_str());
-    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers_tx = curl_slist_append(headers_tx, header.str().c_str());
+    headers_tx = curl_slist_append(headers_tx, "Content-Type: application/json");
 
     header.str("");
 
@@ -195,7 +220,7 @@ ndNetifyApiThread::ndNetifyApiThread()
             header << "X-UUID: " << nd_config.uuid;
     }
 
-    headers = curl_slist_append(headers, header.str().c_str());
+    headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
     if (strncmp(nd_config.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
@@ -208,9 +233,9 @@ ndNetifyApiThread::ndNetifyApiThread()
             header << "X-UUID-Serial: " << nd_config.uuid_serial;
     }
 
-    headers = curl_slist_append(headers, header.str().c_str());
+    headers_tx = curl_slist_append(headers_tx, header.str().c_str());
 
-    curl_easy_setopt(ch, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(ch, CURLOPT_HTTPHEADER, headers_tx);
 }
 
 ndNetifyApiThread::~ndNetifyApiThread()
@@ -224,9 +249,9 @@ ndNetifyApiThread::~ndNetifyApiThread()
         ch = NULL;
     }
 
-    if (headers != NULL) {
-        curl_slist_free_all(headers);
-        headers = NULL;
+    if (headers_tx != NULL) {
+        curl_slist_free_all(headers_tx);
+        headers_tx = NULL;
     }
 }
 
@@ -236,22 +261,21 @@ void *ndNetifyApiThread::Entry(void)
 
     unordered_map<unsigned, string> requests;
 
-    requests[ndCategory::ndCAT_APP] = "/lookup/applications";
-    requests[ndCategory::ndCAT_PROTO] = "/lookup/protocols";
+    requests[ndCAT_TYPE_APP] = "/lookup/applications";
+    requests[ndCAT_TYPE_PROTO] = "/lookup/protocols";
 
-    queue<ndCategory::ndCategoryType> cqueue;
-    cqueue.push(ndCategory::ndCAT_PROTO);
-    cqueue.push(ndCategory::ndCAT_MAX);
+    queue<ndCategoryType> cqueue;
+    cqueue.push(ndCAT_TYPE_PROTO);
+    cqueue.push(ndCAT_TYPE_MAX);
 
-    ndCategory::ndCategoryType cid = ndCategory::ndCAT_APP;
+    ndCategoryType cid = ndCAT_TYPE_APP;
 
     while (! ShouldTerminate()) {
 
         unsigned rc = 0;
 
         // Done?
-        if (cid == ndCategory::ndCAT_MAX || cqueue.size() == 0) {
-            categories.Dump("Downloaded");
+        if (cid == ndCAT_TYPE_MAX || cqueue.size() == 0) {
             if (categories.Save())
                 kill(getpid(), ND_SIG_NAPI_UPDATED);
 
@@ -276,9 +300,30 @@ void *ndNetifyApiThread::Entry(void)
             nd_printf("%s: Error: %s\n", tag.c_str(), es.c_str());
             break;
         }
+        catch (exception &e) {
+            nd_printf("%s: Unknown error: %s.\n", tag.c_str(), e.what());
+            break;
+        }
         catch (...) {
             nd_printf("%s: Unknown error.\n", tag.c_str());
             break;
+        }
+
+        if (rc == 429) {
+            unsigned ttl = 0;
+            if (headers_rx.find("retry-after") != headers_rx.end()) {
+                string retry_value = headers_rx["retry-after"];
+                if (isdigit(retry_value[0]))
+                    ttl = (unsigned)strtoul(retry_value.c_str(), NULL, 0);
+            }
+
+            if (ttl == 0) ttl = _ND_NAPI_RETRY_TTL;
+            while (! ShouldTerminate() && ttl != 0) {
+                sleep(1);
+                ttl--;
+            }
+
+            continue;
         }
 
         if (rc != 200) {
@@ -301,7 +346,7 @@ void *ndNetifyApiThread::Entry(void)
             auto it_data = j.find("data");
 
             if (it_data != j.end())
-                categories.Parse(cid, (*it_data));
+                categories.Load(cid, (*it_data));
             else {
                 nd_printf("%s: Missing element: data\n", tag.c_str());
                 nd_dprintf("%s\n", body_data.c_str());
@@ -337,6 +382,34 @@ void *ndNetifyApiThread::Entry(void)
     return NULL;
 }
 
+void ndNetifyApiThread::ParseHeader(const string &header_raw)
+{
+    string key, value;
+    size_t p = string::npos;
+    if ((p = header_raw.find_first_of(":")) != string::npos) {
+        key = header_raw.substr(0, p);
+        value = header_raw.substr(p + 1);
+    }
+
+    if (! key.empty() && ! value.empty()) {
+
+        transform(key.begin(), key.end(), key.begin(),
+            [](unsigned char c){ return tolower(c); }
+        );
+
+        nd_trim(key);
+        nd_trim(value);
+
+        if (headers_rx.find(key) == headers_rx.end()) {
+            headers_rx[key] = value;
+            if (_ND_DEBUG_CURL) {
+                nd_dprintf("%s: header: %s: %s\n",
+                    tag.c_str(), key.c_str(), value.c_str());
+            }
+        }
+    }
+}
+
 unsigned ndNetifyApiThread::Get(const string &url)
 {
     CURLcode curl_rc;
@@ -344,6 +417,7 @@ unsigned ndNetifyApiThread::Get(const string &url)
     curl_easy_setopt(ch, CURLOPT_URL, url.c_str());
 
     body_data.clear();
+    headers_rx.clear();
 
     nd_dprintf("%s: GET: %s\n", tag.c_str(), url.c_str());
 

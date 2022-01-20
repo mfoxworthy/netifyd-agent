@@ -17,6 +17,8 @@
 #ifndef _ND_NAPI_H
 #define _ND_NAPI_H
 
+#define _ND_NAPI_RETRY_TTL  5
+
 class ndNetifyApiThread : public ndThread
 {
 public:
@@ -34,14 +36,17 @@ public:
         }
     }
 
+    void ParseHeader(const string &header_raw);
+
 protected:
     unsigned Get(const string &url);
 
     CURL *ch;
-    struct curl_slist *headers;
+    struct curl_slist *headers_tx;
+    map<string, string> headers_rx;
     string body_data;
 
-    ndCategory categories;
+    ndCategories categories;
 };
 
 #endif // _ND_NAPI_H

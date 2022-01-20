@@ -376,6 +376,7 @@ AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git
 # Get nDPI version
 NDPI_VERSION=`source ./libs/ndpi/ndpi-version.env; echo ${NDPI_VERSION}`
 AC_SUBST([NDPI_VERSION], "${NDPI_VERSION}")
+AC_DEFINE_UNQUOTED(ND_NDPI_UPSTREAM, "4.1.0", [nDPI upstream version])
 
 # Defines substitution for pkg-config
 ND_DEFINES+=" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"

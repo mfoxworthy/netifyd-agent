@@ -562,7 +562,8 @@ static int nd_config_load(void)
 #define _ND_LO_WAIT_FOR_CLIENT      10
 #define _ND_LO_DUMP_PROTOS          11
 #define _ND_LO_DUMP_APPS            12
-#define _ND_LO_DUMP_SORT_BY_TAG     13
+#define _ND_LO_DUMP_CATS            13
+#define _ND_LO_DUMP_SORT_BY_TAG     14
 
 static int nd_config_set_option(int option)
 {
@@ -606,14 +607,21 @@ static void nd_usage(int rc = 0, bool version = false)
 
     ND_GF_SET_FLAG(ndGF_QUIET, true);
 
-    fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
+    fprintf(stderr,
+        "%s\n%s\n", nd_get_version_and_features().c_str(), PACKAGE_URL);
     if (version) {
-        fprintf(stderr, "\nThis application uses nDPI v%s\n"
-            "http://www.ntop.org/products/deep-packet-inspection/ndpi/\n", ndpi_revision());
+        fprintf(stderr,
+            "\nThis application uses various components from nDPI v%s - v%s.\n"
+            "https://www.ntop.org/products/deep-packet-inspection/ndpi/\n"
+            "https://github.com/ntop/nDPI\n", ndpi_revision(), ND_NDPI_UPSTREAM);
         fprintf(stderr, "\n  This program comes with ABSOLUTELY NO WARRANTY.\n"
-            "  This is free software, and you are welcome to redistribute it\n"
-            "  under certain conditions according to the GNU General Public\n"
-            "  License version 3, or (at your option) any later version.\n");
+            "  Netifyd is dual-licensed under commercial and open source licenses. The\n"
+            "  commercial license gives you the full rights to create and distribute software\n"
+            "  on your own terms without any open source license obligations.\n\n"
+            "  Netifyd is also available under GPL and LGPL open source licenses.  The open\n"
+            "  source licensing is ideal for student/academic purposes, hobby projects,\n"
+            "  internal research project, or other projects where all open source license\n"
+            "  obligations can be met.\n");
 #ifdef PACKAGE_BUGREPORT
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
@@ -719,6 +727,7 @@ static void nd_usage(int rc = 0, bool version = false)
             "  -P, --dump-all\n    Dump all applications and protocols.\n"
             "  --dump-apps\n    Dump applications only.\n"
             "  --dump-protos\n    Dump protocols only.\n"
+            "  --dump-categories\n    Dump application and protocol categories.\n"
 #endif
             "\nCapture options:\n"
             "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
@@ -2248,9 +2257,10 @@ enum ndDumpFlags {
     ndDUMP_NONE = 0x00,
     ndDUMP_TYPE_PROTOS = 0x01,
     ndDUMP_TYPE_APPS = 0x02,
-    ndDUMP_TYPE_VALID = 0x04,
-    ndDUMP_SORT_BY_TAG = 0x08,
-    ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS)
+    ndDUMP_TYPE_CATS = 0x04,
+    ndDUMP_TYPE_VALID = 0x08,
+    ndDUMP_SORT_BY_TAG = 0x10,
+    ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS | ndDUMP_TYPE_CATS)
 };
 
 static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
@@ -2258,8 +2268,17 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
     unsigned custom_proto_base;
     struct ndpi_detection_module_struct *ndpi;
 
-    if (! (type & ndDUMP_TYPE_PROTOS) && ! (type & ndDUMP_TYPE_APPS)) {
+    if (! (type & ndDUMP_TYPE_PROTOS) && ! (type & ndDUMP_TYPE_APPS) &&
+        ! (type & ndDUMP_TYPE_CATS)) {
         printf("No filter type specified (application, protocol).\n");
+        return;
+    }
+
+    if (type & ndDUMP_TYPE_CATS) {
+        ndCategories categories;
+        if (categories.Load())
+            categories.Dump();
+
         return;
     }
 
@@ -2817,6 +2836,7 @@ int main(int argc, char *argv[])
         { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
         { "dump-apps", 0, 0, _ND_LO_DUMP_APPS },
         { "dump-applications", 0, 0, _ND_LO_DUMP_APPS },
+        { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
 
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
 
@@ -2898,6 +2918,14 @@ int main(int argc, char *argv[])
         case _ND_LO_DUMP_APPS:
 #ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
+            exit(0);
+#else
+            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            exit(1);
+#endif
+        case _ND_LO_DUMP_CATS:
+#ifndef _ND_LEAN_AND_MEAN
+            nd_dump_protocols(ndDUMP_TYPE_CATS | dump_flags);
             exit(0);
 #else
             fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
@@ -3354,7 +3382,17 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        itspec_update.it_value.tv_sec = nd_config.ttl_napi_update;
+        time_t ttl = 3;
+        ndCategories categories;
+        if (categories.Load()) {
+            time_t age = time(NULL) - categories.GetLastUpdate();
+            if (age < nd_config.ttl_napi_update)
+                ttl = nd_config.ttl_napi_update - age;
+            else if (age == nd_config.ttl_napi_update)
+                ttl = nd_config.ttl_napi_update;
+        }
+
+        itspec_update.it_value.tv_sec = ttl;
         itspec_update.it_value.tv_nsec = 0;
         itspec_update.it_interval.tv_sec = nd_config.ttl_napi_update;
         itspec_update.it_interval.tv_nsec = 0;
