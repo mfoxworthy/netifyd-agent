@@ -400,21 +400,12 @@ void *ndCaptureThread::Entry(void)
 
     do {
         if (pcap == NULL && ! ShouldTerminate()) {
-            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1) {
+
+            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
+                ! (ifr.ifr_flags & IFF_UP)) {
                 if (warnings) {
                     nd_printf("%s: WARNING: interface not available.\n",
                         tag.c_str());
-                    warnings = false;
-                }
-                sleep(1);
-                continue;
-            }
-
-            warnings = true;
-
-            if (! (ifr.ifr_flags & IFF_UP)) {
-                if (warnings) {
-                    nd_printf("%s: WARNING: interface is down.\n", tag.c_str());
                     warnings = false;
                 }
                 sleep(1);
