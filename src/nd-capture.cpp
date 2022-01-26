@@ -395,22 +395,33 @@ ndCaptureThread::~ndCaptureThread()
 void *ndCaptureThread::Entry(void)
 {
     int rc;
-
     struct ifreq ifr;
+    bool dump_flows = false, warnings = true;
 
     do {
         if (pcap == NULL && ! ShouldTerminate()) {
             if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1) {
+                if (warnings) {
+                    nd_printf("%s: WARNING: interface not available.\n",
+                        tag.c_str());
+                    warnings = false;
+                }
                 sleep(1);
                 continue;
             }
 
+            warnings = true;
+
             if (! (ifr.ifr_flags & IFF_UP)) {
-                nd_dprintf("%s: WARNING: interface is down.\n",
-                    tag.c_str());
+                if (warnings) {
+                    nd_printf("%s: WARNING: interface is down.\n", tag.c_str());
+                    warnings = false;
+                }
                 sleep(1);
                 continue;
             }
+
+            warnings = true;
 
             if ((pcap = OpenCapture()) == NULL) {
                 sleep(1);

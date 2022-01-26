@@ -855,7 +855,7 @@ int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr)
     strncpy(ifr->ifr_name, name.c_str(), IFNAMSIZ - 1);
 
     if (ioctl(fd, request, (char *)ifr) == -1) {
-        nd_printf("%s: error sending interface request: %s\n",
+        nd_dprintf("%s: error sending interface request: %s\n",
             name.c_str(), strerror(errno));
     }
     else rc = 0;
