@@ -562,8 +562,9 @@ static int nd_config_load(void)
 #define _ND_LO_WAIT_FOR_CLIENT      10
 #define _ND_LO_DUMP_PROTOS          11
 #define _ND_LO_DUMP_APPS            12
-#define _ND_LO_DUMP_CATS            13
-#define _ND_LO_DUMP_SORT_BY_TAG     14
+#define _ND_LO_DUMP_CAT             13
+#define _ND_LO_DUMP_CATS            14
+#define _ND_LO_DUMP_SORT_BY_TAG     15
 
 static int nd_config_set_option(int option)
 {
@@ -2257,9 +2258,11 @@ enum ndDumpFlags {
     ndDUMP_NONE = 0x00,
     ndDUMP_TYPE_PROTOS = 0x01,
     ndDUMP_TYPE_APPS = 0x02,
-    ndDUMP_TYPE_CATS = 0x04,
-    ndDUMP_TYPE_VALID = 0x08,
-    ndDUMP_SORT_BY_TAG = 0x10,
+    ndDUMP_TYPE_CAT_APP = 0x04,
+    ndDUMP_TYPE_CAT_PROTO = 0x08,
+    ndDUMP_TYPE_VALID = 0x10,
+    ndDUMP_SORT_BY_TAG = 0x20,
+    ndDUMP_TYPE_CATS = (ndDUMP_TYPE_CAT_APP | ndDUMP_TYPE_CAT_PROTO),
     ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS | ndDUMP_TYPE_CATS)
 };
 
@@ -2276,10 +2279,15 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
     if (type & ndDUMP_TYPE_CATS) {
         ndCategories categories;
-        if (categories.Load())
-            categories.Dump();
-
-        return;
+        
+        if (categories.Load()) {
+            if (type & ndDUMP_TYPE_CAT_APP && ! (type & ndDUMP_TYPE_CAT_PROTO))
+                categories.Dump(ndCAT_TYPE_APP);
+            else if (! (type & ndDUMP_TYPE_CAT_APP) && type & ndDUMP_TYPE_CAT_PROTO)
+                categories.Dump(ndCAT_TYPE_PROTO);
+            else
+                categories.Dump();
+        }
     }
 
     ndpi_global_init();
@@ -2836,6 +2844,7 @@ int main(int argc, char *argv[])
         { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
         { "dump-apps", 0, 0, _ND_LO_DUMP_APPS },
         { "dump-applications", 0, 0, _ND_LO_DUMP_APPS },
+        { "dump-category", 1, 0, _ND_LO_DUMP_CAT },
         { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
 
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
@@ -2918,6 +2927,17 @@ int main(int argc, char *argv[])
         case _ND_LO_DUMP_APPS:
 #ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
+            exit(0);
+#else
+            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            exit(1);
+#endif
+        case _ND_LO_DUMP_CAT:
+#ifndef _ND_LEAN_AND_MEAN
+            if (strncasecmp("protocol", optarg, 8) == 0)
+                nd_dump_protocols(ndDUMP_TYPE_CAT_APP | dump_flags);
+            else if (strncasecmp("application", optarg, 11) == 0)
+                nd_dump_protocols(ndDUMP_TYPE_CAT_PROTO | dump_flags);
             exit(0);
 #else
             fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
