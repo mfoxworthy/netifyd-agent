@@ -60,8 +60,8 @@ public:
 
     time_t GetLastUpdate(void) { return last_update; }
 
-    bool Lookup(ndCategoryType type, unsigned cat_id, unsigned id);
-    bool Lookup(ndCategoryType type, const string &cat_tag, unsigned id);
+    bool IsMember(ndCategoryType type, unsigned cat_id, unsigned id);
+    bool IsMember(ndCategoryType type, const string &cat_tag, unsigned id);
 
 protected:
     time_t last_update;

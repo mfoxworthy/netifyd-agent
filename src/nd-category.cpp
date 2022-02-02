@@ -66,208 +66,6 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-category.h"
 
-#if 0
-bool ndCategory::Load(void)
-{
-    json j;
-    string filename(ND_PERSISTENT_STATEDIR "/netify-categories.json");
-
-    ifstream ifs(filename);
-    if (! ifs.is_open()) {
-        nd_printf("Error opening categories: %s: %s\n",
-            filename.c_str(), strerror(ENOENT));
-        return false;
-    }
-
-    try {
-        ifs >> j;
-    }
-    catch (exception &e) {
-        nd_printf("Error loading categories: %s: JSON parse error\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
-
-        return false;
-    }
-
-    last_update = (time_t)(j["last_update"].get<unsigned>());
-
-    auto apps_index = j.find("application_index");
-
-    if (apps_index != j.end()) {
-        apps.clear();
-        auto obj = (*apps_index).get<json::object_t>();
-
-        for (auto &kvp : obj) {
-            for (auto k = kvp.second.begin(); k != kvp.second.end(); k++) {
-                unsigned id = (unsigned)strtoul(kvp.first.c_str(), NULL, 0);
-                auto i = apps.find(id);
-                if (i == apps.end()) {
-                    apps.insert(
-                        index_cat_insert(id, { (*k).get<unsigned>() })
-                    );
-                }
-                else {
-                    (*i).second.insert((*k).get<unsigned>());
-                }
-            }
-        }
-    }
-
-    auto protos_index = j.find("protocol_index");
-
-    if (protos_index != j.end()) {
-        protos.clear();
-        auto obj = (*protos_index).get<json::object_t>();
-
-        for (auto &kvp : obj) {
-            for (auto k = kvp.second.begin(); k != kvp.second.end(); k++) {
-                unsigned id = (unsigned)strtoul(kvp.first.c_str(), NULL, 0);
-                auto i = protos.find(id);
-                if (i == protos.end()) {
-                    protos.insert(
-                        index_cat_insert(id, { (*k).get<unsigned>() })
-                    );
-                }
-                else {
-                    (*i).second.insert((*k).get<unsigned>());
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-bool ndCategory::Save(void)
-{
-    json j;
-    string filename(ND_PERSISTENT_STATEDIR "/netify-categories.json");
-
-    try {
-        j["last_update"] = time(NULL);
-        j["application_tag_index"] = tag_apps;
-        j["application_index"] = index_apps;
-        j["protocol_tag_index"] = tag_protos;
-        j["protocol_index"] = index_protos;
-    } catch (exception &e) {
-        nd_printf("Error JSON encoding categories: %s\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
-
-        return false;
-    }
-
-    ofstream ofs(filename);
-    if (! ofs.is_open()) {
-        nd_printf("Error opening categories: %s: %s\n",
-            filename.c_str(), strerror(ENOENT));
-        return false;
-    }
-
-    try {
-        ofs << j;
-    }
-    catch (exception &e) {
-        nd_printf("Error saving categories: %s: JSON parse error\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
-
-        return false;
-    }
-
-    return true;
-}
-
-void ndCategory::Dump(void)
-{
-    for (auto l = tag_apps.begin(); l != tag_apps.end(); l++) {
-        auto i = index_apps.find(l.second);
-        if (i == index_apps.end()) continue;
-
-        printf("%4u: application: %s: %u\n",
-            l.second, l.first.c_str(), i.second.size());
-    }
-}
-
-void ndCategory::Parse(ndCategoryType type, json &jdata)
-{
-    string key;
-    index_tag *il = NULL;
-    index_cat *ic = NULL;
-
-    if (type == ndCAT_APP) {
-        lc = &tag_apps;
-        ic = &index_apps;
-        key = "application_category";
-    }
-    else if (type == ndCAT_PROTO) {
-        lc = &tag_protos;
-        ic = &index_protos;
-        key = "protocol_category";
-    }
-    else {
-        nd_dprintf("Unknown category type: %u\n", type);
-        return;
-    }
-
-    for (auto it = jdata.begin(); it != jdata.end(); it++) {
-
-        auto it_cat = it->find(key);
-        if (it_cat == it->end()) continue;
-
-        unsigned id = (*it)["id"].get<unsigned>();
-        unsigned cid = (*it_cat)["id"].get<unsigned>();
-        string tag = (*it_cat)["tag"].get<string>();
-        string tag = (*it_cat)["tag"].get<string>();
-
-        transform(tag.begin(), tag.end(), tag.begin(),
-            [](unsigned char c){ return tolower(c); }
-        );
-
-        auto it_entry = ic->find(tag);
-        if (it_entry == ic->end())
-            ic->insert(index_cat_insert(tag, { id }));
-        else
-            it_entry->second.insert(id);
-
-        if (tag == tag) continue;
-
-        it_entry = ic->find(tag);
-        if (it_entry == ic->end())
-            ic->insert(index_cat_insert(tag, { id }));
-        else
-            it_entry->second.insert(id);
-    }
-}
-
-bool ndCategory::Lookup(ndCategoryType type, const string &name, unsigned id)
-{
-    string search(name);
-    transform(search.begin(), search.end(), search.begin(),
-        [](unsigned char c){ return tolower(c); }
-    );
-
-    nd_name_lookup::iterator i;
-
-    if (type == ndCAT_APP) {
-        i = apps.find(search);
-        if (i == apps.end()) return false;
-    }
-    else if (type == ndCAT_PROTO) {
-        i = protos.find(search);
-        if (i == protos.end()) return false;
-    }
-    else return false;
-
-    auto j = i->second.find(id);
-    if (j == i->second.end()) return false;
-
-    return true;
-}
-
-#endif
-
 bool ndCategories::Load(void)
 {
     json j;
@@ -441,7 +239,7 @@ void ndCategories::Dump(ndCategoryType type)
     }
 }
 
-bool ndCategories::Lookup(ndCategoryType type, unsigned cat_id, unsigned id)
+bool ndCategories::IsMember(ndCategoryType type, unsigned cat_id, unsigned id)
 {
     auto ci = categories.find(type);
 
@@ -450,12 +248,35 @@ bool ndCategories::Lookup(ndCategoryType type, unsigned cat_id, unsigned id)
         return false;
     }
 
+    auto mi = ci->second.index.find(cat_id);
+
+    if (mi == ci->second.index.end()) return false;
+
+    if (mi->second.find(id) == mi->second.end()) return false;
+
     return false;
 }
 
-bool ndCategories::Lookup(ndCategoryType type, const string &cat_tag, unsigned id)
+bool ndCategories::IsMember(ndCategoryType type, const string &cat_tag, unsigned id)
 {
-    return Lookup(type, 0, 0);
+    auto ci = categories.find(type);
+
+    if (ci == categories.end()) {
+        nd_dprintf("%s: category type not found: %u\n", __PRETTY_FUNCTION__, type);
+        return false;
+    }
+
+    auto ti = ci->second.tag.find(cat_tag);
+
+    if (ti == ci->second.tag.end()) return false;
+
+    auto mi = ci->second.index.find(ti->second);
+
+    if (mi == ci->second.index.end()) return false;
+
+    if (mi->second.find(id) == mi->second.end()) return false;
+
+    return true;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
