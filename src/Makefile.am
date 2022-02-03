@@ -25,7 +25,7 @@ AM_CPPFLAGS += $(LIBNETFILTER_CONNTRACK_CFLAGS) $(LIBMNL_CFLAGS)
 endif
 
 lib_LTLIBRARIES = libnetifyd.la
-libnetifyd_la_SOURCES = nd-base64.cpp nd-capture.cpp nd-category.cpp \
+libnetifyd_la_SOURCES = nd-apps.cpp nd-base64.cpp nd-capture.cpp nd-category.cpp \
 	nd-detection.cpp nd-dhc.cpp nd-fhc.cpp nd-flow.cpp nd-flow-map.cpp \
 	nd-json.cpp nd-napi.cpp nd-ndpi.cpp nd-sha1.c nd-sink.cpp nd-socket.cpp \
 	nd-thread.cpp nd-util.cpp

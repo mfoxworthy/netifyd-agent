@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <vector>
 #include <atomic>
@@ -80,6 +81,8 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-json.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-thread.h"
@@ -99,6 +102,7 @@ using namespace std;
 //#define _ND_LOG_FHC             1
 
 extern nd_global_config nd_config;
+extern ndApplications *nd_apps;
 
 ndDetectionQueueEntry::ndDetectionQueueEntry(
     ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp
@@ -300,7 +304,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 {
     bool flow_update = false;
     struct ndpi_id_struct *id_src, *id_dst;
-    uint16_t ndpi_proto = NDPI_PROTOCOL_UNKNOWN;
     ndpi_protocol_match_result npmr;
 
     if (entry->flow->ndpi_flow != NULL) {
@@ -347,7 +350,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         );
 
         // XXX: Preserve app_protocol.
-        entry->flow->detected_protocol.master_protocol = ndpi_rc.master_protocol;
+        entry->flow->detected_protocol = nd_ndpi_proto_find(
+            ndpi_rc.master_protocol
+        );
     }
 
     bool check_extra_packets = (
@@ -355,22 +360,22 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         && entry->flow->detection_packets < nd_config.max_detection_pkts);
 
     if (! entry->flow->flags.detection_init.load() && (
-        entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN
+        entry->flow->detected_protocol != ND_PROTO_UNKNOWN
         || entry->flow->detection_packets == nd_config.max_detection_pkts
         || entry->flow->flags.detection_expiring.load())) {
 
         if (! entry->flow->flags.detection_guessed.load()
-            && entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_UNKNOWN) {
+            && entry->flow->detected_protocol == ND_PROTO_UNKNOWN) {
             entry->flow->flags.detection_guessed = true;
 
-            entry->flow->detected_protocol.master_protocol =
+            entry->flow->detected_protocol = nd_ndpi_proto_find(
                 ndpi_guess_undetected_protocol(
                     ndpi,
                     NULL,
                     entry->flow->ip_protocol,
                     ntohs(entry->flow->lower_port),
                     ntohs(entry->flow->upper_port)
-            );
+            ));
         }
 
 #ifdef _ND_USE_NETLINK
@@ -424,70 +429,100 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         // Determine application based on master protocol metadata
-        switch (entry->flow->detected_protocol.master_protocol) {
-        case NDPI_PROTOCOL_HTTPS:
-        case NDPI_PROTOCOL_TLS:
-        case NDPI_PROTOCOL_MAIL_IMAPS:
-        case NDPI_PROTOCOL_MAIL_SMTPS:
-        case NDPI_PROTOCOL_MAIL_POPS:
-        case NDPI_PROTOCOL_SSL_NO_CERT:
-        case NDPI_PROTOCOL_QUIC:
+        switch (entry->flow->detected_protocol) {
+        case ND_PROTO_HTTPS:
+        case ND_PROTO_TLS:
+        case ND_PROTO_MAIL_IMAPS:
+        case ND_PROTO_MAIL_SMTPS:
+        case ND_PROTO_MAIL_POPS:
+        case ND_PROTO_SSL_NO_CERT:
+        case ND_PROTO_QUIC:
             if (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
-                entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
-                    ndpi,
-                    entry->flow->ndpi_flow,
-                    (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name,
-                    strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name),
-                    &npmr);
+                entry->flow->detected_protocol = nd_ndpi_proto_find(
+                    ndpi_match_host_app_proto(
+                        ndpi,
+                        entry->flow->ndpi_flow,
+                        (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name,
+                        strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name),
+                        &npmr)
+                    );
             }
             break;
 
-        case NDPI_PROTOCOL_SPOTIFY:
-            entry->flow->detected_protocol.app_protocol = ndpi_get_protocol_id(ndpi, "netify.spotify");
+        case ND_PROTO_SPOTIFY:
+            entry->flow->detected_application = nd_apps->Lookup("netify.spotify");
             break;
 
-        case NDPI_PROTOCOL_SKYPE:
-        case NDPI_PROTOCOL_SKYPE_CALL:
-            entry->flow->detected_protocol.app_protocol = ndpi_get_protocol_id(ndpi, "netify.skype");
+        case ND_PROTO_SKYPE:
+        case ND_PROTO_SKYPE_CALL:
+            entry->flow->detected_application = nd_apps->Lookup("netify.skype");
             break;
 
-        case NDPI_PROTOCOL_MDNS:
+        case ND_PROTO_MDNS:
             if (entry->flow->ndpi_flow->protos.mdns.answer[0] != '\0') {
-                entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
-                    ndpi, entry->flow->ndpi_flow,
-                    (char *)entry->flow->ndpi_flow->protos.mdns.answer,
-                    strlen((const char*)entry->flow->ndpi_flow->protos.mdns.answer),
-                    &npmr
+                entry->flow->detected_application = nd_apps->Find(
+                    (const char *)entry->flow->ndpi_flow->protos.mdns.answer
                 );
             }
+            break;
+        default:
             break;
         }
 
         // Determine application by host_server_name if still unknown.
-        if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN) {
+        if (entry->flow->detected_application == ND_APP_UNKNOWN) {
             if (entry->flow->host_server_name[0] != '\0') {
-                entry->flow->detected_protocol.app_protocol = ndpi_match_host_app_proto(
-                    ndpi,
-                    entry->flow->ndpi_flow,
-                    (char *)entry->flow->host_server_name,
-                    strlen((const char *)entry->flow->host_server_name),
-                    &npmr
+                entry->flow->detected_application = nd_apps->Find(
+                    (const char *)entry->flow->host_server_name
                 );
             }
         }
 
-        if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN) {
-            entry->flow->detected_protocol.app_protocol = ndpi_match_host_proto_id(ndpi, entry->flow->ndpi_flow);
+        if (entry->flow->detected_application == ND_APP_UNKNOWN) {
+            switch (entry->flow->ip_version) {
+            case 4:
+                entry->flow->detected_application = nd_apps->Find(
+                    AF_INET,
+                    static_cast<void *>(
+                        &entry->flow->lower_addr4->sin_addr
+                    )
+                );
+                if (entry->flow->detected_application) break;
+                entry->flow->detected_application = nd_apps->Find(
+                    AF_INET,
+                    static_cast<void *>(
+                        &entry->flow->upper_addr4->sin_addr
+                    )
+                );
+                break;
+            case 6:
+                entry->flow->detected_application = nd_apps->Find(
+                    AF_INET6,
+                    static_cast<void *>(
+                        &entry->flow->lower_addr6->sin6_addr
+                    )
+                );
+                if (entry->flow->detected_application) break;
+                entry->flow->detected_application = nd_apps->Find(
+                    AF_INET6,
+                    static_cast<void *>(
+                        &entry->flow->upper_addr6->sin6_addr
+                    )
+                );
+                break;
+            }
         }
 
-        if (entry->flow->detected_protocol.master_protocol == NDPI_PROTOCOL_STUN &&
-            entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_GOOGLE)
-                entry->flow->detected_protocol.app_protocol = NDPI_PROTOCOL_HANGOUT;
+        if (entry->flow->detected_protocol == ND_PROTO_STUN) {
+            // TODO
+            //entry->flow->detected_application == NDPI_PROTOCOL_GOOGLE
+            //    entry->flow->detected_protocol.app_protocol = ND_PROTO_HANGOUT;
+        }
 
         // Additional protocol-specific processing...
-        ndpi_proto = entry->flow->master_protocol();
+        nd_proto_id_t nd_proto = entry->flow->master_protocol();
 
-        switch (ndpi_proto) {
+        switch (nd_proto) {
 
         case NDPI_PROTOCOL_MDNS:
             for (size_t i = 0;
@@ -777,14 +812,12 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         entry->flow->detected_protocol_name = strdup(
-            ndpi_get_proto_name(ndpi, entry->flow->detected_protocol.master_protocol)
+            ndpi_get_proto_name(ndpi, entry->flow->detected_protocol)
         );
 
-        if (entry->flow->detected_protocol.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
+        if (entry->flow->detected_application != ND_APP_UNKNOWN) {
             entry->flow->detected_application_name = strdup(
-                ndpi_get_proto_name(
-                    ndpi, entry->flow->detected_protocol.app_protocol
-                )
+                "TODO" // TODO:
             );
         }
 
@@ -821,13 +854,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN);
                 free(entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN);
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.serverCN = NULL;
-                if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN) {
-                    entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
-                        ndpi,
-                        entry->flow->ndpi_flow,
-                        (char *)entry->flow->ssl.server_cn,
-                        strlen((const char *)entry->flow->ssl.server_cn),
-                        &npmr);
+                if (entry->flow->detected_application == ND_APP_UNKNOWN) {
+                    entry->flow->detected_application = nd_apps->Find(
+                        (const char *)entry->flow->ssl.server_cn
+                    );
                 }
 
                 flow_update = true;
@@ -892,15 +922,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                         if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
                         if (strncmp(alpn.c_str(),
                             nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
-                        if (nd_alpn_proto_map[i].proto_id ==
-                                entry->flow->detected_protocol.master_protocol)
+                        if (nd_alpn_proto_map[i].proto_id == entry->flow->detected_protocol)
                             continue;
-                        entry->flow->detected_protocol.master_protocol =
-                            nd_alpn_proto_map[i].proto_id;
+                        entry->flow->detected_protocol = nd_alpn_proto_map[i].proto_id;
 
                         char *alpn_protocol = strdup(
                             ndpi_get_proto_name(ndpi,
-                                entry->flow->detected_protocol.master_protocol
+                                entry->flow->detected_protocol
                             )
                         );
 
@@ -965,7 +993,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
-            entry->flow->detected_protocol.master_protocol != NDPI_PROTOCOL_UNKNOWN)) {
+            entry->flow->detected_protocol != ND_PROTO_UNKNOWN)) {
             json j;
 
             j["type"] = "flow";

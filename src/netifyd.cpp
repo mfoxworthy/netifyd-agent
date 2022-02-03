@@ -26,6 +26,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <vector>
 #include <locale>
@@ -96,6 +97,8 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-json.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-thread.h"
@@ -161,6 +164,8 @@ nd_device_ethers device_ethers;
 
 nd_global_config nd_config;
 pthread_mutex_t *nd_printf_mutex = NULL;
+
+ndApplications *nd_apps = NULL;
 
 atomic_uint nd_flow_count;
 
@@ -809,7 +814,16 @@ static void nd_force_reset(void)
 
 static void nd_init(void)
 {
+    nd_apps = new ndApplications();
+    if (nd_apps == nullptr)
+        throw ndSystemException(__PRETTY_FUNCTION__, "new nd_apps", ENOMEM);
+
+    if (! nd_apps->Load("TODO"))
+        nd_apps->LoadLegacy(nd_config.path_sink_config);
+
     nd_flow_buckets = new ndFlowMap();
+    if (nd_flow_buckets == nullptr)
+        throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
     for (nd_ifaces::iterator i = ifaces.begin();
         i != ifaces.end(); i++) {
@@ -860,8 +874,15 @@ static void nd_destroy(void)
     stats.clear();
     devices.clear();
 
-    delete nd_flow_buckets;
-    nd_flow_buckets = NULL;
+    if (nd_flow_buckets) {
+        delete nd_flow_buckets;
+        nd_flow_buckets = NULL;
+    }
+
+    if (nd_apps) {
+        delete nd_apps;
+        nd_apps = NULL;
+    }
 }
 
 static int nd_start_capture_threads(void)
@@ -1630,7 +1651,7 @@ static void nd_json_process_flows(
                 }
 
                 if (add_flows &&
-                    i->second->detected_protocol.master_protocol == 0 &&
+                    i->second->detected_protocol == ND_PROTO_UNKNOWN &&
                     (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                     json jf;
@@ -1642,7 +1663,7 @@ static void nd_json_process_flows(
                 if (socket_queue) {
 
                     if (ND_FLOW_DUMP_UNKNOWN &&
-                        i->second->detected_protocol.master_protocol == 0) {
+                        i->second->detected_protocol == ND_PROTO_UNKNOWN) {
 
                         json j, jf;
 
@@ -1664,7 +1685,7 @@ static void nd_json_process_flows(
                     }
 
                     if (ND_FLOW_DUMP_UNKNOWN ||
-                        i->second->detected_protocol.master_protocol > 0) {
+                        i->second->detected_protocol != ND_PROTO_UNKNOWN) {
 
                         json j, jf;
 
@@ -2279,7 +2300,7 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
     if (type & ndDUMP_TYPE_CATS) {
         ndCategories categories;
-        
+
         if (categories.Load()) {
             if (type & ndDUMP_TYPE_CAT_APP && ! (type & ndDUMP_TYPE_CAT_PROTO))
                 categories.Dump(ndCAT_TYPE_APP);

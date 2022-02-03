@@ -25,6 +25,7 @@
 #include <vector>
 #include <atomic>
 #include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 #include <regex>
 
@@ -55,6 +56,8 @@ using namespace std;
 #endif
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-flow.h"
 
 // Enable flow hash cache debug logging
@@ -301,47 +304,41 @@ void ndFlow::release(void)
     capture.clear();
 }
 
-uint16_t ndFlow::master_protocol(void) const
+nd_proto_id_t ndFlow::master_protocol(void) const
 {
-    uint16_t proto = (detected_protocol.master_protocol !=
-        NDPI_PROTOCOL_UNKNOWN) ?
-            detected_protocol.master_protocol :
-            detected_protocol.app_protocol;
-
-    switch (proto) {
-    case NDPI_PROTOCOL_GMAIL:
-    case NDPI_PROTOCOL_HTTPS:
-    case NDPI_PROTOCOL_MAIL_IMAP:
-    case NDPI_PROTOCOL_MAIL_IMAPS:
-    case NDPI_PROTOCOL_MAIL_POPS:
-    case NDPI_PROTOCOL_MAIL_SMTPS:
-    case NDPI_PROTOCOL_TLS:
-    case NDPI_PROTOCOL_SSL_NO_CERT:
-    case NDPI_PROTOCOL_TOR:
-    case NDPI_PROTOCOL_UNENCRYPTED_JABBER:
-        return NDPI_PROTOCOL_TLS;
-    case NDPI_PROTOCOL_HTTP:
-    case NDPI_PROTOCOL_HTTP_CONNECT:
-    case NDPI_PROTOCOL_HTTP_PROXY:
-    case NDPI_PROTOCOL_NETFLIX:
-    case NDPI_PROTOCOL_OOKLA:
-    case NDPI_PROTOCOL_PPSTREAM:
-    case NDPI_PROTOCOL_QQ:
-    case NDPI_PROTOCOL_RTSP:
-    case NDPI_PROTOCOL_STEAM:
-    case NDPI_PROTOCOL_TEAMVIEWER:
-    case NDPI_PROTOCOL_XBOX:
-        return NDPI_PROTOCOL_HTTP;
+    switch (detected_protocol) {
+    case ND_PROTO_GMAIL:
+    case ND_PROTO_HTTPS:
+    case ND_PROTO_MAIL_IMAP:
+    case ND_PROTO_MAIL_IMAPS:
+    case ND_PROTO_MAIL_POPS:
+    case ND_PROTO_MAIL_SMTPS:
+    case ND_PROTO_TLS:
+    case ND_PROTO_SSL_NO_CERT:
+    case ND_PROTO_TOR:
+    case ND_PROTO_UNENCRYPTED_JABBER:
+        return ND_PROTO_TLS;
+    case ND_PROTO_HTTP:
+    case ND_PROTO_HTTP_CONNECT:
+    case ND_PROTO_HTTP_PROXY:
+    case ND_PROTO_NETFLIX:
+    case ND_PROTO_OOKLA:
+    case ND_PROTO_PPSTREAM:
+    case ND_PROTO_QQ:
+    case ND_PROTO_RTSP:
+    case ND_PROTO_STEAM:
+    case ND_PROTO_TEAMVIEWER:
+    case ND_PROTO_XBOX:
+        return ND_PROTO_HTTP;
     }
 
-    return proto;
+    return detected_protocol;
 }
 
 bool ndFlow::has_dhcp_fingerprint(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_DHCP ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_DHCP) &&
+        detected_protocol == ND_PROTO_DHCP &&
         dhcp.fingerprint[0] != '\0'
     );
 }
@@ -349,8 +346,7 @@ bool ndFlow::has_dhcp_fingerprint(void) const
 bool ndFlow::has_dhcp_class_ident(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_DHCP ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_DHCP) &&
+        detected_protocol == ND_PROTO_DHCP &&
         dhcp.class_ident[0] != '\0'
     );
 }
@@ -358,7 +354,7 @@ bool ndFlow::has_dhcp_class_ident(void) const
 bool ndFlow::has_http_user_agent(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_HTTP &&
+        master_protocol() == ND_PROTO_HTTP &&
         http.user_agent[0] != '\0'
     );
 }
@@ -373,8 +369,7 @@ bool ndFlow::has_http_url(void) const
 bool ndFlow::has_ssh_client_agent(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_SSH ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_SSH) &&
+        detected_protocol == ND_PROTO_SSH &&
         ssh.client_agent[0] != '\0'
     );
 }
@@ -382,8 +377,7 @@ bool ndFlow::has_ssh_client_agent(void) const
 bool ndFlow::has_ssh_server_agent(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_SSH ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_SSH) &&
+        detected_protocol == ND_PROTO_SSH &&
         ssh.server_agent[0] != '\0'
     );
 }
@@ -391,7 +385,7 @@ bool ndFlow::has_ssh_server_agent(void) const
 bool ndFlow::has_ssl_client_sni(void) const
 {
     return (
-        (master_protocol() == NDPI_PROTOCOL_TLS || master_protocol() == NDPI_PROTOCOL_QUIC) &&
+        (master_protocol() == ND_PROTO_TLS || master_protocol() == ND_PROTO_QUIC) &&
         ssl.client_sni[0] != '\0'
     );
 }
@@ -399,7 +393,7 @@ bool ndFlow::has_ssl_client_sni(void) const
 bool ndFlow::has_ssl_server_cn(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        master_protocol() == ND_PROTO_TLS &&
         ssl.server_cn[0] != '\0'
     );
 }
@@ -407,7 +401,7 @@ bool ndFlow::has_ssl_server_cn(void) const
 bool ndFlow::has_ssl_server_names(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        master_protocol() == ND_PROTO_TLS &&
         ssl.server_names_length > 0 && ssl.server_names != NULL
     );
 }
@@ -415,7 +409,7 @@ bool ndFlow::has_ssl_server_names(void) const
 bool ndFlow::has_ssl_server_organization(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        master_protocol() == ND_PROTO_TLS &&
         ssl.server_organization[0] != '\0'
     );
 }
@@ -423,7 +417,7 @@ bool ndFlow::has_ssl_server_organization(void) const
 bool ndFlow::has_ssl_client_ja3(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        master_protocol() == ND_PROTO_TLS &&
         ssl.client_ja3[0] != '\0'
     );
 }
@@ -431,7 +425,7 @@ bool ndFlow::has_ssl_client_ja3(void) const
 bool ndFlow::has_ssl_server_ja3(void) const
 {
     return (
-        master_protocol() == NDPI_PROTOCOL_TLS &&
+        master_protocol() == ND_PROTO_TLS &&
         ssl.server_ja3[0] != '\0'
     );
 }
@@ -439,8 +433,7 @@ bool ndFlow::has_ssl_server_ja3(void) const
 bool ndFlow::has_bt_info_hash(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_BITTORRENT ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_BITTORRENT) &&
+        detected_protocol == ND_PROTO_BITTORRENT &&
         bt.info_hash_valid
     );
 }
@@ -448,8 +441,7 @@ bool ndFlow::has_bt_info_hash(void) const
 bool ndFlow::has_mdns_answer(void) const
 {
     return (
-        (detected_protocol.master_protocol == NDPI_PROTOCOL_MDNS ||
-        detected_protocol.app_protocol == NDPI_PROTOCOL_MDNS) &&
+        detected_protocol == ND_PROTO_MDNS &&
         mdns.answer[0] != '\0'
     );
 }
@@ -457,7 +449,7 @@ bool ndFlow::has_mdns_answer(void) const
 bool ndFlow::has_ssdp_headers(void) const
 {
     return (
-        detected_protocol.master_protocol == NDPI_PROTOCOL_SSDP &&
+        detected_protocol == ND_PROTO_SSDP &&
         ssdp.headers.size()
     );
 }
@@ -521,7 +513,7 @@ void ndFlow::print(void) const
     );
 #if 0
     if (ND_DEBUG &&
-        detected_protocol.master_protocol == NDPI_PROTOCOL_TLS &&
+        detected_protocol == ND_PROTO_TLS &&
         flags.detection_guessed.load() == false && ssl.version == 0x0000) {
         nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface->second.c_str());
     }
@@ -780,13 +772,11 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j[_lower_port] = (unsigned)ntohs(lower_port);
         j[_upper_port] = (unsigned)ntohs(upper_port);
 
-        j["detected_protocol"] =
-            (unsigned)detected_protocol.master_protocol;
+        j["detected_protocol"] = (unsigned)detected_protocol;
         j["detected_protocol_name"] =
             (detected_protocol_name != NULL) ? detected_protocol_name : "Unknown";
 
-        j["detected_application"] =
-            (unsigned)detected_protocol.app_protocol;
+        j["detected_application"] = (unsigned)detected_application;
         j["detected_application_name"] =
             (detected_application_name != NULL) ? detected_application_name : "Unknown";
 
@@ -822,7 +812,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 j["ssh"]["server"] = ssh.server_agent;
         }
 
-        if (master_protocol() == NDPI_PROTOCOL_TLS) {
+        if (master_protocol() == ND_PROTO_TLS) {
 
             char tohex[7];
 

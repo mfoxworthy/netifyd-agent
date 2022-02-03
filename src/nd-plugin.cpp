@@ -22,6 +22,7 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <atomic>
 #include <regex>
 
@@ -56,6 +57,8 @@ using namespace std;
 #include "nd-thread.h"
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-plugin.h"

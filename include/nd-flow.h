@@ -122,7 +122,9 @@ public:
 
     uint8_t detection_packets;
 
-    ndpi_protocol detected_protocol;
+    nd_proto_id_t detected_protocol;
+    nd_app_id_t detected_application;
+   
     char *detected_protocol_name;
     char *detected_application_name;
 
@@ -275,7 +277,7 @@ public:
 
     void release(void);
 
-    uint16_t master_protocol(void) const;
+    nd_proto_id_t master_protocol(void) const;
 
     bool has_dhcp_fingerprint(void) const;
     bool has_dhcp_class_ident(void) const;

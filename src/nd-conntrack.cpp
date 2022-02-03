@@ -22,6 +22,7 @@
 #include <set>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <vector>
 #include <sstream>
@@ -66,6 +67,8 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-json.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-flow.h"
 #include "nd-thread.h"
 #include "nd-util.h"

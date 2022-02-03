@@ -17,6 +17,6 @@ egrep -v '(^Proto|Reserved)' ./doc/alpn-protocol-ids.csv |\
         -e 's/["”]*).*$/ *\//g' \
         -e 's/ 0x/, 0x/g' \
         -e 's/^/    { { /g' \
-        -e 's/$/, 0x00 }, NDPI_PROTOCOL_UNKNOWN },/g'
+        -e 's/$/, 0x00 }, ND_PROTO_UNKNOWN },/g'
 
 exit $?
