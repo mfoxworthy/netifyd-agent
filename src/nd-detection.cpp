@@ -304,7 +304,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 {
     bool flow_update = false;
     struct ndpi_id_struct *id_src, *id_dst;
-    ndpi_protocol_match_result npmr;
 
     if (entry->flow->ndpi_flow != NULL) {
         if (entry->addr_cmp == entry->flow->direction)
@@ -438,14 +437,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         case ND_PROTO_SSL_NO_CERT:
         case ND_PROTO_QUIC:
             if (entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
-                entry->flow->detected_protocol = nd_ndpi_proto_find(
-                    ndpi_match_host_app_proto(
-                        ndpi,
-                        entry->flow->ndpi_flow,
-                        (char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name,
-                        strlen((const char*)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name),
-                        &npmr)
-                    );
+                entry->flow->detected_application = nd_apps->Find(
+                    (const char *)entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.client_requested_server_name
+                );
             }
             break;
 
@@ -515,7 +509,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         if (entry->flow->detected_protocol == ND_PROTO_STUN) {
             // TODO
-            //entry->flow->detected_application == NDPI_PROTOCOL_GOOGLE
+            //entry->flow->detected_application == ND_PROTO_GOOGLE
             //    entry->flow->detected_protocol.app_protocol = ND_PROTO_HANGOUT;
         }
 
@@ -524,7 +518,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         switch (nd_proto) {
 
-        case NDPI_PROTOCOL_MDNS:
+        case ND_PROTO_MDNS:
             for (size_t i = 0;
                 i < strlen((const char *)entry->flow->ndpi_flow->protos.mdns.answer); i++) {
                 if (! isprint(entry->flow->ndpi_flow->protos.mdns.answer[i])) {
@@ -539,8 +533,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             );
             break;
 
-        case NDPI_PROTOCOL_TLS:
-        case NDPI_PROTOCOL_QUIC:
+        case ND_PROTO_TLS:
+        case ND_PROTO_QUIC:
             entry->flow->ssl.version =
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ssl_version;
             entry->flow->ssl.cipher_suite =
@@ -552,7 +546,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.ja3_client);
             break;
 
-        case NDPI_PROTOCOL_HTTP:
+        case ND_PROTO_HTTP:
             if (entry->flow->ndpi_flow->http.user_agent != NULL) {
                 for (size_t i = 0;
                     i < strlen((const char *)entry->flow->ndpi_flow->http.user_agent); i++) {
@@ -577,7 +571,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 
             break;
-        case NDPI_PROTOCOL_DHCP:
+        case ND_PROTO_DHCP:
             snprintf(
                 entry->flow->dhcp.fingerprint, ND_FLOW_DHCPFP_LEN,
                 "%s", entry->flow->ndpi_flow->protos.dhcp.fingerprint
@@ -587,13 +581,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", entry->flow->ndpi_flow->protos.dhcp.class_ident
             );
             break;
-        case NDPI_PROTOCOL_SSH:
+        case ND_PROTO_SSH:
             snprintf(entry->flow->ssh.client_agent, ND_FLOW_SSH_UALEN,
                 "%s", entry->flow->ndpi_flow->protos.ssh.client_signature);
             snprintf(entry->flow->ssh.server_agent, ND_FLOW_SSH_UALEN,
                 "%s", entry->flow->ndpi_flow->protos.ssh.server_signature);
             break;
-        case NDPI_PROTOCOL_SSDP:
+        case ND_PROTO_SSDP:
             if (entry->flow->ndpi_flow->packet.packet_lines_parsed_complete) {
                 string buffer;
                 for (unsigned i = 0;
@@ -627,7 +621,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 }
             }
             break;
-        case NDPI_PROTOCOL_BITTORRENT:
+        case ND_PROTO_BITTORRENT:
             if (entry->flow->ndpi_flow->protos.bittorrent.hash_valid) {
                 entry->flow->bt.info_hash_valid = true;
                 memcpy(
@@ -636,6 +630,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     ND_FLOW_BTIHASH_LEN
                 );
             }
+            break;
+        default:
             break;
         }
 
@@ -837,8 +833,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         switch (entry->flow->master_protocol()) {
 
-        case NDPI_PROTOCOL_TLS:
-        case NDPI_PROTOCOL_QUIC:
+        case ND_PROTO_TLS:
+        case ND_PROTO_QUIC:
             if (entry->flow->ssl.cipher_suite == 0 &&
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_cipher != 0) {
                 entry->flow->ssl.cipher_suite =
@@ -962,7 +958,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         if (entry->flow->ip_protocol != IPPROTO_TCP ||
             ! entry->flow->ndpi_flow->l4.tcp.tls.certificate_processed) return;
 
-            if (entry->flow->detected_protocol.app_protocol == NDPI_PROTOCOL_UNKNOWN &&
+            if (entry->flow->detected_application == ND_APP_UNKNOWN &&
                 entry->flow->ndpi_flow->protos.tls_quic_stun.tls_quic.server_certificate[0] != '\0') {
                 entry->flow->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
                     ndpi,
