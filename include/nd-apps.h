@@ -26,7 +26,9 @@ class ndApplication
 public:
     nd_app_id_t id;
     string tag;
-    unordered_set<string> domains;
+
+    ndApplication(nd_app_id_t id, const string &tag)
+        : id(id), tag(tag) { }
 };
 
 typedef map<string, ndApplication *> nd_app_tag_map;
@@ -44,6 +46,7 @@ public:
     nd_app_id_t Find(const string &domain);
     nd_app_id_t Find(sa_family_t af, void *addr);
 
+    const char *Lookup(nd_app_id_t id);
     nd_app_id_t Lookup(const string &tag);
     bool Lookup(const string &tag, ndApplication &app);
     bool Lookup(nd_app_id_t id, ndApplication &app);
@@ -52,9 +55,12 @@ protected:
     nd_app_id_map apps;
     nd_app_tag_map app_tags;
 
-    void AddNetwork(nd_app_id_t id, const string &network);
+    ndApplication *AddApp(nd_app_id_t id, const string &tag);
+    void AddDomain(ndApplication *app, const string &domain);
+    void AddNetwork(ndApplication *app, const string &network);
 
 private:
+    unordered_map<string, nd_app_id_t> domains;
     void *app_networks4, *app_networks6;
 };
 

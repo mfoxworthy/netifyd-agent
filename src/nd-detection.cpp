@@ -813,7 +813,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         if (entry->flow->detected_application != ND_APP_UNKNOWN) {
             entry->flow->detected_application_name = strdup(
-                "TODO" // TODO:
+                nd_apps->Lookup(entry->flow->detected_application)
             );
         }
 

@@ -109,7 +109,7 @@ void ndpi_global_init(void)
         NDPI_BITMASK_SET_ALL(proto_all);
 
         ndpi_set_protocol_detection_bitmask2(np, &proto_all);
-
+#if 0
         if (nd_config.path_sink_config != NULL &&
             stat(nd_config.path_sink_config, &path_sink_config_stat) == 0) {
             nd_dprintf("Loading custom protocols from%s: %s\n",
@@ -117,7 +117,7 @@ void ndpi_global_init(void)
                 nd_config.path_sink_config);
             ndpi_load_protocols_file(np, nd_config.path_sink_config);
         }
-
+#endif
         ndpi_parent = np;
 
     } catch (...) {

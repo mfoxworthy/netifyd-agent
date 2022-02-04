@@ -254,26 +254,36 @@ bool ndApplications::LoadLegacy(const string &filename)
                 nd_trim(domain);
                 nd_trim(domain, '"');
                 if (domain[0] != '^') continue;
-                nd_trim(domain, '^');
-                nd_trim(domain, '$');
-                nd_dprintf("add app: %u %s, domain: %s\n",
-                    (uint32_t)strtoul(app_id.c_str(), NULL, 0),
-                    app_tag.c_str(), domain.c_str());
+                nd_ltrim(domain, '^');
+                nd_rtrim(domain, '$');
 
-                records++;
+                ndApplication *_app = AddApp(
+                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
+                    app_tag);
+
+                if (_app != nullptr) {
+                    nd_dprintf("add app: %u %s, domain: %s\n",
+                        _app->id, app_tag.c_str(), domain.c_str());
+
+                    AddDomain(_app, domain);
+                    records++;
+                }
             }
             else if (type == "ip") {
                 string cidr = entry.substr(p + 1);
                 nd_trim(cidr);
-                nd_dprintf("add app: %u %s, network: %s\n",
-                    (uint32_t)strtoul(app_id.c_str(), NULL, 0),
-                    app_tag.c_str(), cidr.c_str());
-                AddNetwork(
-                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
-                    cidr
-                );
 
-                records++;
+                ndApplication *_app = AddApp(
+                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
+                    app_tag);
+
+                if (_app != nullptr) {
+                    nd_dprintf("add app: %u %s, network: %s\n",
+                        _app->id, app_tag.c_str(), cidr.c_str());
+
+                    AddNetwork(_app, cidr);
+                    records++;
+                }
             }
         }
     }
@@ -286,6 +296,20 @@ bool ndApplications::LoadLegacy(const string &filename)
 
 nd_app_id_t ndApplications::Find(const string &domain)
 {
+    auto it = domains.find(domain);
+    if (it != domains.end()) return it->second;
+
+    size_t p = 0;
+    string sub = domain;
+    while ((p = sub.find_first_of(".")) != string::npos) {
+
+        sub = sub.substr(p + 1);
+        if (sub.find_first_of(".") == string::npos) break;
+
+        it = domains.find(sub);
+        if (it != domains.end()) return it->second;
+    }
+
     return ND_APP_UNKNOWN;
 }
 
@@ -333,22 +357,64 @@ nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
     return ND_APP_UNKNOWN;
 }
 
+const char *ndApplications::Lookup(nd_app_id_t id)
+{
+    auto it = apps.find(id);
+    if (it != apps.end()) return it->second->tag.c_str();
+    nd_dprintf("Lookup failed: ID: %u\n", id);
+    return "ND_APP_UNKNOWN";
+}
+
 nd_app_id_t ndApplications::Lookup(const string &tag)
 {
+    auto it = app_tags.find(tag);
+    if (it != app_tags.end()) return it->second->id;
     return ND_APP_UNKNOWN;
 }
 
 bool ndApplications::Lookup(const string &tag, ndApplication &app)
 {
+    auto it = app_tags.find(tag);
+    if (it != app_tags.end()) {
+        app = (*it->second);
+        return true;
+    }
+
     return false;
 }
 
 bool ndApplications::Lookup(nd_app_id_t id, ndApplication &app)
 {
+    auto it = apps.find(id);
+    if (it != apps.end()) {
+        app = (*it->second);
+        return true;
+    }
     return false;
 }
 
-void ndApplications::AddNetwork(nd_app_id_t id, const string &network)
+ndApplication *ndApplications::AddApp(nd_app_id_t id, const string &tag)
+{
+    auto it_id = apps.find(id);
+    if (it_id != apps.end()) return it_id->second;
+
+    auto it_tag = app_tags.find(tag);
+    if (it_tag != app_tags.end()) return nullptr;
+
+    ndApplication *app = new ndApplication(id, tag);
+
+    if (app == nullptr) return nullptr;
+
+    apps.insert(make_pair(id, app));
+    app_tags.insert(make_pair(tag, app));
+}
+
+void ndApplications::AddDomain(ndApplication *app, const string &domain)
+{
+    domains.insert(make_pair(domain, app->id));
+}
+
+void ndApplications::AddNetwork(ndApplication *app, const string &network)
 {
     in_addr nw_addr;
     in6_addr nw6_addr;
@@ -404,7 +470,7 @@ void ndApplications::AddNetwork(nd_app_id_t id, const string &network)
         entry.addr &= mask32;
 
         nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
-        (*rn4)[entry] = id;
+        (*rn4)[entry] = app->id;
     }
     else {
         ndRadixNetworkEntry<128> entry;
@@ -417,7 +483,7 @@ void ndApplications::AddNetwork(nd_app_id_t id, const string &network)
         entry.addr &= mask128;
 
         nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
-        (*rn6)[entry] = id;
+        (*rn6)[entry] = app->id;
     }
 }
 
