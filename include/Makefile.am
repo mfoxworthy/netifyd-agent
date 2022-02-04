@@ -6,7 +6,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = nd-json-response-code.txt.in nlohmann pcap-compat
+EXTRA_DIST = nd-json-response-code.txt.in nlohmann pcap-compat radix
 
 netifyincludedir = $(includedir)/netifyd
 netifyinclude_HEADERS = nd-base64.h nd-category.h nd-conntrack.h \
@@ -20,6 +20,10 @@ pcapcompatinclude_HEADERS = pcap-compat/sll.h pcap-compat/vlan.h
 
 nlohmannincludedir = $(includedir)/netifyd/nlohmann
 nlohmanninclude_HEADERS = nlohmann/json.hpp
+
+radixincludedir = $(includedir)/netifyd/radix
+radixinclude_HEADERS = radix/radix_tree.hpp radix/radix_tree_it.hpp \
+	radix/radix_tree_node.hpp
 
 BUILT_SOURCES = nd-json-response-code.h
 CLEANFILES = nd-json-response-code.h
