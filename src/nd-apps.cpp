@@ -213,7 +213,75 @@ bool ndApplications::Load(const string &filename)
 
 bool ndApplications::LoadLegacy(const string &filename)
 {
-    return true;
+    size_t records = 0;
+    ifstream ifs(filename);
+
+    if (! ifs.is_open()) return false;
+
+    string line;
+    while (getline(ifs, line)) {
+        nd_trim(line);
+        if (line.empty() || line[0] == '#') continue;
+
+        size_t p;
+        if ((p = line.find_last_of("@")) == string::npos) continue;
+
+        stringstream entries(line.substr(0, p));
+
+        string app = line.substr(p + 1);
+        nd_trim(app);
+
+        if ((p = app.find_first_of(".")) == string::npos) continue;
+
+        string app_id = app.substr(0, p);
+        nd_trim(app_id);
+
+        string app_tag = app.substr(p + 1);
+        nd_trim(app_tag);
+
+        string entry;
+        while (getline(entries, entry, ',')) {
+            nd_trim(entry);
+
+            if ((p = entry.find_first_of(":")) == string::npos)
+                continue;
+
+            string type = entry.substr(0, p);
+            nd_trim(type);
+
+            if (type == "host") {
+                string domain = entry.substr(p + 1);
+                nd_trim(domain);
+                nd_trim(domain, '"');
+                if (domain[0] != '^') continue;
+                nd_trim(domain, '^');
+                nd_trim(domain, '$');
+                nd_dprintf("add app: %u %s, domain: %s\n",
+                    (uint32_t)strtoul(app_id.c_str(), NULL, 0),
+                    app_tag.c_str(), domain.c_str());
+
+                records++;
+            }
+            else if (type == "ip") {
+                string cidr = entry.substr(p + 1);
+                nd_trim(cidr);
+                nd_dprintf("add app: %u %s, network: %s\n",
+                    (uint32_t)strtoul(app_id.c_str(), NULL, 0),
+                    app_tag.c_str(), cidr.c_str());
+                AddNetwork(
+                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
+                    cidr
+                );
+
+                records++;
+            }
+        }
+    }
+
+    if (records > 0)
+        nd_dprintf("Loaded %u application criteria.\n", records);
+
+    return (records > 0);
 }
 
 nd_app_id_t ndApplications::Find(const string &domain)
