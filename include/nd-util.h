@@ -46,9 +46,9 @@ void nd_print_binary(uint32_t byte);
 
 void nd_print_number(ostringstream &os, uint64_t value, bool units_binary = true);
 
-void nd_ltrim(string &s);
-void nd_rtrim(string &s);
-void nd_trim(string &s);
+void nd_ltrim(string &s, unsigned char c = 0);
+void nd_rtrim(string &s, unsigned char c = 0);
+void nd_trim(string &s, unsigned char c = 0);
 
 int nd_sha1_file(const string &filename, uint8_t *digest);
 void nd_sha1_to_string(const uint8_t *digest_bin, string &digest_str);

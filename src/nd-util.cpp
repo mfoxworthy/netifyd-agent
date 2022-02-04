@@ -314,24 +314,26 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
     }
 }
 
-void nd_ltrim(string &s)
+void nd_ltrim(string &s, unsigned char c)
 {
-    s.erase(s.begin(), find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !isspace(ch);
+    s.erase(s.begin(), find_if(s.begin(), s.end(), [c](unsigned char ch) {
+        if (c == 0) return !isspace(ch);
+        else return (ch != c);
     }));
 }
 
-void nd_rtrim(string &s)
+void nd_rtrim(string &s, unsigned char c)
 {
-    s.erase(find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !isspace(ch);
+    s.erase(find_if(s.rbegin(), s.rend(), [c](unsigned char ch) {
+        if (c == 0) return !isspace(ch);
+        else return (ch != c);
     }).base(), s.end());
 }
 
-void nd_trim(string &s)
+void nd_trim(string &s, unsigned char c)
 {
-    nd_ltrim(s);
-    nd_rtrim(s);
+    nd_ltrim(s, c);
+    nd_rtrim(s, c);
 }
 
 int nd_sha1_file(const string &filename, uint8_t *digest)
