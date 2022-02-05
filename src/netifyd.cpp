@@ -178,7 +178,9 @@ static void nd_config_init(void)
 
     nd_config.path_config = NULL;
     nd_config.path_export_json = NULL;
-    nd_config.path_sink_config = strdup(ND_CONF_SINK_PATH);
+    nd_config.path_app_config = strdup(ND_CONF_APP_PATH);
+    nd_config.path_cat_config = strdup(ND_CONF_CAT_PATH);
+    nd_config.path_legacy_config = strdup(ND_CONF_LEGACY_PATH);
     nd_config.path_uuid = NULL;
     nd_config.path_uuid_serial = NULL;
     nd_config.path_uuid_site = NULL;
@@ -217,7 +219,7 @@ static void nd_config_init(void)
     nd_config.ca_sink = -1;
     nd_config.ca_socket = -1;
 
-    memset(nd_config.digest_sink_config, 0, SHA1_DIGEST_LENGTH);
+    memset(nd_config.digest_legacy_config, 0, SHA1_DIGEST_LENGTH);
 
     nd_config.fhc_save = ndFHC_PERSISTENT;
     nd_config.fhc_purge_divisor = ND_FHC_PURGE_DIVISOR;
@@ -756,7 +758,7 @@ static void nd_usage(int rc = 0, bool version = false)
             "\nSee netifyd(8) and netifyd.conf(5) for further options.\n",
 
             ND_CONF_FILE_NAME,
-            ND_CONF_SINK_PATH,
+            ND_CONF_LEGACY_PATH,
             nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
         );
     }
@@ -819,8 +821,8 @@ static void nd_init(void)
     if (nd_apps == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_apps", ENOMEM);
 
-    if (! nd_apps->Load("TODO"))
-        nd_apps->LoadLegacy(nd_config.path_sink_config);
+    if (! nd_apps->Load(nd_config.path_app_config))
+        nd_apps->LoadLegacy(nd_config.path_legacy_config);
 
     nd_flow_buckets = new ndFlowMap();
     if (nd_flow_buckets == nullptr)
@@ -1324,9 +1326,8 @@ static int nd_sink_process_responses(void)
             for (ndJsonData::const_iterator i = response->data.begin();
                 i != response->data.end(); i++) {
 
-                if (! reloaded && i->first == ND_CONF_SINK_BASE) {
-                    if (! nd_apps->Load("TODO"))
-                        nd_apps->LoadLegacy(nd_config.path_sink_config);
+                if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
+                    nd_apps->LoadLegacy(nd_config.path_legacy_config);
 #ifdef NETIFY_TODO
                     if (! nd_capture_stopped_by_signal) {
                         nd_reload_detection_threads();
@@ -3022,9 +3023,9 @@ int main(int argc, char *argv[])
             nd_config.device_filters[last_device] = optarg;
             break;
         case 'f':
-            free(nd_config.path_sink_config);
-            nd_config.path_sink_config = strdup(optarg);
-            nd_config.flags |= ndGF_OVERRIDE_SINK_CONFIG;
+            free(nd_config.path_legacy_config);
+            nd_config.path_legacy_config = strdup(optarg);
+            nd_config.flags |= ndGF_OVERRIDE_LEGACY_CONFIG;
             break;
         case 'h':
             nd_usage();
@@ -3252,7 +3253,7 @@ int main(int argc, char *argv[])
     if (flow_hash_cache) flow_hash_cache->load();
 
     nd_sha1_file(
-        nd_config.path_sink_config, nd_config.digest_sink_config
+        nd_config.path_legacy_config, nd_config.digest_legacy_config
     );
 
     sigfillset(&sigset);

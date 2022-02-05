@@ -158,8 +158,14 @@
 #define PACKAGE_URL             "https://www.netify.ai/"
 #endif
 
-#define ND_CONF_SINK_BASE       "netify-sink.conf"
-#define ND_CONF_SINK_PATH       ND_PERSISTENT_STATEDIR "/" ND_CONF_SINK_BASE
+#define ND_CONF_APP_BASE        "netify-apps.conf"
+#define ND_CONF_APP_PATH        ND_PERSISTENT_STATEDIR "/" ND_CONF_APP_BASE
+
+#define ND_CONF_CAT_BASE        "netify-categories.conf"
+#define ND_CONF_CAT_PATH        ND_PERSISTENT_STATEDIR "/" ND_CONF_CAT_BASE
+
+#define ND_CONF_LEGACY_BASE     "netify-sink.conf"
+#define ND_CONF_LEGACY_PATH     ND_PERSISTENT_STATEDIR "/" ND_CONF_LEGACY_BASE
 
 #define ND_STR_ETHALEN          (ETH_ALEN * 2 + ETH_ALEN - 1)
 
@@ -203,7 +209,7 @@ enum nd_global_flags {
     ndGF_DEBUG_UPLOAD = 0x2,
     ndGF_DEBUG_WITH_ETHERS = 0x4,
     ndGF_QUIET = 0x8,
-    ndGF_OVERRIDE_SINK_CONFIG = 0x10,
+    ndGF_OVERRIDE_LEGACY_CONFIG = 0x10,
     ndGF_CAPTURE_UNKNOWN_FLOWS = 0x20,
     ndGF_PRIVATE_EXTADDR = 0x40,
     ndGF_SSL_USE_TLSv1 = 0x80,
@@ -229,7 +235,7 @@ enum nd_global_flags {
 #define ND_DEBUG_UPLOAD (nd_config.flags & ndGF_DEBUG_UPLOAD)
 #define ND_DEBUG_WITH_ETHERS (nd_config.flags & ndGF_DEBUG_WITH_ETHERS)
 #define ND_QUIET (nd_config.flags & ndGF_QUIET)
-#define ND_OVERRIDE_SINK_CONFIG (nd_config.flags & ndGF_OVERRIDE_SINK_CONFIG)
+#define ND_OVERRIDE_LEGACY_CONFIG (nd_config.flags & ndGF_OVERRIDE_LEGACY_CONFIG)
 #define ND_CAPTURE_UNKNOWN_FLOWS (nd_config.flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
 #define ND_PRIVATE_EXTADDR (nd_config.flags & ndGF_PRIVATE_EXTADDR)
 #define ND_SSL_USE_TLSv1 (nd_config.flags & ndGF_SSL_USE_TLSv1)
@@ -258,9 +264,11 @@ enum nd_global_flags {
 
 typedef struct nd_global_config_t {
     char *napi_vendor;
+    char *path_app_config;
+    char *path_cat_config;
     char *path_config;
     char *path_export_json;
-    char *path_sink_config;
+    char *path_legacy_config;
     char *path_uuid;
     char *path_uuid_serial;
     char *path_uuid_site;
@@ -273,7 +281,7 @@ typedef struct nd_global_config_t {
     size_t max_backlog;
     size_t max_packet_queue;
     uint32_t flags;
-    uint8_t digest_sink_config[SHA1_DIGEST_LENGTH];
+    uint8_t digest_legacy_config[SHA1_DIGEST_LENGTH];
     uint16_t max_capture_length;
     unsigned max_detection_pkts;
     unsigned max_fhc;

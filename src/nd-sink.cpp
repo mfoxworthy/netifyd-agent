@@ -406,7 +406,7 @@ void ndSinkThread::CreateHeaders(void)
     }
 
     string digest;
-    nd_sha1_to_string(nd_config.digest_sink_config, digest);
+    nd_sha1_to_string(nd_config.digest_legacy_config, digest);
 
     ostringstream conf_digest;
     conf_digest << "X-Digest-Sink: " << digest;
@@ -709,11 +709,11 @@ void ndSinkThread::ProcessResponse(void)
             for (ndJsonData::const_iterator i = response->data.begin();
                 i != response->data.end(); i++) {
 
-                if (i->first == ND_CONF_SINK_BASE) {
+                if (i->first == ND_CONF_LEGACY_BASE) {
 
-                    if (nd_save_response_data(ND_CONF_SINK_PATH, i->second) == 0 &&
+                    if (nd_save_response_data(ND_CONF_LEGACY_PATH, i->second) == 0 &&
                         nd_sha1_file(
-                            nd_config.path_sink_config, nd_config.digest_sink_config
+                            nd_config.path_legacy_config, nd_config.digest_legacy_config
                         ) == 0)
                         create_headers = true;
                 }

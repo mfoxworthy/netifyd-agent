@@ -66,15 +66,16 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-category.h"
 
+extern nd_global_config nd_config;
+
 bool ndCategories::Load(void)
 {
     json j;
-    string filename(ND_PERSISTENT_STATEDIR "/netify-categories.json");
 
-    ifstream ifs(filename);
+    ifstream ifs(nd_config.path_cat_config);
     if (! ifs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            filename.c_str(), strerror(ENOENT));
+            nd_config.path_cat_config, strerror(ENOENT));
         return false;
     }
 
@@ -83,8 +84,8 @@ bool ndCategories::Load(void)
     }
     catch (exception &e) {
         nd_printf("Error loading categories: %s: JSON parse error\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
@@ -164,7 +165,6 @@ bool ndCategories::Load(ndCategoryType type, json &jdata)
 bool ndCategories::Save(void)
 {
     json j;
-    string filename(ND_PERSISTENT_STATEDIR "/netify-categories.json");
 
     try {
         j["last_update"] = time(NULL);
@@ -185,17 +185,17 @@ bool ndCategories::Save(void)
         }
     } catch (exception &e) {
         nd_printf("Error JSON encoding categories: %s\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
 
-    ofstream ofs(filename);
+    ofstream ofs(nd_config.path_cat_config);
 
     if (! ofs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            filename.c_str(), strerror(ENOENT));
+            nd_config.path_cat_config, strerror(ENOENT));
         return false;
     }
 
@@ -204,8 +204,8 @@ bool ndCategories::Save(void)
     }
     catch (exception &e) {
         nd_printf("Error saving categories: %s: JSON parse error\n",
-            filename.c_str());
-        nd_dprintf("%s: %s\n", filename.c_str(), e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
