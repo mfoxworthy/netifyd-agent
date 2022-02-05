@@ -17,7 +17,7 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20211202
+#define _ND_PLUGIN_VER  0x20220205
 
 #define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
 #define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
