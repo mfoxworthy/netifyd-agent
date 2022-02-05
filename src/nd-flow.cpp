@@ -80,7 +80,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0),
-    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name(NULL),
+    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
     ndpi_flow(NULL), id_src(NULL), id_dst(NULL),
     digest_lower{}, digest_mdata{},
@@ -117,7 +117,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0),
-    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name(NULL),
+    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
     ndpi_flow(NULL), id_src(NULL), id_dst(NULL),
     host_server_name{}, http{},
@@ -147,10 +147,6 @@ ndFlow::~ndFlow()
 {
     release();
 
-    if (detected_protocol_name != NULL) {
-        free(detected_protocol_name);
-        detected_protocol_name = NULL;
-    }
     if (detected_application_name != NULL) {
         free(detected_application_name);
         detected_application_name = NULL;
@@ -310,7 +306,6 @@ void ndFlow::release(void)
 nd_proto_id_t ndFlow::master_protocol(void) const
 {
     switch (detected_protocol) {
-    case ND_PROTO_GMAIL:
     case ND_PROTO_HTTPS:
     case ND_PROTO_MAIL_IMAP:
     case ND_PROTO_MAIL_IMAPS:
@@ -324,7 +319,6 @@ nd_proto_id_t ndFlow::master_protocol(void) const
     case ND_PROTO_HTTP:
     case ND_PROTO_HTTP_CONNECT:
     case ND_PROTO_HTTP_PROXY:
-    case ND_PROTO_NETFLIX:
     case ND_PROTO_OOKLA:
     case ND_PROTO_PPSTREAM:
     case ND_PROTO_QQ:

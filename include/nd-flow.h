@@ -125,7 +125,7 @@ public:
     nd_proto_id_t detected_protocol;
     nd_app_id_t detected_application;
    
-    char *detected_protocol_name;
+    const char *detected_protocol_name;
     char *detected_application_name;
 
     struct ndpi_flow_struct *ndpi_flow;

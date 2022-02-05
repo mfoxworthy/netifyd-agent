@@ -808,8 +808,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        entry->flow->detected_protocol_name = strdup(
-            ndpi_get_proto_name(ndpi, entry->flow->detected_protocol)
+        entry->flow->detected_protocol_name = nd_proto_get_name(
+            entry->flow->detected_protocol
         );
 
         if (entry->flow->detected_application != ND_APP_UNKNOWN) {
@@ -921,20 +921,17 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                             nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
                         if (nd_alpn_proto_map[i].proto_id == entry->flow->detected_protocol)
                             continue;
-                        entry->flow->detected_protocol = nd_alpn_proto_map[i].proto_id;
-
-                        char *alpn_protocol = strdup(
-                            ndpi_get_proto_name(ndpi,
-                                entry->flow->detected_protocol
-                            )
-                        );
 
                         nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
                             tag.c_str(), alpn.c_str(),
-                            entry->flow->detected_protocol_name, alpn_protocol);
+                            entry->flow->detected_protocol_name,
+                            nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
+                        );
 
-                        free(entry->flow->detected_protocol_name);
-                        entry->flow->detected_protocol_name = alpn_protocol;
+                        entry->flow->detected_protocol = nd_alpn_proto_map[i].proto_id;
+                        entry->flow->detected_protocol_name = nd_proto_get_name(
+                            nd_alpn_proto_map[i].proto_id
+                        );
 
                         flow_update = true;
                         entry->flow->flags.detection_updated = true;
