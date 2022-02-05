@@ -32,6 +32,7 @@
 #include <locale>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1324,7 +1325,9 @@ static int nd_sink_process_responses(void)
                 i != response->data.end(); i++) {
 
                 if (! reloaded && i->first == ND_CONF_SINK_BASE) {
-
+                    if (! nd_apps->Load("TODO"))
+                        nd_apps->LoadLegacy(nd_config.path_sink_config);
+#ifdef NETIFY_TODO
                     if (! nd_capture_stopped_by_signal) {
                         nd_reload_detection_threads();
                     }
@@ -1334,7 +1337,7 @@ static int nd_sink_process_responses(void)
                         nd_json_protocols(json);
                         thread_socket->QueueWrite(json);
                     }
-
+#endif
                     reloaded = true;
                 }
             }

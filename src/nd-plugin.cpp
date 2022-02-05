@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <unistd.h>
 #include <stdlib.h>

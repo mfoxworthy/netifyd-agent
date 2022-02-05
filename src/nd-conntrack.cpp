@@ -28,6 +28,7 @@
 #include <sstream>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <sys/stat.h>
 #include <sys/select.h>

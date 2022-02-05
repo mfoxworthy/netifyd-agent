@@ -52,15 +52,18 @@ public:
     bool Lookup(nd_app_id_t id, ndApplication &app);
 
 protected:
+    mutex lock;
     nd_app_id_map apps;
     nd_app_tag_map app_tags;
+    unordered_map<string, nd_app_id_t> domains;
+
+    void Reset(bool free_only = false);
 
     ndApplication *AddApp(nd_app_id_t id, const string &tag);
     void AddDomain(ndApplication *app, const string &domain);
     void AddNetwork(ndApplication *app, const string &network);
 
 private:
-    unordered_map<string, nd_app_id_t> domains;
     void *app_networks4, *app_networks6;
 };
 

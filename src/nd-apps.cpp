@@ -36,6 +36,7 @@
 #include <bitset>
 #include <cstdlib>
 #include <csignal>
+#include <mutex>
 
 #include <unistd.h>
 #include <pthread.h>
@@ -140,10 +141,10 @@ public:
     }
 };
 
-// TODO: static?
 template <size_t N>
-ndRadixNetworkEntry<N> radix_substr(const ndRadixNetworkEntry<N> &entry, int offset, int length)
-{
+static ndRadixNetworkEntry<N> radix_substr(
+    const ndRadixNetworkEntry<N> &entry, int offset, int length
+) {
     bitset<N> mask;
 
     if (length == N)
@@ -162,8 +163,10 @@ ndRadixNetworkEntry<N> radix_substr(const ndRadixNetworkEntry<N> &entry, int off
 }
 
 template <size_t N>
-ndRadixNetworkEntry<N> radix_join(const ndRadixNetworkEntry<N> &x, const ndRadixNetworkEntry<N> &y)
-{
+static ndRadixNetworkEntry<N> radix_join(
+    const ndRadixNetworkEntry<N> &x,
+    const ndRadixNetworkEntry<N> &y
+) {
     ndRadixNetworkEntry<N> result;
 
     result.addr = x.addr;
@@ -174,7 +177,7 @@ ndRadixNetworkEntry<N> radix_join(const ndRadixNetworkEntry<N> &x, const ndRadix
 }
 
 template <size_t N>
-int radix_length(const ndRadixNetworkEntry<N> &entry)
+static int radix_length(const ndRadixNetworkEntry<N> &entry)
 {
     return (int)entry.prefix_len;
 }
@@ -183,31 +186,22 @@ typedef radix_tree<ndRadixNetworkEntry<32>, nd_app_id_t> nd_rn4_t;
 typedef radix_tree<ndRadixNetworkEntry<128>, nd_app_id_t> nd_rn6_t;
 
 ndApplications::ndApplications()
+    : app_networks4(NULL), app_networks6(NULL)
 {
-    nd_rn4_t *rn4 = new nd_rn4_t;
-    nd_rn6_t *rn6 = new nd_rn6_t;
-
-    if (rn4 == nullptr || rn6 == nullptr) {
-        // TODO: throw...
-        return;
-    }
-
-    app_networks4 = static_cast<void *>(rn4);
-    app_networks6 = static_cast<void *>(rn6);
+    Reset();
 }
 
 ndApplications::~ndApplications()
 {
-    nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
-    delete rn4;
-    nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
-    delete rn6;
-
-    for (auto &it : apps) delete it.second;
+    Reset(true);
 }
 
 bool ndApplications::Load(const string &filename)
 {
+    unique_lock<mutex> ul(lock);
+
+    Reset();
+
     return false;
 }
 
@@ -217,6 +211,10 @@ bool ndApplications::LoadLegacy(const string &filename)
     ifstream ifs(filename);
 
     if (! ifs.is_open()) return false;
+
+    unique_lock<mutex> ul(lock);
+
+    Reset();
 
     string line;
     while (getline(ifs, line)) {
@@ -296,6 +294,8 @@ bool ndApplications::LoadLegacy(const string &filename)
 
 nd_app_id_t ndApplications::Find(const string &domain)
 {
+    unique_lock<mutex> ul(lock);
+
     auto it = domains.find(domain);
     if (it != domains.end()) return it->second;
 
@@ -315,6 +315,8 @@ nd_app_id_t ndApplications::Find(const string &domain)
 
 nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
 {
+    unique_lock<mutex> ul(lock);
+
     in_addr *dst_addr;
     in6_addr *dst6_addr;
 
@@ -359,14 +361,17 @@ nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
 
 const char *ndApplications::Lookup(nd_app_id_t id)
 {
+    unique_lock<mutex> ul(lock);
+
     auto it = apps.find(id);
     if (it != apps.end()) return it->second->tag.c_str();
-    nd_dprintf("Lookup failed: ID: %u\n", id);
-    return "ND_APP_UNKNOWN";
+    return "Unknown";
 }
 
 nd_app_id_t ndApplications::Lookup(const string &tag)
 {
+    unique_lock<mutex> ul(lock);
+
     auto it = app_tags.find(tag);
     if (it != app_tags.end()) return it->second->id;
     return ND_APP_UNKNOWN;
@@ -374,6 +379,8 @@ nd_app_id_t ndApplications::Lookup(const string &tag)
 
 bool ndApplications::Lookup(const string &tag, ndApplication &app)
 {
+    unique_lock<mutex> ul(lock);
+
     auto it = app_tags.find(tag);
     if (it != app_tags.end()) {
         app = (*it->second);
@@ -385,6 +392,8 @@ bool ndApplications::Lookup(const string &tag, ndApplication &app)
 
 bool ndApplications::Lookup(nd_app_id_t id, ndApplication &app)
 {
+    unique_lock<mutex> ul(lock);
+
     auto it = apps.find(id);
     if (it != apps.end()) {
         app = (*it->second);
@@ -393,8 +402,43 @@ bool ndApplications::Lookup(nd_app_id_t id, ndApplication &app)
     return false;
 }
 
-ndApplication *ndApplications::AddApp(nd_app_id_t id, const string &tag)
+void ndApplications::Reset(bool free_only)
 {
+    if (app_networks4 != nullptr) {
+        nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+        delete rn4;
+        app_networks4 = NULL;
+    }
+
+    if (app_networks6 != nullptr) {
+        nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+        delete rn6;
+        app_networks6 = NULL;
+    }
+
+    if (! free_only) {
+        nd_rn4_t *rn4 = new nd_rn4_t;
+        nd_rn6_t *rn6 = new nd_rn6_t;
+
+        if (rn4 == nullptr || rn6 == nullptr) {
+            // TODO: throw...
+            return;
+        }
+
+        app_networks4 = static_cast<void *>(rn4);
+        app_networks6 = static_cast<void *>(rn6);
+    }
+
+    for (auto &it : apps) delete it.second;
+
+    apps.clear();
+    app_tags.clear();
+    domains.clear();
+}
+
+ndApplication *ndApplications::AddApp(
+    nd_app_id_t id, const string &tag
+) {
     auto it_id = apps.find(id);
     if (it_id != apps.end()) return it_id->second;
 
@@ -409,13 +453,15 @@ ndApplication *ndApplications::AddApp(nd_app_id_t id, const string &tag)
     app_tags.insert(make_pair(tag, app));
 }
 
-void ndApplications::AddDomain(ndApplication *app, const string &domain)
-{
+void ndApplications::AddDomain(
+    ndApplication *app, const string &domain
+) {
     domains.insert(make_pair(domain, app->id));
 }
 
-void ndApplications::AddNetwork(ndApplication *app, const string &network)
-{
+void ndApplications::AddNetwork(
+    ndApplication *app, const string &network
+) {
     in_addr nw_addr;
     in6_addr nw6_addr;
     sa_family_t af = AF_UNSPEC;

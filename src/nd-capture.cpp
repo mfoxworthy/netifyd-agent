@@ -33,6 +33,7 @@
 #include <atomic>
 #include <regex>
 #include <algorithm>
+#include <mutex>
 
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>

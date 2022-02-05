@@ -33,6 +33,7 @@
 #include <vector>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <arpa/inet.h>
 #include <errno.h>
