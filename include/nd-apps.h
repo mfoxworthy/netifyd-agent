@@ -31,6 +31,7 @@ public:
         : id(id), tag(tag) { }
 };
 
+typedef map<string, nd_app_id_t> nd_apps_t;
 typedef map<string, ndApplication *> nd_app_tag_map;
 typedef unordered_map<nd_app_id_t, ndApplication *> nd_app_id_map;
 
@@ -50,6 +51,8 @@ public:
     nd_app_id_t Lookup(const string &tag);
     bool Lookup(const string &tag, ndApplication &app);
     bool Lookup(nd_app_id_t id, ndApplication &app);
+
+    void Get(nd_apps_t &apps_copy);
 
 protected:
     mutex lock;

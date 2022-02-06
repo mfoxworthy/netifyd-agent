@@ -1438,20 +1438,31 @@ void nd_json_agent_status(json &j)
 void nd_json_protocols(string &json_string)
 {
     json j, ja;
-    j["type"] = "protocols";
+    j["type"] = "definitions";
 
-    struct ndpi_detection_module_struct *ndpi = ndpi_get_parent();
-
-    for (unsigned i = 0; i < (unsigned)ndpi->ndpi_num_supported_protocols; i++) {
+    for (auto &proto : nd_protos) {
         json jo;
 
-        jo["id"] = i;
-        jo["tag"] = ndpi->proto_defaults[i].proto_name;
+        jo["id"] = proto.first;
+        jo["tag"] = proto.second;
 
         ja.push_back(jo);
     }
 
     j["protocols"] = ja;
+
+    nd_apps_t apps;
+    nd_apps->Get(apps);
+    for (auto &app : apps) {
+        json jo;
+
+        jo["id"] = app.second;
+        jo["tag"] = app.first;
+
+        ja.push_back(jo);
+    }
+
+    j["applications"] = ja;
 
     nd_json_to_string(j, json_string);
     json_string.append("\n");
@@ -2288,7 +2299,7 @@ enum ndDumpFlags {
     ndDUMP_TYPE_VALID = 0x10,
     ndDUMP_SORT_BY_TAG = 0x20,
     ndDUMP_TYPE_CATS = (ndDUMP_TYPE_CAT_APP | ndDUMP_TYPE_CAT_PROTO),
-    ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS | ndDUMP_TYPE_CATS)
+    ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS)
 };
 
 static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
@@ -2302,7 +2313,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
         return;
     }
 
-    if (type & ndDUMP_TYPE_CATS) {
+    if (type & ndDUMP_TYPE_CATS &&
+        !(type & ndDUMP_TYPE_PROTOS) && !(type & ndDUMP_TYPE_APPS)) {
         ndCategories categories;
 
         if (categories.Load()) {
@@ -2315,44 +2327,39 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
         }
     }
 
-    ndpi_global_init();
-
-    ndpi = nd_ndpi_init("netifyd");
-    custom_proto_base = ndpi_get_custom_proto_base();
-
     map<unsigned, string> protos_by_id;
     map<string, unsigned> protos_by_tag;
 
-    unsigned i = (type & ndDUMP_TYPE_PROTOS) ? 0 : custom_proto_base;
-    unsigned last = (type & ndDUMP_TYPE_APPS) ?
-        (unsigned)ndpi->ndpi_num_supported_protocols : custom_proto_base;
+    //unsigned i = (type & ndDUMP_TYPE_PROTOS) ? 0 : custom_proto_base;
 
-    for ( ; i < last; i++) {
-        if (! (type & ndDUMP_TYPE_VALID) &&
-            ! strcasecmp("Uninitialized", ndpi->proto_defaults[i].proto_name))
-            continue;
+    if (type & ndDUMP_TYPE_PROTOS) {
+        for (auto &proto : nd_protos) {
 
-        if ((type & ndDUMP_TYPE_APPS) && ! (type & ndDUMP_TYPE_PROTOS)) {
-            unsigned id;
-            string name;
-
-            if (nd_parse_app_tag(ndpi->proto_defaults[i].proto_name, id, name)) {
-                if (! (type & ndDUMP_SORT_BY_TAG))
-                    protos_by_id[id] = name;
-                else
-                    protos_by_tag[name] = id;
-            }
-        }
-        else {
             if (! (type & ndDUMP_SORT_BY_TAG))
-                protos_by_id[i] = ndpi->proto_defaults[i].proto_name;
+                protos_by_id[proto.first] = proto.second;
             else
-                protos_by_tag[ndpi->proto_defaults[i].proto_name] = i;
+                protos_by_tag[proto.second] = proto.first;
         }
     }
 
-    ndpi_free(ndpi);
-    ndpi_global_destroy();
+    if (type & ndDUMP_TYPE_APPS) {
+
+        if (nd_apps == NULL) {
+            nd_apps = new ndApplications();
+            if (! nd_apps->Load(nd_config.path_app_config))
+                nd_apps->LoadLegacy(nd_config.path_legacy_config);
+        }
+
+        nd_apps_t apps;
+        nd_apps->Get(apps);
+        for (auto &app : apps) {
+
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                protos_by_id[app.second] = app.first;
+            else
+                protos_by_tag[app.first] = app.second;
+        }
+    }
 
     for (auto &proto : protos_by_id)
         printf("%6u: %s\n", proto.first, proto.second.c_str());

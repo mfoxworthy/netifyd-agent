@@ -75,6 +75,8 @@ using namespace std;
 #include "nd-apps.h"
 #include "nd-protos.h"
 
+//#define _ND_APPS_DEBUG    1
+
 template<size_t N>
 bool operator<(const bitset<N> &x, const bitset<N> &y)
 {
@@ -260,9 +262,10 @@ bool ndApplications::LoadLegacy(const string &filename)
                     app_tag);
 
                 if (_app != nullptr) {
+#ifdef _ND_APPS_DEBUG
                     nd_dprintf("add app: %u %s, domain: %s\n",
                         _app->id, app_tag.c_str(), domain.c_str());
-
+#endif
                     AddDomain(_app, domain);
                     records++;
                 }
@@ -276,9 +279,10 @@ bool ndApplications::LoadLegacy(const string &filename)
                     app_tag);
 
                 if (_app != nullptr) {
+#ifdef _ND_APPS_DEBUG
                     nd_dprintf("add app: %u %s, network: %s\n",
                         _app->id, app_tag.c_str(), cidr.c_str());
-
+#endif
                     AddNetwork(_app, cidr);
                     records++;
                 }
@@ -421,8 +425,9 @@ void ndApplications::Reset(bool free_only)
         nd_rn6_t *rn6 = new nd_rn6_t;
 
         if (rn4 == nullptr || rn6 == nullptr) {
-            // TODO: throw...
-            return;
+            throw ndSystemException(
+                __PRETTY_FUNCTION__, "new", ENOMEM
+            );
         }
 
         app_networks4 = static_cast<void *>(rn4);
@@ -436,6 +441,16 @@ void ndApplications::Reset(bool free_only)
     domains.clear();
 }
 
+void ndApplications::Get(nd_apps_t &apps_copy)
+{
+    apps_copy.clear();
+
+    unique_lock<mutex> ul(lock);
+
+    for (auto &app : apps)
+        apps_copy.insert(make_pair(app.second->tag, app.first));
+}
+
 ndApplication *ndApplications::AddApp(
     nd_app_id_t id, const string &tag
 ) {
@@ -447,10 +462,16 @@ ndApplication *ndApplications::AddApp(
 
     ndApplication *app = new ndApplication(id, tag);
 
-    if (app == nullptr) return nullptr;
+    if (app == nullptr) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "new ndApplication", ENOMEM
+        );
+    }
 
     apps.insert(make_pair(id, app));
     app_tags.insert(make_pair(tag, app));
+
+    return app;
 }
 
 void ndApplications::AddDomain(

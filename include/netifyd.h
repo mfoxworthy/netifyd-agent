@@ -161,7 +161,7 @@
 #define ND_CONF_APP_BASE        "netify-apps.conf"
 #define ND_CONF_APP_PATH        ND_PERSISTENT_STATEDIR "/" ND_CONF_APP_BASE
 
-#define ND_CONF_CAT_BASE        "netify-categories.conf"
+#define ND_CONF_CAT_BASE        "netify-categories.json"
 #define ND_CONF_CAT_PATH        ND_PERSISTENT_STATEDIR "/" ND_CONF_CAT_BASE
 
 #define ND_CONF_LEGACY_BASE     "netify-sink.conf"

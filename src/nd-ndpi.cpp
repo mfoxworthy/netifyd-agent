@@ -83,11 +83,11 @@ void ndpi_global_init(void)
 
         ndpi_custom_proto_base = np->ndpi_num_supported_protocols;
 
-    #ifdef NDPI_ENABLE_DEBUG_MESSAGES
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
         np->ndpi_log_level = NDPI_LOG_TRACE;
         //np->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
         set_ndpi_debug_function(np, nd_ndpi_debug_printf);
-    #endif
+#endif
 
         if (np->host_automa.ac_automa == NULL)
             throw ndThreadException("Detection host_automa initialization failure");
@@ -109,15 +109,7 @@ void ndpi_global_init(void)
         NDPI_BITMASK_SET_ALL(proto_all);
 
         ndpi_set_protocol_detection_bitmask2(np, &proto_all);
-#if 0
-        if (nd_config.path_sink_config != NULL &&
-            stat(nd_config.path_sink_config, &path_sink_config_stat) == 0) {
-            nd_dprintf("Loading custom protocols from%s: %s\n",
-                ND_OVERRIDE_SINK_CONFIG ? " override" : "",
-                nd_config.path_sink_config);
-            ndpi_load_protocols_file(np, nd_config.path_sink_config);
-        }
-#endif
+
         ndpi_parent = np;
 
     } catch (...) {
@@ -206,8 +198,6 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
     ndpi->host_automa.ac_automa = ndpi_parent->host_automa.ac_automa;
     ndpi->host_automa.lock = ndpi_parent->host_automa.lock;
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
-
-    //ndpi_init_string_based_protocols(ndpi);
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
     ndpi->ndpi_log_level = NDPI_LOG_TRACE;
