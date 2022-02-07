@@ -34,6 +34,8 @@ public:
 typedef map<string, nd_app_id_t> nd_apps_t;
 typedef map<string, ndApplication *> nd_app_tag_map;
 typedef unordered_map<nd_app_id_t, ndApplication *> nd_app_id_map;
+typedef unordered_map<string, nd_app_id_t> nd_domains_t;
+typedef vector<pair<regex *, string> > nd_domain_rx_xforms_t;
 
 class ndApplications
 {
@@ -58,12 +60,16 @@ protected:
     mutex lock;
     nd_app_id_map apps;
     nd_app_tag_map app_tags;
-    unordered_map<string, nd_app_id_t> domains;
+    nd_domains_t domains;
+    nd_domain_rx_xforms_t domain_xforms;
 
     void Reset(bool free_only = false);
 
     ndApplication *AddApp(nd_app_id_t id, const string &tag);
+    void AddDomain(nd_app_id_t id, const string &domain);
     void AddDomain(ndApplication *app, const string &domain);
+    void AddDomainTransform(const string &search, const string &replace);
+    void AddNetwork(nd_app_id_t id, const string &network);
     void AddNetwork(ndApplication *app, const string &network);
 
 private:

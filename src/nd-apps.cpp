@@ -200,11 +200,59 @@ ndApplications::~ndApplications()
 
 bool ndApplications::Load(const string &filename)
 {
+    size_t records = 0;
+    ifstream ifs(filename);
+
+    if (! ifs.is_open()) return false;
+
     unique_lock<mutex> ul(lock);
 
     Reset();
 
-    return false;
+    string line;
+    while (getline(ifs, line)) {
+        nd_ltrim(line);
+        if (line.empty() || line[0] == '#') continue;
+
+        size_t p;
+        if ((p = line.find_first_of(":")) == string::npos) continue;
+
+        string type = line.substr(0, p);
+
+        if (type != "app" && type != "dom" && type != "net" && type != "xfm")
+            continue;
+
+        line = line.substr(p + 1);
+
+        if (type == "app" || type == "dom" || type != "net") {
+            if ((p = line.find_first_of(":")) == string::npos) continue;
+            nd_app_id_t id = (nd_app_id_t)strtoul(line.substr(0, p).c_str(), NULL, 0);
+
+            if (type == "app") {
+                string tag = line.substr(p + 1);
+                ndApplication *_app = AddApp(id, tag);
+#ifdef _ND_APPS_DEBUG
+                if (_app != nullptr)
+                    nd_dprintf("Added app: %u %s\n", id, tag.c_str());
+#endif
+            }
+            else if (type == "dom")
+                AddDomain(id, line.substr(p + 1));
+            else if (type == "net")
+                AddDomain(id, line.substr(p + 1));
+        }
+        else if (type == "xfm") {
+            if ((p = line.find_first_of(":")) == string::npos) continue;
+            AddDomainTransform(line.substr(0, p), line.substr(p + 1));
+        }
+
+        records++;
+    }
+
+    if (records > 0)
+        nd_dprintf("Loaded %u applications.\n", records);
+
+    return (records > 0);
 }
 
 bool ndApplications::LoadLegacy(const string &filename)
@@ -291,7 +339,7 @@ bool ndApplications::LoadLegacy(const string &filename)
     }
 
     if (records > 0)
-        nd_dprintf("Loaded %u application criteria.\n", records);
+        nd_dprintf("Loaded %u legacy applications.\n", records);
 
     return (records > 0);
 }
@@ -300,18 +348,28 @@ nd_app_id_t ndApplications::Find(const string &domain)
 {
     unique_lock<mutex> ul(lock);
 
-    auto it = domains.find(domain);
-    if (it != domains.end()) return it->second;
+    vector<string> search;
+    for (auto &rx : domain_xforms) {
+        string result = regex_replace(domain, (*rx.first), rx.second);
+        if (result.size()) search.push_back(result);
+    }
 
-    size_t p = 0;
-    string sub = domain;
-    while ((p = sub.find_first_of(".")) != string::npos) {
+    search.push_back(domain);
 
-        sub = sub.substr(p + 1);
-        if (sub.find_first_of(".") == string::npos) break;
-
-        it = domains.find(sub);
+    for (auto &it_search : search) {
+        auto it = domains.find(it_search);
         if (it != domains.end()) return it->second;
+
+        size_t p = 0;
+        string sub = it_search;
+        while ((p = sub.find_first_of(".")) != string::npos) {
+
+            sub = sub.substr(p + 1);
+            if (sub.find_first_of(".") == string::npos) break;
+
+            it = domains.find(sub);
+            if (it != domains.end()) return it->second;
+        }
     }
 
     return ND_APP_UNKNOWN;
@@ -436,9 +494,12 @@ void ndApplications::Reset(bool free_only)
 
     for (auto &it : apps) delete it.second;
 
+    for (auto &rx : domain_xforms) delete rx.first;
+
     apps.clear();
     app_tags.clear();
     domains.clear();
+    domain_xforms.clear();
 }
 
 void ndApplications::Get(nd_apps_t &apps_copy)
@@ -474,10 +535,44 @@ ndApplication *ndApplications::AddApp(
     return app;
 }
 
+void ndApplications::AddDomain(nd_app_id_t id, const string &domain)
+{
+    domains.insert(make_pair(domain, id));
+}
+
 void ndApplications::AddDomain(
     ndApplication *app, const string &domain
 ) {
     domains.insert(make_pair(domain, app->id));
+}
+
+void ndApplications::AddDomainTransform(const string &search, const string &replace)
+{
+    if (search.size() == 0) return;
+#ifdef HAVE_WORKING_REGEX
+    try {
+        regex *rx_search = new regex(
+            search,
+            regex_constants::icase |
+            regex_constants::optimize |
+            regex_constants::extended
+        );
+        domain_xforms.push_back(make_pair(rx_search, replace));
+    } catch (regex_error &e) {
+        nd_printf("WARNING: %s: Error compiling privacy regex: %s: %d\n",
+            filename, search.c_str(), e.code());
+    } catch (bad_alloc &e) {
+        throw ndSystemException(__PRETTY_FUNCTION__, "new regex", ENOMEM);
+    }
+#endif
+}
+
+void ndApplications::AddNetwork(
+    nd_app_id_t id, const string &network)
+{
+    auto app = apps.find(id);
+    if (app != apps.end())
+        AddNetwork(app->second, network);
 }
 
 void ndApplications::AddNetwork(
