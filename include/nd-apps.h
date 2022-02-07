@@ -35,7 +35,7 @@ typedef map<string, nd_app_id_t> nd_apps_t;
 typedef map<string, ndApplication *> nd_app_tag_map;
 typedef unordered_map<nd_app_id_t, ndApplication *> nd_app_id_map;
 typedef unordered_map<string, nd_app_id_t> nd_domains_t;
-typedef vector<pair<regex *, string> > nd_domain_rx_xforms_t;
+typedef unordered_map<string, pair<regex *, string>> nd_domain_rx_xforms_t;
 
 class ndApplications
 {
@@ -45,6 +45,8 @@ public:
 
     bool Load(const string &filename);
     bool LoadLegacy(const string &filename);
+
+    bool Save(const string &filename);
 
     nd_app_id_t Find(const string &domain);
     nd_app_id_t Find(sa_family_t af, void *addr);

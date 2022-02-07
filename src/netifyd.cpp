@@ -573,6 +573,7 @@ static int nd_config_load(void)
 #define _ND_LO_DUMP_CAT             13
 #define _ND_LO_DUMP_CATS            14
 #define _ND_LO_DUMP_SORT_BY_TAG     15
+#define _ND_LO_EXPORT_APPS          16
 
 static int nd_config_set_option(int option)
 {
@@ -2366,6 +2367,19 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
     for (auto &proto : protos_by_tag)
         printf("%6u: %s\n", proto.second, proto.first.c_str());
 }
+
+int static nd_export_applications(void)
+{
+    if (nd_apps == NULL) {
+        nd_apps = new ndApplications();
+        if (! nd_apps->Load(nd_config.path_app_config))
+            nd_apps->LoadLegacy(nd_config.path_legacy_config);
+    }
+
+    if (! nd_apps->Save("/dev/stdout")) return 1;
+
+    return 0;
+}
 #endif
 
 static void nd_status(void)
@@ -2881,6 +2895,8 @@ int main(int argc, char *argv[])
 
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
 
+        { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
+
         { NULL, 0, 0, 0 }
     };
 
@@ -2948,12 +2964,19 @@ int main(int argc, char *argv[])
             dump_flags |= ndDUMP_SORT_BY_TAG;
             break;
 
+        case _ND_LO_EXPORT_APPS:
+#ifndef _ND_LEAN_AND_MEAN
+            exit(nd_export_applications());
+#else
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
+            exit(1);
+#endif
         case _ND_LO_DUMP_PROTOS:
 #ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_PROTOS | dump_flags);
             exit(0);
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case _ND_LO_DUMP_APPS:
@@ -2961,7 +2984,7 @@ int main(int argc, char *argv[])
             nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
             exit(0);
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case _ND_LO_DUMP_CAT:
@@ -2972,7 +2995,7 @@ int main(int argc, char *argv[])
                 nd_dump_protocols(ndDUMP_TYPE_CAT_PROTO | dump_flags);
             exit(0);
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case _ND_LO_DUMP_CATS:
@@ -2980,7 +3003,7 @@ int main(int argc, char *argv[])
             nd_dump_protocols(ndDUMP_TYPE_CATS | dump_flags);
             exit(0);
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case '?':
@@ -3064,7 +3087,7 @@ int main(int argc, char *argv[])
             }
             device_netlink[last_device] = optarg;
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             return 1;
 #endif
             break;
@@ -3073,7 +3096,7 @@ int main(int argc, char *argv[])
             nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
             exit(0);
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case 'p':
@@ -3104,7 +3127,7 @@ int main(int argc, char *argv[])
                 }
             }
 #else
-            fprintf(stderr, "Sorry, this feature was not enabled for this build.\n");
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
         case 's':

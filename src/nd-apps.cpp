@@ -344,13 +344,33 @@ bool ndApplications::LoadLegacy(const string &filename)
     return (records > 0);
 }
 
+bool ndApplications::Save(const string &filename)
+{
+    ofstream ofs(filename, ofstream::trunc);
+
+    if (! ofs.is_open()) return false;
+
+    unique_lock<mutex> ul(lock);
+
+    for (auto &it : apps)
+        ofs << "app:" << it.first << ":" << it.second->tag << endl;
+    for (auto &it : domains)
+        ofs << "dom:" << it.second << ":" << it.first << endl;
+    for (auto &it : domain_xforms)
+        ofs << "xfm:" << it.first << ":" << it.second.second << endl;
+
+    return true;
+}
+
 nd_app_id_t ndApplications::Find(const string &domain)
 {
     unique_lock<mutex> ul(lock);
 
     vector<string> search;
     for (auto &rx : domain_xforms) {
-        string result = regex_replace(domain, (*rx.first), rx.second);
+        string result = regex_replace(
+            domain, (*rx.second.first), rx.second.second
+        );
         if (result.size()) search.push_back(result);
     }
 
@@ -494,7 +514,7 @@ void ndApplications::Reset(bool free_only)
 
     for (auto &it : apps) delete it.second;
 
-    for (auto &rx : domain_xforms) delete rx.first;
+    for (auto &rx : domain_xforms) delete rx.second.first;
 
     apps.clear();
     app_tags.clear();
@@ -557,7 +577,7 @@ void ndApplications::AddDomainTransform(const string &search, const string &repl
             regex_constants::optimize |
             regex_constants::extended
         );
-        domain_xforms.push_back(make_pair(rx_search, replace));
+        domain_xforms[search] = make_pair(rx_search, replace);
     } catch (regex_error &e) {
         nd_printf("WARNING: %s: Error compiling privacy regex: %s: %d\n",
             filename, search.c_str(), e.code());
