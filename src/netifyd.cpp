@@ -494,7 +494,7 @@ static int nd_config_load(void)
 
         freeaddrinfo(result);
     }
-#ifdef HAVE_WORKING_REGEX
+
     for (int i = 0; ; i++) {
         ostringstream os;
         os << "regex_search[" << i << "]";
@@ -514,14 +514,16 @@ static int nd_config_load(void)
                 regex_constants::extended
             );
             nd_config.privacy_regex.push_back(make_pair(rx_search, replace));
-        } catch (regex_error &e) {
-            fprintf(stderr, "WARNING: %s: Error compiling privacy regex: %s: %d\n",
-                nd_conf_filename, search.c_str(), e.code());
+        } catch (const regex_error &e) {
+            string error;
+            nd_regex_error(e, error);
+            fprintf(stderr, "WARNING: %s: Error compiling privacy regex: %s: %s [%d]\n",
+                nd_conf_filename, search.c_str(), error.c_str(), e.code());
         } catch (bad_alloc &e) {
             throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
         }
     }
-#endif
+
     ND_GF_SET_FLAG(ndGF_PRIVATE_EXTADDR,
         reader.GetBoolean("privacy_filter", "private_external_addresses", false));
 

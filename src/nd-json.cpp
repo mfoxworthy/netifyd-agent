@@ -56,7 +56,7 @@ void nd_json_to_string(const json &j, string &output, bool pretty)
         pretty ? ND_JSON_INDENT : -1,
         ' ', false, json::error_handler_t::replace
     );
-#ifdef HAVE_WORKING_REGEX
+
     vector<pair<regex *, string> >::const_iterator i;
     for (i = nd_config.privacy_regex.begin();
         i != nd_config.privacy_regex.end(); i++) {
@@ -64,7 +64,6 @@ void nd_json_to_string(const json &j, string &output, bool pretty)
         string result = regex_replace(output, *((*i).first), (*i).second);
         if (result.size()) output = result;
     }
-#endif // HAVE_WORKING_REGEX
 }
 
 void nd_json_save_to_file(const json &j, const string &filename, bool pretty)

@@ -224,7 +224,7 @@ bool ndApplications::Load(const string &filename)
 
         line = line.substr(p + 1);
 
-        if (type == "app" || type == "dom" || type != "net") {
+        if (type == "app" || type == "dom" || type == "net") {
             if ((p = line.find_first_of(":")) == string::npos) continue;
             nd_app_id_t id = (nd_app_id_t)strtoul(line.substr(0, p).c_str(), NULL, 0);
 
@@ -569,22 +569,23 @@ void ndApplications::AddDomain(
 void ndApplications::AddDomainTransform(const string &search, const string &replace)
 {
     if (search.size() == 0) return;
-#ifdef HAVE_WORKING_REGEX
+
     try {
-        regex *rx_search = new regex(
+        regex *rx = new regex(
             search,
             regex_constants::icase |
             regex_constants::optimize |
             regex_constants::extended
         );
-        domain_xforms[search] = make_pair(rx_search, replace);
-    } catch (regex_error &e) {
-        nd_printf("WARNING: %s: Error compiling privacy regex: %s: %d\n",
-            filename, search.c_str(), e.code());
+        domain_xforms[search] = make_pair(rx, replace);
+    } catch (const regex_error &e) {
+        string error;
+        nd_regex_error(e, error);
+        nd_printf("WARNING: Error compiling domain transform regex: %s: %s [%d]\n",
+            search.c_str(), error.c_str(), e.code());
     } catch (bad_alloc &e) {
         throw ndSystemException(__PRETTY_FUNCTION__, "new regex", ENOMEM);
     }
-#endif
 }
 
 void ndApplications::AddNetwork(

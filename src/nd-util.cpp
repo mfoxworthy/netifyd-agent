@@ -694,9 +694,6 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_INOTIFY
     ident << "; inotify";
 #endif
-#ifdef HAVE_WORKING_REGEX
-    ident << "; regex";
-#endif
     ident << ")";
 
     return ident.str();
@@ -1222,6 +1219,54 @@ void ndLogDirectory::Discard(void)
         unlink(full_path.c_str());
 
         hf_cur = NULL;
+    }
+}
+
+void nd_regex_error(const regex_error &e, string &error)
+{
+    switch (e.code()) {
+    case regex_constants::error_collate:
+        error = "The expression contains an invalid collating element name";
+        break;
+    case regex_constants::error_ctype:
+        error = "The expression contains an invalid character class name";
+        break;
+    case regex_constants::error_escape:
+        error = "The expression contains an invalid escaped character or a trailing escape";
+        break;
+    case regex_constants::error_backref:
+        error = "The expression contains an invalid back reference";
+        break;
+    case regex_constants::error_brack:
+        error = "The expression contains mismatched square brackets ('[' and ']')";
+        break;
+    case regex_constants::error_paren:
+        error = "The expression contains mismatched parentheses ('(' and ')')";
+        break;
+    case regex_constants::error_brace:
+        error = "The expression contains mismatched curly braces ('{' and '}')";
+        break;
+    case regex_constants::error_badbrace:
+        error = "The expression contains an invalid range in a {} expression";
+        break;
+    case regex_constants::error_range:
+        error = "The expression contains an invalid character range (e.g. [b-a])";
+        break;
+    case regex_constants::error_space:
+        error = "There was not enough memory to convert the expression into a finite state machine";
+        break;
+    case regex_constants::error_badrepeat:
+        error = "one of *?+{ was not preceded by a valid regular expression";
+        break;
+    case regex_constants::error_complexity:
+        error = "The complexity of an attempted match exceeded a predefined level";
+        break;
+    case regex_constants::error_stack:
+        error = "There was not enough memory to perform a match";
+        break;
+    default:
+        error = e.what();
+        break;
     }
 }
 
