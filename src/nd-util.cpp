@@ -711,6 +711,9 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_INOTIFY
     ident << "; inotify";
 #endif
+#ifdef HAVE_WORKING_REGEX
+    ident << "; regex";
+#endif
     ident << ")";
 
     return ident.str();

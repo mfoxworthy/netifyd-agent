@@ -573,7 +573,6 @@ void ndApplications::AddDomainTransform(const string &search, const string &repl
     try {
         regex *rx = new regex(
             search,
-            /*regex::ECMAScript | */
             regex::extended |
             regex::icase |
             regex::optimize

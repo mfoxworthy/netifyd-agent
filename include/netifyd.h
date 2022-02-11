@@ -44,6 +44,17 @@
 #define s6_addr32 __u6_addr.__u6_addr32
 #endif
 
+#if __cplusplus >= 201103L &&                             \
+    (!defined(__GLIBCXX__) || (__cplusplus >= 201402L) || \
+        (defined(_GLIBCXX_REGEX_DFS_QUANTIFIERS_LIMIT) || \
+         defined(_GLIBCXX_REGEX_STATE_LIMIT)           || \
+             (defined(_GLIBCXX_RELEASE)                && \
+             _GLIBCXX_RELEASE > 4)))
+#define HAVE_WORKING_REGEX 1
+#else
+#undef HAVE_WORKING_REGEX
+#endif
+
 #define ND_MAX_HOSTNAME         256
 
 #define ND_STATS_INTERVAL       15      // Collect stats every N seconds
