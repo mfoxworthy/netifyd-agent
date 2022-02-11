@@ -231,6 +231,8 @@ void ndCategories::Dump(ndCategoryType type)
                 case ndCAT_TYPE_PROTO:
                     tag = "protocol";
                     break;
+                default:
+                    break;
                 }
 
                 printf("%6u: %s: %s\n", li.second, tag.c_str(), li.first.c_str());

@@ -327,6 +327,8 @@ nd_proto_id_t ndFlow::master_protocol(void) const
     case ND_PROTO_TEAMVIEWER:
     case ND_PROTO_XBOX:
         return ND_PROTO_HTTP;
+    default:
+        break;
     }
 
     return detected_protocol;

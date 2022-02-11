@@ -966,6 +966,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     &npmr);
             }
 #endif
+        break;
+
+        default:
+            break;
         }
     }
 
