@@ -509,9 +509,9 @@ static int nd_config_load(void)
         try {
             regex *rx_search = new regex(
                 search,
-                regex_constants::icase |
-                regex_constants::optimize |
-                regex_constants::extended
+                regex::extended |
+                regex::icase |
+                regex::optimize
             );
             nd_config.privacy_regex.push_back(make_pair(rx_search, replace));
         } catch (const regex_error &e) {

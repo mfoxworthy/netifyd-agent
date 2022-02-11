@@ -239,7 +239,7 @@ bool ndApplications::Load(const string &filename)
             else if (type == "dom")
                 AddDomain(id, line.substr(p + 1));
             else if (type == "net")
-                AddDomain(id, line.substr(p + 1));
+                AddNetwork(id, line.substr(p + 1));
         }
         else if (type == "xfm") {
             if ((p = line.find_first_of(":")) == string::npos) continue;
@@ -573,9 +573,10 @@ void ndApplications::AddDomainTransform(const string &search, const string &repl
     try {
         regex *rx = new regex(
             search,
-            regex_constants::icase |
-            regex_constants::optimize |
-            regex_constants::extended
+            /*regex::ECMAScript | */
+            regex::extended |
+            regex::icase |
+            regex::optimize
         );
         domain_xforms[search] = make_pair(rx, replace);
     } catch (const regex_error &e) {

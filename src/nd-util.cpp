@@ -410,28 +410,45 @@ sa_family_t nd_string_to_ip(const string &src, sockaddr_storage *ip)
     return family;
 }
 
+bool nd_ip_to_string(sa_family_t af, void *addr, string &dst)
+{
+    char ip[INET6_ADDRSTRLEN];
+
+    switch (af) {
+    case AF_INET:
+        inet_ntop(AF_INET, addr, ip, INET_ADDRSTRLEN);
+        break;
+    case AF_INET6:
+        inet_ntop(AF_INET6, addr, ip, INET6_ADDRSTRLEN);
+        break;
+    default:
+        return false;
+    }
+
+    dst.assign(ip);
+
+    return true;
+}
+
 bool nd_ip_to_string(const sockaddr_storage &ip, string &dst)
 {
-    char addr[INET6_ADDRSTRLEN];
     const struct sockaddr_in *ipv4 = reinterpret_cast<const struct sockaddr_in *>(&ip);
     const struct sockaddr_in6 *ipv6 = reinterpret_cast<const struct sockaddr_in6 *>(&ip);
 
     switch (ip.ss_family) {
     case AF_INET:
-        inet_ntop(AF_INET, &ipv4->sin_addr.s_addr, addr, INET_ADDRSTRLEN);
-        break;
-
+        return nd_ip_to_string(
+            AF_INET, (void *)&ipv4->sin_addr.s_addr, dst
+        );
     case AF_INET6:
-        inet_ntop(AF_INET6, &ipv6->sin6_addr.s6_addr, addr, INET6_ADDRSTRLEN);
-        break;
-
+        return nd_ip_to_string(
+            AF_INET6, (void *)&ipv6->sin6_addr.s6_addr, dst
+        );
     default:
         return false;
     }
 
-    dst.assign(addr);
-
-    return true;
+    return false;
 }
 
 void nd_iface_name(const string &iface, string &result)
