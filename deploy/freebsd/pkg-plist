@@ -5,8 +5,8 @@
 @sample %%ETCDIR%%.conf.sample
 @sample etc/netify.d/netify-sink.conf.sample
 lib/libnetifyd.so
-lib/libnetifyd.so.1
-lib/libnetifyd.so.1.0.0
+lib/libnetifyd.so.2
+lib/libnetifyd.so.2.0.1
 man/man5/netifyd.conf.5.gz
 man/man8/netifyd.8.gz
 sbin/netifyd
