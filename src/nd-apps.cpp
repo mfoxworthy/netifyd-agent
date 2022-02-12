@@ -38,22 +38,20 @@
 #include <csignal>
 #include <mutex>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+
 #include <unistd.h>
 #include <pthread.h>
 #include <dlfcn.h>
 #include <string.h>
 #include <errno.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #define __FAVOR_BSD 1
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
-#undef __FAVOR_BSD
-
-#include <arpa/inet.h>
 
 #include <pcap/pcap.h>
 
