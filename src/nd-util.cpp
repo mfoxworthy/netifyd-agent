@@ -410,7 +410,7 @@ sa_family_t nd_string_to_ip(const string &src, sockaddr_storage *ip)
     return family;
 }
 
-bool nd_ip_to_string(sa_family_t af, void *addr, string &dst)
+bool nd_ip_to_string(sa_family_t af, const void *addr, string &dst)
 {
     char ip[INET6_ADDRSTRLEN];
 
@@ -438,11 +438,11 @@ bool nd_ip_to_string(const sockaddr_storage &ip, string &dst)
     switch (ip.ss_family) {
     case AF_INET:
         return nd_ip_to_string(
-            AF_INET, (void *)&ipv4->sin_addr.s_addr, dst
+            AF_INET, (const void *)&ipv4->sin_addr.s_addr, dst
         );
     case AF_INET6:
         return nd_ip_to_string(
-            AF_INET6, (void *)&ipv6->sin6_addr.s6_addr, dst
+            AF_INET6, (const void *)&ipv6->sin6_addr.s6_addr, dst
         );
     default:
         return false;

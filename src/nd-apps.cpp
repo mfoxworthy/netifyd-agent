@@ -141,6 +141,36 @@ public:
         else
             return addr < rhs.addr;
     }
+#ifndef _ND_LEAN_AND_MEAN
+    bool to_ipstring(sa_family_t af, string &ip) const {
+        struct in_addr nw_addr;
+        struct in6_addr nw6_addr;
+        switch (af) {
+        case AF_INET:
+            nw_addr.s_addr = htonl(addr.to_ulong());
+            if (! nd_ip_to_string(
+                AF_INET, (const void *)&nw_addr, ip))
+                return false;
+            break;
+        case AF_INET6:
+            for (auto i = 0; i < 4; i++) {
+                bitset<32> b;
+                for (auto j = 0; j < 32; j++)
+                    b[j] = addr[i * 32 + j];
+                nw6_addr.s6_addr32[3 - i] = htonl(b.to_ulong());
+            }
+            if (! nd_ip_to_string(
+                AF_INET6, (const void *)&nw6_addr, ip))
+                return false;
+            break;
+        default:
+            return false;
+        }
+
+        ip.append(string("/") + to_string(prefix_len));
+        return true;
+    }
+#endif
 };
 
 template <size_t N>
@@ -200,7 +230,8 @@ ndApplications::~ndApplications()
 
 bool ndApplications::Load(const string &filename)
 {
-    size_t records = 0;
+    size_t ac = 0, dc = 0, nc = 0, xc = 0;
+
     ifstream ifs(filename);
 
     if (! ifs.is_open()) return false;
@@ -226,38 +257,39 @@ bool ndApplications::Load(const string &filename)
 
         if (type == "app" || type == "dom" || type == "net") {
             if ((p = line.find_first_of(":")) == string::npos) continue;
-            nd_app_id_t id = (nd_app_id_t)strtoul(line.substr(0, p).c_str(), NULL, 0);
+            nd_app_id_t id = (nd_app_id_t)strtoul(
+                line.substr(0, p).c_str(), NULL, 0
+            );
 
-            if (type == "app") {
-                string tag = line.substr(p + 1);
-                ndApplication *_app = AddApp(id, tag);
-#ifdef _ND_APPS_DEBUG
-                if (_app != nullptr)
-                    nd_dprintf("Added app: %u %s\n", id, tag.c_str());
-#endif
+            if (type == "app" && apps.find(id) == apps.end()) {
+                if (AddApp(id, line.substr(p + 1)) != nullptr) ac++;
             }
-            else if (type == "dom")
-                AddDomain(id, line.substr(p + 1));
-            else if (type == "net")
-                AddNetwork(id, line.substr(p + 1));
+            else if (type == "dom") {
+                if (AddDomain(id, line.substr(p + 1))) dc++;
+            }
+            else if (type == "net") {
+                if (AddNetwork(id, line.substr(p + 1))) nc++;
+            }
         }
         else if (type == "xfm") {
             if ((p = line.find_first_of(":")) == string::npos) continue;
-            AddDomainTransform(line.substr(0, p), line.substr(p + 1));
+            if (AddDomainTransform(line.substr(0, p), line.substr(p + 1))) xc++;
         }
-
-        records++;
     }
 
-    if (records > 0)
-        nd_dprintf("Loaded %u applications.\n", records);
+    if (ac > 0) {
+        nd_dprintf("Loaded %u apps, %u domains, %u networks, %u transforms.\n",
+            ac, dc, nc, xc
+        );
+    }
 
-    return (records > 0);
+    return (ac > 0 && (ac > 0 || nc > 0));
 }
 
 bool ndApplications::LoadLegacy(const string &filename)
 {
-    size_t records = 0;
+    size_t ac = 0, dc = 0, nc = 0, xc = 0;
+
     ifstream ifs(filename);
 
     if (! ifs.is_open()) return false;
@@ -281,11 +313,17 @@ bool ndApplications::LoadLegacy(const string &filename)
 
         if ((p = app.find_first_of(".")) == string::npos) continue;
 
-        string app_id = app.substr(0, p);
-        nd_trim(app_id);
+        nd_app_id_t app_id = (nd_app_id_t)strtoul(
+            app.substr(0, p).c_str(), NULL, 0
+        );
 
         string app_tag = app.substr(p + 1);
         nd_trim(app_tag);
+
+        if (apps.find(app_id) == apps.end()) {
+            if (AddApp(app_id, app_tag) != nullptr) ac++;
+            else return false;
+        }
 
         string entry;
         while (getline(entries, entry, ',')) {
@@ -305,47 +343,31 @@ bool ndApplications::LoadLegacy(const string &filename)
                 nd_ltrim(domain, '^');
                 nd_rtrim(domain, '$');
 
-                ndApplication *_app = AddApp(
-                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
-                    app_tag);
-
-                if (_app != nullptr) {
-#ifdef _ND_APPS_DEBUG
-                    nd_dprintf("add app: %u %s, domain: %s\n",
-                        _app->id, app_tag.c_str(), domain.c_str());
-#endif
-                    AddDomain(_app, domain);
-                    records++;
-                }
+                if (AddDomain(app_id, domain)) dc++;
             }
             else if (type == "ip") {
                 string cidr = entry.substr(p + 1);
                 nd_trim(cidr);
 
-                ndApplication *_app = AddApp(
-                    (nd_app_id_t)strtoul(app_id.c_str(), NULL, 0),
-                    app_tag);
-
-                if (_app != nullptr) {
-#ifdef _ND_APPS_DEBUG
-                    nd_dprintf("add app: %u %s, network: %s\n",
-                        _app->id, app_tag.c_str(), cidr.c_str());
-#endif
-                    AddNetwork(_app, cidr);
-                    records++;
-                }
+                if (AddNetwork(app_id, cidr)) nc++;
             }
         }
     }
 
-    if (records > 0)
-        nd_dprintf("Loaded %u legacy applications.\n", records);
+    if (ac > 0) {
+        nd_dprintf("Loaded [legacy] %u apps, %u domains, %u networks, %u transforms.\n",
+            ac, dc, nc, xc
+        );
+    }
 
-    return (records > 0);
+    return (ac > 0 && (ac > 0 || nc > 0));
 }
 
 bool ndApplications::Save(const string &filename)
 {
+#ifndef _ND_LEAN_AND_MEAN
+    size_t nc = 0;
+
     ofstream ofs(filename, ofstream::trunc);
 
     if (! ofs.is_open()) return false;
@@ -356,10 +378,34 @@ bool ndApplications::Save(const string &filename)
         ofs << "app:" << it.first << ":" << it.second->tag << endl;
     for (auto &it : domains)
         ofs << "dom:" << it.second << ":" << it.first << endl;
+    nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+    for (auto &it : (*rn4)) {
+        string ip;
+        if (it.first.to_ipstring(AF_INET, ip)) {
+            ofs << "net:" << it.second << ":" << ip << endl;
+            nc++;
+        }
+    }
+    nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+    for (auto &it : (*rn6)) {
+        string ip;
+        if (it.first.to_ipstring(AF_INET6, ip)) {
+            ofs << "net:" << it.second << ":" << ip << endl;
+            nc++;
+        }
+    }
     for (auto &it : domain_xforms)
         ofs << "xfm:" << it.first << ":" << it.second.second << endl;
 
+    nd_dprintf("Exported %u apps, %u domains, %u networks, %u transforms.\n",
+        apps.size(), domains.size(), nc, domain_xforms.size()
+    );
+
     return true;
+#else
+    nd_printf("Sorry, this feature was disabled (lean and mean).\n");
+    return false;
+#endif // _ND_LEAN_AND_MEAN
 }
 
 nd_app_id_t ndApplications::Find(const string &domain)
@@ -399,15 +445,15 @@ nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
 {
     unique_lock<mutex> ul(lock);
 
-    in_addr *dst_addr;
-    in6_addr *dst6_addr;
+    struct in_addr *dst_addr;
+    struct in6_addr *dst6_addr;
 
     switch (af) {
     case AF_INET:
-        dst_addr = static_cast<in_addr *>(addr);
+        dst_addr = static_cast<struct in_addr *>(addr);
         break;
     case AF_INET6:
-        dst6_addr = static_cast<in6_addr *>(addr);
+        dst6_addr = static_cast<struct in6_addr *>(addr);
         break;
     default:
         nd_printf("Invalid address family: %hu\n", af);
@@ -555,20 +601,16 @@ ndApplication *ndApplications::AddApp(
     return app;
 }
 
-void ndApplications::AddDomain(nd_app_id_t id, const string &domain)
+bool ndApplications::AddDomain(nd_app_id_t id, const string &domain)
 {
-    domains.insert(make_pair(domain, id));
+    auto rc = domains.insert(make_pair(domain, id));
+    return rc.second;
 }
 
-void ndApplications::AddDomain(
-    ndApplication *app, const string &domain
-) {
-    domains.insert(make_pair(domain, app->id));
-}
-
-void ndApplications::AddDomainTransform(const string &search, const string &replace)
+bool ndApplications::AddDomainTransform(const string &search, const string &replace)
 {
-    if (search.size() == 0) return;
+    if (search.size() == 0) return false;
+    if (domain_xforms.find(search) != domain_xforms.end()) return false;
 
     try {
         regex *rx = new regex(
@@ -578,6 +620,7 @@ void ndApplications::AddDomainTransform(const string &search, const string &repl
             regex::optimize
         );
         domain_xforms[search] = make_pair(rx, replace);
+        return true;
     } catch (const regex_error &e) {
         string error;
         nd_regex_error(e, error);
@@ -586,21 +629,15 @@ void ndApplications::AddDomainTransform(const string &search, const string &repl
     } catch (bad_alloc &e) {
         throw ndSystemException(__PRETTY_FUNCTION__, "new regex", ENOMEM);
     }
+
+    return false;
 }
 
-void ndApplications::AddNetwork(
-    nd_app_id_t id, const string &network)
-{
-    auto app = apps.find(id);
-    if (app != apps.end())
-        AddNetwork(app->second, network);
-}
-
-void ndApplications::AddNetwork(
-    ndApplication *app, const string &network
+bool ndApplications::AddNetwork(
+    nd_app_id_t id, const string &network
 ) {
-    in_addr nw_addr;
-    in6_addr nw6_addr;
+    struct in_addr nw_addr;
+    struct in6_addr nw6_addr;
     sa_family_t af = AF_UNSPEC;
     size_t shift, prefix_max = 0, prefix_len = 0;
 
@@ -623,12 +660,12 @@ void ndApplications::AddNetwork(
     }
     else {
         nd_printf("Invalid IPv4/6 network address: %s\n", addr.c_str());
-        return;
+        return false;
     }
 
     if (prefix_len > prefix_max) {
         nd_printf("Invalid prefix length: > %u\n", prefix_max);
-        return;
+        return false;
     }
 
     bitset<32> mask32;
@@ -653,7 +690,8 @@ void ndApplications::AddNetwork(
         entry.addr &= mask32;
 
         nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
-        (*rn4)[entry] = app->id;
+        (*rn4)[entry] = id;
+        return true;
     }
     else {
         ndRadixNetworkEntry<128> entry;
@@ -666,8 +704,11 @@ void ndApplications::AddNetwork(
         entry.addr &= mask128;
 
         nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
-        (*rn6)[entry] = app->id;
+        (*rn6)[entry] = id;
+        return true;
     }
+
+    return false;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

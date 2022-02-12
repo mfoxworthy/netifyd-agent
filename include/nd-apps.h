@@ -68,11 +68,9 @@ protected:
     void Reset(bool free_only = false);
 
     ndApplication *AddApp(nd_app_id_t id, const string &tag);
-    void AddDomain(nd_app_id_t id, const string &domain);
-    void AddDomain(ndApplication *app, const string &domain);
-    void AddDomainTransform(const string &search, const string &replace);
-    void AddNetwork(nd_app_id_t id, const string &network);
-    void AddNetwork(ndApplication *app, const string &network);
+    bool AddDomain(nd_app_id_t id, const string &domain);
+    bool AddDomainTransform(const string &search, const string &replace);
+    bool AddNetwork(nd_app_id_t id, const string &network);
 
 private:
     void *app_networks4, *app_networks6;
