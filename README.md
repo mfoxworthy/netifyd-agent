@@ -52,7 +52,7 @@ make
 ```
 
 ## Online Documentation
-Further user and developer documentation can be found [here](https://www.netify.ai/resources).
+Further user and developer documentation can be found [here](https://www.netify.ai/resources).  The project Wiki is available [here](https://gitlab.com/netify.ai/public/netify-agent/-/wikis/home).
 
 ## License
 Netifyd is dual-licensed under commercial and open source licenses. The commercial license gives you the full rights to create and distribute software on your own terms without any open source license obligations.
