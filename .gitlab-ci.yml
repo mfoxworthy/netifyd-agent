@@ -94,10 +94,10 @@ centos 7 build:
     RPMOS_ARCH: "x86_64"
   <<: *rpmos_build_script
 
-centos 8 build:
+almalinux 8 build:
   variables:
     RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os8"
-    RPMOS_OS: "centos"
+    RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
     RPMOS_ARCH: "x86_64"
   <<: *rpmos_build_script
@@ -206,14 +206,14 @@ centos 7 test:
   needs: ["centos 7 build"]
   <<: *rpmos_test_script
 
-centos 8 test:
+almalinux 8 test:
   variables:
-    RPMOS_OS: "centos"
+    RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
-    RPMOS_IMAGE: "centos:8"
+    RPMOS_IMAGE: "almalinux:8"
     RPMOS_ARCH: "x86_64"
     RPMOS_UUID: "NE-CE-08-X1"
-  needs: ["centos 8 build"]
+  needs: ["almalinux 8 build"]
   <<: *rpmos_test_script
 
 # OPNsense/pfSense
