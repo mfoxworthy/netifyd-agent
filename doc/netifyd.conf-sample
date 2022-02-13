@@ -78,23 +78,4 @@ update_interval = <number of seconds between API updates (1 day, 86400, by defau
 url_api = <Base API URL to use>
 vendor = <Optional two character vendor ID>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # vi: syntax=ini

@@ -39,7 +39,7 @@ typedef enum {
     ND_PROTO_DHCP                   = 18,
     ND_PROTO_POSTGRES               = 19,
     ND_PROTO_MYSQL                  = 20,
-    ND_PROTO_FREE21                 = 21,
+    ND_PROTO_FTPS_CONTROL           = 21,
     ND_PROTO_DIRECT_DOWNLOAD_LINK   = 22,
     ND_PROTO_MAIL_POPS              = 23,
     ND_PROTO_APPLEJUICE             = 24,
@@ -48,13 +48,13 @@ typedef enum {
     ND_PROTO_COAP                   = 27,
     ND_PROTO_VMWARE                 = 28,
     ND_PROTO_MAIL_SMTPS             = 29,
-    ND_PROTO_FREE30                 = 30,
+    ND_PROTO_FTPS_DATA              = 30,
     ND_PROTO_UBNTAC2                = 31,
     ND_PROTO_KONTIKI                = 32,
     ND_PROTO_OPENFT                 = 33,
     ND_PROTO_FASTTRACK              = 34,
     ND_PROTO_GNUTELLA               = 35,
-    ND_PROTO_FREE36                 = 36,
+    ND_PROTO_SIPS                   = 36,
     ND_PROTO_BITTORRENT             = 37,
     ND_PROTO_SKYPE_CALL             = 38,
     ND_PROTO_SIGNAL                 = 39,
@@ -71,7 +71,7 @@ typedef enum {
     ND_PROTO_RTSP                   = 50,
     ND_PROTO_MAIL_IMAPS             = 51,
     ND_PROTO_ICECAST                = 52,
-    ND_PROTO_FREE53                 = 53,
+    ND_PROTO_MQTTS                  = 53,
     ND_PROTO_PPSTREAM               = 54,
     ND_PROTO_ZATTOO                 = 55,
     ND_PROTO_SHOUTCAST              = 56,
@@ -108,10 +108,10 @@ typedef enum {
     ND_PROTO_RTP                    = 87,
     ND_PROTO_RDP                    = 88,
     ND_PROTO_VNC                    = 89,
-    ND_PROTO_FREE90                 = 90,
+    ND_PROTO_NNTPS                  = 90,
     ND_PROTO_TLS                    = 91,
     ND_PROTO_SSH                    = 92,
-    ND_PROTO_USENET                 = 93,
+    ND_PROTO_NNTP                   = 93,
     ND_PROTO_MGCP                   = 94,
     ND_PROTO_IAX                    = 95,
     ND_PROTO_TFTP                   = 96,
@@ -323,6 +323,8 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_FLORENSIA, "Florensia" },
     { ND_PROTO_FTP_CONTROL, "FTP/C" },
     { ND_PROTO_FTP_DATA, "FTP/D" },
+    { ND_PROTO_FTPS_CONTROL, "FTP/S/C" },
+    { ND_PROTO_FTPS_DATA, "FTP/S/D" },
     { ND_PROTO_GENERIC, "Generic" },
     { ND_PROTO_GIT, "Git" },
     { ND_PROTO_GNUTELLA, "Gnutella" },
@@ -377,6 +379,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_MODBUS, "Modbus" },
     { ND_PROTO_MPEGTS, "MPEGTS" },
     { ND_PROTO_MQTT, "MQTT" },
+    { ND_PROTO_MQTTS, "MQTT/S" },
     { ND_PROTO_MSSQL_TDS, "MSSQL/TDS" },
     { ND_PROTO_MYSQL, "MYSQL" },
     { ND_PROTO_NEST_LOG_SINK, "NestLog" },
@@ -384,6 +387,8 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_NETFLOW, "NetFlow" },
     { ND_PROTO_NFS, "NFS" },
     { ND_PROTO_NINTENDO, "Nintendo" },
+    { ND_PROTO_NNTP, "NNTP" },
+    { ND_PROTO_NNTPS, "NNTP/S" },
     { ND_PROTO_NOE, "NOE" },
     { ND_PROTO_NTOP, "NTOP" },
     { ND_PROTO_NTP, "NTP" },
@@ -412,6 +417,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_SHOUTCAST, "ShoutCast" },
     { ND_PROTO_SIGNAL, "Signal" },
     { ND_PROTO_SIP, "SIP" },
+    { ND_PROTO_SIPS, "SIP/S" },
     { ND_PROTO_SKYPE_CALL, "SkypeCall" },
     { ND_PROTO_SKYPE, "Skype" },
     { ND_PROTO_SKYPE_TEAMS, "Skype/Teams" },
@@ -451,7 +457,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_UNENCRYPTED_JABBER, "Jabber/PT" },
     { ND_PROTO_UNKNOWN, "Unknown" },
     { ND_PROTO_UPNP, "UPnP" },
-    { ND_PROTO_USENET, "USENET" },
     { ND_PROTO_VHUA, "VHUA" },
     { ND_PROTO_VIBER, "Viber" },
     { ND_PROTO_VMWARE, "VMWARE" },
@@ -542,7 +547,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_HTTP_DOWNLOAD, ND_PROTO_HTTP_DOWNLOAD },
     { NDPI_PROTOCOL_HTTP, ND_PROTO_HTTP },
     { NDPI_PROTOCOL_HTTP_PROXY, ND_PROTO_HTTP_PROXY },
-    { NDPI_PROTOCOL_HTTPS, ND_PROTO_HTTPS },
     { NDPI_PROTOCOL_IAX, ND_PROTO_IAX },
     { NDPI_PROTOCOL_ICECAST, ND_PROTO_ICECAST },
     { NDPI_PROTOCOL_IP_EGP, ND_PROTO_IP_EGP },
@@ -657,7 +661,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_UNENCRYPTED_JABBER, ND_PROTO_UNENCRYPTED_JABBER },
     { NDPI_PROTOCOL_UNKNOWN, ND_PROTO_UNKNOWN },
     { NDPI_PROTOCOL_UPNP, ND_PROTO_UPNP },
-    { NDPI_PROTOCOL_USENET, ND_PROTO_USENET },
+    { NDPI_PROTOCOL_USENET, ND_PROTO_NNTP },
     { NDPI_PROTOCOL_VHUA, ND_PROTO_VHUA },
     { NDPI_PROTOCOL_VIBER, ND_PROTO_VIBER },
     { NDPI_PROTOCOL_VMWARE, ND_PROTO_VMWARE },
@@ -680,13 +684,23 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_ZOOM, ND_PROTO_ZOOM },
 };
 
-inline const nd_proto_id_t nd_ndpi_proto_find(uint16_t id)
-{
-    nd_ndpi_proto_t::const_iterator it;
-    if ((it = nd_ndpi_protos.find(id)) == nd_ndpi_protos.end())
-        return ND_PROTO_UNKNOWN;
-    return it->second;
-}
+typedef unordered_map<uint16_t, vector<pair<uint16_t, nd_proto_id_t>>> nd_ndpi_portmap_t;
+
+const nd_ndpi_portmap_t nd_ndpi_portmap = {
+    { NDPI_PROTOCOL_TLS, {
+        { 53, ND_PROTO_DOH_DOT },
+        { 443, ND_PROTO_HTTPS },
+        { 563, ND_PROTO_NNTPS },
+        { 853, ND_PROTO_DOH_DOT },
+        { 989, ND_PROTO_FTPS_DATA },
+        { 990, ND_PROTO_FTPS_CONTROL },
+        { 5061, ND_PROTO_SIPS },
+        { 8883, ND_PROTO_MQTTS },
+    } },
+};
+
+class ndFlow;
+const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow);
 
 #endif // _ND_PROTOS_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
