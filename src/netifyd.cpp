@@ -2816,8 +2816,9 @@ int main(int argc, char *argv[])
     struct itimerspec itspec_update;
     string last_device;
     nd_device_addr device_addresses;
+#ifndef _ND_LEAN_AND_MEAN
     uint8_t dump_flags = ndDUMP_NONE;
-
+#endif
     setlocale(LC_ALL, "");
 
     ostringstream os;
@@ -2963,7 +2964,12 @@ int main(int argc, char *argv[])
             break;
 
         case _ND_LO_DUMP_SORT_BY_TAG:
+#ifndef _ND_LEAN_AND_MEAN
             dump_flags |= ndDUMP_SORT_BY_TAG;
+#else
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
+            exit(1);
+#endif
             break;
 
         case _ND_LO_EXPORT_APPS:
