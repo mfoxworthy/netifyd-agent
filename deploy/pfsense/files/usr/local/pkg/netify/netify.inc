@@ -3,7 +3,7 @@
  * netify.inc
  *
  * Netify for pfSense
- * Copyright (C) 2015-2021 eGloo Incorporated
+ * Copyright (C) 2015-2022 eGloo Incorporated
  *
  * This program comes with ABSOLUTELY NO WARRANTY.
  *
