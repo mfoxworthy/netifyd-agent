@@ -307,14 +307,15 @@ nd_proto_id_t ndFlow::master_protocol(void) const
 {
     switch (detected_protocol) {
     case ND_PROTO_HTTPS:
-    case ND_PROTO_MAIL_IMAP:
+    case ND_PROTO_TLS:
+    case ND_PROTO_FTPS_CONTROL:
+    case ND_PROTO_FTPS_DATA:
     case ND_PROTO_MAIL_IMAPS:
     case ND_PROTO_MAIL_POPS:
     case ND_PROTO_MAIL_SMTPS:
-    case ND_PROTO_TLS:
-    case ND_PROTO_SSL_NO_CERT:
-    case ND_PROTO_TOR:
-    case ND_PROTO_UNENCRYPTED_JABBER:
+    case ND_PROTO_MQTTS:
+    case ND_PROTO_NNTPS:
+    case ND_PROTO_SIPS:
         return ND_PROTO_TLS;
     case ND_PROTO_HTTP:
     case ND_PROTO_HTTP_CONNECT:

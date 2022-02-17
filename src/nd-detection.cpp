@@ -371,8 +371,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         if (! ndEF->flags.detection_guessed.load()
             && ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
-            ndEF->flags.detection_guessed = true;
 
+            ndEF->flags.detection_guessed = true;
             ndEF->detected_protocol = nd_ndpi_proto_find(
                 ndpi_guess_undetected_protocol(
                     ndpi,
@@ -436,13 +436,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         // Determine application based on master protocol metadata
-        switch (ndEF->detected_protocol) {
-        case ND_PROTO_HTTPS:
+        switch (ndEF->master_protocol()) {
         case ND_PROTO_TLS:
-        case ND_PROTO_MAIL_IMAPS:
-        case ND_PROTO_MAIL_SMTPS:
-        case ND_PROTO_MAIL_POPS:
-        case ND_PROTO_SSL_NO_CERT:
         case ND_PROTO_QUIC:
             if (ndEFNFP.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
                 ndEF->detected_application = nd_apps->Find(
@@ -455,8 +450,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->detected_application = nd_apps->Lookup("netify.spotify");
             break;
 
-        case ND_PROTO_SKYPE:
         case ND_PROTO_SKYPE_CALL:
+        case ND_PROTO_SKYPE_TEAMS:
             ndEF->detected_application = nd_apps->Lookup("netify.skype");
             break;
 

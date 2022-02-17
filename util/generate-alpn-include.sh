@@ -19,4 +19,6 @@ egrep -v '(^Proto|Reserved)' ./doc/alpn-protocol-ids.csv |\
         -e 's/^/    { { /g' \
         -e 's/$/, 0x00 }, ND_PROTO_UNKNOWN },/g'
 
-exit $?
+echo "{ { 0x64, 0x6F, 0x71 /* doq */, 0x00 }, ND_PROTO_DOQ },"
+
+exit 0

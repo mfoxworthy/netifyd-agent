@@ -77,6 +77,8 @@ using namespace std;
 
 const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
 {
+    if (id == NDPI_PROTOCOL_UNKNOWN) return ND_PROTO_UNKNOWN;
+
     auto it_pm = nd_ndpi_portmap.find(id);
     if (it_pm != nd_ndpi_portmap.end()) {
         for (auto &it_entry : it_pm->second) {
@@ -89,7 +91,7 @@ const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
 
     nd_ndpi_proto_t::const_iterator it;
     if ((it = nd_ndpi_protos.find(id)) == nd_ndpi_protos.end())
-        return ND_PROTO_UNKNOWN;
+        return ND_PROTO_TODO;
 
     return it->second;
 }
