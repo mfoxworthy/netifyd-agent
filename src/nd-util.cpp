@@ -201,7 +201,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
     ndpi_log_level_t level, const char *file, const char *func, unsigned line,
     const char *format, ...)
 {
-    if (ND_DEBUG) {
+    if (ND_DEBUG && (ND_DEBUG_NDPI || level == NDPI_LOG_ERROR)) {
 
         pthread_mutex_lock(nd_printf_mutex);
 
@@ -216,8 +216,8 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
                             "UNK???",
             file, func, line
         );
-        vfprintf(stderr, format, ap);
 
+        vfprintf(stderr, format, ap);
         va_end(ap);
 
         pthread_mutex_unlock(nd_printf_mutex);

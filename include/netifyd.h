@@ -228,12 +228,14 @@ enum nd_global_flags {
     ndGF_FLOW_DUMP_UNKNOWN = 0x100000,
     ndGF_UPLOAD_ENABLED = 0x200000,
     ndGF_UPLOAD_NAT_FLOWS = 0x400000,
-    ndGF_WAIT_FOR_CLIENT = 0x800000
+    ndGF_WAIT_FOR_CLIENT = 0x800000,
+    ndGF_DEBUG_NDPI = 0x1000000
 };
 
 #define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
 #define ND_DEBUG_UPLOAD (nd_config.flags & ndGF_DEBUG_UPLOAD)
 #define ND_DEBUG_WITH_ETHERS (nd_config.flags & ndGF_DEBUG_WITH_ETHERS)
+#define ND_DEBUG_NDPI (nd_config.flags & ndGF_DEBUG_NDPI)
 #define ND_QUIET (nd_config.flags & ndGF_QUIET)
 #define ND_OVERRIDE_LEGACY_CONFIG (nd_config.flags & ndGF_OVERRIDE_LEGACY_CONFIG)
 #define ND_CAPTURE_UNKNOWN_FLOWS (nd_config.flags & ndGF_CAPTURE_UNKNOWN_FLOWS)

@@ -2852,6 +2852,7 @@ int main(int argc, char *argv[])
         { "debug", 0, 0, 'd' },
         { "debug-ether-names", 0, 0, 'e' },
         { "debug-uploads", 0, 0, 'D' },
+        { "debug-ndpi", 0, 0, 'n' },
         { "device-address", 1, 0, 'A' },
         { "device-filter", 1, 0, 'F' },
         { "device-netlink", 1, 0, 'N' },
@@ -2904,10 +2905,12 @@ int main(int argc, char *argv[])
     };
 
     for (optind = 1;; ) {
-        int o = 0;
         if ((rc = getopt_long(argc, argv,
-            "?A:c:DdE:eF:f:hI:i:j:lN:PpRrS:stT:Uu:vV",
-            options, &o)) == -1) break;
+            "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:sTt:Uu:Vv",
+            options, NULL)) == -1) break;
+
+        fprintf(stderr, "Option [%d]: %d (%c).\n", optind, rc, (isascii(rc)) ? rc : '?');
+
         switch (rc) {
         case 0:
             break;
@@ -3019,7 +3022,7 @@ int main(int argc, char *argv[])
             return 1;
         case 'A':
             if (last_device.size() == 0) {
-                fprintf(stderr, "You must specify an interface first (-I/E).\n");
+                fprintf(stderr, "You must specify an interface first A (-I/E).\n");
                 exit(1);
             }
             device_addresses.push_back(make_pair(last_device, optarg));
@@ -3050,7 +3053,7 @@ int main(int argc, char *argv[])
             break;
         case 'F':
             if (last_device.size() == 0) {
-                fprintf(stderr, "You must specify an interface first (-I/E).\n");
+                fprintf(stderr, "You must specify an interface first F (-I/E).\n");
                 exit(1);
             }
             if (nd_config.device_filters
@@ -3068,13 +3071,13 @@ int main(int argc, char *argv[])
         case 'h':
             nd_usage();
         case 'I':
-            for (nd_ifaces::iterator i = ifaces.begin();
-                i != ifaces.end(); i++) {
+            for (nd_ifaces::iterator i = ifaces.begin(); i != ifaces.end(); i++) {
                 if (strcasecmp((*i).second.c_str(), optarg) == 0) {
                     fprintf(stderr, "Duplicate interface specified: %s\n", optarg);
                     exit(1);
                 }
             }
+            fprintf(stderr, "Set internal interface: %s\n", optarg);
             last_device = optarg;
             ifaces.push_back(make_pair(true, optarg));
             break;
@@ -3087,10 +3090,13 @@ int main(int argc, char *argv[])
         case 'l':
             nd_config.flags &= ~ndGF_USE_NETLINK;
             break;
+        case 'n':
+            nd_config.flags |= ndGF_DEBUG_NDPI;
+            break;
         case 'N':
 #if _ND_USE_NETLINK
             if (last_device.size() == 0) {
-                fprintf(stderr, "You must specify an interface first (-I/E).\n");
+                fprintf(stderr, "You must specify an interface first N (-I/E).\n");
                 exit(1);
             }
             device_netlink[last_device] = optarg;
@@ -3141,9 +3147,9 @@ int main(int argc, char *argv[])
         case 's':
             nd_status();
             exit(0);
-        case 't':
-            nd_config.flags &= ~ndGF_USE_CONNTRACK;
-            break;
+//        case 't':
+//            nd_config.flags &= ~ndGF_USE_CONNTRACK;
+//            break;
         case 'T':
             if ((nd_config.h_flow = fopen(optarg, "w")) == NULL) {
                 fprintf(stderr, "Error while opening test output log: %s: %s\n",

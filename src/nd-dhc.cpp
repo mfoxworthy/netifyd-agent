@@ -55,9 +55,10 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-json.h"
-#include "nd-dhc.h"
+#include "nd-ndpi.h"
 #include "nd-sha1.h"
 #include "nd-util.h"
+#include "nd-dhc.h"
 
 extern nd_global_config nd_config;
 

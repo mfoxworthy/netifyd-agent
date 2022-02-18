@@ -48,8 +48,8 @@ using namespace std;
 
 #include "nd-thread.h"
 #include "nd-json.h"
-#include "nd-util.h"
 #include "nd-ndpi.h"
+#include "nd-util.h"
 
 extern nd_global_config nd_config;
 
@@ -84,9 +84,14 @@ void ndpi_global_init(void)
         ndpi_custom_proto_base = np->ndpi_num_supported_protocols;
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
-        np->ndpi_log_level = NDPI_LOG_TRACE;
-        //np->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
-        set_ndpi_debug_function(np, nd_ndpi_debug_printf);
+        if (ND_DEBUG) {
+            np->ndpi_log_level = NDPI_LOG_ERROR;
+            if (! ND_QUIET)
+                np->ndpi_log_level = NDPI_LOG_DEBUG;
+            if (ND_DEBUG_NDPI)
+                np->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
+            set_ndpi_debug_function(np, nd_ndpi_debug_printf);
+        }
 #endif
 
         if (np->host_automa.ac_automa == NULL)
@@ -200,9 +205,14 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
-    ndpi->ndpi_log_level = NDPI_LOG_TRACE;
-    //ndpi->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
-    set_ndpi_debug_function(ndpi, nd_ndpi_debug_printf);
+        if (ND_DEBUG) {
+            ndpi->ndpi_log_level = NDPI_LOG_ERROR;
+            if (! ND_QUIET)
+                ndpi->ndpi_log_level = NDPI_LOG_DEBUG;
+            if (ND_DEBUG_NDPI)
+                ndpi->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
+            set_ndpi_debug_function(ndpi, nd_ndpi_debug_printf);
+        }
 #endif
 
     NDPI_PROTOCOL_BITMASK proto_all;

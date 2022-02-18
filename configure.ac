@@ -302,6 +302,16 @@ AS_IF([test "x$enable_watchdogs" = "xyes"], [
     AM_CONDITIONAL(USE_WATCHDOGS, false)
 ])
 
+AC_ARG_ENABLE([ndpi-debug],
+    [AS_HELP_STRING([--enable-ndpi-debug], [Enable nDPI debug messages [default=no]])],
+    [],
+    [enable_ndpi_debug=no])
+
+AS_IF([test "x$enable_ndpi_debug" = "xyes"], [
+    AC_DEFINE([NDPI_ENABLE_DEBUG_MESSAGES], [1],
+        [Define to enable nDPI debug messages.])
+])
+
 # Checks for required header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h net/ethernet.h stdint.h stdlib.h string.h sys/file.h sys/ioctl.h sys/socket.h sys/types.h sys/time.h sys/un.h syslog.h unistd.h], [], AC_MSG_ERROR([required header(s) not found.]))
