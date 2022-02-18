@@ -385,7 +385,7 @@ bool ndFlow::has_ssh_server_agent(void) const
 bool ndFlow::has_ssl_client_sni(void) const
 {
     return (
-        (master_protocol() == ND_PROTO_TLS || master_protocol() == ND_PROTO_QUIC) &&
+        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.client_sni[0] != '\0'
     );
 }
@@ -393,7 +393,7 @@ bool ndFlow::has_ssl_client_sni(void) const
 bool ndFlow::has_ssl_server_cn(void) const
 {
     return (
-        master_protocol() == ND_PROTO_TLS &&
+        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.server_cn[0] != '\0'
     );
 }

@@ -450,6 +450,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->detected_application = nd_apps->Lookup("netify.spotify");
             break;
 
+        case ND_PROTO_UBNTAC2:
+            ndEF->detected_application = nd_apps->Lookup("netify.ubiquiti");
+            break;
+
         case ND_PROTO_SKYPE_CALL:
         case ND_PROTO_SKYPE_TEAMS:
             ndEF->detected_application = nd_apps->Lookup("netify.skype");
