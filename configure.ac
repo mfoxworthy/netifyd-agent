@@ -310,6 +310,7 @@ AC_ARG_ENABLE([ndpi-debug],
 AS_IF([test "x$enable_ndpi_debug" = "xyes"], [
     AC_DEFINE([NDPI_ENABLE_DEBUG_MESSAGES], [1],
         [Define to enable nDPI debug messages.])
+    ND_DEFINES+=" -DNDPI_ENABLE_DEBUG_MESSAGES=1"
 ])
 
 # Checks for required header files.
