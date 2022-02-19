@@ -281,6 +281,8 @@ typedef enum {
     ND_PROTO_NNTPS                  = 259,
     ND_PROTO_DOT                    = 260,
     ND_PROTO_DOQ                    = 261,  // TODO: Refine QUIC via ALPN (doq)
+    ND_PROTO_AMAZON_VIDEO           = 262,
+    ND_PROTO_AMONG_US               = 263,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -292,6 +294,8 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_AFP, "AFP" },
     { ND_PROTO_AIMINI, "Aimini" },
     { ND_PROTO_AJP, "AJP" },
+    { ND_PROTO_AMAZON_VIDEO, "AmazonVideo" },
+    { ND_PROTO_AMONG_US, "AmongUs" },
     { ND_PROTO_AMQP, "AMQP" },
     { ND_PROTO_APPLEJUICE, "APPLJ" },
     { ND_PROTO_APPLE_PUSH, "Apple/Push" },
@@ -356,7 +360,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_IP_SCTP, "SCTP" },
     { ND_PROTO_IP_VRRP, "VRRP" },
     { ND_PROTO_IRC, "IRC" },
-    { ND_PROTO_XMPP, "XMPP" },
     { ND_PROTO_KAKAOTALK_VOICE, "KakaoTalk/Voice" },
     { ND_PROTO_KERBEROS, "Kerberos" },
     { ND_PROTO_KONTIKI, "Kontiki" },
@@ -466,6 +469,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_WSD, "WSD" },
     { ND_PROTO_XBOX, "Xbox" },
     { ND_PROTO_XDMCP, "XDMCP" },
+    { ND_PROTO_XMPP, "XMPP" },
     { ND_PROTO_YAHOO, "Yahoo" },
     { ND_PROTO_ZATTOO, "Zattoo" },
     { ND_PROTO_ZMQ, "ZMQ" },
@@ -486,6 +490,8 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_AFP, ND_PROTO_AFP },
     { NDPI_PROTOCOL_AIMINI, ND_PROTO_AIMINI },
     { NDPI_PROTOCOL_AJP, ND_PROTO_AJP },
+    { NDPI_PROTOCOL_AMAZON_VIDEO, ND_PROTO_AMAZON_VIDEO },
+    { NDPI_PROTOCOL_AMONG_US, ND_PROTO_AMONG_US },
     { NDPI_PROTOCOL_AMQP, ND_PROTO_AMQP },
     { NDPI_PROTOCOL_APPLEJUICE, ND_PROTO_APPLEJUICE },
     { NDPI_PROTOCOL_APPLE_PUSH, ND_PROTO_APPLE_PUSH },
