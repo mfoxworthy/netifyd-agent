@@ -812,7 +812,8 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 j["ssh"]["server"] = ssh.server_agent;
         }
 
-        if (master_protocol() == ND_PROTO_TLS) {
+        if (master_protocol() == ND_PROTO_TLS
+            || detected_protocol == ND_PROTO_QUIC) {
 
             char tohex[7];
 
