@@ -82,7 +82,6 @@ protected:
     nd_plugins *plugins;
 #endif
     struct ndpi_detection_module_struct *ndpi;
-    uint32_t custom_proto_base;
     nd_private_addr private_addrs;
 
     nd_devices &devices;

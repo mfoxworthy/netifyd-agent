@@ -208,7 +208,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
         va_list ap;
         va_start(ap, format);
 
-        fprintf(stderr, "[nDPI:%08x:%p:%s]: %s/%s:%d: ", protocol, ndpi,
+        fprintf(stdout, "[nDPI:%08x:%p:%s]: %s/%s:%d: ", protocol, ndpi,
             (level == NDPI_LOG_ERROR) ? "ERROR" :
                 (level == NDPI_LOG_TRACE) ? "TRACE" :
                     (level == NDPI_LOG_DEBUG) ? "DEBUG" :
@@ -217,7 +217,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
             file, func, line
         );
 
-        vfprintf(stderr, format, ap);
+        vfprintf(stdout, format, ap);
         va_end(ap);
 
         pthread_mutex_unlock(nd_printf_mutex);

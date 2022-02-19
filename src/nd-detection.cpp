@@ -146,13 +146,12 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_PLUGINS
     plugins(plugin_detections),
 #endif
-    ndpi(NULL), custom_proto_base(0),
+    ndpi(NULL),
     devices(devices),
     dhc(dhc), fhc(fhc),
     flows(0)
 {
-    ndpi = nd_ndpi_init(tag);
-    custom_proto_base = ndpi_get_custom_proto_base();
+    Reload();
 
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);
@@ -181,8 +180,8 @@ ndDetectionThread::ndDetectionThread(
     if ((rc = pthread_mutex_init(&pkt_queue_cond_mutex, NULL)) != 0)
         throw ndDetectionThreadException(strerror(rc));
 
-    nd_dprintf("%s: detection thread created on CPU: %hu, custom_proto_base: %u.\n",
-        tag.c_str(), cpu, custom_proto_base);
+    nd_dprintf("%s: detection thread created on CPU: %hu\n",
+        tag.c_str(), cpu);
 }
 
 ndDetectionThread::~ndDetectionThread()
@@ -214,9 +213,6 @@ void ndDetectionThread::Reload(void)
 {
     if (ndpi != NULL) nd_ndpi_free(ndpi);
     ndpi = nd_ndpi_init(tag);
-    custom_proto_base = ndpi_get_custom_proto_base();
-
-    if (ndpi == NULL) throw ndDetectionThreadException(strerror(ENOMEM));
 }
 
 void ndDetectionThread::QueuePacket(ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp)

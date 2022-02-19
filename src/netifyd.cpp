@@ -2307,7 +2307,6 @@ enum ndDumpFlags {
 
 static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 {
-    unsigned custom_proto_base;
     struct ndpi_detection_module_struct *ndpi;
 
     if (! (type & ndDUMP_TYPE_PROTOS) && ! (type & ndDUMP_TYPE_APPS) &&
@@ -2332,8 +2331,6 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
     map<unsigned, string> protos_by_id;
     map<string, unsigned> protos_by_tag;
-
-    //unsigned i = (type & ndDUMP_TYPE_PROTOS) ? 0 : custom_proto_base;
 
     if (type & ndDUMP_TYPE_PROTOS) {
         for (auto &proto : nd_protos) {

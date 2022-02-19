@@ -56,7 +56,6 @@ extern nd_global_config nd_config;
 static pthread_mutex_t *ndpi_init_lock = NULL;
 static pthread_mutex_t *ndpi_host_automa_lock = NULL;
 static struct ndpi_detection_module_struct *ndpi_parent = NULL;
-static uint32_t ndpi_custom_proto_base = 0;
 
 void ndpi_global_init(void)
 {
@@ -80,8 +79,6 @@ void ndpi_global_init(void)
 
         if (np == NULL)
             throw ndThreadException("Detection module initialization failure");
-
-        ndpi_custom_proto_base = np->ndpi_num_supported_protocols;
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
         if (ND_DEBUG) {
@@ -172,11 +169,6 @@ struct ndpi_detection_module_struct *ndpi_get_parent(void)
     return ndpi_parent;
 }
 
-uint32_t ndpi_get_custom_proto_base(void)
-{
-    return ndpi_custom_proto_base;
-}
-
 struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute__((unused)))
 {
     struct ndpi_detection_module_struct *ndpi = NULL;
@@ -185,6 +177,17 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
 
     if (ndpi == NULL)
         throw ndThreadException("Detection module initialization failure");
+
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
+    if (ND_DEBUG) {
+        ndpi->ndpi_log_level = NDPI_LOG_ERROR;
+        if (! ND_QUIET)
+            ndpi->ndpi_log_level = NDPI_LOG_DEBUG;
+        if (ND_DEBUG_NDPI)
+            ndpi->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
+        set_ndpi_debug_function(ndpi, nd_ndpi_debug_printf);
+    }
+#endif
 
     // Set nDPI preferences
     ndpi_set_detection_preferences(ndpi, ndpi_pref_enable_tls_block_dissection, 1);
@@ -203,17 +206,6 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
     ndpi->host_automa.ac_automa = ndpi_parent->host_automa.ac_automa;
     ndpi->host_automa.lock = ndpi_parent->host_automa.lock;
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
-
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-        if (ND_DEBUG) {
-            ndpi->ndpi_log_level = NDPI_LOG_ERROR;
-            if (! ND_QUIET)
-                ndpi->ndpi_log_level = NDPI_LOG_DEBUG;
-            if (ND_DEBUG_NDPI)
-                ndpi->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
-            set_ndpi_debug_function(ndpi, nd_ndpi_debug_printf);
-        }
-#endif
 
     NDPI_PROTOCOL_BITMASK proto_all;
     NDPI_BITMASK_SET_ALL(proto_all);
