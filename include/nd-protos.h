@@ -283,6 +283,7 @@ typedef enum {
     ND_PROTO_DOQ                    = 261,  // TODO: Refine QUIC via ALPN (doq)
     ND_PROTO_AMAZON_VIDEO           = 262,
     ND_PROTO_AMONG_US               = 263,
+    ND_PROTO_AVAST_SDNS             = 264,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -300,6 +301,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_APPLEJUICE, "APPLJ" },
     { ND_PROTO_APPLE_PUSH, "Apple/Push" },
     { ND_PROTO_ARMAGETRON, "Armagetron" },
+    { ND_PROTO_AVAST_SDNS, "AVASTSecureDNS" },
     { ND_PROTO_AYIYA, "Ayiya" },
     { ND_PROTO_BGP, "BGP" },
     { ND_PROTO_BITTORRENT, "BitTorrent" },
@@ -496,6 +498,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_APPLEJUICE, ND_PROTO_APPLEJUICE },
     { NDPI_PROTOCOL_APPLE_PUSH, ND_PROTO_APPLE_PUSH },
     { NDPI_PROTOCOL_ARMAGETRON, ND_PROTO_ARMAGETRON },
+    { NDPI_PROTOCOL_AVAST_SECUREDNS, ND_PROTO_AVAST_SDNS },
     { NDPI_PROTOCOL_AYIYA, ND_PROTO_AYIYA },
     { NDPI_PROTOCOL_BGP, ND_PROTO_BGP },
     { NDPI_PROTOCOL_BITTORRENT, ND_PROTO_BITTORRENT },

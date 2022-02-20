@@ -1,4 +1,4 @@
-// Netify Agent
+// Netify Agent 🥷🏿
 // Copyright (C) 2015-2022 eGloo Incorporated <http://www.egloo.ca>
 //
 // This program is free software: you can redistribute it and/or modify
