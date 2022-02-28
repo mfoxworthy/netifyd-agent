@@ -2335,6 +2335,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
     if (type & ndDUMP_TYPE_PROTOS) {
         for (auto &proto : nd_protos) {
 
+            if (proto.first == ND_PROTO_TODO) continue;
+
             if (! (type & ndDUMP_SORT_BY_TAG))
                 protos_by_id[proto.first] = proto.second;
             else
