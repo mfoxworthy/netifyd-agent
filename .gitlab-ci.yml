@@ -178,6 +178,7 @@ freebsd 12.3 build:
     OS_ARCH: "x86_64"
     OS_MAKE_TARGET: "deploy-freebsd-12x"
     OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
+  <<: *xbsd_build_script
 
 # -------------------------------------------------------------------------
 # Test stage
