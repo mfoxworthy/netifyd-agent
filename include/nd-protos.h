@@ -286,6 +286,7 @@ typedef enum {
     ND_PROTO_AVAST_SDNS             = 264,
     ND_PROTO_CAPWAP                 = 265,
     ND_PROTO_CASSANDRA              = 266,
+    ND_PROTO_CPHA                   = 267,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -317,6 +318,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_COAP, "COAP" },
     { ND_PROTO_COLLECTD, "Collectd" },
     { ND_PROTO_CORBA, "Corba" },
+    { ND_PROTO_CPHA, "CheckPointHA" },
     { ND_PROTO_CROSSFIRE, "Crossfire" },
     { ND_PROTO_CSGO, "CSGO" },
     { ND_PROTO_DHCP, "DHCP" },
@@ -515,6 +517,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_COAP, ND_PROTO_COAP },
     { NDPI_PROTOCOL_COLLECTD, ND_PROTO_COLLECTD },
     { NDPI_PROTOCOL_CORBA, ND_PROTO_CORBA },
+    { NDPI_PROTOCOL_CPHA, ND_PROTO_CPHA },
     { NDPI_PROTOCOL_CROSSFIRE, ND_PROTO_CROSSFIRE },
     { NDPI_PROTOCOL_CSGO, ND_PROTO_CSGO },
     { NDPI_PROTOCOL_DATASAVER, ND_PROTO_DATASAVER },
