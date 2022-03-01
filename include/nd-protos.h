@@ -285,6 +285,7 @@ typedef enum {
     ND_PROTO_AMONG_US               = 263,
     ND_PROTO_AVAST_SDNS             = 264,
     ND_PROTO_CAPWAP                 = 265,
+    ND_PROTO_CASSANDRA              = 266,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -308,6 +309,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_BITTORRENT, "BitTorrent" },
     { ND_PROTO_BJNP, "BJNP" },
     { ND_PROTO_CAPWAP, "CAPWAP" },
+    { ND_PROTO_CASSANDRA, "Cassandra" },
     { ND_PROTO_CHECKMK, "CHECKMK" },
     { ND_PROTO_CISCO_SKINNY, "Cisco/Skinny" },
     { ND_PROTO_CISCO_VPN, "Cisco/VPN" },
@@ -506,6 +508,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_BITTORRENT, ND_PROTO_BITTORRENT },
     { NDPI_PROTOCOL_BJNP, ND_PROTO_BJNP },
     { NDPI_PROTOCOL_CAPWAP, ND_PROTO_CAPWAP },
+    { NDPI_PROTOCOL_CASSANDRA, ND_PROTO_CASSANDRA },
     { NDPI_PROTOCOL_CHECKMK, ND_PROTO_CHECKMK },
     { NDPI_PROTOCOL_CISCOVPN, ND_PROTO_CISCO_VPN },
     { NDPI_PROTOCOL_CITRIX, ND_PROTO_CITRIX },
