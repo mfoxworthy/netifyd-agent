@@ -124,8 +124,8 @@ almalinux 8 build:
     - gmake deploy-pfsense
     # Push build to master mirror
     - mkdir -p builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/$OS_BASENAME/work/pkg/*.txz builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/pfsense/work/pkg/*.txz builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
+    - mv deploy/$OS_BASENAME/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
+    - mv deploy/pfsense/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
     - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
   allow_failure: true
 
@@ -142,6 +142,7 @@ freebsd 11.2 build:
     OS_ARCH: "x86_64"
     OS_MAKE_TARGET: "deploy-freebsd-11x"
     OS_CONFIGURE_FLAGS: ""
+    OS_PKG_EXTENSION: "txz"
   <<: *xbsd_build_script
 
 # freebsd 11.3 build:
@@ -154,6 +155,7 @@ freebsd 11.2 build:
 #     OS_ARCH: "x86_64"
 #     OS_MAKE_TARGET: "deploy-freebsd-11x"
 #     OS_CONFIGURE_FLAGS: ""
+#     OS_PKG_EXTENSION: "txz"
 #   <<: *xbsd_build_script
 
 freebsd 12.1 build:
@@ -166,6 +168,7 @@ freebsd 12.1 build:
     OS_ARCH: "x86_64"
     OS_MAKE_TARGET: "deploy-freebsd-12x"
     OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
+    OS_PKG_EXTENSION: "txz"
   <<: *xbsd_build_script
 
 freebsd 12.3 build:
@@ -177,7 +180,8 @@ freebsd 12.3 build:
     OS_RELEASE: "3"
     OS_ARCH: "x86_64"
     OS_MAKE_TARGET: "deploy-freebsd-12x"
-    OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
+    OS_CONFIGURE_FLAGS: ""
+    OS_PKG_EXTENSION: "pkg"
   <<: *xbsd_build_script
 
 # -------------------------------------------------------------------------
@@ -324,4 +328,14 @@ pfsense 2.4.5 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
+  <<: *xsense_test_script
+
+pfsense 2.6.0 test:
+  tags:
+    - pfsense260
+  variables:
+    AGENT_UUID: "NE-PF-26-XC"
+    FREEBSD_VERSION: "12"
+    FREEBSD_RELEASE: "3"
+  needs: ["freebsd 12.3 build"]
   <<: *xsense_test_script
