@@ -179,7 +179,7 @@ deploy-freebsd-build:
 	make -C deploy/freebsd clean
 	make -C deploy/freebsd makesum
 	make -C deploy/freebsd package DISABLE_VULNERABILITIES=yes
-	ls -lh deploy/freebsd/work/pkg/*.{txz,pkg}
+	-ls -lh deploy/freebsd/work/pkg/*.{txz,pkg}
 
 deploy-freebsd-10x: deploy-freebsd-common
 	cp deploy/freebsd/Makefile-10x deploy/freebsd/Makefile
@@ -203,7 +203,7 @@ deploy-freebsd-debug: deploy-freebsd-11x-debug
 deploy-pfsense:
 	make -C deploy/pfsense clean
 	make -C deploy/pfsense package DISABLE_VULNERABILITIES=yes
-	ls -lh deploy/freebsd/work/pkg/*.{txz,pkg}
+	-ls -lh deploy/freebsd/work/pkg/*.{txz,pkg}
 
 deploy-debug: all
 	rsync -av --progress --inplace src/.libs/netifyd $(DEBUG_HOST):/usr/sbin/
