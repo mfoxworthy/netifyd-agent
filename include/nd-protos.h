@@ -288,6 +288,7 @@ typedef enum {
     ND_PROTO_CASSANDRA              = 266,
     ND_PROTO_CPHA                   = 267,
     ND_PROTO_DNP3                   = 268,
+    ND_PROTO_DNSCRYPT               = 269,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -329,6 +330,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_DIRECT_DOWNLOAD_LINK, "DDLink" },
     { ND_PROTO_DNP3, "DNP3" },
     { ND_PROTO_DNS, "DNS" },
+    { ND_PROTO_DNSCRYPT, "DNSCrypt" },
     { ND_PROTO_DOFUS, "Dofus" },
     { ND_PROTO_DOH, "DoH" },
     { ND_PROTO_DOQ, "DoQ" },
@@ -531,6 +533,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_DIRECT_DOWNLOAD_LINK, ND_PROTO_DIRECT_DOWNLOAD_LINK },
     { NDPI_PROTOCOL_DNP3, ND_PROTO_DNP3 },
     { NDPI_PROTOCOL_DNS, ND_PROTO_DNS },
+    { NDPI_PROTOCOL_DNSCRYPT, ND_PROTO_DNSCRYPT },
     { NDPI_PROTOCOL_DOFUS, ND_PROTO_DOFUS },
     { NDPI_PROTOCOL_DOH_DOT, ND_PROTO_DOH },
     { NDPI_PROTOCOL_DRDA, ND_PROTO_DRDA },
