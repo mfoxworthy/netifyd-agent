@@ -239,8 +239,8 @@ almalinux 8 test:
   stage: test
   script:
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
-    - rsync master-mirror.egloo.ca::netify-builds/$CI_PROJECT_NAME/freebsd/$FREEBSD_VERSION.$FREEBSD_RELEASE/x86_64/netifyd-`cat /tmp/version`_1.txz .
-    - pkg add netifyd-`cat /tmp/version`_1.txz
+    - rsync master-mirror.egloo.ca::netify-builds/$CI_PROJECT_NAME/freebsd/$FREEBSD_VERSION.$FREEBSD_RELEASE/x86_64/netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION .
+    - pkg add netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION
     # Set our Agent UUID
     - echo "$AGENT_UUID" > /usr/local/etc/netify.d/agent.uuid
     - netifyd --enable-sink
@@ -260,6 +260,7 @@ opnsense 19.7 test:
     FREEBSD_VERSION: "11"
     FREEBSD_RELEASE: "2"
     FREEBSD_LIBS_RELEASE: "3"
+    FREEBSD_PKG_EXTENSION: "txz"
   before_script:
     - ntpdate -u time.nist.gov
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
@@ -275,6 +276,7 @@ opnsense 20.1 test:
     FREEBSD_VERSION: "11"
     FREEBSD_RELEASE: "2"
     FREEBSD_LIBS_RELEASE: "3"
+    FREEBSD_PKG_EXTENSION: "txz"
   before_script:
     - ntpdate -u time.nist.gov
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
@@ -290,30 +292,11 @@ opnsense 20.7 test:
     FREEBSD_VERSION: "12"
     FREEBSD_RELEASE: "1"
     FREEBSD_LIBS_RELEASE: "1"
+    FREEBSD_PKG_EXTENSION: "txz"
   before_script:
     - ntpdate -u time.nist.gov
   needs: ["freebsd 12.1 build"]
   <<: *xsense_test_script
-
-# Deprecated and busted.  Users need to upgrade to 2.4.5
-# pfsense 2.4.4 test:
-#  tags:
-#    - pfsense244
-#  variables:
-#    AGENT_UUID: "NE-PF-24-XC"
-#    FREEBSD_VERSION: "11"
-#    FREEBSD_RELEASE: "2"
-#    FREEBSD_LIBS_RELEASE: "3"
-#  before_script:
-#    - ntpdate -u time.nist.gov
-#    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
-#    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
-#    # FreeBSD 11.2 is deprecated, so "pkg install" no longer works.  Install rsync directly.
-#    - IGNORE_OSVERSION=yes pkg add https://pkg.freebsd.org/FreeBSD:11:amd64/quarterly/All/zstd-1.4.5.txz
-#    - IGNORE_OSVERSION=yes pkg add https://pkg.freebsd.org/FreeBSD:11:amd64/quarterly/All/xxhash-0.7.4.txz
-#    - IGNORE_OSVERSION=yes pkg add https://pkg.freebsd.org/FreeBSD:11:amd64/quarterly/All/rsync-3.2.3.txz
-#  needs: ["freebsd 11.2 build"]
-#  <<: *xsense_test_script
 
 pfsense 2.4.5 test:
   tags:
@@ -323,6 +306,7 @@ pfsense 2.4.5 test:
     FREEBSD_VERSION: "11"
     FREEBSD_RELEASE: "2"
     FREEBSD_LIBS_RELEASE: "3"
+    FREEBSD_PKG_EXTENSION: "txz"
   before_script:
     - ntpdate -u time.nist.gov
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
@@ -337,5 +321,6 @@ pfsense 2.6.0 test:
     AGENT_UUID: "NE-PF-26-XC"
     FREEBSD_VERSION: "12"
     FREEBSD_RELEASE: "3"
+    FREEBSD_PKG_EXTENSION: "pkg"
   needs: ["freebsd 12.3 build"]
   <<: *xsense_test_script
