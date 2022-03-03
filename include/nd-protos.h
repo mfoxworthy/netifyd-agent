@@ -288,6 +288,8 @@ typedef enum {
     ND_PROTO_CPHA                   = 267,
     ND_PROTO_DNP3                   = 268,
     ND_PROTO_DNSCRYPT               = 269,
+    ND_PROTO_ETHERNET_IP            = 270,  // EtherNet/IP (explicit messaging)
+                                            // https://www.odva.org/wp-content/uploads/2021/05/PUB00138R7_Tech-Series-EtherNetIP.pdf
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -339,6 +341,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_DTLS, "DTLS" },
     { ND_PROTO_EAQ, "EAQ" },
     { ND_PROTO_EDONKEY, "eDonkey" },
+    { ND_PROTO_ETHERNET_IP, "EtherNet/IP" },
     { ND_PROTO_FASTTRACK, "FastTrack" },
     { ND_PROTO_FIESTA, "Fiesta" },
     { ND_PROTO_FIX, "FIX" },
@@ -541,6 +544,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_DTLS, ND_PROTO_DTLS },
     { NDPI_PROTOCOL_EAQ, ND_PROTO_EAQ },
     { NDPI_PROTOCOL_EDONKEY, ND_PROTO_EDONKEY },
+    { NDPI_PROTOCOL_ETHERNET_IP, ND_PROTO_ETHERNET_IP },
     { NDPI_PROTOCOL_FASTTRACK, ND_PROTO_FASTTRACK },
     { NDPI_PROTOCOL_FIESTA, ND_PROTO_FIESTA },
     { NDPI_PROTOCOL_FIX, ND_PROTO_FIX },
