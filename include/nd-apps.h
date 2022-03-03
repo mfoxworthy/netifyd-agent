@@ -17,7 +17,8 @@
 #ifndef _ND_APPS_H
 #define _ND_APPS_H
 
-#define ND_APP_UNKNOWN  0
+#define ND_APP_UNKNOWN      0
+#define ND_APP_UNKNOWN_TAG  "netify.unclassified"
 
 typedef uint32_t nd_app_id_t;
 
@@ -27,6 +28,8 @@ public:
     nd_app_id_t id;
     string tag;
 
+    ndApplication()
+        : id(ND_APP_UNKNOWN), tag(ND_APP_UNKNOWN_TAG) { }
     ndApplication(nd_app_id_t id, const string &tag)
         : id(id), tag(tag) { }
 };
