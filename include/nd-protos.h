@@ -290,6 +290,7 @@ typedef enum {
     ND_PROTO_DNSCRYPT               = 269,
     ND_PROTO_ETHERNET_IP            = 270,  // EtherNet/IP (explicit messaging)
                                             // https://www.odva.org/wp-content/uploads/2021/05/PUB00138R7_Tech-Series-EtherNetIP.pdf
+    ND_PROTO_GENSHIN_IMPACT         = 271,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -350,6 +351,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_FTP_DATA, "FTP/D" },
     { ND_PROTO_FTPS_CONTROL, "FTP/S/C" },
     { ND_PROTO_FTPS_DATA, "FTP/S/D" },
+    { ND_PROTO_GENSHIN_IMPACT, "Genshin Impact" },
     { ND_PROTO_GIT, "Git" },
     { ND_PROTO_GNUTELLA, "Gnutella" },
     { ND_PROTO_GOOGLE_MEET_DUO, "Google/Meet/Duo" },
@@ -551,6 +553,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_FLORENSIA, ND_PROTO_FLORENSIA },
     { NDPI_PROTOCOL_FTP_CONTROL, ND_PROTO_FTP_CONTROL },
     { NDPI_PROTOCOL_FTP_DATA, ND_PROTO_FTP_DATA },
+    { NDPI_PROTOCOL_GENSHIN_IMPACT, ND_PROTO_GENSHIN_IMPACT },
     { NDPI_PROTOCOL_GIT, ND_PROTO_GIT },
     { NDPI_PROTOCOL_GNUTELLA, ND_PROTO_GNUTELLA },
     { NDPI_PROTOCOL_GTP, ND_PROTO_GTP },
