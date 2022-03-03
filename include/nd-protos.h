@@ -291,6 +291,9 @@ typedef enum {
     ND_PROTO_ETHERNET_IP            = 270,  // EtherNet/IP (explicit messaging)
                                             // https://www.odva.org/wp-content/uploads/2021/05/PUB00138R7_Tech-Series-EtherNetIP.pdf
     ND_PROTO_GENSHIN_IMPACT         = 271,
+    ND_PROTO_GTP_C                  = 272,
+    ND_PROTO_GTP_P                  = 273,
+    ND_PROTO_GTP_U                  = 274,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -356,6 +359,9 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_GNUTELLA, "Gnutella" },
     { ND_PROTO_GOOGLE_MEET_DUO, "Google/Meet/Duo" },
     { ND_PROTO_GTP, "GTP" },
+    { ND_PROTO_GTP_C, "GTP/C" },
+    { ND_PROTO_GTP_P, "GTP/P" },
+    { ND_PROTO_GTP_U, "GTP/U" },
     { ND_PROTO_GUILDWARS, "Guildwars" },
     { ND_PROTO_H323, "H323" },
     { ND_PROTO_HALFLIFE2, "HalfLife2" },
@@ -557,6 +563,9 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_GIT, ND_PROTO_GIT },
     { NDPI_PROTOCOL_GNUTELLA, ND_PROTO_GNUTELLA },
     { NDPI_PROTOCOL_GTP, ND_PROTO_GTP },
+    { NDPI_PROTOCOL_GTP_C, ND_PROTO_GTP_C },
+    { NDPI_PROTOCOL_GTP_PRIME, ND_PROTO_GTP_P },
+    { NDPI_PROTOCOL_GTP_U, ND_PROTO_GTP_U },
     { NDPI_PROTOCOL_GUILDWARS, ND_PROTO_GUILDWARS },
     { NDPI_PROTOCOL_H323, ND_PROTO_H323 },
     { NDPI_PROTOCOL_HALFLIFE2, ND_PROTO_HALFLIFE2 },
