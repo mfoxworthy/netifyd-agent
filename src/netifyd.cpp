@@ -622,10 +622,12 @@ static void nd_usage(int rc = 0, bool version = false)
     fprintf(stderr,
         "%s\n%s\n", nd_get_version_and_features().c_str(), PACKAGE_URL);
     if (version) {
+        fprintf(stderr, "\nnDPI ABI version: %u\n", NDPI_API_VERSION);
         fprintf(stderr,
-            "\nThis application uses various components from nDPI v%s - v%s.\n"
+            "This application uses various components from nDPI v%s - v%s.\n"
             "https://www.ntop.org/products/deep-packet-inspection/ndpi/\n"
             "https://github.com/ntop/nDPI\n", ndpi_revision(), ND_NDPI_UPSTREAM);
+
         fprintf(stderr, "\n  This program comes with ABSOLUTELY NO WARRANTY.\n"
             "  Netifyd is dual-licensed under commercial and open source licenses. The\n"
             "  commercial license gives you the full rights to create and distribute software\n"

@@ -54,7 +54,6 @@ using namespace std;
 extern nd_global_config nd_config;
 
 static pthread_mutex_t *ndpi_init_lock = NULL;
-static pthread_mutex_t *ndpi_host_automa_lock = NULL;
 static struct ndpi_detection_module_struct *ndpi_parent = NULL;
 
 void ndpi_global_init(void)
@@ -94,11 +93,6 @@ void ndpi_global_init(void)
         if (np->host_automa.ac_automa == NULL)
             throw ndThreadException("Detection host_automa initialization failure");
 
-        ndpi_host_automa_lock = new pthread_mutex_t;
-        if (pthread_mutex_init(ndpi_host_automa_lock, NULL) != 0)
-            throw ndThreadException("Unable to initialize pthread_mutex (host automa)");
-        np->host_automa.lock = ndpi_host_automa_lock;
-
         if (np->protocols_ptree == NULL) {
             np->protocols_ptree = ndpi_init_ptree(32); // 32-bit for IPv4
             if (np->protocols_ptree == NULL)
@@ -134,10 +128,6 @@ void ndpi_global_destroy(void)
                 throw ndThreadException("Unable to lock pthread_mutex (init)");
 
             ndpi_parent = NULL;
-
-            pthread_mutex_destroy(ndpi_host_automa_lock);
-            delete ndpi_host_automa_lock;
-            ndpi_host_automa_lock = NULL;
 
             ndpi_exit_detection_module(np);
 
@@ -204,7 +194,6 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
         ndpi_free_ptree(ndpi->protocols_ptree);
 
     ndpi->host_automa.ac_automa = ndpi_parent->host_automa.ac_automa;
-    ndpi->host_automa.lock = ndpi_parent->host_automa.lock;
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
 
     NDPI_PROTOCOL_BITMASK proto_all;
