@@ -209,7 +209,7 @@ enum nd_global_flags {
     ndGF_DEBUG_UPLOAD = 0x2,
     ndGF_DEBUG_WITH_ETHERS = 0x4,
     ndGF_QUIET = 0x8,
-    ndGF_OVERRIDE_LEGACY_CONFIG = 0x10,
+    ndGF_FREE_0x10 = 0x10,
     ndGF_CAPTURE_UNKNOWN_FLOWS = 0x20,
     ndGF_PRIVATE_EXTADDR = 0x40,
     ndGF_SSL_USE_TLSv1 = 0x80,

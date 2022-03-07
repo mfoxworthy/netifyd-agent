@@ -717,7 +717,8 @@ static void nd_usage(int rc = 0, bool version = false)
             "\nGlobal options:\n"
             "  -d, --debug\n    Enable debug output and remain in foreground.\n"
             "  -e, --debug-ether-names\n    In debug mode, resolve and display addresses from: /etc/ethers\n"
-            "  -D, --debug-upload\n    In debug mode, display debug output for sink server uploads.\n"
+            "  -n, --debug-ndpi\n    In debug mode, display nDPI debug message when enabled (compile-time).\n"
+            "  -D, --debug-upload\n    In debug mode, display debug output from sink server uploads.\n"
             "  -v, --verbose\n    In debug mode, display real-time flow detections.\n"
             "  -R, --remain-in-foreground\n    Remain in foreground, don't daemonize (OpenWrt).\n"
             "  --wait-for-client\n    In debug mode, don't start capture threads until a client connects.\n"
@@ -729,7 +730,7 @@ static void nd_usage(int rc = 0, bool version = false)
             "  --enable-sink, --disable-sink\n    Enable/disable sink uploads.\n"
             "  -c, --config <filename>\n    Specify an alternate Agent configuration.\n"
             "    Default: %s\n"
-            "  -f, --sink-config <filename>\n    Specify an alternate app and protocol configuration.\n"
+            "  -f, --ndpi-config <filename>\n    Specify an alternate legacy (nDPI) application configuration file.\n"
             "    Default: %s\n"
             "  --force-reset\n    Reset Agent sink configuration options.\n"
             "    Deletes: %s, %s, %s\n"
@@ -2852,23 +2853,23 @@ int main(int argc, char *argv[])
         { "config", 1, 0, 'c' },
         { "debug", 0, 0, 'd' },
         { "debug-ether-names", 0, 0, 'e' },
-        { "debug-uploads", 0, 0, 'D' },
         { "debug-ndpi", 0, 0, 'n' },
+        { "debug-uploads", 0, 0, 'D' },
         { "device-address", 1, 0, 'A' },
         { "device-filter", 1, 0, 'F' },
         { "device-netlink", 1, 0, 'N' },
         { "disable-conntrack", 0, 0, 't' },
         { "disable-netlink", 0, 0, 'l' },
+        { "export-json", 1, 0, 'j' },
         { "external", 1, 0, 'E' },
         { "hash-file", 1, 0, 'S' },
         { "help", 0, 0, 'h' },
         { "internal", 1, 0, 'I' },
         { "interval", 1, 0, 'i' },
-        { "export-json", 1, 0, 'j' },
+        { "ndpi-config", 1, 0, 'f' },
         { "provision", 0, 0, 'p' },
         { "remain-in-foreground", 0, 0, 'R' },
         { "replay-delay", 0, 0, 'r' },
-        { "sink-config", 1, 0, 'f' },
         { "status", 0, 0, 's' },
         { "test-output", 1, 0, 'T' },
         { "uuid", 1, 0, 'u' },
@@ -3065,7 +3066,6 @@ int main(int argc, char *argv[])
         case 'f':
             free(nd_config.path_legacy_config);
             nd_config.path_legacy_config = strdup(optarg);
-            nd_config.flags |= ndGF_OVERRIDE_LEGACY_CONFIG;
             break;
         case 'h':
             nd_usage();
