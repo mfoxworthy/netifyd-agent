@@ -181,11 +181,7 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
 
     // Set nDPI preferences
     ndpi_set_detection_preferences(ndpi, ndpi_pref_enable_tls_block_dissection, 1);
-    ndpi_set_detection_preferences(ndpi, ndpi_pref_http_dont_dissect_response, 0);
-    ndpi_set_detection_preferences(ndpi, ndpi_pref_dns_dont_dissect_response, 0);
     ndpi_set_detection_preferences(ndpi, ndpi_pref_direction_detect_disable, 0);
-    ndpi_set_detection_preferences(ndpi, ndpi_pref_disable_metadata_export, 0);
-    ndpi_set_detection_preferences(ndpi, ndpi_pref_enable_category_substring_match, 0);
 
     if (ndpi->host_automa.ac_automa != NULL)
         ndpi_free_automa(ndpi->host_automa.ac_automa);
