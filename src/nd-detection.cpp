@@ -634,6 +634,14 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 );
             }
             break;
+        case ND_PROTO_KERBEROS:
+            snprintf(ndEF->kerberos.hostname, ND_FLOW_KERBEROS_HOST,
+                "%s", ndEFNFP.kerberos.hostname);
+            snprintf(ndEF->kerberos.domain, ND_FLOW_KERBEROS_DOMAIN,
+                "%s", ndEFNFP.kerberos.domain);
+            snprintf(ndEF->kerberos.username, ND_FLOW_KERBEROS_USER,
+                "%s", ndEFNFP.kerberos.username);
+            break;
         default:
             break;
         }

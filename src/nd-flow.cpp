@@ -454,6 +454,30 @@ bool ndFlow::has_ssdp_headers(void) const
     );
 }
 
+bool ndFlow::has_kerberos_hostname(void) const
+{
+    return (
+        detected_protocol == ND_PROTO_KERBEROS &&
+        kerberos.hostname[0] != '\0'
+    );
+}
+
+bool ndFlow::has_kerberos_domain(void) const
+{
+    return (
+        detected_protocol == ND_PROTO_KERBEROS &&
+        kerberos.domain[0] != '\0'
+    );
+}
+
+bool ndFlow::has_kerberos_username(void) const
+{
+    return (
+        detected_protocol == ND_PROTO_KERBEROS &&
+        kerberos.username[0] != '\0'
+    );
+}
+
 void ndFlow::print(void) const
 {
     const char *lower_name = lower_ip, *upper_name = upper_ip;
@@ -867,7 +891,21 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         if (has_ssdp_headers()) {
 
             j["ssdp"] = ssdp.headers;
+        }
 
+        if (has_kerberos_hostname()) {
+
+            j["kerberos"]["hostname"] = kerberos.hostname;
+        }
+
+        if (has_kerberos_domain()) {
+
+            j["kerberos"]["domain"] = kerberos.domain;
+        }
+
+        if (has_kerberos_username()) {
+
+            j["kerberos"]["username"] = kerberos.username;
         }
 
         j["first_seen_at"] = ts_first_seen;

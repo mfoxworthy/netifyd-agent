@@ -40,6 +40,12 @@
 // SSL certificate fingerprint hash length
 #define ND_FLOW_TLS_HASH_LEN    SHA1_DIGEST_LENGTH
 
+// Kerberos fields
+#define ND_FLOW_KERBEROS_FIELD  48
+#define ND_FLOW_KERBEROS_HOST   ND_FLOW_KERBEROS_FIELD
+#define ND_FLOW_KERBEROS_DOMAIN ND_FLOW_KERBEROS_FIELD
+#define ND_FLOW_KERBEROS_USER   ND_FLOW_KERBEROS_FIELD
+
 // Capture filename template
 #define ND_FLOW_CAPTURE_TEMPLATE    ND_VOLATILE_STATEDIR "/nd-flow-XXXXXXXX.cap"
 #define ND_FLOW_CAPTURE_SUB_OFFSET  (sizeof(ND_FLOW_CAPTURE_TEMPLATE) - 8 - 4 - 1)
@@ -180,6 +186,12 @@ public:
         struct {
             char answer[ND_FLOW_MDNS_ANSLEN];
         } mdns;
+
+        struct {
+            char hostname[ND_FLOW_KERBEROS_HOST];
+            char domain[ND_FLOW_KERBEROS_DOMAIN];
+            char username[ND_FLOW_KERBEROS_USER];
+        } kerberos;
     };
 
     struct {
@@ -294,6 +306,9 @@ public:
     bool has_bt_info_hash(void) const;
     bool has_mdns_answer(void) const;
     bool has_ssdp_headers(void) const;
+    bool has_kerberos_hostname(void) const;
+    bool has_kerberos_domain(void) const;
+    bool has_kerberos_username(void) const;
 
     void print(void) const;
 
