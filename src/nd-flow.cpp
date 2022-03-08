@@ -478,6 +478,14 @@ bool ndFlow::has_kerberos_username(void) const
     );
 }
 
+bool ndFlow::has_mining_variant(void) const
+{
+    return (
+        detected_protocol == ND_PROTO_MINING &&
+        mining.variant[0] != '\0'
+    );
+}
+
 void ndFlow::print(void) const
 {
     const char *lower_name = lower_ip, *upper_name = upper_ip;
@@ -878,35 +886,27 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         }
 
         if (has_bt_info_hash()) {
-
             nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
             j["bt"]["info_hash"] = digest;
         }
 
-        if (has_mdns_answer()) {
-
+        if (has_mdns_answer())
             j["mdns"]["answer"] = mdns.answer;
-        }
 
-        if (has_ssdp_headers()) {
-
+        if (has_ssdp_headers())
             j["ssdp"] = ssdp.headers;
-        }
 
-        if (has_kerberos_hostname()) {
-
+        if (has_kerberos_hostname())
             j["kerberos"]["hostname"] = kerberos.hostname;
-        }
 
-        if (has_kerberos_domain()) {
-
+        if (has_kerberos_domain())
             j["kerberos"]["domain"] = kerberos.domain;
-        }
 
-        if (has_kerberos_username()) {
-
+        if (has_kerberos_username())
             j["kerberos"]["username"] = kerberos.username;
-        }
+
+        if (has_mining_variant())
+            j["mining"]["variant"] = mining.variant;
 
         j["first_seen_at"] = ts_first_seen;
         j["first_update_at"] = ts_first_update;

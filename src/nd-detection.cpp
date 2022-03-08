@@ -642,6 +642,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             snprintf(ndEF->kerberos.username, ND_FLOW_KERBEROS_USER,
                 "%s", ndEFNFP.kerberos.username);
             break;
+        case ND_PROTO_MINING:
+            snprintf(ndEF->mining.variant, ND_FLOW_EXTRA_INFO,
+                "%s", ndEFNF->flow_extra_info);
+            break;
         default:
             break;
         }

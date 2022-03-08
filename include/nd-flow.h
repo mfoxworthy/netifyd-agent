@@ -46,6 +46,9 @@
 #define ND_FLOW_KERBEROS_DOMAIN ND_FLOW_KERBEROS_FIELD
 #define ND_FLOW_KERBEROS_USER   ND_FLOW_KERBEROS_FIELD
 
+// Extra protocol info text
+#define ND_FLOW_EXTRA_INFO      16
+
 // Capture filename template
 #define ND_FLOW_CAPTURE_TEMPLATE    ND_VOLATILE_STATEDIR "/nd-flow-XXXXXXXX.cap"
 #define ND_FLOW_CAPTURE_SUB_OFFSET  (sizeof(ND_FLOW_CAPTURE_TEMPLATE) - 8 - 4 - 1)
@@ -192,6 +195,10 @@ public:
             char domain[ND_FLOW_KERBEROS_DOMAIN];
             char username[ND_FLOW_KERBEROS_USER];
         } kerberos;
+
+        struct {
+            char variant[ND_FLOW_EXTRA_INFO];
+        } mining;
     };
 
     struct {
@@ -309,6 +316,7 @@ public:
     bool has_kerberos_hostname(void) const;
     bool has_kerberos_domain(void) const;
     bool has_kerberos_username(void) const;
+    bool has_mining_variant(void) const;
 
     void print(void) const;
 
