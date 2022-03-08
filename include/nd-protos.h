@@ -296,6 +296,7 @@ typedef enum {
     ND_PROTO_GTP_U                  = 274,
     ND_PROTO_HP_VIRTGRP             = 275,
     ND_PROTO_CISCO_HSRP             = 276,
+    ND_PROTO_IEC60870_5_104         = 277, // Extension for industrial 104 protocol recognition
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -375,6 +376,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_HTTPS, "HTTP/S" },
     { ND_PROTO_IAX, "IAX" },
     { ND_PROTO_ICECAST, "IceCast" },
+    { ND_PROTO_IEC60870_5_104, "IEC60870/5/104" },
     { ND_PROTO_IP_EGP, "EGP" },
     { ND_PROTO_IP_GRE, "GRE" },
     { ND_PROTO_IP_ICMP, "ICMP" },
@@ -580,6 +582,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_HTTP_PROXY, ND_PROTO_HTTP_PROXY },
     { NDPI_PROTOCOL_IAX, ND_PROTO_IAX },
     { NDPI_PROTOCOL_ICECAST, ND_PROTO_ICECAST },
+    { NDPI_PROTOCOL_IEC60870, ND_PROTO_IEC60870_5_104 },
     { NDPI_PROTOCOL_IP_EGP, ND_PROTO_IP_EGP },
     { NDPI_PROTOCOL_IP_GRE, ND_PROTO_IP_GRE },
     { NDPI_PROTOCOL_IP_ICMP, ND_PROTO_IP_ICMP },
