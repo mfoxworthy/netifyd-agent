@@ -298,6 +298,7 @@ typedef enum {
     ND_PROTO_CISCO_HSRP             = 276,
     ND_PROTO_IEC60870_5_104         = 277, // Extension for industrial 104 protocol recognition
     ND_PROTO_IMO                    = 278, // No idea what this is.
+    ND_PROTO_IRCS                   = 279, // IRC over TLS
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -391,6 +392,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_IP_SCTP, "SCTP" },
     { ND_PROTO_IP_VRRP, "VRRP" },
     { ND_PROTO_IRC, "IRC" },
+    { ND_PROTO_IRCS, "IRC/S" },
     { ND_PROTO_KAKAOTALK_VOICE, "KakaoTalk/Voice" },
     { ND_PROTO_KERBEROS, "Kerberos" },
     { ND_PROTO_KONTIKI, "Kontiki" },
@@ -722,6 +724,7 @@ const nd_ndpi_portmap_t nd_ndpi_portmap = {
         { 989, ND_PROTO_FTPS_DATA },
         { 990, ND_PROTO_FTPS_CONTROL },
         { 5061, ND_PROTO_SIPS },
+        { 6697, ND_PROTO_IRCS },
         { 8883, ND_PROTO_MQTTS },
     } },
 };
