@@ -288,8 +288,11 @@ typedef enum {
     ND_PROTO_CPHA                   = 267,
     ND_PROTO_DNP3                   = 268,
     ND_PROTO_DNSCRYPT               = 269,
-    ND_PROTO_ETHERNET_IP            = 270,  // EtherNet/IP (explicit messaging)
-                                            // https://www.odva.org/wp-content/uploads/2021/05/PUB00138R7_Tech-Series-EtherNetIP.pdf
+
+    // EtherNet/IP (explicit messaging)
+    // https://www.odva.org/wp-content/uploads/2021/05/PUB00138R7_Tech-Series-EtherNetIP.pdf
+    ND_PROTO_ETHERNET_IP            = 270,
+
     ND_PROTO_GENSHIN_IMPACT         = 271,
     ND_PROTO_GTP_C                  = 272,
     ND_PROTO_GTP_P                  = 273,
@@ -299,6 +302,7 @@ typedef enum {
     ND_PROTO_IEC60870_5_104         = 277, // Extension for industrial 104 protocol recognition
     ND_PROTO_IMO                    = 278, // No idea what this is.
     ND_PROTO_IRCS                   = 279, // IRC over TLS
+    ND_PROTO_MONGODB                = 280, // MongoDB
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -413,6 +417,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_MGCP, "MGCP" },
     { ND_PROTO_MINING, "Mining" },
     { ND_PROTO_MODBUS, "Modbus" },
+    { ND_PROTO_MONGODB, "MongoDB" },
     { ND_PROTO_MPEGTS, "MPEGTS" },
     { ND_PROTO_MQTT, "MQTT" },
     { ND_PROTO_MQTTS, "MQTT/S" },
@@ -621,6 +626,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_MGCP, ND_PROTO_MGCP },
     { NDPI_PROTOCOL_MINING, ND_PROTO_MINING },
     { NDPI_PROTOCOL_MODBUS, ND_PROTO_MODBUS },
+    { NDPI_PROTOCOL_MONGODB, ND_PROTO_MONGODB },
     { NDPI_PROTOCOL_MPEGTS, ND_PROTO_MPEGTS },
     { NDPI_PROTOCOL_MQTT, ND_PROTO_MQTT },
     { NDPI_PROTOCOL_MSSQL_TDS, ND_PROTO_MSSQL_TDS },
