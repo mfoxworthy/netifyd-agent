@@ -304,6 +304,10 @@ typedef enum {
     ND_PROTO_IRCS                   = 279, // IRC over TLS
     ND_PROTO_MONGODB                = 280, // MongoDB
 
+    // NATS: Connective Technology for Adaptive Edge & Distributed Systems
+    // https://docs.nats.io/
+    ND_PROTO_NATS                   = 281,
+
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
 } nd_proto_id_t;
@@ -423,6 +427,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_MQTTS, "MQTT/S" },
     { ND_PROTO_MSSQL_TDS, "MSSQL/TDS" },
     { ND_PROTO_MYSQL, "MYSQL" },
+    { ND_PROTO_NATS, "NATS" },
     { ND_PROTO_NEST_LOG_SINK, "NestLog" },
     { ND_PROTO_NETBIOS, "NETBIOS" },
     { ND_PROTO_NETFLOW, "NetFlow" },
@@ -631,6 +636,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_MQTT, ND_PROTO_MQTT },
     { NDPI_PROTOCOL_MSSQL_TDS, ND_PROTO_MSSQL_TDS },
     { NDPI_PROTOCOL_MYSQL, ND_PROTO_MYSQL },
+    { NDPI_PROTOCOL_NATS, ND_PROTO_NATS },
     { NDPI_PROTOCOL_NEST_LOG_SINK, ND_PROTO_NEST_LOG_SINK },
     { NDPI_PROTOCOL_NETBIOS, ND_PROTO_NETBIOS },
     { NDPI_PROTOCOL_NETFLOW, ND_PROTO_NETFLOW },
