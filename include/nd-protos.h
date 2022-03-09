@@ -178,7 +178,7 @@ typedef enum {
     ND_PROTO_DEPR157                = 157,  // Deprecated: FB? Messenger
     ND_PROTO_H323                   = 158,
     ND_PROTO_OPENVPN                = 159,
-    ND_PROTO_NOE                    = 160,
+    ND_PROTO_NOE                    = 160,  // Alcatel new office environment
     ND_PROTO_CISCO_VPN              = 161,
     ND_PROTO_TEAMSPEAK              = 162,
     ND_PROTO_TOR                    = 163,  // TODO: Delete (from nDPI).
