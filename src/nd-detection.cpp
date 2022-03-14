@@ -433,15 +433,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         // Determine application based on master protocol metadata
         switch (ndEF->master_protocol()) {
-        case ND_PROTO_TLS:
-        case ND_PROTO_QUIC:
-            if (ndEFNFP.tls_quic_stun.tls_quic.client_requested_server_name[0] != '\0') {
-                ndEF->detected_application = nd_apps->Find(
-                    (const char *)ndEFNFP.tls_quic_stun.tls_quic.client_requested_server_name
-                );
-            }
-            break;
-
         case ND_PROTO_SPOTIFY:
             ndEF->detected_application = nd_apps->Lookup("netify.spotify");
             break;
@@ -539,14 +530,15 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         case ND_PROTO_TLS:
         case ND_PROTO_QUIC:
             ndEF->ssl.version =
-                ndEFNFP.tls_quic_stun.tls_quic.ssl_version;
+                ndEFNFP.tls_quic.ssl_version;
             ndEF->ssl.cipher_suite =
-                ndEFNFP.tls_quic_stun.tls_quic.server_cipher;
+                ndEFNFP.tls_quic.server_cipher;
 
+            // TODO: No need for client_sni any longer, it's set in host_server_name.
             snprintf(ndEF->ssl.client_sni, ND_FLOW_TLS_CNLEN,
-                "%s", ndEFNFP.tls_quic_stun.tls_quic.client_requested_server_name);
+                "%s", ndEFNF->host_server_name);
             snprintf(ndEF->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
-                "%s", ndEFNFP.tls_quic_stun.tls_quic.ja3_client);
+                "%s", ndEFNFP.tls_quic.ja3_client);
             break;
 
         case ND_PROTO_HTTP:
@@ -851,20 +843,20 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         case ND_PROTO_TLS:
         case ND_PROTO_QUIC:
             if (ndEF->ssl.cipher_suite == 0 &&
-                ndEFNFP.tls_quic_stun.tls_quic.server_cipher != 0) {
+                ndEFNFP.tls_quic.server_cipher != 0) {
                 ndEF->ssl.cipher_suite =
-                    ndEFNFP.tls_quic_stun.tls_quic.server_cipher;
+                    ndEFNFP.tls_quic.server_cipher;
 
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
-                ndEFNFP.tls_quic_stun.tls_quic.serverCN != NULL) {
+                ndEFNFP.tls_quic.serverCN != NULL) {
                 snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                    "%s", ndEFNFP.tls_quic_stun.tls_quic.serverCN);
-                free(ndEFNFP.tls_quic_stun.tls_quic.serverCN);
-                ndEFNFP.tls_quic_stun.tls_quic.serverCN = NULL;
+                    "%s", ndEFNFP.tls_quic.serverCN);
+                free(ndEFNFP.tls_quic.serverCN);
+                ndEFNFP.tls_quic.serverCN = NULL;
                 if (ndEF->detected_application == ND_APP_UNKNOWN) {
                     ndEF->detected_application = nd_apps->Find(
                         (const char *)ndEF->ssl.server_cn
@@ -875,9 +867,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->flags.detection_updated = true;
             }
             if (ndEF->ssl.server_ja3[0] == '\0' &&
-                ndEFNFP.tls_quic_stun.tls_quic.ja3_server[0] != '\0') {
+                ndEFNFP.tls_quic.ja3_server[0] != '\0') {
                 snprintf(ndEF->ssl.server_ja3, ND_FLOW_TLS_JA3LEN, "%s",
-                    ndEFNFP.tls_quic_stun.tls_quic.ja3_server);
+                    ndEFNFP.tls_quic.ja3_server);
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
@@ -885,7 +877,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             if (! ndEF->ssl.cert_fingerprint_found &&
                 ndEFNF->l4.tcp.tls.fingerprint_set) {
                 memcpy(ndEF->ssl.cert_fingerprint,
-                    ndEFNFP.tls_quic_stun.tls_quic.sha1_certificate_fingerprint,
+                    ndEFNFP.tls_quic.sha1_certificate_fingerprint,
                     ND_FLOW_TLS_HASH_LEN);
                 flow_update = true;
                 ndEF->ssl.cert_fingerprint_found = true;
@@ -893,10 +885,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 
             if (ndEF->ssl.server_names_length <
-                ndEFNFP.tls_quic_stun.tls_quic.server_names_len &&
-                ndEFNFP.tls_quic_stun.tls_quic.server_names) {
+                ndEFNFP.tls_quic.server_names_len &&
+                ndEFNFP.tls_quic.server_names) {
 
-                ndEF->ssl.server_names_length = ndEFNFP.tls_quic_stun.tls_quic.server_names_len;
+                ndEF->ssl.server_names_length = ndEFNFP.tls_quic.server_names_len;
                 ndEF->ssl.server_names = (char *)realloc(
                     (void *)ndEF->ssl.server_names,
                     ndEF->ssl.server_names_length + 1
@@ -905,7 +897,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     throw ndDetectionThreadException(strerror(ENOMEM));
                 memcpy(
                     ndEF->ssl.server_names,
-                    ndEFNFP.tls_quic_stun.tls_quic.server_names,
+                    ndEFNFP.tls_quic.server_names,
                     ndEF->ssl.server_names_length
                 );
                 ndEF->ssl.server_names[ndEF->ssl.server_names_length] = '\0';
@@ -914,12 +906,12 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->flags.detection_updated = true;
             }
 
-            if (ndEFNFP.tls_quic_stun.tls_quic.alpn) {
+            if (ndEFNFP.tls_quic.alpn) {
 
                 //nd_dprintf("%s: TLS ALPN: %s\n", tag.c_str(),
-                //    ndEFNFP.tls_quic_stun.tls_quic.alpn);
+                //    ndEFNFP.tls_quic.alpn);
                 stringstream ss(
-                    ndEFNFP.tls_quic_stun.tls_quic.alpn
+                    ndEFNFP.tls_quic.alpn
                 );
 
                 while (ss.good()) {
@@ -953,30 +945,30 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     }
                 }
 
-                free(ndEFNFP.tls_quic_stun.tls_quic.alpn);
-                ndEFNFP.tls_quic_stun.tls_quic.alpn = NULL;
+                free(ndEFNFP.tls_quic.alpn);
+                ndEFNFP.tls_quic.alpn = NULL;
             }
 #if 0
 /*
             snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                "%s", ndEFNFP.tls_quic_stun.tls_quic.server_certificate);
+                "%s", ndEFNFP.tls_quic.server_certificate);
             snprintf(ndEF->ssl.server_organization, ND_FLOW_TLS_ORGLEN,
-                "%s", ndEFNFP.tls_quic_stun.tls_quic.server_organization);
+                "%s", ndEFNFP.tls_quic.server_organization);
 */
         nd_dprintf("--> PROCESS EXTRA PACKETS: hello: %s\n",
-            (ndEFNFP.tls_quic_stun.tls_quic.hello_processed) ?
+            (ndEFNFP.tls_quic.hello_processed) ?
             "yes" : "no");
 
         if (ndEF->ip_protocol != IPPROTO_TCP ||
             ! ndEFNF->l4.tcp.tls.certificate_processed) return;
 
             if (ndEF->detected_application == ND_APP_UNKNOWN &&
-                ndEFNFP.tls_quic_stun.tls_quic.server_certificate[0] != '\0') {
+                ndEFNFP.tls_quic.server_certificate[0] != '\0') {
                 ndEF->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
                     ndpi,
                     ndEFNF,
-                    (char *)ndEFNFP.tls_quic_stun.tls_quic.server_certificate,
-                    strlen((const char*)ndEFNFP.tls_quic_stun.tls_quic.server_certificate),
+                    (char *)ndEFNFP.tls_quic.server_certificate,
+                    strlen((const char*)ndEFNFP.tls_quic.server_certificate),
                     &npmr);
             }
 #endif
