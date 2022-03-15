@@ -312,6 +312,8 @@ typedef enum {
     // between programmable logic controllers (PLCs) of the Siemens S7-300/400 family.
     ND_PROTO_S7COMM                 = 282,
 
+    ND_PROTO_SOAP                   = 283,
+
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
 } nd_proto_id_t;
@@ -462,6 +464,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_RTP, "RTP" },
     { ND_PROTO_RTSP, "RTSP" },
     { ND_PROTO_RX, "RX" },
+    { ND_PROTO_S7COMM, "S7comm" },
     { ND_PROTO_SAP, "SAP" },
     { ND_PROTO_SFLOW, "SFlow" },
     { ND_PROTO_SHOUTCAST, "ShoutCast" },
@@ -475,6 +478,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_SMPP, "SMPP" },
     { ND_PROTO_SNAPCHAT_CALL, "Snapchat/Call" },
     { ND_PROTO_SNMP, "SNMP" },
+    { ND_PROTO_SOAP, "SOAP" },
     { ND_PROTO_SOCKS, "SOCKS" },
     { ND_PROTO_SOMEIP, "SOMEIP" },
     { ND_PROTO_SOPCAST, "Sopcast" },
@@ -669,6 +673,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_RTP, ND_PROTO_RTP },
     { NDPI_PROTOCOL_RTSP, ND_PROTO_RTSP },
     { NDPI_PROTOCOL_RX, ND_PROTO_RX },
+    { NDPI_PROTOCOL_S7COMM, ND_PROTO_S7COMM },
     { NDPI_PROTOCOL_SAP, ND_PROTO_SAP },
     { NDPI_PROTOCOL_SFLOW, ND_PROTO_SFLOW },
     { NDPI_PROTOCOL_SHOUTCAST, ND_PROTO_SHOUTCAST },
@@ -682,6 +687,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_SMPP, ND_PROTO_SMPP },
     { NDPI_PROTOCOL_SNAPCHAT_CALL, ND_PROTO_SNAPCHAT_CALL },
     { NDPI_PROTOCOL_SNMP, ND_PROTO_SNMP },
+    { NDPI_PROTOCOL_SOAP, ND_PROTO_SOAP },
     { NDPI_PROTOCOL_SOCKS, ND_PROTO_SOCKS },
     { NDPI_PROTOCOL_SOMEIP, ND_PROTO_SOMEIP },
     { NDPI_PROTOCOL_SOPCAST, ND_PROTO_SOPCAST },
