@@ -308,6 +308,10 @@ typedef enum {
     // https://docs.nats.io/
     ND_PROTO_NATS                   = 281,
 
+    // S7comm (S7 Communication) is a Siemens proprietary protocol that runs
+    // between programmable logic controllers (PLCs) of the Siemens S7-300/400 family.
+    ND_PROTO_S7COMM                 = 282,
+
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
 } nd_proto_id_t;
