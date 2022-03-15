@@ -973,7 +973,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 #endif
         break;
-
+        case ND_PROTO_DNS:
+        case ND_PROTO_MDNS:
+        case ND_PROTO_LLMNR:
+            //nd_dprintf("DNS flow updated.\n");
+            break;
         default:
             break;
         }
