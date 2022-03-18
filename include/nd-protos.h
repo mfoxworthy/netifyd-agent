@@ -313,6 +313,7 @@ typedef enum {
     ND_PROTO_S7COMM                 = 282,
 
     ND_PROTO_SOAP                   = 283,
+    ND_PROTO_TARGUS_GETDATA         = 284, // Targus Dataspeed (speedtest).
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -490,6 +491,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_STEAM, "Steam" },
     { ND_PROTO_STUN, "STUN" },
     { ND_PROTO_SYSLOG, "SYSLOG" },
+    { ND_PROTO_TARGUS_GETDATA, "Targus/Dataspeed" },
     { ND_PROTO_TEAMSPEAK, "TeamSpeak" },
     { ND_PROTO_TEAMVIEWER, "TeamViewer" },
     { ND_PROTO_TELEGRAM, "Telegram" },
@@ -699,6 +701,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_STEAM, ND_PROTO_STEAM },
     { NDPI_PROTOCOL_STUN, ND_PROTO_STUN },
     { NDPI_PROTOCOL_SYSLOG, ND_PROTO_SYSLOG },
+    { NDPI_PROTOCOL_TARGUS_GETDATA, ND_PROTO_TARGUS_GETDATA },
     { NDPI_PROTOCOL_TEAMSPEAK, ND_PROTO_TEAMSPEAK },
     { NDPI_PROTOCOL_TEAMVIEWER, ND_PROTO_TEAMVIEWER },
     { NDPI_PROTOCOL_TELEGRAM, ND_PROTO_TELEGRAM },
