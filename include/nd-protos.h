@@ -321,6 +321,8 @@ typedef enum {
     // International standard client–server, application layer communications protocol.
     ND_PROTO_Z3950                  = 287,
 
+    ND_PROTO_ZABBIX                 = 288,
+
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
 } nd_proto_id_t;
@@ -533,6 +535,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_XMPP, "XMPP" },
     { ND_PROTO_YAHOO, "Yahoo" },
     { ND_PROTO_Z3950, "Z39.50" },
+    { ND_PROTO_ZABBIX, "Zabbix" },
     { ND_PROTO_ZATTOO, "Zattoo" },
     { ND_PROTO_ZMQ, "ZMQ" },
     { ND_PROTO_ZOOM, "ZOOM" },
@@ -745,6 +748,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_XDMCP, ND_PROTO_XDMCP },
     { NDPI_PROTOCOL_YAHOO, ND_PROTO_YAHOO },
     { NDPI_PROTOCOL_Z3950, ND_PROTO_Z3950 },
+    { NDPI_PROTOCOL_ZABBIX, ND_PROTO_ZABBIX },
     { NDPI_PROTOCOL_ZATTOO, ND_PROTO_ZATTOO },
     { NDPI_PROTOCOL_ZMQ, ND_PROTO_ZMQ },
     { NDPI_PROTOCOL_ZOOM, ND_PROTO_ZOOM },
