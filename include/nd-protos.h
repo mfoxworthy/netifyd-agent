@@ -317,6 +317,10 @@ typedef enum {
     ND_PROTO_VXLAN                  = 285, // Virtual Extensible LAN.
     ND_PROTO_WEBSOCKET              = 286, // Websocketj
 
+    // Z39.50 dissector.
+    // International standard client–server, application layer communications protocol.
+    ND_PROTO_Z3950                  = 287,
+
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
 } nd_proto_id_t;
@@ -528,6 +532,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_XDMCP, "XDMCP" },
     { ND_PROTO_XMPP, "XMPP" },
     { ND_PROTO_YAHOO, "Yahoo" },
+    { ND_PROTO_Z3950, "Z39.50" },
     { ND_PROTO_ZATTOO, "Zattoo" },
     { ND_PROTO_ZMQ, "ZMQ" },
     { ND_PROTO_ZOOM, "ZOOM" },
@@ -739,6 +744,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_XBOX, ND_PROTO_XBOX },
     { NDPI_PROTOCOL_XDMCP, ND_PROTO_XDMCP },
     { NDPI_PROTOCOL_YAHOO, ND_PROTO_YAHOO },
+    { NDPI_PROTOCOL_Z3950, ND_PROTO_Z3950 },
     { NDPI_PROTOCOL_ZATTOO, ND_PROTO_ZATTOO },
     { NDPI_PROTOCOL_ZMQ, ND_PROTO_ZMQ },
     { NDPI_PROTOCOL_ZOOM, ND_PROTO_ZOOM },
