@@ -315,6 +315,7 @@ typedef enum {
     ND_PROTO_SOAP                   = 283,
     ND_PROTO_TARGUS_GETDATA         = 284, // Targus Dataspeed (speedtest).
     ND_PROTO_VXLAN                  = 285, // Virtual Extensible LAN.
+    ND_PROTO_WEBSOCKET              = 286, // Websocketj
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -514,6 +515,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_VNC, "VNC" },
     { ND_PROTO_VXLAN, "VXLAN" },
     { ND_PROTO_WARCRAFT3, "Warcraft3" },
+    { ND_PROTO_WEBSOCKET, "Websocket" },
     { ND_PROTO_WHATSAPP_CALL, "WhatsApp/Call" },
     { ND_PROTO_WHATSAPP_VOICE, "WhatsApp/Voice" },
     { ND_PROTO_WHATSAPP, "WhatsApp" },
@@ -726,6 +728,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_VNC, ND_PROTO_VNC },
     { NDPI_PROTOCOL_VXLAN, ND_PROTO_VXLAN },
     { NDPI_PROTOCOL_WARCRAFT3, ND_PROTO_WARCRAFT3 },
+    { NDPI_PROTOCOL_WEBSOCKET, ND_PROTO_WEBSOCKET },
     { NDPI_PROTOCOL_WHATSAPP_CALL, ND_PROTO_WHATSAPP_CALL },
     { NDPI_PROTOCOL_WHATSAPP, ND_PROTO_WHATSAPP },
     { NDPI_PROTOCOL_WHOIS_DAS, ND_PROTO_WHOIS_DAS },
