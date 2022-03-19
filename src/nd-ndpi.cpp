@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +38,10 @@
 
 #include <arpa/inet.h>
 
+#define __FAVOR_BSD 1
+#include <netinet/tcp.h>
+#undef __FAVOR_BSD
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
@@ -46,13 +51,21 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-ndpi.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
+#include "nd-json.h"
+#include "nd-apps.h"
+#include "nd-protos.h"
+#include "nd-flow.h"
 #include "nd-thread.h"
 #include "nd-json.h"
-#include "nd-ndpi.h"
 #include "nd-util.h"
 
 extern nd_global_config nd_config;
 
+static NDPI_PROTOCOL_BITMASK ndpi_protos;
 static pthread_mutex_t *ndpi_init_lock = NULL;
 static struct ndpi_detection_module_struct *ndpi_parent = NULL;
 
@@ -101,10 +114,63 @@ void ndpi_global_init(void)
 
         ndpi_init_string_based_protocols(np);
 
-        NDPI_PROTOCOL_BITMASK proto_all;
-        NDPI_BITMASK_SET_ALL(proto_all);
+        NDPI_BITMASK_RESET(ndpi_protos);
 
-        ndpi_set_protocol_detection_bitmask2(np, &proto_all);
+        auto it = nd_config.protocols.find("ALL");
+        if (it == nd_config.protocols.end()) {
+            it = nd_config.protocols.find("all");
+            if (it == nd_config.protocols.end())
+                it = nd_config.protocols.find("All");
+        }
+
+        if (it != nd_config.protocols.end()) {
+            if (strcasecmp(it->second.c_str(), "include") == 0) {
+                NDPI_BITMASK_SET_ALL(ndpi_protos);
+                nd_dprintf("Enabled all protocols.\n");
+            }
+            else if (strcasecmp(it->second.c_str(), "exclude") == 0) {
+                nd_dprintf("Disabled all protocols.\n");
+            }
+        }
+
+        for (auto it : nd_config.protocols) {
+            signed action = -1;
+            if (strcasecmp(it.second.c_str(), "include") == 0)
+                action = 0;
+            else if (strcasecmp(it.second.c_str(), "exclude") == 0)
+                action = 1;
+            else
+                continue;
+
+            unsigned id = nd_proto_get_id(it.first);
+
+            if (id == ND_PROTO_UNKNOWN) {
+                id = nd_ndpi_proto_find((unsigned)strtoul(
+                    it.first.c_str(), NULL, 0
+                ));
+
+                if (id == ND_PROTO_UNKNOWN) continue;
+            }
+
+            switch (action) {
+            case 0:
+                NDPI_ADD_PROTOCOL_TO_BITMASK(ndpi_protos, id);
+                nd_dprintf("Enabled protocol: %s\n", it.first.c_str());
+                break;
+
+            case 1:
+                NDPI_DEL_PROTOCOL_FROM_BITMASK(ndpi_protos, id);
+                nd_dprintf("Disabled protocol: %s\n", it.first.c_str());
+                break;
+            }
+        }
+
+        if (nd_config.protocols.empty()) {
+            NDPI_BITMASK_SET_ALL(ndpi_protos);
+            nd_dprintf("Enabled all protocols.\n");
+        }
+
+        ndpi_set_protocol_detection_bitmask2(np, &ndpi_protos);
 
         ndpi_parent = np;
 
@@ -192,10 +258,7 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
     ndpi->host_automa.ac_automa = ndpi_parent->host_automa.ac_automa;
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
 
-    NDPI_PROTOCOL_BITMASK proto_all;
-    NDPI_BITMASK_SET_ALL(proto_all);
-
-    ndpi_set_protocol_detection_bitmask2(ndpi, &proto_all);
+    ndpi_set_protocol_detection_bitmask2(ndpi, &ndpi_protos);
 
     for (int i = 0;
         i < NDPI_MAX_SUPPORTED_PROTOCOLS + NDPI_MAX_NUM_CUSTOM_PROTOCOLS;

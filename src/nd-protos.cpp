@@ -96,4 +96,16 @@ const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
     return it->second;
 }
 
+const uint16_t nd_ndpi_proto_find(unsigned id)
+{
+    if (id == ND_PROTO_UNKNOWN) return NDPI_PROTOCOL_UNKNOWN;
+
+    for (auto &it : nd_ndpi_protos) {
+        if (it.second != id) continue;
+        return it.first;
+    }
+
+    return NDPI_PROTOCOL_UNKNOWN;
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

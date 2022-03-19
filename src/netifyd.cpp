@@ -557,6 +557,9 @@ static int nd_config_load(void)
         "netify_api", "vendor", ND_API_VENDOR);
     nd_config.napi_vendor = strdup(napi_vendor.c_str());
 
+    // Protocols section
+    reader.GetSection("protocols", nd_config.protocols);
+
     return 0;
 }
 

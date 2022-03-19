@@ -549,6 +549,15 @@ inline const char *nd_proto_get_name(nd_proto_id_t id)
     return it->second;
 }
 
+inline unsigned nd_proto_get_id(const string &name)
+{
+    for (auto &it : nd_protos) {
+        if (strcasecmp(it.second, name.c_str())) continue;
+        return it.first;
+    }
+    return ND_PROTO_UNKNOWN;
+}
+
 typedef unordered_map<uint16_t, nd_proto_id_t> nd_ndpi_proto_t;
 
 const nd_ndpi_proto_t nd_ndpi_protos = {
@@ -772,6 +781,7 @@ const nd_ndpi_portmap_t nd_ndpi_portmap = {
 
 class ndFlow;
 const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow);
+const uint16_t nd_ndpi_proto_find(unsigned id);
 
 #endif // _ND_PROTOS_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
