@@ -170,22 +170,22 @@ using namespace std;
 #include "nd-capture.h"
 
 // Enable to log discarded packets
-//#define _ND_LOG_PKT_DISCARD     1
+//#define _ND_LOG_PKT_DISCARD   1
 
 // Enable to log discarded flows
-//#define _ND_LOG_FLOW_DISCARD    1
+//#define _ND_LOG_FLOW_DISCARD  1
 
 // Enable DNS response debug logging
-//#define _ND_LOG_DNS_RESPONSE    1
+//#define _ND_LOG_DNS_RESPONSE  1
 
 // Enable DNS hint cache debug logging
-//#define _ND_LOG_DHC             1
+//#define _ND_LOG_DHC           1
 
 // Enable flow hash cache debug logging
-//#define _ND_LOG_FHC             1
+//#define _ND_LOG_FHC           1
 
 // Enable GTP tunnel dissection
-#define _ND_DISSECT_GTP       1
+#define _ND_DISSECT_GTP         1
 
 extern nd_global_config nd_config;
 extern atomic_uint nd_flow_count;
@@ -742,11 +742,29 @@ void ndCaptureThread::ProcessPacket(void)
         return;
     }
 
+    if (l2_len > pkt_header->caplen) {
+        stats->pkt.discard++;
+        stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+        nd_dprintf("%s: discard: layer-2 length is beyond capture length.\n",
+            tag.c_str());
+#endif
+    }
+
     while (true) {
         if (type == ETHERTYPE_VLAN) {
-            vlan_packet = 1;
+            if (l2_len + 4 > pkt_header->caplen) {
+                stats->pkt.discard++;
+                stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+                nd_dprintf("%s: discard: layer-2 + VLAN length is beyond capture length.\n",
+                    tag.c_str());
+#endif
+            }
+
             // TODO: Replace with struct vlan_tag from <pcap/vlan.h>
             // See: https://en.wikipedia.org/wiki/IEEE_802.1Q
+            vlan_packet = 1;
             flow.vlan_id = ((pkt_data[l2_len] << 8) + pkt_data[l2_len + 1]) & 0xFFF;
             type = (pkt_data[l2_len + 2] << 8) + pkt_data[l2_len + 3];
             l2_len += VLAN_TAG_LEN;
@@ -761,14 +779,42 @@ void ndCaptureThread::ProcessPacket(void)
             type = ETHERTYPE_IP;
             l2_len += 4;
 
+            if (l2_len > pkt_header->caplen) {
+                stats->pkt.discard++;
+                stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+                nd_dprintf("%s: discard: layer-2 + MPLS length is beyond capture length.\n",
+                    tag.c_str());
+#endif
+            }
+
             while (! mpls.mpls.s) {
                 l2_len += 4;
+
+                if (l2_len > pkt_header->caplen) {
+                    stats->pkt.discard++;
+                    stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+                    nd_dprintf("%s: discard: layer-2 + MPLS length is beyond capture length.\n",
+                        tag.c_str());
+#endif
+                }
                 mpls.u32 = ntohl(*((uint32_t *)&pkt_data[l2_len]));
             }
         }
         else if (type == ETHERTYPE_PPPOE) {
             stats->pkt.pppoe++;
             type = ETHERTYPE_IP;
+
+            if (l2_len + 6 > pkt_header->caplen) {
+                stats->pkt.discard++;
+                stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+                nd_dprintf("%s: discard: layer-2 + PPP length is beyond capture length.\n",
+                    tag.c_str());
+#endif
+            }
+
             ppp_proto = (uint16_t)(
                 _ND_PPP_PROTOCOL(pkt_data + l2_len + 6)
             );
@@ -783,6 +829,15 @@ void ndCaptureThread::ProcessPacket(void)
             }
 
             l2_len += 8;
+
+            if (l2_len > pkt_header->caplen) {
+                stats->pkt.discard++;
+                stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+                nd_dprintf("%s: discard: layer-2 + PPP length is beyond capture length.\n",
+                    tag.c_str());
+#endif
+            }
         }
         else if (type == ETHERTYPE_PPPOEDISC) {
             stats->pkt.pppoe++;
@@ -800,6 +855,15 @@ void ndCaptureThread::ProcessPacket(void)
     stats->pkt.vlan += vlan_packet;
 
 nd_process_ip:
+    if (l2_len + sizeof(struct ip) > pkt_header->caplen) {
+        stats->pkt.discard++;
+        stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+        nd_dprintf("%s: discard: layer-2 + IP length is beyond capture length.\n",
+            tag.c_str());
+#endif
+    }
+
     hdr_ip = reinterpret_cast<const struct ip *>(&pkt_data[l2_len]);
 
     flow.ip_version = hdr_ip->ip_v;
@@ -859,19 +923,7 @@ nd_process_ip:
 #endif
             return;
         }
-#if 0
-        // XXX: Disabled, drops all large packets.  Investigate.
 
-        if ((pkt_header->caplen - l2_len) < ntohs(hdr_ip->ip_len)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
-#ifdef _ND_LOG_PKT_DISCARD
-            nd_dprintf("%s: discard: (pkt_header->caplen[%hu] - l2_len[%hu](%hu)) < hdr_ip->ip_len[%hu]\n",
-                tag.c_str(), pkt_header->caplen, l2_len, pkt_header->caplen - l2_len, ntohs(hdr_ip->ip_len));
-#endif
-            return;
-        }
-#endif
         addr_cmp = memcmp(&hdr_ip->ip_src, &hdr_ip->ip_dst, 4);
 
         if (addr_cmp < 0) {
@@ -955,6 +1007,17 @@ nd_process_ip:
 #endif
         return;
     }
+
+    if (l2_len + l3_len + l4_len > pkt_header->caplen) {
+        stats->pkt.discard++;
+        stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+        nd_dprintf("%s: discard: L2 + L3 + L4 length is beyond capture length.\n",
+            tag.c_str());
+#endif
+        return;
+    }
+
 #if _ND_DISSECT_GTP
     if (l4_len > 8 && flow.ip_protocol == IPPROTO_UDP) {
         hdr_udp = reinterpret_cast<const struct udphdr *>(l4);
@@ -1059,9 +1122,31 @@ nd_process_ip:
 #endif
     switch (flow.ip_protocol) {
     case IPPROTO_TCP:
-        if (l4_len >= 20) {
+        stats->pkt.tcp++;
+
+        if (l4_len < 20) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: TCP header too small.\n",
+                tag.c_str());
+#endif
+            return;
+        }
+        else {
             hdr_tcp = reinterpret_cast<const struct tcphdr *>(l4);
-            stats->pkt.tcp++;
+
+            uint16_t hdr_size = hdr_tcp->th_off * 4;
+
+            if (hdr_size < 20 || hdr_size > l4_len) {
+                stats->pkt.discard++;
+                stats->pkt.discard_bytes += pkt_header->len;
+    #ifdef _ND_LOG_PKT_DISCARD
+                nd_dprintf("%s: discard: unexpected TCP payload length.\n",
+                    tag.c_str());
+    #endif
+                return;
+            }
 
             if (addr_cmp < 0) {
                 flow.lower_port = hdr_tcp->th_sport;
@@ -1083,37 +1168,58 @@ nd_process_ip:
             }
 
             pkt = reinterpret_cast<const uint8_t *>(l4 + (hdr_tcp->th_off * 4));
-            pkt_len = l4_len - (hdr_tcp->th_off * 4);
+            pkt_len = l4_len - hdr_size;
         }
+
         break;
 
     case IPPROTO_UDP:
-        if (l4_len >= 8) {
-            hdr_udp = reinterpret_cast<const struct udphdr *>(l4);
-            stats->pkt.udp++;
+        stats->pkt.udp++;
 
-            if (addr_cmp < 0) {
+        if (l4_len < 8) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: UDP header too small.\n",
+                tag.c_str());
+#endif
+            return;
+        }
+
+        hdr_udp = reinterpret_cast<const struct udphdr *>(l4);
+
+        if (addr_cmp < 0) {
+            flow.lower_port = hdr_udp->uh_sport;
+            flow.upper_port = hdr_udp->uh_dport;
+        }
+        else if (addr_cmp > 0) {
+            flow.lower_port = hdr_udp->uh_dport;
+            flow.upper_port = hdr_udp->uh_sport;
+        }
+        else {
+            if (hdr_udp->uh_sport < hdr_udp->uh_dport) {
                 flow.lower_port = hdr_udp->uh_sport;
                 flow.upper_port = hdr_udp->uh_dport;
             }
-            else if (addr_cmp > 0) {
+            else {
                 flow.lower_port = hdr_udp->uh_dport;
                 flow.upper_port = hdr_udp->uh_sport;
             }
-            else {
-                if (hdr_udp->uh_sport < hdr_udp->uh_dport) {
-                    flow.lower_port = hdr_udp->uh_sport;
-                    flow.upper_port = hdr_udp->uh_dport;
-                }
-                else {
-                    flow.lower_port = hdr_udp->uh_dport;
-                    flow.upper_port = hdr_udp->uh_sport;
-                }
-            }
-
-            pkt = reinterpret_cast<const uint8_t *>(l4 + sizeof(struct udphdr));
-            pkt_len = ntohs(hdr_udp->uh_ulen) - sizeof(struct udphdr);
         }
+
+        if (ntohs(hdr_udp->uh_ulen) != l4_len) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: unexpected UDP data length.\n",
+                tag.c_str());
+#endif
+            return;
+        }
+
+        pkt = reinterpret_cast<const uint8_t *>(l4 + sizeof(struct udphdr));
+        pkt_len = ntohs(hdr_udp->uh_ulen) - sizeof(struct udphdr);
+
         break;
 
     case IPPROTO_ICMP:

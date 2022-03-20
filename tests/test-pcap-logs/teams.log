@@ -1,6 +1,5 @@
 lo: [i4-----] DNS.netify.azure 192.168.1.1:53 <-- 192.168.1.6:60813 H: skypedataprdcolneu04.cloudapp.net
 lo: [i4-----] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60533 H: teams.microsoft.com SSL C: teams.microsoft.com
-lo: [i4--g--] HTTP/S 149.154.167.91:443 <-- 192.168.1.6:58533
 lo: [i4-u---] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60533 H: teams.microsoft.com SSL C: teams.microsoft.com
 lo: [i4---d-] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60532 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
 lo: [i4-u-d-] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60532 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
@@ -100,6 +99,7 @@ lo: [i4-----] SkypeCall.netify.skype 52.114.252.8:3479 <-- 192.168.1.6:50016
 lo: [i4---d-] HTTP/S 40.79.138.41:443 <-- 192.168.1.6:60568 H: gate.hockeyapp.net SSL C: gate.hockeyapp.net
 lo: [i4-u-d-] HTTP/S 40.79.138.41:443 <-- 192.168.1.6:60568 H: gate.hockeyapp.net SSL C: gate.hockeyapp.net
 lo: [i4-----] ICMP 93.71.110.205:0 --> 192.168.1.6:0
+lo: [i4--g--] HTTP/S 149.154.167.91:443 <-- 192.168.1.6:58533
 lo: [i4--g--] Unknown 192.168.1.112:57621 --> 192.168.1.255:57621
 lo: [i4--g--] DHCP 192.168.0.1:68 --> 255.255.255.255:67
 lo: [i4--g--] HTTP/S 93.62.150.157:443 <-- 192.168.1.6:60512

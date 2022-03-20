@@ -1,8 +1,8 @@
 lo: [i4-----] DNS 8.8.8.8:53 <-- 192.168.180.2:38472 H: ocu03.labgency.ws
 lo: [i4-----] DNS.netify.crashlytics 8.8.8.8:53 <-- 192.168.180.2:40097 H: settings.crashlytics.com
 lo: [i4-----] DNS 8.8.8.8:53 <-- 192.168.180.2:1291 H: api.eu01.capptain.com
-lo: [i4--g--] HTTP 137.135.129.206:80 <-- 192.168.180.2:53356
 lo: [i4-----] HTTP.netify.orange-cinema-series 178.248.208.54:80 <-- 192.168.180.2:48250 H: ocu03.labgency.ws
+lo: [i4-----] HTTP 137.135.129.206:80 <-- 192.168.180.2:53356 H: api.eu01.capptain.com
 lo: [i4-----] HTTP 137.135.129.206:80 <-- 192.168.180.2:44959 H: api.eu01.capptain.com
 lo: [i4-----] DNS.netify.android 8.8.8.8:53 <-- 192.168.180.2:48770 H: android.clients.google.com
 lo: [i4-----] HTTP/S.netify.google 192.168.180.2:41223 --> 216.58.208.46:443

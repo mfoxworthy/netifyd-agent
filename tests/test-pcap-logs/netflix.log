@@ -2,6 +2,7 @@ lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:51543 H: ios.ncc
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:52116 H: ichnaea.us-west-2.prodaa.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53114 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
+lo: [i4--g--] HTTP/S 52.24.87.6:443 <-- 192.168.1.7:52929
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
@@ -102,4 +103,3 @@ lo: [i4-u-d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53250 H: api-
 lo: [i4-----] DNS.netify.akamai 192.168.1.1:53 <-- 192.168.1.7:57093 H: a1907.dscg.akamai.net
 lo: [i4---d-] HTTP.netify.netflix 184.25.204.10:80 <-- 192.168.1.7:53251 H: art-1.nflximg.net
 lo: [i4---d-] HTTP.netify.netflix 184.25.204.10:80 <-- 192.168.1.7:53252 H: art-1.nflximg.net
-lo: [i4--g--] HTTP/S 52.24.87.6:443 <-- 192.168.1.7:52929

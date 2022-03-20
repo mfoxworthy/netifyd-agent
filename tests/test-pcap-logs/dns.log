@@ -4261,7 +4261,7 @@ lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:55537 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:53226 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:55509 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:56070 H: gw.sokoloski.ca
-lo: [i4---d-] DNS.netify.google 8.8.8.8:53 <-- 192.168.242.41:41668 H: clients3.google.com
+lo: [i4-----] DNS.netify.google 8.8.8.8:53 <-- 192.168.242.41:41668 H: clients3.google.com
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:43567 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:42632 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:53441 H: gw.sokoloski.ca
@@ -4288,7 +4288,7 @@ lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:42836 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:48697 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:36758 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:43763 H: gw.sokoloski.ca
-lo: [i4---d-] DNS.netify.google 8.8.8.8:53 <-- 192.168.242.41:39788 H: fcm.googleapis.com
+lo: [i4-----] DNS.netify.google 8.8.8.8:53 <-- 192.168.242.41:39788 H: fcm.googleapis.com
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:47608 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:41724 H: gw.sokoloski.ca
 lo: [i4---d-] DNS 192.168.242.1:53 <-- 192.168.242.3:37521 H: gw.sokoloski.ca
