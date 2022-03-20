@@ -1743,8 +1743,10 @@ static void nd_json_process_flows(
                     nd_flow_count--;
                 }
                 else {
-                    nd_dprintf("%s: flow purge blocked by %lu queued packets.\n",
-                        i->second->iface->second.c_str(), i->second->queued.load());
+                    if (blocked == 0) {
+                        nd_dprintf("%s: flow purge blocked by %lu queued packets.\n",
+                            i->second->iface->second.c_str(), i->second->queued.load());
+                    }
                     blocked++;
                     i++;
                 }
