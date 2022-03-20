@@ -1,1 +1,2 @@
-lo: [i4-g--] HTTPS.206.netify.cloudflare 104.16.248.249:443 <-- 172.20.10.4:49877
+lo: [i4-----] HTTP/S.netify.cloudflare-dns 104.16.248.249:443 <-- 172.20.10.4:49877 H: mozilla.cloudflare-dns.com SSL C: mozilla.cloudflare-dns.com
+lo: [i4-u---] HTTP/S.netify.cloudflare-dns 104.16.248.249:443 <-- 172.20.10.4:49877 H: mozilla.cloudflare-dns.com SSL C: mozilla.cloudflare-dns.com

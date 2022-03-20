@@ -1,1 +1,3 @@
-lo: [i4-g--] HTTPS 104.111.215.93:443 <-- 192.168.2.126:60174
+lo: [i4-----] HTTP/S 104.111.215.93:443 <-- 192.168.2.126:60174 H: www.repubblica.it SSL C: www.repubblica.it
+lo: [i4-u---] HTTP/S 104.111.215.93:443 <-- 192.168.2.126:60174 H: www.repubblica.it SSL C: www.repubblica.it
+lo: [i4-u---] HTTP/S 104.111.215.93:443 <-- 192.168.2.126:60174 H: www.repubblica.it SSL C: www.repubblica.it

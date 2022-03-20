@@ -1,0 +1,116 @@
+lo: [i4-----] DNS 192.168.242.58:5353 --> 224.0.0.251:5353 H: __9e5e7c8f47989526c9bcd95d24084f6f0b27c5ed._sub._googlecast._tcp.local
+lo: [i4-----] DNS.netify.amazon 192.168.242.1:53 <-- 192.168.242.58:13896 H: msh.amazon.com
+lo: [i4-----] DNS.netify.amazon 192.168.242.1:53 <-- 192.168.242.58:16186 H: api.amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 52.46.145.179:443 <-- 192.168.242.58:43254 H: msh.amazon.com SSL C: msh.amazon.com
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:12855 H: api.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon 52.46.145.179:443 <-- 192.168.242.58:43254 H: msh.amazon.com SSL C: msh.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 52.46.145.179:443 <-- 192.168.242.58:43254 H: msh.amazon.com SSL C: msh.amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 52.46.144.134:443 <-- 192.168.242.58:48132 H: api.amazon.com SSL C: api.amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.71.94.56:443 <-- 192.168.242.58:37310 H: api.us-east-1.aiv-delivery.net SSL C: api.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon 52.46.144.134:443 <-- 192.168.242.58:48132 H: api.amazon.com SSL C: api.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 52.46.144.134:443 <-- 192.168.242.58:48132 H: api.amazon.com SSL C: api.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.71.94.56:443 <-- 192.168.242.58:37310 H: api.us-east-1.aiv-delivery.net SSL C: api.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.71.94.56:443 <-- 192.168.242.58:37310 H: api.us-east-1.aiv-delivery.net SSL C: api.us-east-1.aiv-delivery.net
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:46405 H: m.media-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39614 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39608 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39606 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39612 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39610 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39608 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39608 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39612 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39612 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39606 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39606 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39614 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39614 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39610 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39610 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:7912 H: andr.na.api.amazonvideo.com
+lo: [i4-----] DNS.netify.amazon-devices 192.168.242.1:53 <-- 192.168.242.58:1585 H: arcus-uswest.amazon.com
+lo: [i4-----] DNS.netify.amazon-devices 192.168.242.1:53 <-- 192.168.242.58:29031 H: dp-gw-na.amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44188 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44190 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44194 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44192 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44188 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44188 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44190 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44190 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44194 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44194 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44192 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.54.246.54:443 <-- 192.168.242.58:44192 H: andr.na.api.amazonvideo.com SSL C: andr.na.api.amazonvideo.com
+lo: [i4---d-] HTTP/S.netify.amazon-devices 52.119.168.148:443 <-- 192.168.242.58:39976 H: arcus-uswest.amazon.com SSL C: arcus-uswest.amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-devices 52.94.228.85:443 <-- 192.168.242.58:47252 H: dp-gw-na.amazon.com SSL C: dp-gw-na.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-devices 52.94.228.85:443 <-- 192.168.242.58:47252 H: dp-gw-na.amazon.com SSL C: dp-gw-na.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-devices 52.94.228.85:443 <-- 192.168.242.58:47252 H: dp-gw-na.amazon.com SSL C: dp-gw-na.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-devices 52.119.168.148:443 <-- 192.168.242.58:39976 H: arcus-uswest.amazon.com SSL C: arcus-uswest.amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-devices 52.119.168.148:443 <-- 192.168.242.58:39976 H: arcus-uswest.amazon.com SSL C: arcus-uswest.amazon.com
+lo: [i4-----] DNS.netify.amazon-cloudfront 192.168.242.1:53 <-- 192.168.242.58:15441 H: doh6p23r7m48u.cloudfront.net
+lo: [i4---d-] HTTP/S.netify.amazon-cloudfront 13.225.62.110:443 <-- 192.168.242.58:45980 H: doh6p23r7m48u.cloudfront.net SSL C: doh6p23r7m48u.cloudfront.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-cloudfront 13.225.62.110:443 <-- 192.168.242.58:45980 H: doh6p23r7m48u.cloudfront.net SSL C: doh6p23r7m48u.cloudfront.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-cloudfront 13.225.62.110:443 <-- 192.168.242.58:45980 H: doh6p23r7m48u.cloudfront.net SSL C: doh6p23r7m48u.cloudfront.net
+lo: [i4-----] DNS.netify.amazon 192.168.242.1:53 <-- 192.168.242.58:48997 H: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 192.168.242.58:39632 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 192.168.242.58:39630 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39632 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39630 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39630 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 192.168.242.58:39634 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39634 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39636 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39636 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39636 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-----] DNS.netify.amazon 192.168.242.1:53 <-- 192.168.242.58:32502 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon 13.225.205.49:80 <-- 192.168.242.58:40360 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon 13.225.205.49:80 <-- 192.168.242.58:40362 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon 13.225.205.49:80 <-- 192.168.242.58:40364 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon 13.225.205.49:80 <-- 192.168.242.58:40366 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon 13.225.205.49:80 <-- 192.168.242.58:40368 H: ecx.images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon 192.168.242.58:39676 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:35091 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39676 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39676 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39932 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39934 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39936 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39938 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39942 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39940 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39944 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:49415 H: s3-iad-ww.cf.videorolls.row.aiv-cdn.net
+lo: [i4---d-] HTTP/S.netify.amazon-prime 13.226.36.14:443 <-- 192.168.242.58:43702 H: s3-iad-ww.cf.videorolls.row.aiv-cdn.net SSL C: s3-iad-ww.cf.videorolls.row.aiv-cdn.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 13.226.36.14:443 <-- 192.168.242.58:43702 H: s3-iad-ww.cf.videorolls.row.aiv-cdn.net SSL C: s3-iad-ww.cf.videorolls.row.aiv-cdn.net
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:9863 H: ters.us-east-1.aiv-delivery.net
+lo: [i4---d-] HTTP/S.netify.amazon-prime 18.214.21.67:443 <-- 192.168.242.58:39926 H: ters.us-east-1.aiv-delivery.net SSL C: ters.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 18.214.21.67:443 <-- 192.168.242.58:39926 H: ters.us-east-1.aiv-delivery.net SSL C: ters.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 18.214.21.67:443 <-- 192.168.242.58:39926 H: ters.us-east-1.aiv-delivery.net SSL C: ters.us-east-1.aiv-delivery.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39950 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:33865 H: dmqdd6hw24ucf.cloudfront.net
+lo: [i4-----] DNS.netify.amazon-prime 192.168.242.1:53 <-- 192.168.242.58:48002 H: d25xi40x97liuc.cloudfront.net
+lo: [i4---d-] HTTP.netify.amazon-prime 13.226.25.180:80 <-- 192.168.242.58:44658 H: d25xi40x97liuc.cloudfront.net
+lo: [i4---d-] HTTP/S.netify.amazon 192.168.242.58:39700 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP.netify.amazon-prime 13.226.25.4:80 <-- 192.168.242.58:37160 H: dmqdd6hw24ucf.cloudfront.net
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39700 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon 192.168.242.58:39700 --> 199.232.37.16:443 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
+lo: [i4---d-] HTTP/S.netify.amazon-prime 13.226.25.4:443 <-- 192.168.242.58:41826 H: dmqdd6hw24ucf.cloudfront.net SSL C: dmqdd6hw24ucf.cloudfront.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 13.226.25.4:443 <-- 192.168.242.58:41826 H: dmqdd6hw24ucf.cloudfront.net SSL C: dmqdd6hw24ucf.cloudfront.net
+lo: [i4---d-] HTTP/S.netify.amazon-prime 52.71.94.56:443 <-- 192.168.242.58:37412 H: api.us-east-1.aiv-delivery.net SSL C: api.us-east-1.aiv-delivery.net
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 52.71.94.56:443 <-- 192.168.242.58:37412 H: api.us-east-1.aiv-delivery.net SSL C: api.us-east-1.aiv-delivery.net
+lo: [i4---d-] HTTP/S.netify.amazon-prime 192.168.242.58:39710 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39710 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4-u-d-] HTTP/S.netify.amazon-prime 192.168.242.58:39710 --> 199.232.37.16:443 H: m.media-amazon.com SSL C: m.media-amazon.com
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39966 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39970 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39968 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4---d-] HTTP.netify.amazon-prime 54.182.192.118:80 <-- 192.168.242.58:39972 H: s3-iad-2.cf.dash.row.aiv-cdn.net
+lo: [i4--g--] HTTP/S 52.119.196.31:443 <-- 192.168.242.58:48208
+lo: [i4--g--] HTTP/S.netify.google 172.217.165.142:443 <-- 192.168.242.58:45338
+lo: [i4--g--] HTTP/S.netify.google 172.217.11.4:443 <-- 192.168.242.58:44842
+lo: [i4--g--] HTTP/S 52.94.232.206:443 <-- 192.168.242.58:42590
+lo: [i4--g--] HTTP/S 13.226.32.114:443 <-- 192.168.242.58:43810
+lo: [i4--g--] HTTP/S 13.226.32.114:443 <-- 192.168.242.58:43808
+lo: [i4--g--] HTTP/S 52.94.232.206:443 <-- 192.168.242.58:42588
+lo: [i4--g--] HTTP/S 13.226.32.114:443 <-- 192.168.242.58:43806
