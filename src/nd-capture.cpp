@@ -486,6 +486,8 @@ void *ndCaptureThread::Entry(void)
             while (ShouldTerminate() == false &&
                 (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
 
+                if (rc == 0) break;
+
                 if (pthread_mutex_trylock(&lock) != 0)
                     stats->pkt.queue_dropped += pkt_queue.push(pkt_header, pkt_data);
                 else {
@@ -554,6 +556,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
             nd_config.max_capture_length,
             1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
         );
+
 #if 0
         if (pcap_new != NULL) {
             bool adapter = false;
@@ -582,6 +585,9 @@ pcap_t *ndCaptureThread::OpenCapture(void)
     if (pcap_new == NULL)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
+        if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
+            nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
+
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
