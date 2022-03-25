@@ -585,8 +585,10 @@ pcap_t *ndCaptureThread::OpenCapture(void)
     if (pcap_new == NULL)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
-        if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
-            nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
+        if (pcap_file.empty()) {
+            if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
+                nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
+        }
 
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
