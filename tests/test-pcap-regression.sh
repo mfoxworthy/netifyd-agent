@@ -1,33 +1,56 @@
-#!/bin/bash -x
+#!/bin/bash
+
+set -euo pipefail
+
+if [ -z "${TESTDIR:-}" ]; then
+    TESTDIR=$(dirname $0)
+    export TESTDIR
+fi
 
 ND_PCAPS=$(find "${TESTDIR}/pcap/" -name '*.cap.gz' | sort)
-NDPI_PCAPS=$(sort "${TESTDIR}/ndpi-pcap-files.txt" | egrep -v '^#' | xargs -n 1 -i find "${TESTDIR}/../libs/ndpi/tests/pcap" -name '{}*cap' | egrep -v -- '-test.cap$')
+NDPI_PCAPS=$(sort "${TESTDIR}/ndpi-pcap-files.txt" | egrep -v '^#' |\
+    xargs -n 1 -i find "${TESTDIR}/../libs/ndpi/tests/pcap" -name '{}*cap' |\
+    egrep -v -- '-test.cap$')
 
 PCAPS="$(echo ${ND_PCAPS} ${NDPI_PCAPS} | sort)"
 
 CONF="${TESTDIR}/netifyd-test-pcap.conf"
 SINK_CONF="${TESTDIR}/../deploy/netify-sink.conf"
+NETIFYD="${TESTDIR}/../src/.libs/netifyd"
 NETWORK=192.168.242.0/24
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
 
 export LD_LIBRARY_PATH="${TESTDIR}/../src/.libs/"
 
 echo -e "\nStarting capture tests..."
 
-for PCAP in $PCAPS; do
-    BASE=$(echo $PCAP | sed -e 's/\.[pc]*ap.*$//')
+run_test() {
+    BASE=$(echo $1 | sed -e 's/\.[pc]*ap.*$//')
+    NAME=$(basename "${BASE}")
     LOG=$(printf "%s/test-pcap-logs/%s.log" ${TESTDIR} $(basename ${BASE}))
-    if echo $PCAP | egrep -q '\.gz$'; then
-        zcat $PCAP > ${BASE}-test.cap || exit $?
+    if echo $1 | egrep -q '\.gz$'; then
+        zcat $1 > ${BASE}-test.cap || exit $?
     else
-        cat $PCAP > ${BASE}-test.cap || exit $?
+        cat $1 > ${BASE}-test.cap || exit $?
     fi
-    echo $(basename "${BASE}")
-    sudo LD_LIBRARY_PATH="${TESTDIR}/../src/.libs/" \
-        ../src/.libs/netifyd -t -c $CONF -f $SINK_CONF \
-        --thread-detection-cores=1 -I lo,${BASE}-test.cap -A $NETWORK -T ${LOG} || exit $?
+    echo -e "\n${BOLD}>>> ${NAME}${NORMAL}"
+    CMD="${NETIFYD} -t -c $CONF -f $SINK_CONF --thread-detection-cores=1 -I lo,${BASE}-test.cap -A $NETWORK -T ${LOG}"
+    echo $CMD
+    $CMD || exit $?
     rm -f ${BASE}-test.cap
-    echo
-done
+}
+
+if [ $# -eq 0 ]; then
+    for PCAP in $PCAPS; do
+        run_test $PCAP
+    done
+else
+    while [ $# -gt 0 ]; do
+        run_test $1
+        shift 1
+    done
+fi
 
 echo "Capture test complete."
 
