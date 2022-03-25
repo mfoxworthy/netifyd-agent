@@ -585,8 +585,10 @@ pcap_t *ndCaptureThread::OpenCapture(void)
     if (pcap_new == NULL)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
-        if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
-            nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
+        if (pcap_file.empty()) {
+            if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
+                nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
+        }
 
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
@@ -963,14 +965,14 @@ nd_process_ip:
         l4_len = ntohs(hdr_ip6->ip6_ctlun.ip6_un1.ip6_un1_plen);
         flow.ip_protocol = hdr_ip6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
 
-        if (ndpi_handle_ipv6_extension_headers(NULL, &l4, &l4_len, &flow.ip_protocol)) {
+        //if (ndpi_handle_ipv6_extension_headers(l3_len, &l4, &l4_len, &l4[0])) {
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Error walking IPv6 extensions.\n", tag.c_str());
 #endif
             return;
-        }
+        //}
 
         flow.lower_addr.ss_family = AF_INET6;
         flow.upper_addr.ss_family = AF_INET6;

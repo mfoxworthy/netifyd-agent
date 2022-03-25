@@ -82,7 +82,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
-    ndpi_flow(NULL), id_src(NULL), id_dst(NULL),
+    ndpi_flow(NULL),
     digest_lower{}, digest_mdata{},
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
@@ -119,7 +119,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
-    ndpi_flow(NULL), id_src(NULL), id_dst(NULL),
+    ndpi_flow(NULL),
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
     capture_filename{},
@@ -290,9 +290,6 @@ void ndFlow::reset(void)
 void ndFlow::release(void)
 {
     if (ndpi_flow != NULL) { ndpi_free_flow(ndpi_flow); ndpi_flow = NULL; }
-
-    if (id_src != NULL) { delete id_src; id_src = NULL; }
-    if (id_dst != NULL) { delete id_dst; id_dst = NULL; }
 
     for (nd_flow_capture::const_iterator i = capture.begin();
         i != capture.end(); i++) {

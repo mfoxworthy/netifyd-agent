@@ -3251,7 +3251,7 @@ int main(int argc, char *argv[])
     nd_check_agent_uuid();
 #ifndef _ND_LEAN_AND_MEAN
     nd_dprintf("Flow entry size: %lu\n", sizeof(struct ndFlow) +
-        sizeof(struct ndpi_flow_struct) + sizeof(struct ndpi_id_struct) * 2);
+        sizeof(struct ndpi_flow_struct));
 #endif
 #if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
     bool je_state = false, je_enable = true;

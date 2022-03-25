@@ -139,9 +139,6 @@ public:
 
     struct ndpi_flow_struct *ndpi_flow;
 
-    struct ndpi_id_struct *id_src;
-    struct ndpi_id_struct *id_dst;
-
     uint8_t digest_lower[SHA1_DIGEST_LENGTH];
     uint8_t digest_mdata[SHA1_DIGEST_LENGTH];
 

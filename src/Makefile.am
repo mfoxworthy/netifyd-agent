@@ -32,7 +32,7 @@ libnetifyd_la_SOURCES = nd-apps.cpp nd-base64.cpp nd-capture.cpp nd-category.cpp
 
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 libnetifyd_la_LDFLAGS = -version-info 2:1:0
-libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
+libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.a $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
 if USE_INOTIFY
 libnetifyd_la_SOURCES += nd-inotify.cpp

@@ -65,6 +65,7 @@ using namespace std;
 
 extern nd_global_config nd_config;
 
+static ndpi_init_prefs nd_ndpi_prefs = ndpi_no_prefs;
 static NDPI_PROTOCOL_BITMASK ndpi_protos;
 static pthread_mutex_t *ndpi_init_lock = NULL;
 static struct ndpi_detection_module_struct *ndpi_parent = NULL;
@@ -87,7 +88,24 @@ void ndpi_global_init(void)
         set_ndpi_malloc(nd_mem_alloc);
         set_ndpi_free(nd_mem_free);
 
-        np = ndpi_init_detection_module();
+        nd_ndpi_prefs = ndpi_no_prefs;
+
+        nd_ndpi_prefs |= ndpi_dont_load_tor_list;
+        nd_ndpi_prefs |= ndpi_enable_ja3_plus;
+        nd_ndpi_prefs |= ndpi_dont_load_azure_list;
+        nd_ndpi_prefs |= ndpi_dont_load_whatsapp_list;
+        nd_ndpi_prefs |= ndpi_dont_load_amazon_aws_list;
+        nd_ndpi_prefs |= ndpi_dont_load_ethereum_list;
+        nd_ndpi_prefs |= ndpi_dont_load_zoom_list;
+        nd_ndpi_prefs |= ndpi_dont_load_cloudflare_list;
+        nd_ndpi_prefs |= ndpi_dont_load_microsoft_list;
+        nd_ndpi_prefs |= ndpi_dont_load_google_list;
+        nd_ndpi_prefs |= ndpi_dont_load_google_cloud_list;
+        nd_ndpi_prefs |= ndpi_dont_load_asn_lists;
+        nd_ndpi_prefs |= ndpi_dont_load_icloud_private_relay_list;
+        nd_ndpi_prefs |= ndpi_dont_init_risk_ptree;
+
+        np = ndpi_init_detection_module(nd_ndpi_prefs);
 
         if (np == NULL)
             throw ndThreadException("Detection module initialization failure");
@@ -102,7 +120,7 @@ void ndpi_global_init(void)
             set_ndpi_debug_function(np, nd_ndpi_debug_printf);
         }
 #endif
-
+#if 0
         if (np->host_automa.ac_automa == NULL)
             throw ndThreadException("Detection host_automa initialization failure");
 
@@ -113,7 +131,7 @@ void ndpi_global_init(void)
         }
 
         ndpi_init_string_based_protocols(np);
-
+#endif
         NDPI_BITMASK_RESET(ndpi_protos);
 
         auto it = nd_config.protocols.find("ALL");
@@ -172,6 +190,8 @@ void ndpi_global_init(void)
 
         ndpi_set_protocol_detection_bitmask2(np, &ndpi_protos);
 
+        ndpi_finalize_initialization(np);
+
         ndpi_parent = np;
 
     } catch (...) {
@@ -229,7 +249,7 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
 {
     struct ndpi_detection_module_struct *ndpi = NULL;
 
-    ndpi = ndpi_init_detection_module();
+    ndpi = ndpi_init_detection_module(nd_ndpi_prefs);
 
     if (ndpi == NULL)
         throw ndThreadException("Detection module initialization failure");
@@ -248,7 +268,7 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
     // Set nDPI preferences
     ndpi_set_detection_preferences(ndpi, ndpi_pref_enable_tls_block_dissection, 1);
     ndpi_set_detection_preferences(ndpi, ndpi_pref_direction_detect_disable, 0);
-
+#if 0
     if (ndpi->host_automa.ac_automa != NULL)
         ndpi_free_automa(ndpi->host_automa.ac_automa);
 
@@ -257,9 +277,9 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
 
     ndpi->host_automa.ac_automa = ndpi_parent->host_automa.ac_automa;
     ndpi->protocols_ptree = ndpi_parent->protocols_ptree;
-
+#endif
     ndpi_set_protocol_detection_bitmask2(ndpi, &ndpi_protos);
-
+#if 0
     for (int i = 0;
         i < NDPI_MAX_SUPPORTED_PROTOCOLS + NDPI_MAX_NUM_CUSTOM_PROTOCOLS;
         i++) {
@@ -276,7 +296,8 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
             );
         }
     }
-
+#endif
+#if 0
     ndpi_tdestroy(ndpi->udp_root_node, ndpi_free);
     ndpi_tdestroy(ndpi->tcp_root_node, ndpi_free);
 
@@ -285,17 +306,21 @@ struct ndpi_detection_module_struct *nd_ndpi_init(const string &tag __attribute_
 
     ndpi->ndpi_num_supported_protocols = ndpi_parent->ndpi_num_supported_protocols;
     ndpi->ndpi_num_custom_protocols = ndpi_parent->ndpi_num_custom_protocols;
+#endif
+
+    ndpi_finalize_initialization(ndpi);
 
     return ndpi;
 }
 
 void nd_ndpi_free(struct ndpi_detection_module_struct *ndpi)
 {
+#if 0
     ndpi->host_automa.ac_automa = NULL;
     ndpi->protocols_ptree = NULL;
     ndpi->udp_root_node = NULL;
     ndpi->tcp_root_node = NULL;
-
+#endif
     ndpi_exit_detection_module(ndpi);
 }
 
