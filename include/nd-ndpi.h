@@ -18,6 +18,8 @@
 #define _ND_NDPI_H
 
 #include <ndpi_api.h>
+#include <ndpi_main.h>
+#include <ndpi_typedefs.h>
 
 void ndpi_global_init(void);
 void ndpi_global_destroy(void);

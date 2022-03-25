@@ -13,8 +13,7 @@ AM_CPPFLAGS = $(CPPFLAGS) -D_GNU_SOURCE -I $(top_srcdir)/include \
 	-D'ND_DATADIR="$(datadir)/$(PACKAGE_TARNAME)"' \
 	-D'ND_PERSISTENT_STATEDIR="$(persistentstatedir)"' \
 	-D'ND_PID_FILE_NAME="$(volatilestatedir)/$(PACKAGE_TARNAME).pid"' \
-	-D'ND_VOLATILE_STATEDIR="$(volatilestatedir)"' \
-	-D NDPI_LIB_COMPILATION=1
+	-D'ND_VOLATILE_STATEDIR="$(volatilestatedir)"'
 
 if USE_LIBTCMALLOC
 AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS)
