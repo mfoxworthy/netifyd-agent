@@ -433,6 +433,19 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         // Determine application based on master protocol metadata
         switch (ndEF->master_protocol()) {
+        case ND_PROTO_MDNS:
+            if (ndEFNFP.mdns.answer[0] != '\0') {
+                ndEF->detected_application = nd_apps->Find(
+                    (const char *)ndEFNFP.mdns.answer
+                );
+            }
+            break;
+
+        case ND_PROTO_SKYPE_CALL:
+        case ND_PROTO_SKYPE_TEAMS:
+            ndEF->detected_application = nd_apps->Lookup("netify.skype");
+            break;
+
         case ND_PROTO_SPOTIFY:
             ndEF->detected_application = nd_apps->Lookup("netify.spotify");
             break;
@@ -441,18 +454,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->detected_application = nd_apps->Lookup("netify.ubiquiti");
             break;
 
-        case ND_PROTO_SKYPE_CALL:
-        case ND_PROTO_SKYPE_TEAMS:
-            ndEF->detected_application = nd_apps->Lookup("netify.skype");
+        case ND_PROTO_VIBER:
+            ndEF->detected_application = nd_apps->Lookup("netify.viber");
             break;
 
-        case ND_PROTO_MDNS:
-            if (ndEFNFP.mdns.answer[0] != '\0') {
-                ndEF->detected_application = nd_apps->Find(
-                    (const char *)ndEFNFP.mdns.answer
-                );
-            }
-            break;
         default:
             break;
         }
