@@ -332,15 +332,18 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndpi_rc.master_protocol,
             ndEF
         );
+
+        if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
+            ndEF->detected_protocol = nd_ndpi_proto_find(
+                ndpi_rc.app_protocol,
+                ndEF
+            );
+        }
     }
 
     bool check_extra_packets = (
         ndEFNF->check_extra_packets
         && ndEF->detection_packets < nd_config.max_detection_pkts);
-
-    nd_dprintf("packets: %u, check_extra: %s\n",
-        ndEF->detection_packets,
-        (check_extra_packets) ? "yes" : "no");
 
     if (! ndEF->flags.detection_init.load() && (
         ndEF->detected_protocol != ND_PROTO_UNKNOWN
