@@ -848,7 +848,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
-#if 0
+
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
                 snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
@@ -864,7 +864,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
-#endif
+
             if (ndEF->ssl.server_ja3[0] == '\0' &&
                 ndEFNFP.tls_quic.ja3_server[0] != '\0') {
                 snprintf(ndEF->ssl.server_ja3, ND_FLOW_TLS_JA3LEN, "%s",
