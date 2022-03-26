@@ -577,40 +577,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", ndEFNFP.ssh.server_signature);
             break;
         case ND_PROTO_SSDP:
-#if 0
-            if (ndEFNF->packet.packet_lines_parsed_complete) {
-                string buffer;
-                for (unsigned i = 0;
-                    i < ndEFNF->packet.parsed_lines; i++) {
-
-                    buffer.assign(
-                        (const char *)ndEFNF->packet.line[i].ptr,
-                        ndEFNF->packet.line[i].len
-                    );
-
-                    size_t n = buffer.find_first_of(":");
-                    if (n != string::npos && n > 0) {
-                        string key = buffer.substr(0, n);
-                        for_each(key.begin(), key.end(), [](char & c) {
-                            c = ::tolower(c);
-                        });
-
-                        if (key != "user-agent" && key != "server" &&
-                            ! (key.size() > 2 && key[0] == 'x' && key[1] == '-'))
-                            continue;
-
-                        string value = buffer.substr(n);
-                        value.erase(value.begin(),
-                            find_if(value.begin(), value.end(), [](int c) {
-                                return !isspace(c) && c != ':';
-                            })
-                        );
-
-                        ndEF->ssdp.headers[key] = value;
-                    }
-                }
+            if (ndEFNF->http.user_agent != NULL &&
+                strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN) != 0) {
+                ndEF->ssdp.headers["user-agent"].assign(
+                    ndEFNF->http.user_agent,
+                    strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN)
+                );
             }
-#endif
             break;
         case ND_PROTO_BITTORRENT:
 #if 0
