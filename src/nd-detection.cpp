@@ -418,15 +418,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         // Determine application based on master protocol metadata
         switch (ndEF->master_protocol()) {
-        case ND_PROTO_MDNS:
-#if 0
-            if (ndEFNFP.mdns.answer[0] != '\0') {
-                ndEF->detected_application = nd_apps->Find(
-                    (const char *)ndEFNFP.mdns.answer
-                );
-            }
-#endif
-            break;
 
         case ND_PROTO_SKYPE_CALL:
         case ND_PROTO_SKYPE_TEAMS:
@@ -503,23 +494,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         nd_proto_id_t nd_proto = ndEF->master_protocol();
 
         switch (nd_proto) {
-
-        case ND_PROTO_MDNS:
-#if 0
-            for (size_t i = 0;
-                i < strlen((const char *)ndEFNFP.mdns.answer); i++) {
-                if (! isprint(ndEFNFP.mdns.answer[i])) {
-                    // XXX: Sanitize mdns.answer of non-printable characters.
-                    ndEFNFP.mdns.answer[i] = '_';
-                }
-            }
-
-            snprintf(
-                ndEF->mdns.answer, ND_FLOW_MDNS_ANSLEN,
-                "%s", ndEFNFP.mdns.answer
-            );
-#endif
-            break;
 
         case ND_PROTO_TLS:
         case ND_PROTO_QUIC:

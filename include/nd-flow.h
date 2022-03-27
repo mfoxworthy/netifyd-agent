@@ -32,7 +32,6 @@
 #define ND_FLOW_TLS_JA3LEN  33      // TLS JA3 hash length (MD5)
 #define ND_FLOW_DHCPFP_LEN  48      // DHCP fingerprint length
 #define ND_FLOW_DHCPCI_LEN  96      // DHCP class identifier
-#define ND_FLOW_MDNS_ANSLEN 96      // MDNS answer length
 
 // BitTorrent info hash length
 #define ND_FLOW_BTIHASH_LEN     SHA1_DIGEST_LENGTH
@@ -184,10 +183,6 @@ public:
         } bt;
 
         struct {
-            char answer[ND_FLOW_MDNS_ANSLEN];
-        } mdns;
-
-        struct {
             char hostname[ND_FLOW_KERBEROS_HOST];
             char domain[ND_FLOW_KERBEROS_DOMAIN];
             char username[ND_FLOW_KERBEROS_USER];
@@ -308,7 +303,6 @@ public:
     bool has_ssl_client_ja3(void) const;
     bool has_ssl_server_ja3(void) const;
     bool has_bt_info_hash(void) const;
-    bool has_mdns_answer(void) const;
     bool has_ssdp_headers(void) const;
     bool has_kerberos_hostname(void) const;
     bool has_kerberos_domain(void) const;

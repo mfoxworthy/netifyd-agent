@@ -224,9 +224,6 @@ void ndFlow::hash(const string &device,
         if (has_bt_info_hash()) {
             sha1_write(&ctx, bt.info_hash, ND_FLOW_BTIHASH_LEN);
         }
-        if (has_mdns_answer()) {
-            sha1_write(&ctx, mdns.answer, ND_FLOW_MDNS_ANSLEN);
-        }
     }
 
     if (key != NULL && key_length > 0)
@@ -435,14 +432,6 @@ bool ndFlow::has_bt_info_hash(void) const
     );
 }
 
-bool ndFlow::has_mdns_answer(void) const
-{
-    return (
-        detected_protocol == ND_PROTO_MDNS &&
-        mdns.answer[0] != '\0'
-    );
-}
-
 bool ndFlow::has_ssdp_headers(void) const
 {
     return (
@@ -531,9 +520,8 @@ void ndFlow::print(void) const
         (origin == ORIGIN_UNKNOWN) ? '?' : '-',
         (origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ? '-' : '>',
         upper_name, ntohs(upper_port),
-        (host_server_name[0] != '\0' || has_mdns_answer()) ? " H: " : "",
-        (host_server_name[0] != '\0' || has_mdns_answer()) ?
-            has_mdns_answer() ? mdns.answer : host_server_name : "",
+        (host_server_name[0] != '\0') ? " H: " : "",
+        (host_server_name[0] != '\0') ? host_server_name : "",
         (has_ssl_client_sni()) ? " SSL" : "",
         (has_ssl_client_sni()) ? " C: " : "",
         (has_ssl_client_sni()) ? ssl.client_sni : "",
@@ -886,9 +874,6 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
             nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
             j["bt"]["info_hash"] = digest;
         }
-
-        if (has_mdns_answer())
-            j["mdns"]["answer"] = mdns.answer;
 
         if (has_ssdp_headers())
             j["ssdp"] = ssdp.headers;
