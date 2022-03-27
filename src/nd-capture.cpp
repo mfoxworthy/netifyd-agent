@@ -402,31 +402,11 @@ void *ndCaptureThread::Entry(void)
     struct ifreq ifr;
     bool dump_flows = false, warnings = true;
 
-    do {
-        if (pcap == NULL && ! ShouldTerminate()) {
+    while (! ShouldTerminate() || ! pkt_queue.empty()) {
 
-            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
-                ! (ifr.ifr_flags & IFF_UP)) {
-                if (warnings) {
-                    nd_printf("%s: WARNING: interface not available.\n",
-                        tag.c_str());
-                    warnings = false;
-                }
-                sleep(1);
-                continue;
-            }
-
-            warnings = true;
-
-            if ((pcap = OpenCapture()) == NULL) {
-                sleep(1);
-                continue;
-            }
-
-            pcap_datalink_type = pcap_datalink(pcap);
-
-            nd_dprintf("%s: capture started on CPU: %lu\n",
-                tag.c_str(), cpu >= 0 ? cpu : 0);
+        if (ShouldTerminate() && pcap != NULL) {
+            pcap_close(pcap);
+            pcap = NULL;
         }
 
         if (! pkt_queue.empty() && pthread_mutex_trylock(&lock) == 0) {
@@ -446,47 +426,30 @@ void *ndCaptureThread::Entry(void)
             pkt_queue.pop();
         }
 
-        if (! ShouldTerminate()) {
-            if (pcap_fd != -1) {
-                int max_fd = 0;
-                struct timeval tv;
-                fd_set fds_read;
+        if (pcap != NULL) {
+            int max_fd = 0;
+            struct timeval tv;
+            fd_set fds_read;
 
-                FD_ZERO(&fds_read);
-                FD_SET(fd_ipc[0], &fds_read);
-                FD_SET(pcap_fd, &fds_read);
+            FD_ZERO(&fds_read);
+            FD_SET(pcap_fd, &fds_read);
 
-                memset(&tv, 0, sizeof(struct timeval));
+            memset(&tv, 0, sizeof(struct timeval));
 
-                if (pkt_queue.empty()) tv.tv_sec = 1;
-                tv.tv_usec = ND_TTL_PCAP_SELECT_USEC;
+            if (pkt_queue.empty()) tv.tv_sec = 1;
 
-                max_fd = max(fd_ipc[0], pcap_fd);
-                rc = select(max_fd + 1, &fds_read, NULL, NULL, &tv);
+            max_fd = max(fd_ipc[0], pcap_fd);
+            rc = select(max_fd + 1, &fds_read, NULL, NULL, &tv);
 
-                if (rc == -1)
-                    throw ndCaptureThreadException(strerror(errno));
+            if (rc == 0) continue;
+            else if (rc == -1)
+                throw ndCaptureThreadException(strerror(errno));
 
-                if (rc == 0) continue;
-
-                // TODO: Not currently used, remove?
-                if (FD_ISSET(fd_ipc[0], &fds_read)) {
-                    uint32_t id = RecvIPC();
-
-                    switch (id) {
-                    default:
-                        nd_dprintf("%s: Unhandled IPC ID: %u\n", tag.c_str(), id);
-                    }
-                }
-
-                if (! FD_ISSET(pcap_fd, &fds_read)) continue;
-            }
+            if (! FD_ISSET(pcap_fd, &fds_read)) continue;
 
             rc = 0;
             while (ShouldTerminate() == false &&
                 (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
-
-                if (rc == 0) break;
 
                 if (pthread_mutex_trylock(&lock) != 0)
                     stats->pkt.queue_dropped += pkt_queue.push(pkt_header, pkt_data);
@@ -511,24 +474,46 @@ void *ndCaptureThread::Entry(void)
                 }
             }
 
-            if (rc == -1) {
-                nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
+            if (rc < 0) {
+                if (rc == -1)
+                    nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
+                else if (rc == -2) {
+                    nd_dprintf(
+                        "%s: end of capture file: %s, flushing queued packets: %lu\n",
+                        tag.c_str(), pcap_file.c_str(), pkt_queue.size());
+
+                    Terminate();
+                }
+
                 pcap_close(pcap);
                 pcap = NULL;
-                pcap_fd = -1;
-            }
-            else if (rc == -2) {
-                nd_dprintf(
-                    "%s: end of capture file: %s, flushing queued packets: %lu\n",
-                    tag.c_str(), pcap_file.c_str(), pkt_queue.size());
-                pcap_close(pcap);
-                pcap = NULL;
-                Terminate();
-                pcap_fd = -1;
             }
         }
+        else if (! ShouldTerminate()) {
+            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
+                ! (ifr.ifr_flags & IFF_UP)) {
+                if (warnings) {
+                    nd_printf("%s: WARNING: interface not available.\n",
+                        tag.c_str());
+                    warnings = false;
+                }
+                sleep(1);
+                continue;
+            }
+
+            warnings = true;
+
+            if ((pcap = OpenCapture()) == NULL) {
+                sleep(1);
+                continue;
+            }
+
+            pcap_datalink_type = pcap_datalink(pcap);
+
+            nd_dprintf("%s: capture started on CPU: %lu\n",
+                tag.c_str(), cpu >= 0 ? cpu : 0);
+        }
     }
-    while (ShouldTerminate() == false || ! pkt_queue.empty());
 
     nd_dprintf(
         "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
