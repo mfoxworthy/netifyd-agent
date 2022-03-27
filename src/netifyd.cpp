@@ -986,8 +986,6 @@ static int nd_start_detection_threads(void)
 {
     if (detection_threads.size() > 0) return 1;
 
-    ndpi_global_init();
-
     try {
         int16_t cpu = (
                 nd_config.ca_detection_base > -1 &&
@@ -1047,8 +1045,6 @@ static void nd_stop_detection_threads(void)
     }
 
     detection_threads.clear();
-
-    ndpi_global_destroy();
 }
 
 static int nd_reload_detection_threads(void)
@@ -1056,13 +1052,6 @@ static int nd_reload_detection_threads(void)
     for (nd_detection_threads::iterator i = detection_threads.begin();
         i != detection_threads.end(); i++) {
         i->second->Lock();
-    }
-
-    ndpi_global_destroy();
-    ndpi_global_init();
-
-    for (nd_detection_threads::iterator i = detection_threads.begin();
-        i != detection_threads.end(); i++) {
         i->second->Reload();
         i->second->Unlock();
     }
@@ -3409,6 +3398,7 @@ int main(int argc, char *argv[])
     }
 #endif
     nd_init();
+    ndpi_global_init();
 
     nd_dprintf("Online CPU cores: %ld\n", nda_stats.cpus);
 

@@ -212,7 +212,7 @@ ndDetectionThread::~ndDetectionThread()
 void ndDetectionThread::Reload(void)
 {
     if (ndpi != NULL) nd_ndpi_free(ndpi);
-    ndpi = nd_ndpi_init(tag);
+    ndpi = nd_ndpi_init();
 }
 
 void ndDetectionThread::QueuePacket(ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp)
