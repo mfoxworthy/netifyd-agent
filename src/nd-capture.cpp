@@ -965,7 +965,7 @@ nd_process_ip:
         l4_len = ntohs(hdr_ip6->ip6_ctlun.ip6_un1.ip6_un1_plen);
         flow.ip_protocol = hdr_ip6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
 
-        if (ndpi_handle_ipv6_extension_headers(NULL, &l4, &l4_len, &flow.ip_protocol)) {
+        if (ndpi_handle_ipv6_extension_headers(l3_len, &l4, &l4_len, &flow.ip_protocol)) {
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->len;
 #ifdef _ND_LOG_PKT_DISCARD

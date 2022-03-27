@@ -13,8 +13,7 @@ AM_CPPFLAGS = $(CPPFLAGS) -D_GNU_SOURCE -I $(top_srcdir)/include \
 	-D'ND_DATADIR="$(datadir)/$(PACKAGE_TARNAME)"' \
 	-D'ND_PERSISTENT_STATEDIR="$(persistentstatedir)"' \
 	-D'ND_PID_FILE_NAME="$(volatilestatedir)/$(PACKAGE_TARNAME).pid"' \
-	-D'ND_VOLATILE_STATEDIR="$(volatilestatedir)"' \
-	-D NDPI_LIB_COMPILATION=1
+	-D'ND_VOLATILE_STATEDIR="$(volatilestatedir)"'
 
 if USE_LIBTCMALLOC
 AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS)
@@ -32,7 +31,7 @@ libnetifyd_la_SOURCES = nd-apps.cpp nd-base64.cpp nd-capture.cpp nd-category.cpp
 
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 libnetifyd_la_LDFLAGS = -version-info 2:1:0
-libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
+libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.a $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
 if USE_INOTIFY
 libnetifyd_la_SOURCES += nd-inotify.cpp

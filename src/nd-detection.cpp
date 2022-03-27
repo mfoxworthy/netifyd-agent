@@ -304,15 +304,8 @@ void ndDetectionThread::ProcessPacketQueue(void)
 void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 {
     bool flow_update = false;
-    struct ndpi_id_struct *id_src, *id_dst;
 
-    if (ndEFNF != NULL) {
-        if (entry->addr_cmp == ndEF->direction)
-            id_src = ndEF->id_src, id_dst = ndEF->id_dst;
-        else
-            id_src = ndEF->id_dst, id_dst = ndEF->id_src;
-    }
-    else {
+    if (ndEFNF == NULL) {
         flows++;
 
         ndEFNF = (ndpi_flow_struct *)ndpi_malloc(sizeof(ndpi_flow_struct));
@@ -320,19 +313,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             throw ndDetectionThreadException(strerror(ENOMEM));
 
         memset(ndEFNF, 0, sizeof(ndpi_flow_struct));
-
-        ndEF->id_src = new ndpi_id_struct;
-        if (ndEF->id_src == NULL)
-            throw ndDetectionThreadException(strerror(ENOMEM));
-        ndEF->id_dst = new ndpi_id_struct;
-        if (ndEF->id_dst == NULL)
-            throw ndDetectionThreadException(strerror(ENOMEM));
-
-        memset(ndEF->id_src, 0, sizeof(ndpi_id_struct));
-        memset(ndEF->id_dst, 0, sizeof(ndpi_id_struct));
-
-        id_src = ndEF->id_src;
-        id_dst = ndEF->id_dst;
     }
 
     if (! ndEF->flags.detection_expiring.load()) {
@@ -344,9 +324,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEFNF,
             (const uint8_t *)entry->pkt_data,
             entry->pkt_length,
-            ndEF->ts_last_seen,
-            id_src,
-            id_dst
+            ndEF->ts_last_seen
         );
 
         // XXX: Preserve app_protocol.
@@ -354,6 +332,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndpi_rc.master_protocol,
             ndEF
         );
+
+        if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
+            ndEF->detected_protocol = nd_ndpi_proto_find(
+                ndpi_rc.app_protocol,
+                ndEF
+            );
+        }
     }
 
     bool check_extra_packets = (
@@ -364,7 +349,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEF->detected_protocol != ND_PROTO_UNKNOWN
         || ndEF->detection_packets == nd_config.max_detection_pkts
         || ndEF->flags.detection_expiring.load())) {
-
+#if 0
         if (! ndEF->flags.detection_guessed.load()
             && ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
 
@@ -380,7 +365,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF
             );
         }
-
+#endif
 #ifdef _ND_USE_NETLINK
         if (ND_USE_NETLINK) {
             ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr);
@@ -434,11 +419,13 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         // Determine application based on master protocol metadata
         switch (ndEF->master_protocol()) {
         case ND_PROTO_MDNS:
+#if 0
             if (ndEFNFP.mdns.answer[0] != '\0') {
                 ndEF->detected_application = nd_apps->Find(
                     (const char *)ndEFNFP.mdns.answer
                 );
             }
+#endif
             break;
 
         case ND_PROTO_SKYPE_CALL:
@@ -518,6 +505,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         switch (nd_proto) {
 
         case ND_PROTO_MDNS:
+#if 0
             for (size_t i = 0;
                 i < strlen((const char *)ndEFNFP.mdns.answer); i++) {
                 if (! isprint(ndEFNFP.mdns.answer[i])) {
@@ -530,6 +518,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->mdns.answer, ND_FLOW_MDNS_ANSLEN,
                 "%s", ndEFNFP.mdns.answer
             );
+#endif
             break;
 
         case ND_PROTO_TLS:
@@ -588,40 +577,16 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", ndEFNFP.ssh.server_signature);
             break;
         case ND_PROTO_SSDP:
-            if (ndEFNF->packet.packet_lines_parsed_complete) {
-                string buffer;
-                for (unsigned i = 0;
-                    i < ndEFNF->packet.parsed_lines; i++) {
-
-                    buffer.assign(
-                        (const char *)ndEFNF->packet.line[i].ptr,
-                        ndEFNF->packet.line[i].len
-                    );
-
-                    size_t n = buffer.find_first_of(":");
-                    if (n != string::npos && n > 0) {
-                        string key = buffer.substr(0, n);
-                        for_each(key.begin(), key.end(), [](char & c) {
-                            c = ::tolower(c);
-                        });
-
-                        if (key != "user-agent" && key != "server" &&
-                            ! (key.size() > 2 && key[0] == 'x' && key[1] == '-'))
-                            continue;
-
-                        string value = buffer.substr(n);
-                        value.erase(value.begin(),
-                            find_if(value.begin(), value.end(), [](int c) {
-                                return !isspace(c) && c != ':';
-                            })
-                        );
-
-                        ndEF->ssdp.headers[key] = value;
-                    }
-                }
+            if (ndEFNF->http.user_agent != NULL &&
+                strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN) != 0) {
+                ndEF->ssdp.headers["user-agent"].assign(
+                    ndEFNF->http.user_agent,
+                    strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN)
+                );
             }
             break;
         case ND_PROTO_BITTORRENT:
+#if 0
             if (ndEFNFP.bittorrent.hash_valid) {
                 ndEF->bt.info_hash_valid = true;
                 memcpy(
@@ -630,6 +595,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     ND_FLOW_BTIHASH_LEN
                 );
             }
+#endif
             break;
         case ND_PROTO_KERBEROS:
             snprintf(ndEF->kerberos.hostname, ND_FLOW_KERBEROS_HOST,
@@ -871,6 +837,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
+
             if (ndEF->ssl.server_ja3[0] == '\0' &&
                 ndEFNFP.tls_quic.ja3_server[0] != '\0') {
                 snprintf(ndEF->ssl.server_ja3, ND_FLOW_TLS_JA3LEN, "%s",
