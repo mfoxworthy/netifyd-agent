@@ -31,7 +31,7 @@ AC_PATH_PROG([osc], [osc])
 AM_CONDITIONAL([HAVE_OSC], [test x$osc != x])
 
 # Defines we will pass to pkg-config:
-ND_DEFINES="-D NDPI_LIB_COMPILATION=1"
+ND_DEFINES=""
 
 AS_IF([test "x$ac_cv_path_bash" != "xfalse"], [
     AC_SUBST([ND_PATH_BASH], [$ac_cv_path_bash])
