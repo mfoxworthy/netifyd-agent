@@ -507,6 +507,35 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 "%s", ndEFNF->host_server_name);
             snprintf(ndEF->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
                 "%s", ndEFNFP.tls_quic.ja3_client);
+
+            if (ndEF->ssl.server_cn[0] == '\0' &&
+                ndEFNFP.tls_quic.serverCN != NULL) {
+                snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
+                    "%s", ndEFNFP.tls_quic.serverCN);
+                free(ndEFNFP.tls_quic.serverCN);
+                ndEFNFP.tls_quic.serverCN = NULL;
+
+                if (ndEF->detected_application == ND_APP_UNKNOWN) {
+                    ndEF->detected_application = nd_apps->Find(
+                        (const char *)ndEF->ssl.server_cn
+                    );
+                }
+            }
+
+            if (ndEF->ssl.issuer_dn == NULL &&
+                ndEFNFP.tls_quic.issuerDN != NULL) {
+                ndEF->ssl.issuer_dn = strdup(ndEFNFP.tls_quic.issuerDN);
+                free(ndEFNFP.tls_quic.issuerDN);
+                ndEFNFP.tls_quic.issuerDN = NULL;
+            }
+
+            if (ndEF->ssl.subject_dn == NULL &&
+                ndEFNFP.tls_quic.subjectDN != NULL) {
+                ndEF->ssl.subject_dn = strdup(ndEFNFP.tls_quic.subjectDN);
+                free(ndEFNFP.tls_quic.subjectDN);
+                ndEFNFP.tls_quic.subjectDN = NULL;
+            }
+
             break;
 
         case ND_PROTO_HTTP:
@@ -796,18 +825,28 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->flags.detection_updated = true;
             }
 
-            if (ndEF->ssl.issuer_dn == NULL &&
-                ndEFNFP.tls_quic.issuerDN != NULL) {
-                ndEF->ssl.issuer_dn = strdup(ndEFNFP.tls_quic.issuerDN);
-                free(ndEFNFP.tls_quic.issuerDN);
-                ndEFNFP.tls_quic.issuerDN = NULL;
-#if 0
+            if (ndEF->ssl.server_cn[0] == '\0' &&
+                ndEFNFP.tls_quic.serverCN != NULL) {
+                snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
+                    "%s", ndEFNFP.tls_quic.serverCN);
+                free(ndEFNFP.tls_quic.serverCN);
+                ndEFNFP.tls_quic.serverCN = NULL;
+
                 if (ndEF->detected_application == ND_APP_UNKNOWN) {
                     ndEF->detected_application = nd_apps->Find(
                         (const char *)ndEF->ssl.server_cn
                     );
                 }
-#endif
+
+                flow_update = true;
+                ndEF->flags.detection_updated = true;
+            }
+
+            if (ndEF->ssl.issuer_dn == NULL &&
+                ndEFNFP.tls_quic.issuerDN != NULL) {
+                ndEF->ssl.issuer_dn = strdup(ndEFNFP.tls_quic.issuerDN);
+                free(ndEFNFP.tls_quic.issuerDN);
+                ndEFNFP.tls_quic.issuerDN = NULL;
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
@@ -817,13 +856,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->ssl.subject_dn = strdup(ndEFNFP.tls_quic.subjectDN);
                 free(ndEFNFP.tls_quic.subjectDN);
                 ndEFNFP.tls_quic.subjectDN = NULL;
-#if 0
-                if (ndEF->detected_application == ND_APP_UNKNOWN) {
-                    ndEF->detected_application = nd_apps->Find(
-                        (const char *)ndEF->ssl.server_cn
-                    );
-                }
-#endif
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }

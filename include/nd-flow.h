@@ -164,6 +164,7 @@ public:
             uint16_t cipher_suite;
             char client_sni[ND_FLOW_TLS_CNLEN];
             char *subject_dn, *issuer_dn, *server_names;
+            char server_cn[ND_FLOW_TLS_CNLEN];
             unsigned server_names_length;
             char server_organization[ND_FLOW_TLS_ORGLEN];
             char client_ja3[ND_FLOW_TLS_JA3LEN];
@@ -296,6 +297,7 @@ public:
     bool has_ssh_client_agent(void) const;
     bool has_ssh_server_agent(void) const;
     bool has_ssl_client_sni(void) const;
+    bool has_ssl_server_cn(void) const;
     bool has_ssl_issuer_dn(void) const;
     bool has_ssl_subject_dn(void) const;
     bool has_ssl_server_names(void) const;

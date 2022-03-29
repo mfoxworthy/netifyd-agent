@@ -380,11 +380,19 @@ bool ndFlow::has_ssl_client_sni(void) const
     );
 }
 
+bool ndFlow::has_ssl_server_cn(void) const
+{
+    return (
+        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
+        ssl.server_cn[0] != '\0'
+    );
+}
+
 bool ndFlow::has_ssl_issuer_dn(void) const
 {
     return (
         (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
-        ssl.issuer_dn[0] != '\0'
+        ssl.issuer_dn != NULL
     );
 }
 
@@ -392,7 +400,7 @@ bool ndFlow::has_ssl_subject_dn(void) const
 {
     return (
         (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
-        ssl.subject_dn[0] != '\0'
+        ssl.subject_dn != NULL
     );
 }
 
@@ -846,6 +854,9 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
             if (has_ssl_client_sni())
                 j["ssl"]["client_sni"] = ssl.client_sni;
+
+            if (has_ssl_server_cn())
+                j["ssl"]["server_cn"] = ssl.server_cn;
 
             if (has_ssl_issuer_dn())
                 j["ssl"]["issuer_dn"] = ssl.issuer_dn;
