@@ -72,6 +72,12 @@ static struct ndpi_detection_module_struct *ndpi_parent = NULL;
 
 void ndpi_global_init(void)
 {
+    nd_dprintf("Initializing nDPI v%s, API v%u...\n",
+        ndpi_revision(), NDPI_API_VERSION);
+
+    if (ndpi_get_api_version() != NDPI_API_VERSION)
+        throw ndThreadException("nDPI library version mis-match");
+
     set_ndpi_malloc(nd_mem_alloc);
     set_ndpi_free(nd_mem_free);
 
@@ -152,11 +158,10 @@ void ndpi_global_init(void)
 struct ndpi_detection_module_struct *nd_ndpi_init(void)
 {
     struct ndpi_detection_module_struct *ndpi = NULL;
-
     ndpi = ndpi_init_detection_module(nd_ndpi_prefs);
 
     if (ndpi == NULL)
-        throw ndThreadException("Detection module initialization failure");
+        throw ndThreadException("nDPI initialization failure");
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
     if (ND_DEBUG) {
