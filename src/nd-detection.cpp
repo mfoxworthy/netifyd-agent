@@ -349,23 +349,32 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEF->detected_protocol != ND_PROTO_UNKNOWN
         || ndEF->detection_packets == nd_config.max_detection_pkts
         || ndEF->flags.detection_expiring.load())) {
-#if 0
+
         if (! ndEF->flags.detection_guessed.load()
             && ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
-
-            ndEF->flags.detection_guessed = true;
-            ndEF->detected_protocol = nd_ndpi_proto_find(
-                ndpi_guess_undetected_protocol(
-                    ndpi,
-                    NULL,
-                    ndEF->ip_protocol,
-                    ntohs(ndEF->lower_port),
-                    ntohs(ndEF->upper_port)
-                ),
-                ndEF
+            uint8_t guessed = 0;
+            ndpi_protocol ndpi_rc = ndpi_detection_giveup(
+                ndpi,
+                ndEFNF,
+                1, &guessed
             );
+            ndEF->flags.detection_guessed = guessed;
+
+            if (guessed) {
+                // XXX: Preserve app_protocol.
+                ndEF->detected_protocol = nd_ndpi_proto_find(
+                    ndpi_rc.master_protocol,
+                    ndEF
+                );
+
+                if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
+                    ndEF->detected_protocol = nd_ndpi_proto_find(
+                        ndpi_rc.app_protocol,
+                        ndEF
+                    );
+                }
+            }
         }
-#endif
 #ifdef _ND_USE_NETLINK
         if (ND_USE_NETLINK) {
             ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr);
