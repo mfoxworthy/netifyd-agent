@@ -3434,6 +3434,8 @@ int main(int argc, char *argv[])
         return 1;
     if (nd_plugin_start_stats() < 0)
         return 1;
+
+    nd_plugin_event(ndPlugin::EVENT_RELOAD);
 #endif
     // XXX: Always send an update on start-up...
     nd_dump_stats();
