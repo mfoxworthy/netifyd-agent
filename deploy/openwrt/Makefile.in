@@ -28,7 +28,7 @@ define Package/@PACKAGE_TARNAME@
   CATEGORY:=Network
   TITLE:=Netify Agent
   URL:=http://www.netify.ai/
-  DEPENDS:=+ca-bundle +libcurl +libmnl +libnetfilter-conntrack +libpcap +zlib +libpthread @!USE_UCLIBC
+  DEPENDS:=+ca-bundle +libcurl +libmnl +libnetfilter-conntrack +libpcap +libgcrypt +zlib +libpthread @!USE_UCLIBC
   # Explicitly depend on libstdcpp rather than $(CXX_DEPENDS).  At the moment
   # std::unordered_map is only available via libstdcpp which is required for
   # performance reasons.
@@ -49,6 +49,7 @@ define Package/@PACKAGE_TARNAME@/conffiles
 /etc/netify.d/agent.uuid
 /etc/netify.d/serial.uuid
 /etc/netify.d/site.uuid
+/etc/netify.d/netify-categories.json
 endef
 
 TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
@@ -59,7 +60,7 @@ CONFIGURE_ARGS+= \
 	--sharedstatedir=/var/run \
 	--enable-lean-and-mean \
 	--disable-libtcmalloc \
-	--enable-jemalloc \
+	--disable-jemalloc \
 	--without-systemdsystemunitdir \
 	--without-tmpfilesdir
 
@@ -85,13 +86,12 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/pcap-compat/*.h $(1)/usr/include/netifyd/pcap-compat
 	$(INSTALL_DIR) $(1)/usr/include/netifyd/nlohmann
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/netifyd/nlohmann/*.hpp $(1)/usr/include/netifyd/nlohmann
-	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0
-	$(INSTALL_DIR) $(1)/usr/include/libndpi-2.9.0/libndpi
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/libndpi-2.9.0/libndpi/*.h $(1)/usr/include/libndpi-2.9.0/libndpi
+	$(INSTALL_DIR) $(1)/usr/include/ndpi
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/ndpi/*.h $(1)/usr/include/ndpi
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.{a,so*} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.{a,so*} $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib@PACKAGE_TARNAME@.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/lib@PACKAGE_TARNAME@.pc $(1)/usr/lib/pkgconfig
 endef
 
 define Package/@PACKAGE_TARNAME@/install
@@ -104,11 +104,12 @@ define Package/@PACKAGE_TARNAME@/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/netifyd $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.so.* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.so.* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/netify.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-sink.conf $(1)/etc/netify.d/netify-sink.conf
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-sink.conf $(1)/etc/netify.d
 	$(INSTALL_DIR) $(1)/usr/share/netifyd
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/functions.sh $(1)/usr/share/netifyd
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-categories.json $(1)/etc/netify.d
 endef
 
 $(eval $(call BuildPackage,@PACKAGE_TARNAME@))
