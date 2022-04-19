@@ -123,7 +123,7 @@ touch %{EXTRA_DIST}
 make install DESTDIR=%{buildroot}
 
 rm -rf %{buildroot}/%{_bindir}
-rm -rf %{buildroot}/lib/libndpi*
+rm -rf %{buildroot}/usr/lib/libndpi*
 rm -rf %{buildroot}/%{_libdir}/libndpi*
 rm -rf %{buildroot}/%{_libdir}/pkgconfig/*ndpi*
 rm -rf %{buildroot}/%{_datadir}/ndpi
