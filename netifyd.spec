@@ -123,8 +123,8 @@ touch %{EXTRA_DIST}
 make install DESTDIR=%{buildroot}
 
 rm -rf %{buildroot}/%{_bindir}
-rm -rf %{buildroot}/%{_libdir}/libndpi*
-rm -rf %{buildroot}/%{_libdir}/pkgconfig/libndpi*
+rm -rf %{buildroot}/%{_libdir}/*ndpi*
+rm -rf %{buildroot}/%{_libdir}/pkgconfig/*ndpi*
 
 rm -rf %{buildroot}/%{_includedir}/google
 rm -rf %{buildroot}/%{_includedir}/gperftools
@@ -202,7 +202,7 @@ exit 0
 %files devel
 %defattr(-,root,root)
 %{_includedir}/%{name}
-%{_includedir}/libndpi*
+%{_includedir}/ndpi*
 %{_libdir}/pkgconfig/lib%{name}.pc
 %{_libdir}/lib%{name}.a
 %{_libdir}/lib%{name}.la
