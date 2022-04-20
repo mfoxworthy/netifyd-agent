@@ -2,6 +2,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+datarootdir=@datarootdir@
 
 Name: @PACKAGE_STRING@ API Library
 Description: @PACKAGE_NAME@ API for plugin development
