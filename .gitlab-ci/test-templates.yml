@@ -3,8 +3,6 @@
 
 .rpmos_test:
   stage: test
-  tags:
-    - docker
   image: $RPMOS_IMAGE
   script:
     - yum -y install epel-release

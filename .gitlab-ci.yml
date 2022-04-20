@@ -23,6 +23,8 @@ include:
 
 .debian 10 build:
   extends: .debian_build
+  tags:
+    - docker
   variables:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
@@ -31,12 +33,16 @@ include:
 
 .debian 11 build:
   extends: .debian11_build
+  tags:
+    - debian11
 
 # RPM OS Targets
 #---------------
 
 centos 7 build:
   extends: .rpmos_build
+  tags:
+    - docker
   variables:
     RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os7"
     RPMOS_OS: "centos"
@@ -45,6 +51,8 @@ centos 7 build:
 
 almalinux 8 build:
   extends: .rpmos_build
+  tags:
+    - docker
   variables:
     RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os8"
     RPMOS_OS: "almalinux"
@@ -115,6 +123,8 @@ freebsd 12.3 build:
 
 centos 7 test:
   extends: .rpmos_test
+  tags:
+    - docker
   variables:
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
@@ -125,6 +135,8 @@ centos 7 test:
 
 almalinux 8 test:
   extends: .rpmos_test
+  tags:
+    - docker
   variables:
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"

@@ -3,8 +3,6 @@
 
 .debian_build:
   stage: build
-  tags:
-    - docker
   image: $OS_IMAGE
   before_script:
     # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
@@ -23,8 +21,6 @@
 
 .debian11_build:
   stage: build
-  tags:
-    - debian11
   before_script:
     - git submodule sync --recursive
     - git submodule update --init --recursive --force
@@ -39,8 +35,6 @@
 
 .rpmos_build:
   stage: build
-  tags:
-    - docker
   image: $RPMOS_IMAGE
   before_script:
     # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
