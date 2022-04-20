@@ -9,12 +9,14 @@ stages:
 # variables:
 #  CI_DEBUG_TRACE: "true"
 
+# Incude templates
+include:
+  - '/.gitlab-ci/build-templates.yml'
+  - '/.gitlab-ci/test-templates.yml'
+
 # -------------------------------------------------------------------------
 # Build stage
 # -------------------------------------------------------------------------
-
-# Incude build templates
-include: '/.gitlab-ci/build-templates.yml'
 
 # Debian OS Targets
 #------------------
@@ -104,9 +106,6 @@ freebsd 12.3 build:
 # -------------------------------------------------------------------------
 # Test stage
 # -------------------------------------------------------------------------
-
-# Incude test templates
-include: '/.gitlab-ci/test-templates.yml'
 
 # CentOS
 #-------
