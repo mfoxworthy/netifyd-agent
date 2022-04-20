@@ -21,6 +21,19 @@
     - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
     - echo "to be continued?"
 
+.debian11_build:
+  stage: build
+  tags:
+    - debian11
+  before_script:
+    - git submodule sync --recursive
+    - git submodule update --init --recursive --force
+  script:
+    - ./autogen.sh
+    - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
+    - make clean
+    - make DESTDIR=/tmp/netify-agent install
+
 # RPM build
 #----------
 
