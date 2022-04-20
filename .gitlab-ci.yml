@@ -13,126 +13,44 @@ stages:
 # Build stage
 # -------------------------------------------------------------------------
 
-# Debian build
-#-------------
-
-.debian_build: &debian_build_script
-  stage: build
-  tags:
-    - docker
-  image: $OS_IMAGE
-  before_script:
-    # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - apt update
-    - apt install -y git
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
-  script:
-    # Build environment
-    - apt update
-    - apt install -y rsync debhelper dh-systemd autoconf automake bc build-essential libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtool zlib1g-dev libgoogle-perftools-dev
-    # Build packages
-    - ./autogen.sh
-    - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
-    - echo "to be continued?"
+# Incude build templates
+include: '/.gitlab-ci/build-templates.yml'
 
 # Debian OS Targets
 #------------------
 
 .debian 10 build:
+  extends: .debian_build
   variables:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
     OS_VERSION: "10"
     OS_ARCH: "x86_64"
-  <<: *debian_build_script
-
-# RPM build
-#----------
-
-.rpmos_build: &rpmos_build_script
-  stage: build
-  tags:
-    - docker
-  image: $RPMOS_IMAGE
-  before_script:
-    # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
-  script:
-    # Build via raw source only
-    - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
-    - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
-    # Build packages
-    - mkdir -p result builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH logs/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH
-    - rpmbuild -bs netifyd.spec --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
-    - mock -v --old-chroot --resultdir=result *.src.rpm
-    # Copy packages and logs to artifacts
-    - grep -v DEBUG result/root.log
-    - mv result/*rpm builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
-    - mv result/*log logs/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
-    - rm -rf result
-    # Push build to master node
-    - sudo yum -y install rsync
-    - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-    - builds
-    - logs
-    expire_in: 1 day
 
 # RPM OS Targets
 #---------------
 
 centos 7 build:
+  extends: .rpmos_build
   variables:
     RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os7"
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
     RPMOS_ARCH: "x86_64"
-  <<: *rpmos_build_script
 
 almalinux 8 build:
+  extends: .rpmos_build
   variables:
     RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os8"
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
     RPMOS_ARCH: "x86_64"
-  <<: *rpmos_build_script
-
-
-# FreeBSD Build
-#--------------
-
-.xbsd_build: &xbsd_build_script
-  stage: build
-  before_script:
-    # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
-  script:
-    # Build environment
-    - ntpdate -d -u time.nist.gov
-    - ntpdate -u time.nist.gov
-    # Build packages
-    - ./autogen.sh
-    - ./configure --disable-conntrack --disable-inotify $OS_CONFIGURE_FLAGS CC=clang CXX=clang++ MAKE=gmake
-    - mkdir -p /usr/ports/distfiles
-    - gmake $OS_MAKE_TARGET
-    - gmake deploy-pfsense
-    # Push build to master mirror
-    - mkdir -p builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/$OS_BASENAME/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/pfsense/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
-  allow_failure: true
 
 # FreeBSD OS Targets
 #-------------------
 
 freebsd 11.2 build:
+  extends: .xbsd_build
   tags:
     - freebsd112
   variables:
@@ -143,9 +61,9 @@ freebsd 11.2 build:
     OS_MAKE_TARGET: "deploy-freebsd-11x"
     OS_CONFIGURE_FLAGS: ""
     OS_PKG_EXTENSION: "txz"
-  <<: *xbsd_build_script
 
 # freebsd 11.3 build:
+#   extends: .xbsd_build
 #   tags:
 #     - freebsd113
 #   variables:
@@ -156,9 +74,9 @@ freebsd 11.2 build:
 #     OS_MAKE_TARGET: "deploy-freebsd-11x"
 #     OS_CONFIGURE_FLAGS: ""
 #     OS_PKG_EXTENSION: "txz"
-#   <<: *xbsd_build_script
 
 freebsd 12.1 build:
+  extends: .xbsd_build
   tags:
     - freebsd121
   variables:
@@ -169,9 +87,9 @@ freebsd 12.1 build:
     OS_MAKE_TARGET: "deploy-freebsd-12x"
     OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
     OS_PKG_EXTENSION: "txz"
-  <<: *xbsd_build_script
 
 freebsd 12.3 build:
+  extends: .xbsd_build
   tags:
     - freebsd123
   variables:
@@ -182,37 +100,19 @@ freebsd 12.3 build:
     OS_MAKE_TARGET: "deploy-freebsd-12x"
     OS_CONFIGURE_FLAGS: ""
     OS_PKG_EXTENSION: "pkg"
-  <<: *xbsd_build_script
 
 # -------------------------------------------------------------------------
 # Test stage
 # -------------------------------------------------------------------------
 
+# Incude test templates
+include: '/.gitlab-ci/test-templates.yml'
+
 # CentOS
 #-------
 
-.rpmos_test: &rpmos_test_script
-  stage: test
-  tags:
-    - docker
-  image: $RPMOS_IMAGE
-  script:
-    - yum -y install epel-release
-    - yum -y --nogpgcheck localinstall builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/netifyd-[0-9]*.*.$RPMOS_ARCH.rpm
-    # yum returns exit code 0 even if target is corrupt or invalid, so verify with rpm
-    - rpm -qV netifyd
-    # CentOS is used for mirror port mode only
-    - echo $RPMOS_UUID > /etc/netify.d/agent.uuid
-    - echo NETIFYD_AUTODETECT="no" > /etc/sysconfig/netifyd
-    - echo NETIFYD_EXTRA_OPTS="-t" >> /etc/sysconfig/netifyd
-    - echo NETIFYD_INTNET="eth0" >> /etc/sysconfig/netifyd
-    - netifyd --enable-sink
-    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
-    - grep "enable_sink.*=.*yes" /etc/netifyd.conf || exit 1
-    - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I eth0 )
-    - curl "https://manager.netify.ai/api/v1/deployment/agents/status/$RPMOS_UUID"
-
 centos 7 test:
+  extends: .rpmos_test
   variables:
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
@@ -220,9 +120,9 @@ centos 7 test:
     RPMOS_ARCH: "x86_64"
     RPMOS_UUID: "NE-CE-07-X1"
   needs: ["centos 7 build"]
-  <<: *rpmos_test_script
 
 almalinux 8 test:
+  extends: .rpmos_test
   variables:
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
@@ -230,29 +130,12 @@ almalinux 8 test:
     RPMOS_ARCH: "x86_64"
     RPMOS_UUID: "NE-CE-08-X1"
   needs: ["almalinux 8 build"]
-  <<: *rpmos_test_script
 
 # OPNsense/pfSense
 #-----------------
 
-.xsense_test: &xsense_test_script
-  stage: test
-  script:
-    - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
-    - rsync master-mirror.egloo.ca::netify-builds/$CI_PROJECT_NAME/freebsd/$FREEBSD_VERSION.$FREEBSD_RELEASE/x86_64/netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION .
-    - pkg add netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION
-    # Set our Agent UUID
-    - echo "$AGENT_UUID" > /usr/local/etc/netify.d/agent.uuid
-    - netifyd --enable-sink
-    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
-    - grep "enable_sink.*=.*yes" /usr/local/etc/netifyd.conf || exit 1
-    - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I em1 )
-    - service netifyd onestart
-    - netifyd --status
-    - ps afx | grep netify
-
-
 opnsense 19.7 test:
+  extends: .xsense_test
   tags:
     - opnsense197
   variables:
@@ -266,9 +149,9 @@ opnsense 19.7 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
-  <<: *xsense_test_script
 
 opnsense 20.1 test:
+  extends: .xsense_test
   tags:
     - opnsense201
   variables:
@@ -282,9 +165,9 @@ opnsense 20.1 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
-  <<: *xsense_test_script
 
 opnsense 20.7 test:
+  extends: .xsense_test
   tags:
    - opnsense207
   variables:
@@ -296,9 +179,9 @@ opnsense 20.7 test:
   before_script:
     - ntpdate -u time.nist.gov
   needs: ["freebsd 12.1 build"]
-  <<: *xsense_test_script
 
 pfsense 2.4.5 test:
+  extends: .xsense_test
   tags:
     - pfsense245
   variables:
@@ -312,9 +195,9 @@ pfsense 2.4.5 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
-  <<: *xsense_test_script
 
 pfsense 2.6.0 test:
+  extends: .xsense_test
   tags:
     - pfsense260
   variables:
@@ -323,4 +206,3 @@ pfsense 2.6.0 test:
     FREEBSD_RELEASE: "3"
     FREEBSD_PKG_EXTENSION: "pkg"
   needs: ["freebsd 12.3 build"]
-  <<: *xsense_test_script

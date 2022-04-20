@@ -1,0 +1,42 @@
+# CentOS
+#-------
+
+.rpmos_test:
+  stage: test
+  tags:
+    - docker
+  image: $RPMOS_IMAGE
+  script:
+    - yum -y install epel-release
+    - yum -y --nogpgcheck localinstall builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/netifyd-[0-9]*.*.$RPMOS_ARCH.rpm
+    # yum returns exit code 0 even if target is corrupt or invalid, so verify with rpm
+    - rpm -qV netifyd
+    # CentOS is used for mirror port mode only
+    - echo $RPMOS_UUID > /etc/netify.d/agent.uuid
+    - echo NETIFYD_AUTODETECT="no" > /etc/sysconfig/netifyd
+    - echo NETIFYD_EXTRA_OPTS="-t" >> /etc/sysconfig/netifyd
+    - echo NETIFYD_INTNET="eth0" >> /etc/sysconfig/netifyd
+    - netifyd --enable-sink
+    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
+    - grep "enable_sink.*=.*yes" /etc/netifyd.conf || exit 1
+    - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I eth0 )
+    - curl "https://manager.netify.ai/api/v1/deployment/agents/status/$RPMOS_UUID"
+
+# OPNsense/pfSense
+#-----------------
+
+.xsense_test:
+  stage: test
+  script:
+    - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
+    - rsync master-mirror.egloo.ca::netify-builds/$CI_PROJECT_NAME/freebsd/$FREEBSD_VERSION.$FREEBSD_RELEASE/x86_64/netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION .
+    - pkg add netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION
+    # Set our Agent UUID
+    - echo "$AGENT_UUID" > /usr/local/etc/netify.d/agent.uuid
+    - netifyd --enable-sink
+    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
+    - grep "enable_sink.*=.*yes" /usr/local/etc/netifyd.conf || exit 1
+    - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I em1 )
+    - service netifyd onestart
+    - netifyd --status
+    - ps afx | grep netify
