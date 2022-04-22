@@ -65,6 +65,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <libgen.h>
+#include <dirent.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -1288,6 +1289,47 @@ void nd_regex_error(const regex_error &e, string &error)
         error = e.what();
         break;
     }
+}
+
+bool nd_scan_dotd(const string &path, vector<string> &files)
+{
+    DIR *dh = opendir(path.c_str());
+
+    if (dh == NULL) {
+        nd_printf("Error opening directory: %s: %s\n",
+            path.c_str(), strerror(errno));
+        return false;
+    }
+
+    long dname_max = pathconf(path.c_str(), _PC_NAME_MAX);
+    if (dname_max == -1) dname_max = 255;
+    size_t entry_size = offsetof(struct dirent, d_name) + dname_max + 1;
+
+    struct dirent *dentry = reinterpret_cast<struct dirent *>(
+        new uint8_t[entry_size]
+    );
+    unique_ptr<struct dirent, void(*)(struct dirent *p)> entry(
+        dentry, [](struct dirent *p) {
+        delete [] (uint8_t *)p;
+    });
+
+    int rc;
+    struct dirent *result = NULL;
+    while (! (rc = readdir_r(dh, dentry, &result))) {
+        if (result == NULL) break;
+        if (
+            (
+                result->d_type != DT_LNK &&
+                result->d_type != DT_REG &&
+                result->d_type != DT_UNKNOWN
+            )
+            || ! isdigit(result->d_name[0])) continue;
+        files.push_back(result->d_name);
+    }
+
+    closedir(dh);
+
+    return (rc == 0);
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

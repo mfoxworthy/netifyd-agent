@@ -134,5 +134,7 @@ protected:
 
 void nd_regex_error(const regex_error &e, string &error);
 
+bool nd_scan_dotd(const string &path, vector<string> &files);
+
 #endif // _ND_UTIL_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
