@@ -2186,14 +2186,10 @@ static void nd_dump_stats(void)
             p->ProcessStats(iface_name, stats[i->first]);
         }
 
-        stats[i->first]->reset();
-
         i->second->Unlock();
 
         jstatus["stats"][iface_name] = js;
     }
-
-    nd_json_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
 
     for (nd_plugins::iterator pi = plugin_stats.begin();
         pi != plugin_stats.end(); pi++) {
@@ -2202,6 +2198,16 @@ static void nd_dump_stats(void)
         );
         p->ProcessStats(pkt_totals);
         p->ProcessStats(nd_flow_buckets);
+    }
+
+    nd_json_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
+
+    for (nd_capture_threads::iterator i = capture_threads.begin();
+        i != capture_threads.end(); i++) {
+
+        i->second->Lock();
+        stats[i->first]->reset();
+        i->second->Unlock();
     }
 
     jstatus["flow_count"] = nda_stats.flows;
