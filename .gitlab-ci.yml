@@ -66,6 +66,8 @@ freebsd 11.2 build:
   extends: .xbsd_build
   tags:
     - freebsd112
+  only:
+    - web
   variables:
     OS_BASENAME: "freebsd"
     OS_VERSION: "11"
@@ -92,6 +94,8 @@ freebsd 12.1 build:
   extends: .xbsd_build
   tags:
     - freebsd121
+  only:
+    - web
   variables:
     OS_BASENAME: "freebsd"
     OS_VERSION: "12"
@@ -105,6 +109,8 @@ freebsd 12.3 build:
   extends: .xbsd_build
   tags:
     - freebsd123
+  only:
+    - web
   variables:
     OS_BASENAME: "freebsd"
     OS_VERSION: "12"
@@ -152,6 +158,8 @@ opnsense 19.7 test:
   extends: .xsense_test
   tags:
     - opnsense197
+  only:
+    - web
   variables:
     AGENT_UUID: "NE-PN-19-XC"
     FREEBSD_VERSION: "11"
@@ -168,6 +176,8 @@ opnsense 20.1 test:
   extends: .xsense_test
   tags:
     - opnsense201
+  only:
+    - web
   variables:
     AGENT_UUID: "NE-PN-20-XC"
     FREEBSD_VERSION: "11"
@@ -184,6 +194,8 @@ opnsense 20.7 test:
   extends: .xsense_test
   tags:
    - opnsense207
+  only:
+    - web
   variables:
     AGENT_UUID: "NE-PN-27-XC"
     FREEBSD_VERSION: "12"
@@ -198,6 +210,8 @@ pfsense 2.4.5 test:
   extends: .xsense_test
   tags:
     - pfsense245
+  only:
+    - web
   variables:
     AGENT_UUID: "NE-PF-24-XC"
     FREEBSD_VERSION: "11"
@@ -214,6 +228,8 @@ pfsense 2.6.0 test:
   extends: .xsense_test
   tags:
     - pfsense260
+  only:
+    - web
   variables:
     AGENT_UUID: "NE-PF-26-XC"
     FREEBSD_VERSION: "12"
