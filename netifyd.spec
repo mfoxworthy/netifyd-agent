@@ -27,7 +27,7 @@
 # RPM package details
 Name: netifyd
 Summary: Netify Agent
-Version: 4.1.7
+Version: 4.1.8
 Release: 1%{dist}
 Vendor: eGloo Incorporated
 URL: https://www.netify.ai/

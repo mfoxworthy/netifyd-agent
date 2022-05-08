@@ -70,7 +70,7 @@ extern nd_global_config nd_config;
 
 bool ndCategories::Load(void)
 {
-    json j;
+    json jdata;
 
     ifstream ifs(nd_config.path_cat_config);
     if (! ifs.is_open()) {
@@ -80,7 +80,7 @@ bool ndCategories::Load(void)
     }
 
     try {
-        ifs >> j;
+        ifs >> jdata;
     }
     catch (exception &e) {
         nd_printf("Error loading categories: %s: JSON parse error\n",
@@ -90,7 +90,11 @@ bool ndCategories::Load(void)
         return false;
     }
 
-    last_update = (time_t)(j["last_update"].get<unsigned>());
+    last_update = (time_t)(jdata["last_update"].get<unsigned>());
+
+    if (jdata.find("application_tag_index") == jdata.end() ||
+        jdata.find("protocol_tag_index") == jdata.end())
+        return LoadLegacy(jdata);
 
     for (auto &ci : categories) {
         string key;
@@ -107,8 +111,44 @@ bool ndCategories::Load(void)
         }
 
         if (! key.empty()) {
-            ci.second.tag = j[key + "_tag_index"].get<ndCategory::index_tag>();
-            ci.second.index = j[key + "_index"].get<ndCategory::index_cat>();
+            ci.second.tag = jdata[key + "_tag_index"].get<ndCategory::index_tag>();
+            ci.second.index = jdata[key + "_index"].get<ndCategory::index_cat>();
+        }
+    }
+
+    return true;
+}
+
+bool ndCategories::LoadLegacy(json &jdata) {
+    nd_printf("Legacy category format detected: %s\n",
+        nd_config.path_cat_config);
+
+    for (auto &ci : categories) {
+        string key;
+        unsigned id = 1;
+
+        switch (ci.first) {
+        case ndCAT_TYPE_APP:
+            key = "application";
+            break;
+        case ndCAT_TYPE_PROTO:
+            key = "protocol";
+            break;
+        default:
+            break;
+        }
+
+        auto it = jdata.find(key + "_index");
+        for (auto &it_kvp : it->get<json::object_t>()) {
+
+            if (it_kvp.second.type() != json::value_t::array)
+                continue;
+
+            ci.second.tag[it_kvp.first] = id;
+            ci.second.index[id] =
+                it_kvp.second.get<ndCategory::set_id>();
+
+            id++;
         }
     }
 

@@ -54,6 +54,7 @@ public:
     };
 
     bool Load(void);
+    bool LoadLegacy(json &jdata);
     bool Load(ndCategoryType type, json &jdata);
     bool Save(void);
     void Dump(ndCategoryType type = ndCAT_TYPE_MAX);
