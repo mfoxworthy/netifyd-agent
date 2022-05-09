@@ -347,6 +347,18 @@ nd_cat_id_t ndCategories::Lookup(ndCategoryType type, unsigned id)
     return ND_CAT_UNKNOWN;
 }
 
+nd_cat_id_t ndCategories::LookupTag(ndCategoryType type, const string &tag)
+{
+    if (type >= ndCAT_TYPE_MAX) return ND_CAT_UNKNOWN;
+
+    unique_lock<mutex> ul(lock);
+
+    ndCategory::index_tag::const_iterator it = categories[type].tag.find(tag);
+    if (it != categories[type].tag.end()) return it->second;
+
+    return ND_CAT_UNKNOWN;
+}
+
 bool ndDomains::Load(void)
 {
     unique_lock<mutex> ul(lock);

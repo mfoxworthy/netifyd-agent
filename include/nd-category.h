@@ -70,6 +70,7 @@ public:
     bool IsMember(ndCategoryType type, const string &cat_tag, unsigned id);
 
     nd_cat_id_t Lookup(ndCategoryType type, unsigned id);
+    nd_cat_id_t LookupTag(ndCategoryType type, const string &tag);
 
     bool GetTagIndex(ndCategoryType type, ndCategory::index_tag &index) {
         unique_lock<mutex> ul(lock);
