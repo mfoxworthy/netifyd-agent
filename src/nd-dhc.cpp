@@ -81,6 +81,12 @@ void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &h
     string digest;
     uint8_t _digest[SHA1_DIGEST_LENGTH];
 
+    if (af == AF_INET) {
+        // TODO: Temporary hack; certain addresses (ex: broadcast),
+        // should not be added to DNS cache...
+        if (((struct in_addr *)addr)->s_addr == 0xffffffff) return;
+    }
+
     sha1_init(&ctx);
     sha1_write(&ctx, (const char *)addr, (af == AF_INET) ?
         sizeof(struct in_addr) : sizeof(struct in6_addr));
