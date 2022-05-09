@@ -24,6 +24,7 @@
 #include <map>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -32,6 +33,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <mutex>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -70,6 +72,8 @@ extern nd_global_config nd_config;
 
 bool ndCategories::Load(void)
 {
+    unique_lock<mutex> ul(lock);
+
     json jdata;
 
     ifstream ifs(nd_config.path_cat_config);
@@ -125,7 +129,7 @@ bool ndCategories::LoadLegacy(json &jdata) {
 
     for (auto &ci : categories) {
         string key;
-        unsigned id = 1;
+        nd_cat_id_t id = 1;
 
         switch (ci.first) {
         case ndCAT_TYPE_APP:
@@ -157,6 +161,8 @@ bool ndCategories::LoadLegacy(json &jdata) {
 
 bool ndCategories::Load(ndCategoryType type, json &jdata)
 {
+    unique_lock<mutex> ul(lock);
+
     auto ci = categories.find(type);
 
     if (ci == categories.end()) {
@@ -182,8 +188,8 @@ bool ndCategories::Load(ndCategoryType type, json &jdata)
         auto it_cat = it->find(key);
         if (it_cat == it->end()) continue;
 
-        unsigned id = (*it)["id"].get<unsigned>();
-        unsigned cid = (*it_cat)["id"].get<unsigned>();
+        nd_cat_id_t id = (*it)["id"].get<unsigned>();
+        nd_cat_id_t cid = (*it_cat)["id"].get<nd_cat_id_t>();
         string tag = (*it_cat)["tag"].get<string>();
 
         auto it_tag_id = ci->second.tag.find(tag);
@@ -204,6 +210,8 @@ bool ndCategories::Load(ndCategoryType type, json &jdata)
 
 bool ndCategories::Save(void)
 {
+    unique_lock<mutex> ul(lock);
+
     json j;
 
     try {
@@ -255,6 +263,8 @@ bool ndCategories::Save(void)
 
 void ndCategories::Dump(ndCategoryType type)
 {
+    unique_lock<mutex> ul(lock);
+
     for (auto &ci : categories) {
         if (type != ndCAT_TYPE_MAX && ci.first != type) continue;
 
@@ -281,8 +291,9 @@ void ndCategories::Dump(ndCategoryType type)
     }
 }
 
-bool ndCategories::IsMember(ndCategoryType type, unsigned cat_id, unsigned id)
+bool ndCategories::IsMember(ndCategoryType type, nd_cat_id_t cat_id, unsigned id)
 {
+    unique_lock<mutex> ul(lock);
     auto ci = categories.find(type);
 
     if (ci == categories.end()) {
@@ -301,6 +312,7 @@ bool ndCategories::IsMember(ndCategoryType type, unsigned cat_id, unsigned id)
 
 bool ndCategories::IsMember(ndCategoryType type, const string &cat_tag, unsigned id)
 {
+    unique_lock<mutex> ul(lock);
     auto ci = categories.find(type);
 
     if (ci == categories.end()) {
@@ -319,6 +331,97 @@ bool ndCategories::IsMember(ndCategoryType type, const string &cat_tag, unsigned
     if (mi->second.find(id) == mi->second.end()) return false;
 
     return true;
+}
+
+nd_cat_id_t ndCategories::Lookup(ndCategoryType type, unsigned id)
+{
+    if (type >= ndCAT_TYPE_MAX) return ND_CAT_UNKNOWN;
+
+    unique_lock<mutex> ul(lock);
+
+    for (auto &it : categories[type].index) {
+        if (it.second.find(id) == it.second.end()) continue;
+        return it.first;
+    }
+
+    return ND_CAT_UNKNOWN;
+}
+
+bool ndDomains::Load(void)
+{
+    unique_lock<mutex> ul(lock);
+
+    ndCategories categories;
+    categories.Load();
+
+    if (! categories.GetTagIndex(ndCAT_TYPE_APP, index_tag)) return false;
+
+    vector<string> files;
+    if (! nd_scan_dotd(ND_DOMAINS_DIR, files)) return false;
+
+    domains.clear();
+
+    // /etc/netify.d/domains.d/10-adult.txt
+    // /etc/netify.d/domains.d/{pri}-{cat_tag}.txt
+
+    for (auto &it : files) {
+        size_t p1 = it.find_first_of("-");
+        if (p1 == string::npos) {
+            nd_dprintf("Rejecting domain file (wrong format; missing hyphen): %s\n",
+                it.c_str());
+            continue;
+        }
+
+        size_t p2 = it.find_last_of(".");
+        if (p2 == string::npos) {
+            nd_dprintf("Rejecting domain file (wrong format; missing extension): %s\n",
+                it.c_str());
+            continue;
+        }
+
+        string cat_tag = it.substr(p1 + 1, p2 - p1 - 1);
+
+        auto tag = index_tag.find(cat_tag);
+        if (tag == index_tag.end()) {
+            nd_dprintf("Rejecting domain file (invalid category tag): %s\n",
+                it.c_str());
+            continue;
+        }
+
+        nd_dprintf("Loading custom %s domain file: %s\n",
+            tag->first.c_str(), it.c_str());
+
+        ifstream ifs(string(ND_DOMAINS_DIR) + "/" + it);
+
+        if (! ifs.is_open()) {
+            nd_printf("Error opening custom domain category file: %s\n", it.c_str());
+            continue;
+        }
+
+        string domain;
+        unordered_set<string> entries;
+        while (ifs >> domain) entries.insert(domain);
+
+        domains.insert(make_pair(tag->second, entries));
+
+        nd_dprintf("Loaded %u %s domains from: %s\n",
+            entries.size(), tag->first.c_str(), it.c_str()
+        );
+    }
+
+    return true;
+}
+
+nd_cat_id_t ndDomains::Lookup(const string &domain)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &it : domains) {
+        if (it.second.find(domain) == it.second.end()) continue;
+        return it.first;
+    }
+
+    return ND_DOMAIN_UNKNOWN;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

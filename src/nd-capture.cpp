@@ -155,6 +155,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
+#include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-thread.h"

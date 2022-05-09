@@ -17,6 +17,9 @@
 #ifndef _ND_CATEGORY_H
 #define _ND_CATEGORY_H
 
+#define ND_CAT_UNKNOWN      0
+#define ND_DOMAIN_UNKNOWN   0
+
 typedef enum {
     ndCAT_TYPE_APP,
     ndCAT_TYPE_PROTO,
@@ -26,15 +29,18 @@ typedef enum {
 
 class ndCategories;
 
+typedef unsigned nd_cat_id_t;
+
 class ndCategory
 {
+public:
+    typedef map<string, nd_cat_id_t> index_tag;
+    typedef set<unsigned> set_id;
+    typedef map<nd_cat_id_t, set_id> index_cat;
+    typedef pair<nd_cat_id_t, set_id> index_cat_insert;
+
 protected:
     friend class ndCategories;
-
-    typedef map<string, unsigned> index_tag;
-    typedef set<unsigned> set_id;
-    typedef map<unsigned, set_id> index_cat;
-    typedef pair<unsigned, set_id> index_cat_insert;
 
     index_tag tag;
     index_cat index;
@@ -54,19 +60,47 @@ public:
     };
 
     bool Load(void);
-    bool LoadLegacy(json &jdata);
     bool Load(ndCategoryType type, json &jdata);
     bool Save(void);
     void Dump(ndCategoryType type = ndCAT_TYPE_MAX);
 
     time_t GetLastUpdate(void) { return last_update; }
 
-    bool IsMember(ndCategoryType type, unsigned cat_id, unsigned id);
+    bool IsMember(ndCategoryType type, nd_cat_id_t cat_id, unsigned id);
     bool IsMember(ndCategoryType type, const string &cat_tag, unsigned id);
 
+    nd_cat_id_t Lookup(ndCategoryType type, unsigned id);
+
+    bool GetTagIndex(ndCategoryType type, ndCategory::index_tag &index) {
+        unique_lock<mutex> ul(lock);
+
+        auto it = categories.find(type);
+        if (it == categories.end()) return false;
+        index.insert(it->second.tag.begin(), it->second.tag.end());
+        return true;
+    }
+
 protected:
+    mutex lock;
     time_t last_update;
     map<ndCategoryType, ndCategory> categories;
+
+    bool LoadLegacy(json &jdata);
+};
+
+#define ND_DOMAINS_DIR  ND_PERSISTENT_STATEDIR "/domains.d"
+
+class ndDomains
+{
+public:
+    bool Load(void);
+    nd_cat_id_t Lookup(const string &domain);
+
+protected:
+    mutex lock;
+    ndCategory::index_tag index_tag;
+    typedef unordered_map<nd_cat_id_t, unordered_set<string>> cat_domain_map;
+    cat_domain_map domains;
 };
 
 #endif // _ND_CATEGORY_H

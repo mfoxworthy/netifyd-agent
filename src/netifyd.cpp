@@ -100,6 +100,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
+#include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-thread.h"
@@ -118,7 +119,6 @@ using namespace std;
 #endif
 #include "nd-util.h"
 #include "nd-signal.h"
-#include "nd-category.h"
 #include "nd-napi.h"
 
 static bool nd_terminate = false;
@@ -167,6 +167,8 @@ nd_global_config nd_config;
 pthread_mutex_t *nd_printf_mutex = NULL;
 
 ndApplications *nd_apps = NULL;
+ndCategories *nd_categories = NULL;
+ndDomains *nd_domains = NULL;
 
 atomic_uint nd_flow_count;
 
@@ -832,6 +834,18 @@ static void nd_init(void)
     if (! nd_apps->Load(nd_config.path_app_config))
         nd_apps->LoadLegacy(nd_config.path_legacy_config);
 
+    nd_categories = new ndCategories();
+    if (nd_categories == nullptr)
+        throw ndSystemException(__PRETTY_FUNCTION__, "new nd_categories", ENOMEM);
+
+    nd_categories->Load();
+
+    nd_domains = new ndDomains();
+    if (nd_domains == nullptr)
+        throw ndSystemException(__PRETTY_FUNCTION__, "new nd_domains", ENOMEM);
+
+    nd_domains->Load();
+
     nd_flow_buckets = new ndFlowMap();
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
@@ -893,6 +907,11 @@ static void nd_destroy(void)
     if (nd_apps) {
         delete nd_apps;
         nd_apps = NULL;
+    }
+
+    if (nd_domains) {
+        delete nd_domains;
+        nd_domains = NULL;
     }
 }
 
@@ -3474,9 +3493,8 @@ int main(int argc, char *argv[])
         }
 
         time_t ttl = 3;
-        ndCategories categories;
-        if (categories.Load()) {
-            time_t age = time(NULL) - categories.GetLastUpdate();
+        if (nd_categories->GetLastUpdate() > 0) {
+            time_t age = time(NULL) - nd_categories->GetLastUpdate();
             if (age < nd_config.ttl_napi_update)
                 ttl = nd_config.ttl_napi_update - age;
             else if (age == nd_config.ttl_napi_update)
@@ -3614,6 +3632,12 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_NAPI_UPDATED) {
+            if (nd_domains != NULL)
+                nd_domains->Load();
+
+            if (nd_categories != NULL)
+                nd_categories->Load();
+
             if (thread_napi != NULL) {
                 delete thread_napi;
                 thread_napi = NULL;

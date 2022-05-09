@@ -84,6 +84,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
+#include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-thread.h"
@@ -104,6 +105,8 @@ using namespace std;
 
 extern nd_global_config nd_config;
 extern ndApplications *nd_apps;
+extern ndCategories *nd_categories;
+extern ndDomains *nd_domains;
 
 #define ndEF    entry->flow
 #define ndEFNF  entry->flow->ndpi_flow
@@ -805,6 +808,23 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->detected_application_name = strdup(
                 nd_apps->Lookup(ndEF->detected_application)
             );
+            ndEF->category.application = nd_categories->Lookup(
+                ndCAT_TYPE_APP,
+                (unsigned)ndEF->detected_application
+            );
+        }
+
+        if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+            ndEF->category.protocol = nd_categories->Lookup(
+                ndCAT_TYPE_PROTO,
+                (unsigned)ndEF->detected_protocol
+            );
+        }
+
+        if (ndEFNF->host_server_name[0] != '\0') {
+            ndEF->category.domain = nd_domains->Lookup(
+                ndEFNF->host_server_name
+            );
         }
 
         ndEF->update_lower_maps();
@@ -818,6 +838,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
     }
     else if (ndEF->flags.detection_init.load()) {
+
         // Flows with extra packet processing...
         ndEF->flags.detection_updated = false;
 
@@ -991,6 +1012,29 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEF->flags.detection_complete = true;
 
     if (flow_update) {
+
+        if (ndEF->category.application == ND_CAT_UNKNOWN &&
+            ndEF->detected_application != ND_APP_UNKNOWN) {
+            ndEF->category.application = nd_categories->Lookup(
+                ndCAT_TYPE_APP,
+                (unsigned)ndEF->detected_application
+            );
+        }
+
+        if (ndEF->category.protocol == ND_CAT_UNKNOWN &&
+            ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+            ndEF->category.protocol = nd_categories->Lookup(
+                ndCAT_TYPE_PROTO,
+                (unsigned)ndEF->detected_protocol
+            );
+        }
+
+        if (ndEF->category.domain == ND_DOMAIN_UNKNOWN &&
+            ndEFNF->host_server_name[0] != '\0') {
+            ndEF->category.domain = nd_domains->Lookup(
+                ndEFNF->host_server_name
+            );
+        }
 
         if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
             ndEF->print();

@@ -136,6 +136,12 @@ public:
     const char *detected_protocol_name;
     char *detected_application_name;
 
+    struct {
+        nd_cat_id_t application;
+        nd_cat_id_t protocol;
+        nd_cat_id_t domain;
+    } category;
+
     struct ndpi_flow_struct *ndpi_flow;
 
     uint8_t digest_lower[SHA1_DIGEST_LENGTH];

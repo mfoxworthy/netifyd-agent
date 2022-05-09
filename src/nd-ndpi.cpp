@@ -52,13 +52,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-ndpi.h"
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
-#include "nd-json.h"
-#include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-flow.h"
 #include "nd-thread.h"
 #include "nd-json.h"
 #include "nd-util.h"

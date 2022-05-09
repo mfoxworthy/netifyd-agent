@@ -58,6 +58,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-apps.h"
+#include "nd-category.h"
 #include "nd-protos.h"
 #include "nd-flow.h"
 
@@ -82,6 +83,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
+    category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
     digest_lower{}, digest_mdata{},
     host_server_name{}, http{},
@@ -119,6 +121,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
     detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
+    category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
     host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
@@ -811,6 +814,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
         j["detection_guessed"] = flags.detection_guessed.load();
         j["detection_updated"] = flags.detection_updated.load();
+
+        j["category"]["application"] = category.application;
+        j["category"]["protocol"] = category.protocol;
+        j["category"]["domain"] = category.domain;
 
         if (host_server_name[0] != '\0')
             j["host_server_name"] = host_server_name;

@@ -73,6 +73,7 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
+#include "nd-category.h"
 #include "nd-flow.h"
 
 const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
