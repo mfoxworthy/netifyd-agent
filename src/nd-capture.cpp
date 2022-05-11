@@ -30,6 +30,7 @@
 #include <unordered_set>
 #include <list>
 #include <vector>
+#include <set>
 #include <atomic>
 #include <regex>
 #include <algorithm>
@@ -401,7 +402,7 @@ void *ndCaptureThread::Entry(void)
 {
     int rc;
     struct ifreq ifr;
-    bool dump_flows = false, warnings = true;
+    bool warnings = true;
 
     while (! ShouldTerminate() || ! pkt_queue.empty()) {
 

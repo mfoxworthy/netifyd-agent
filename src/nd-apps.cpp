@@ -673,11 +673,11 @@ bool ndApplications::AddNetwork(
     if (shift < prefix_max) {
         if (prefix_max == 32) {
             mask32.set();
-            for (auto i = 0; i < shift; i++) mask32.flip(i);
+            for (size_t i = 0; i < shift; i++) mask32.flip(i);
         }
         else {
             mask128.set();
-            for (auto i = 0; i < shift; i++) mask128.flip(i);
+            for (size_t i = 0; i < shift; i++) mask128.flip(i);
         }
     }
 
@@ -695,7 +695,6 @@ bool ndApplications::AddNetwork(
         ndRadixNetworkEntry<128> entry;
         entry.prefix_len = prefix_len;
         for (auto i = 0; i < 4; i++) {
-            bitset<32> quad = ntohl(nw6_addr.s6_addr32[i]);
             entry.addr |= ntohl(nw6_addr.s6_addr32[i]);
             if (i != 3) entry.addr <<= 32;
         }

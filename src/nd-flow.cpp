@@ -23,6 +23,7 @@
 #include <map>
 #include <list>
 #include <vector>
+#include <set>
 #include <atomic>
 #include <unordered_map>
 #include <unordered_set>
@@ -81,8 +82,10 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0),
-    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
-    detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
+    detected_protocol(ND_PROTO_UNKNOWN),
+    detected_application(ND_APP_UNKNOWN),
+    detected_protocol_name("Unknown"),
+    detected_application_name(NULL),
     category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
     digest_lower{}, digest_mdata{},
@@ -119,8 +122,10 @@ ndFlow::ndFlow(const ndFlow &flow)
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
     detection_packets(0),
-    detected_protocol(ND_PROTO_UNKNOWN), detected_protocol_name("Unknown"),
-    detected_application(ND_APP_UNKNOWN), detected_application_name(NULL),
+    detected_protocol(ND_PROTO_UNKNOWN),
+    detected_application(ND_APP_UNKNOWN),
+    detected_protocol_name("Unknown"),
+    detected_application_name(NULL),
     category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
     host_server_name{}, http{},

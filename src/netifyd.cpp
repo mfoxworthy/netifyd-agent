@@ -1673,7 +1673,7 @@ static void nd_json_process_flows(
                     if (i->second->flags.detection_expiring.load() == false) {
 
                         if (i->second->dpi_thread_id >= 0 &&
-                            i->second->dpi_thread_id < detection_threads.size()) {
+                            (size_t)i->second->dpi_thread_id < detection_threads.size()) {
 
                             expiring++;
                             i->second->flags.detection_expiring = true;

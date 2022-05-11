@@ -25,6 +25,7 @@
 #include <map>
 #include <queue>
 #include <list>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
