@@ -57,7 +57,7 @@ typedef enum {
     ND_PROTO_EDONKEY                = 36,
     ND_PROTO_BITTORRENT             = 37,
     ND_PROTO_SKYPE_CALL             = 38,
-    ND_PROTO_SIGNAL                 = 39,
+    ND_PROTO_SIGNAL_CALL            = 39,
     ND_PROTO_MEMCACHED              = 40,
     ND_PROTO_SMBV23                 = 41,
     ND_PROTO_MINING                 = 42,
@@ -88,7 +88,7 @@ typedef enum {
     ND_PROTO_XMPP                   = 67,   // Renamed: Jabber
     ND_PROTO_FREE68                 = 68,
     ND_PROTO_FREE69                 = 69,
-    ND_PROTO_YAHOO                  = 70,   // TODO: Delete.
+    ND_PROTO_DEPR70                 = 70,   // Deprecated: Yahoo
     ND_PROTO_FREE71                 = 71,
     ND_PROTO_FREE72                 = 72,
     ND_PROTO_IP_VRRP                = 73,
@@ -181,7 +181,7 @@ typedef enum {
     ND_PROTO_NOE                    = 160,  // Alcatel new office environment
     ND_PROTO_CISCO_VPN              = 161,
     ND_PROTO_TEAMSPEAK              = 162,
-    ND_PROTO_TOR                    = 163,  // TODO: Delete (from nDPI).
+    ND_PROTO_DEPR163                = 163,  // Deprecated: TOR
     ND_PROTO_CISCO_SKINNY           = 164,
     ND_PROTO_RTCP                   = 165,
     ND_PROTO_RSYNC                  = 166,
@@ -207,7 +207,7 @@ typedef enum {
     ND_PROTO_FREE186                = 186,
     ND_PROTO_FREE187                = 187,
     ND_PROTO_QUIC                   = 188,
-    ND_PROTO_WHATSAPP_VOICE         = 189,
+    ND_PROTO_DEPR189                = 189,  // Deprecated: WhatsApp/Voice
     ND_PROTO_EAQ                    = 190,
     ND_PROTO_OOKLA                  = 191,
     ND_PROTO_AMQP                   = 192,
@@ -263,9 +263,9 @@ typedef enum {
     ND_PROTO_FREE242                = 242,
     ND_PROTO_DOH                    = 243,
     ND_PROTO_DTLS                   = 244,
-    ND_PROTO_GOOGLE_MEET_DUO        = 245,
+    ND_PROTO_GOOGLE_MEET_DUO        = 245,  // TODO: Implement in Agent.
     ND_PROTO_WHATSAPP_CALL          = 246,
-    ND_PROTO_SKYPE_TEAMS            = 247,
+    ND_PROTO_SKYPE_TEAMS            = 247,  // TODO: Implement in Agent.
     ND_PROTO_ZOOM                   = 248,
     ND_PROTO_FREE249                = 249,
     ND_PROTO_FREE250                = 250,
@@ -477,7 +477,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_SAP, "SAP" },
     { ND_PROTO_SFLOW, "SFlow" },
     { ND_PROTO_SHOUTCAST, "ShoutCast" },
-    { ND_PROTO_SIGNAL, "Signal" },
+    { ND_PROTO_SIGNAL_CALL, "SignalCall" },
     { ND_PROTO_SIP, "SIP" },
     { ND_PROTO_SIPS, "SIP/S" },
     { ND_PROTO_SKYPE_CALL, "SkypeCall" },
@@ -510,7 +510,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_TINC, "TINC" },
     { ND_PROTO_TLS, "TLS" },
     { ND_PROTO_TODO, "TODO" },
-    { ND_PROTO_TOR, "TOR" },
     { ND_PROTO_TRUPHONE, "TruPhone" },
     { ND_PROTO_TVUPLAYER, "TVUplayer" },
     { ND_PROTO_UBNTAC2, "UBNTAC2" },
@@ -523,7 +522,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_WARCRAFT3, "Warcraft3" },
     { ND_PROTO_WEBSOCKET, "Websocket" },
     { ND_PROTO_WHATSAPP_CALL, "WhatsApp/Call" },
-    { ND_PROTO_WHATSAPP_VOICE, "WhatsApp/Voice" },
     { ND_PROTO_WHATSAPP, "WhatsApp" },
     { ND_PROTO_WHOIS_DAS, "Whois/DAS" },
     { ND_PROTO_WIREGUARD, "WireGuard" },
@@ -533,7 +531,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_XBOX, "Xbox" },
     { ND_PROTO_XDMCP, "XDMCP" },
     { ND_PROTO_XMPP, "XMPP" },
-    { ND_PROTO_YAHOO, "Yahoo" },
     { ND_PROTO_Z3950, "Z39/50" },
     { ND_PROTO_ZABBIX, "Zabbix" },
     { ND_PROTO_ZATTOO, "Zattoo" },
@@ -595,7 +592,11 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_DNSCRYPT, ND_PROTO_DNSCRYPT },
     { NDPI_PROTOCOL_DNS, ND_PROTO_DNS },
     { NDPI_PROTOCOL_DOFUS, ND_PROTO_DOFUS },
-    { NDPI_PROTOCOL_DOH_DOT, ND_PROTO_DOH },
+
+    // Currently, the only dissector that can match DoH/DoT/DoQ is QUIC.
+    // The others are content matches only.
+    { NDPI_PROTOCOL_DOH_DOT, ND_PROTO_DOQ },
+
     { NDPI_PROTOCOL_DRDA, ND_PROTO_DRDA },
     { NDPI_PROTOCOL_DROPBOX, ND_PROTO_DROPBOX },
     { NDPI_PROTOCOL_DTLS, ND_PROTO_DTLS },
@@ -697,7 +698,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_SAP, ND_PROTO_SAP },
     { NDPI_PROTOCOL_SFLOW, ND_PROTO_SFLOW },
     { NDPI_PROTOCOL_SHOUTCAST, ND_PROTO_SHOUTCAST },
-    { NDPI_PROTOCOL_SIGNAL, ND_PROTO_SIGNAL },
+    { NDPI_PROTOCOL_SIGNAL_VOIP, ND_PROTO_SIGNAL_CALL },
     { NDPI_PROTOCOL_SIP, ND_PROTO_SIP },
     { NDPI_PROTOCOL_SKINNY, ND_PROTO_CISCO_SKINNY },
     { NDPI_PROTOCOL_SKYPE_CALL, ND_PROTO_SKYPE_CALL },
@@ -730,7 +731,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_TIKTOK, ND_PROTO_TIKTOK },
     { NDPI_PROTOCOL_TINC, ND_PROTO_TINC },
     { NDPI_PROTOCOL_TLS, ND_PROTO_TLS },
-    { NDPI_PROTOCOL_TOR, ND_PROTO_TOR },
     { NDPI_PROTOCOL_TRUPHONE, ND_PROTO_TRUPHONE },
     { NDPI_PROTOCOL_TVUPLAYER, ND_PROTO_TVUPLAYER },
     { NDPI_PROTOCOL_UBNTAC2, ND_PROTO_UBNTAC2 },
@@ -752,7 +752,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_WSD, ND_PROTO_WSD },
     { NDPI_PROTOCOL_XBOX, ND_PROTO_XBOX },
     { NDPI_PROTOCOL_XDMCP, ND_PROTO_XDMCP },
-    { NDPI_PROTOCOL_YAHOO, ND_PROTO_YAHOO },
     { NDPI_PROTOCOL_Z3950, ND_PROTO_Z3950 },
     { NDPI_PROTOCOL_ZABBIX, ND_PROTO_ZABBIX },
     { NDPI_PROTOCOL_ZATTOO, ND_PROTO_ZATTOO },
