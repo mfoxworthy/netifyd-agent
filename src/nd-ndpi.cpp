@@ -147,6 +147,11 @@ void ndpi_global_init(void)
         NDPI_BITMASK_SET_ALL(ndpi_protos);
         nd_dprintf("Enabled all protocols.\n");
     }
+
+    for (auto &it : nd_ndpi_disabled) {
+        NDPI_DEL_PROTOCOL_FROM_BITMASK(ndpi_protos, it);
+        nd_dprintf("Banned protocol by ID: %hu\n", it);
+    }
 }
 
 struct ndpi_detection_module_struct *nd_ndpi_init(void)

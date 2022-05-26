@@ -280,7 +280,7 @@ typedef enum {
     ND_PROTO_NNTPS                  = 259,
     ND_PROTO_DOT                    = 260,
     ND_PROTO_DOQ                    = 261,  // TODO: Refine QUIC via ALPN (doq)
-    ND_PROTO_AMAZON_VIDEO           = 262,
+    ND_PROTO_DEPR262                = 262,  // Deprecated: Amazon Video
     ND_PROTO_AMONG_US               = 263,
     ND_PROTO_AVAST_SDNS             = 264,
     ND_PROTO_CAPWAP                 = 265,
@@ -299,10 +299,10 @@ typedef enum {
     ND_PROTO_GTP_U                  = 274,
     ND_PROTO_HP_VIRTGRP             = 275,
     ND_PROTO_CISCO_HSRP             = 276,
-    ND_PROTO_IEC60870_5_104         = 277, // Extension for industrial 104 protocol recognition
-    ND_PROTO_IMO                    = 278, // No idea what this is.
-    ND_PROTO_IRCS                   = 279, // IRC over TLS
-    ND_PROTO_MONGODB                = 280, // MongoDB
+    ND_PROTO_IEC60870_5_104         = 277,  // Extension for industrial 104 protocol recognition
+    ND_PROTO_DEPR278                = 278,  // Deprecated: IMO
+    ND_PROTO_IRCS                   = 279,  // IRC over TLS
+    ND_PROTO_MONGODB                = 280,  // MongoDB
 
     // NATS: Connective Technology for Adaptive Edge & Distributed Systems
     // https://docs.nats.io/
@@ -313,9 +313,9 @@ typedef enum {
     ND_PROTO_S7COMM                 = 282,
 
     ND_PROTO_SOAP                   = 283,
-    ND_PROTO_TARGUS_GETDATA         = 284, // Targus Dataspeed (speedtest).
-    ND_PROTO_VXLAN                  = 285, // Virtual Extensible LAN.
-    ND_PROTO_WEBSOCKET              = 286, // Websocketj
+    ND_PROTO_TARGUS_GETDATA         = 284,  // Targus Dataspeed (speedtest).
+    ND_PROTO_VXLAN                  = 285,  // Virtual Extensible LAN.
+    ND_PROTO_WEBSOCKET              = 286,  // Websocketj
 
     // Z39.50 dissector.
     // International standard client–server, application layer communications protocol.
@@ -333,7 +333,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_AFP, "AFP" },
     { ND_PROTO_AIMINI, "Aimini" },
     { ND_PROTO_AJP, "AJP" },
-    { ND_PROTO_AMAZON_VIDEO, "AmazonVideo" },
     { ND_PROTO_AMONG_US, "AmongUs" },
     { ND_PROTO_AMQP, "AMQP" },
     { ND_PROTO_APPLEJUICE, "APPLJ" },
@@ -402,7 +401,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_IAX, "IAX" },
     { ND_PROTO_ICECAST, "IceCast" },
     { ND_PROTO_IEC60870_5_104, "IEC60870/5/104" },
-    { ND_PROTO_IMO, "IMO" },
     { ND_PROTO_IP_EGP, "EGP" },
     { ND_PROTO_IP_GRE, "GRE" },
     { ND_PROTO_IP_ICMP, "ICMP" },
@@ -561,7 +559,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_AFP, ND_PROTO_AFP },
     { NDPI_PROTOCOL_AIMINI, ND_PROTO_AIMINI },
     { NDPI_PROTOCOL_AJP, ND_PROTO_AJP },
-    { NDPI_PROTOCOL_AMAZON_VIDEO, ND_PROTO_AMAZON_VIDEO },
     { NDPI_PROTOCOL_AMONG_US, ND_PROTO_AMONG_US },
     { NDPI_PROTOCOL_AMQP, ND_PROTO_AMQP },
     { NDPI_PROTOCOL_APPLEJUICE, ND_PROTO_APPLEJUICE },
@@ -628,7 +625,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_IAX, ND_PROTO_IAX },
     { NDPI_PROTOCOL_ICECAST, ND_PROTO_ICECAST },
     { NDPI_PROTOCOL_IEC60870, ND_PROTO_IEC60870_5_104 },
-    { NDPI_PROTOCOL_IMO, ND_PROTO_IMO },
     { NDPI_PROTOCOL_IP_EGP, ND_PROTO_IP_EGP },
     { NDPI_PROTOCOL_IP_GRE, ND_PROTO_IP_GRE },
     { NDPI_PROTOCOL_IP_ICMP, ND_PROTO_IP_ICMP },
@@ -759,6 +755,13 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_ZOOM, ND_PROTO_ZOOM },
 };
 
+typedef vector<uint16_t> nd_ndpi_disabled_t;
+
+const nd_ndpi_disabled_t nd_ndpi_disabled = {
+    NDPI_PROTOCOL_AMAZON_VIDEO, // No detections and no pcap to test.
+    NDPI_PROTOCOL_IMO,          // Weak, too many false-positives, and obscure/undocumented.
+};
+
 typedef unordered_map<uint16_t, vector<pair<uint16_t, nd_proto_id_t>>> nd_ndpi_portmap_t;
 
 const nd_ndpi_portmap_t nd_ndpi_portmap = {
@@ -769,6 +772,7 @@ const nd_ndpi_portmap_t nd_ndpi_portmap = {
         { 853, ND_PROTO_DOT },
         { 989, ND_PROTO_FTPS_DATA },
         { 990, ND_PROTO_FTPS_CONTROL },
+        { 1883, ND_PROTO_MQTTS },
         { 5061, ND_PROTO_SIPS },
         { 6697, ND_PROTO_IRCS },
         { 8883, ND_PROTO_MQTTS },
