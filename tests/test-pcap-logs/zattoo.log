@@ -1,0 +1,3 @@
+lo: [i4-----] HTTP/S 10.101.0.2:2930 --> 10.102.0.2:443 H: zattoo.com SSL C: zattoo.com
+lo: [i4-u---] HTTP/S 10.101.0.2:2930 --> 10.102.0.2:443 H: zattoo.com SSL C: zattoo.com
+lo: [i4-----] HTTP.netify.akamai 10.101.0.2:2936 --> 10.102.0.2:80 H: zattosecurehd2-f.akamaihd.net
