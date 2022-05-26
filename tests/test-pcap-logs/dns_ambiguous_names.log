@@ -1,0 +1,10 @@
+lo: [i4-----] DNS.netify.apple-push 8.8.8.8:53 <-- 10.200.2.11:48375 H: 41-courier.push.apple.com
+lo: [i4-----] DNS.netify.teams 8.8.8.8:53 <-- 10.200.2.11:57290 H: teams.skype.com
+lo: [i4-----] DNS.netify.teams 8.8.8.8:53 <-- 10.200.2.11:57051 H: api.teams.skype.com
+lo: [i4-----] DNS.netify.google-hangouts 8.8.8.8:53 <-- 10.200.2.11:46134 H: alt2-mtalk.google.com
+lo: [i4-----] DNS.netify.android 8.8.8.8:53 <-- 10.200.2.11:57632 H: android.clients.google.com
+lo: [i4-----] DNS.netify.teams 8.8.8.8:53 <-- 10.200.2.11:42790 H: _.teams.microsoft.com
+lo: [i4-----] DNS.netify.google 8.8.8.8:53 <-- 10.200.2.11:44198 H: wide-youtube.l.google.com
+lo: [i4-----] DNS.netify.apple 8.8.8.8:53 <-- 10.200.2.11:52541 H: guzzoni.apple.com
+lo: [i4-----] DNS 8.8.8.8:53 <-- 10.200.2.11:53951 H: short.weixin.qq.com
+lo: [i4-----] DNS.netify.facebook 8.8.8.8:53 <-- 10.200.2.11:44883 H: instagram.faae1-1.fna.fbcdn.net
