@@ -671,6 +671,15 @@ void ndCaptureThread::ProcessPacket(void)
 
     switch (pcap_datalink_type) {
     case DLT_NULL:
+        if (pkt_header->caplen < sizeof(uint32_t)) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
+#endif
+            return;
+        }
+
         switch (ntohl(*((uint32_t *)pkt_data))) {
         case 2:
             type = ETHERTYPE_IP;
@@ -694,6 +703,15 @@ void ndCaptureThread::ProcessPacket(void)
         break;
 
     case DLT_EN10MB:
+        if (pkt_header->caplen < sizeof(struct ether_header)) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
+#endif
+            return;
+        }
+
         hdr_eth = reinterpret_cast<const struct ether_header *>(pkt_data);
         type = ntohs(hdr_eth->ether_type);
         l2_len = sizeof(struct ether_header);
@@ -715,6 +733,15 @@ void ndCaptureThread::ProcessPacket(void)
         break;
 
     case DLT_LINUX_SLL:
+        if (pkt_header->caplen < sizeof(struct sll_header)) {
+            stats->pkt.discard++;
+            stats->pkt.discard_bytes += pkt_header->len;
+#ifdef _ND_LOG_PKT_DISCARD
+            nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
+#endif
+            return;
+        }
+
         hdr_sll = reinterpret_cast<const struct sll_header *>(pkt_data);
         type = hdr_sll->sll_protocol;
         l2_len = SLL_HDR_LEN;
