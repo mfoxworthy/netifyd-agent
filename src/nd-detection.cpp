@@ -429,7 +429,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        // Determine application based on master protocol metadata
+        // Determine application based on master protocol metadata for
+        // Protocol / Application "Twins"
         switch (ndEF->master_protocol()) {
 
         case ND_PROTO_SKYPE_CALL:
@@ -447,6 +448,26 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         case ND_PROTO_VIBER:
             ndEF->detected_application = nd_apps->Lookup("netify.viber");
+            break;
+
+        case ND_PROTO_NEST_LOG_SINK:
+            ndEF->detected_application = nd_apps->Lookup("netify.nest");
+            break;
+
+        case ND_PROTO_STEAM:
+            ndEF->detected_application = nd_apps->Lookup("netify.steam");
+            break;
+
+        case ND_PROTO_TEAMVIEWER:
+            ndEF->detected_application = nd_apps->Lookup("netify.teamviewer");
+            break;
+
+        case ND_PROTO_PPSTREAM:
+            ndEF->detected_application = nd_apps->Lookup("netify.iqiyi");
+            break;
+
+        case ND_PROTO_APPLE_PUSH:
+            ndEF->detected_application = nd_apps->Lookup("netify.apple-push");
             break;
 
         default:
