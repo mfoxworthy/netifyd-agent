@@ -11,6 +11,9 @@ EXTRA_DIST = ndpi-pcap-files.txt netifyd-test-pcap.conf \
 test:
 	sudo TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
 
+test-valgrind:
+	sudo WITH_VALGRIND="yes" TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
+
 clean-local: clean-local-check
 clean-local-check:
 	-rm -rf pcap-test/*.cap
