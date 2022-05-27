@@ -159,9 +159,20 @@ ndFlow::~ndFlow()
         free(detected_application_name);
         detected_application_name = NULL;
     }
+
     if (has_ssl_server_names()) {
         free(ssl.server_names);
         ssl.server_names = NULL;
+    }
+
+    if (has_ssl_issuer_dn()) {
+        free(ssl.issuer_dn);
+        ssl.issuer_dn = NULL;
+    }
+
+    if (has_ssl_subject_dn()) {
+        free(ssl.subject_dn);
+        ssl.subject_dn = NULL;
     }
 }
 
