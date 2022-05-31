@@ -9,7 +9,7 @@ EXTRA_DIST = ndpi-pcap-files.txt netifyd-test-pcap.conf \
 	test-pcap-logs test-pcap-regression.sh pcap/ssdp.cap.gz
 
 test:
-	sudo TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
+	sudo WITH_VALGRIND="no" TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
 
 test-valgrind:
 	sudo WITH_VALGRIND="yes" TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
