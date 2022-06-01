@@ -61,6 +61,7 @@ using namespace std;
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
+#include "nd-risks.h"
 #include "nd-flow.h"
 
 // Enable flow hash cache debug logging
@@ -98,7 +99,8 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0), gtp{}
+    flags{}, queued(0), gtp{},
+    risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     lower_addr4 = (struct sockaddr_in *)&lower_addr;
     lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
@@ -137,7 +139,8 @@ ndFlow::ndFlow(const ndFlow &flow)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0), gtp(flow.gtp)
+    flags{}, queued(0), gtp(flow.gtp),
+    risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     memcpy(lower_mac, flow.lower_mac, ETH_ALEN);
     memcpy(upper_mac, flow.upper_mac, ETH_ALEN);
@@ -933,6 +936,11 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
         j["first_seen_at"] = ts_first_seen;
         j["first_update_at"] = ts_first_update;
+
+        j["risks"]["risks"] = risks;
+        j["risks"]["ndpi_risk_score"] = ndpi_risk_score;
+        j["risks"]["ndpi_risk_score_client"] = ndpi_risk_score_client;
+        j["risks"]["ndpi_risk_score_server"] = ndpi_risk_score_server;
     }
 
     if (encode_includes & ENCODE_TUNNELS) {

@@ -85,6 +85,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
+#include "nd-risks.h"
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
@@ -1030,8 +1031,30 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     }
 
     // Flow detection complete.
-    if (ndEF->flags.detection_init.load() && ! check_extra_packets)
+    if (ndEF->flags.detection_init.load() && ! check_extra_packets) {
         ndEF->flags.detection_complete = true;
+
+        if (ndEFNF->risk != NDPI_NO_RISK) {
+            for (int i = 0; i < NDPI_MAX_RISK; i++) {
+                if (NDPI_ISSET_BIT(ndEFNF->risk, i) != 0) {
+                    nd_risk_id_t risk_id = nd_ndpi_risk_find(i);
+
+                    nd_dprintf("Detected risk: %s/%s\n",
+                        ndpi_risk2str((ndpi_risk_enum)i),
+                        nd_risk_get_name(risk_id)
+                    );
+
+                    ndEF->risks.push_back(risk_id);
+                }
+            }
+        }
+
+        ndEF->ndpi_risk_score = ndpi_risk2score(
+            ndEFNF->risk,
+            &ndEF->ndpi_risk_score_client,
+            &ndEF->ndpi_risk_score_server
+        );
+    }
 
     if (flow_update) {
 

@@ -15,7 +15,8 @@ NDPI_PCAPS=$(sort "${TESTDIR}/ndpi-pcap-files.txt" | egrep -v '^#' |\
 PCAPS="$(echo ${ND_PCAPS} ${NDPI_PCAPS} | sort)"
 
 CONF="${TESTDIR}/netifyd-test-pcap.conf"
-SINK_CONF="${TESTDIR}/../deploy/netify-sink.conf"
+#SINK_CONF="${TESTDIR}/../deploy/netify-sink.conf"
+SINK_CONF="/etc/netify.d/netify-sink.conf"
 NETIFYD="${TESTDIR}/../src/.libs/netifyd"
 NETWORK=192.168.242.0/24
 BOLD=$(tput bold)
@@ -28,7 +29,7 @@ echo -e "\nStarting capture tests..."
 run_test() {
     BASE=$(echo $1 | sed -e 's/\.[pc]*ap.*$//')
     NAME=$(basename "${BASE}")
-    LOG=$(printf "%s/test-pcap-logs/%s.log" ${TESTDIR} $(basename ${BASE}))
+    LOG=$(printf "%s/test-pcap-logs/%s.log" ${TESTDIR} ${NAME})
     if echo $1 | egrep -q '\.gz$'; then
         zcat $1 > ${BASE}-test.cap || exit $?
     else
@@ -36,6 +37,9 @@ run_test() {
     fi
     echo -e "\n${BOLD}>>> ${NAME}${NORMAL}"
     CMD="${NETIFYD} -t -c $CONF -f $SINK_CONF --thread-detection-cores=1 -I lo,${BASE}-test.cap -A $NETWORK -T ${LOG}"
+    if [ "x${WITH_VALGRIND}" == "xyes" ]; then
+        CMD="valgrind --tool=memcheck --leak-check=full --track-origins=yes --log-file=/tmp/${NAME}.log ${CMD}"
+    fi
     echo $CMD
     $CMD || exit $?
     rm -f ${BASE}-test.cap

@@ -2,7 +2,6 @@ lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:51543 H: ios.ncc
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:52116 H: ichnaea.us-west-2.prodaa.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53114 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
-lo: [i4--g--] HTTP/S 52.24.87.6:443 <-- 192.168.1.7:52929
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
@@ -55,22 +54,22 @@ lo: [i4---d-] HTTP.netify.netflix 184.25.204.24:80 <-- 192.168.1.7:53153 H: tp.a
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53162 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53162 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53162 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
-lo: [i4-----] HTTP 23.246.11.145:80 <-- 192.168.1.7:53163 H: 23.246.11.145
-lo: [i4-----] HTTP 23.246.10.139:80 <-- 192.168.1.7:53164 H: 23.246.10.139
-lo: [i4-----] HTTP 23.246.3.140:80 <-- 192.168.1.7:53171 H: 23.246.3.140
-lo: [i4-----] HTTP 23.246.11.133:80 <-- 192.168.1.7:53172 H: 23.246.11.133
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53174 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.133:80 <-- 192.168.1.7:53173 H: 23.246.11.133
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53175 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53179 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53178 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53176 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53177 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53180 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53181 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53182 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53184 H: 23.246.11.141
-lo: [i4-----] HTTP 23.246.3.140:80 <-- 192.168.1.7:53183 H: 23.246.3.140
+lo: [i4-----] HTTP.netify.netflix 23.246.11.145:80 <-- 192.168.1.7:53163 H: 23.246.11.145
+lo: [i4-----] HTTP.netify.netflix 23.246.10.139:80 <-- 192.168.1.7:53164 H: 23.246.10.139
+lo: [i4-----] HTTP.netify.netflix 23.246.3.140:80 <-- 192.168.1.7:53171 H: 23.246.3.140
+lo: [i4-----] HTTP.netify.netflix 23.246.11.133:80 <-- 192.168.1.7:53172 H: 23.246.11.133
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53174 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.133:80 <-- 192.168.1.7:53173 H: 23.246.11.133
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53175 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53179 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53178 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53176 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53177 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53180 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53181 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53182 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53184 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.3.140:80 <-- 192.168.1.7:53183 H: 23.246.3.140
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:60962 H: ichnaea.geo.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53193 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53202 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
@@ -82,8 +81,8 @@ lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53193 H: io
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.37.36.252:443 <-- 192.168.1.7:53203 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53202 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.37.36.252:443 <-- 192.168.1.7:53203 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
-lo: [i4-----] HTTP 23.246.11.133:80 <-- 192.168.1.7:53210 H: 23.246.11.133
-lo: [i4-----] HTTP 23.246.11.141:80 <-- 192.168.1.7:53217 H: 23.246.11.141
+lo: [i4-----] HTTP.netify.netflix 23.246.11.133:80 <-- 192.168.1.7:53210 H: 23.246.11.133
+lo: [i4-----] HTTP.netify.netflix 23.246.11.141:80 <-- 192.168.1.7:53217 H: 23.246.11.141
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:51622 H: ios.nccp.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 52.32.22.214:443 <-- 192.168.1.7:53238 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.32.22.214:443 <-- 192.168.1.7:53238 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
@@ -103,3 +102,4 @@ lo: [i4-u-d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53250 H: api-
 lo: [i4-----] DNS.netify.akamai 192.168.1.1:53 <-- 192.168.1.7:57093 H: a1907.dscg.akamai.net
 lo: [i4---d-] HTTP.netify.netflix 184.25.204.10:80 <-- 192.168.1.7:53251 H: art-1.nflximg.net
 lo: [i4---d-] HTTP.netify.netflix 184.25.204.10:80 <-- 192.168.1.7:53252 H: art-1.nflximg.net
+lo: [i4--g--] HTTP/S 52.24.87.6:443 <-- 192.168.1.7:52929

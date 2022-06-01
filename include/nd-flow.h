@@ -279,6 +279,11 @@ public:
         } gtp;
     };
 
+    vector<nd_risk_id_t> risks;
+    uint16_t ndpi_risk_score;
+    uint16_t ndpi_risk_score_client;
+    uint16_t ndpi_risk_score_server;
+
     ndFlow(nd_ifaces::iterator iface);
     ndFlow(const ndFlow &flow);
     virtual ~ndFlow();
