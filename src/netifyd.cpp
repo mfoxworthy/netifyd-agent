@@ -580,8 +580,9 @@ static int nd_config_load(void)
 #define _ND_LO_DUMP_APPS            12
 #define _ND_LO_DUMP_CAT             13
 #define _ND_LO_DUMP_CATS            14
-#define _ND_LO_DUMP_SORT_BY_TAG     15
-#define _ND_LO_EXPORT_APPS          16
+#define _ND_LO_DUMP_RISKS           15
+#define _ND_LO_DUMP_SORT_BY_TAG     16
+#define _ND_LO_EXPORT_APPS          17
 
 static int nd_config_set_option(int option)
 {
@@ -742,12 +743,14 @@ static void nd_usage(int rc = 0, bool version = false)
 
 #ifndef _ND_LEAN_AND_MEAN
             "\nDump options:\n"
-            "  --dump-sort-by-tag\n    Sort application/protocol list by tag.\n"
-            "    Default: sort by application/protocol ID.\n"
+            "  --dump-sort-by-tag\n    Sort entries by tag.\n"
+            "    Default: sort entries by ID.\n"
             "  -P, --dump-all\n    Dump all applications and protocols.\n"
             "  --dump-apps\n    Dump applications only.\n"
             "  --dump-protos\n    Dump protocols only.\n"
             "  --dump-categories\n    Dump application and protocol categories.\n"
+            "  --dump-category <type>\n    Dump categories by type: application or protocol\n"
+            "  --dump-risks\n    Dump flow security risks.\n"
 #endif
             "\nCapture options:\n"
             "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
@@ -2325,8 +2328,9 @@ enum ndDumpFlags {
     ndDUMP_TYPE_APPS = 0x02,
     ndDUMP_TYPE_CAT_APP = 0x04,
     ndDUMP_TYPE_CAT_PROTO = 0x08,
-    ndDUMP_TYPE_VALID = 0x10,
-    ndDUMP_SORT_BY_TAG = 0x20,
+    ndDUMP_TYPE_RISKS = 0x10,
+    ndDUMP_TYPE_VALID = 0x20,
+    ndDUMP_SORT_BY_TAG = 0x40,
     ndDUMP_TYPE_CATS = (ndDUMP_TYPE_CAT_APP | ndDUMP_TYPE_CAT_PROTO),
     ndDUMP_TYPE_ALL = (ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS)
 };
@@ -2336,7 +2340,7 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
     struct ndpi_detection_module_struct *ndpi;
 
     if (! (type & ndDUMP_TYPE_PROTOS) && ! (type & ndDUMP_TYPE_APPS) &&
-        ! (type & ndDUMP_TYPE_CATS)) {
+        ! (type & ndDUMP_TYPE_CATS) && ! (type & ndDUMP_TYPE_RISKS)) {
         printf("No filter type specified (application, protocol).\n");
         return;
     }
@@ -2355,8 +2359,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
         }
     }
 
-    map<unsigned, string> protos_by_id;
-    map<string, unsigned> protos_by_tag;
+    map<unsigned, string> entries_by_id;
+    map<string, unsigned> entries_by_tag;
 
     if (type & ndDUMP_TYPE_PROTOS) {
         for (auto &proto : nd_protos) {
@@ -2364,9 +2368,9 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
             if (proto.first == ND_PROTO_TODO) continue;
 
             if (! (type & ndDUMP_SORT_BY_TAG))
-                protos_by_id[proto.first] = proto.second;
+                entries_by_id[proto.first] = proto.second;
             else
-                protos_by_tag[proto.second] = proto.first;
+                entries_by_tag[proto.second] = proto.first;
         }
     }
 
@@ -2383,16 +2387,28 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
         for (auto &app : apps) {
 
             if (! (type & ndDUMP_SORT_BY_TAG))
-                protos_by_id[app.second] = app.first;
+                entries_by_id[app.second] = app.first;
             else
-                protos_by_tag[app.first] = app.second;
+                entries_by_tag[app.first] = app.second;
         }
     }
 
-    for (auto &proto : protos_by_id)
-        printf("%6u: %s\n", proto.first, proto.second.c_str());
-    for (auto &proto : protos_by_tag)
-        printf("%6u: %s\n", proto.second, proto.first.c_str());
+    if (type & ndDUMP_TYPE_RISKS) {
+        for (auto &risk : nd_risks) {
+
+            if (risk.first == ND_RISK_TODO) continue;
+
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                entries_by_id[risk.first] = risk.second;
+            else
+                entries_by_tag[risk.second] = risk.first;
+        }
+    }
+
+    for (auto &entry : entries_by_id)
+        printf("%6u: %s\n", entry.first, entry.second.c_str());
+    for (auto &entry : entries_by_tag)
+        printf("%6u: %s\n", entry.second, entry.first.c_str());
 }
 
 int static nd_export_applications(void)
@@ -2921,6 +2937,7 @@ int main(int argc, char *argv[])
         { "dump-applications", 0, 0, _ND_LO_DUMP_APPS },
         { "dump-category", 1, 0, _ND_LO_DUMP_CAT },
         { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
+        { "dump-risks", 0, 0, _ND_LO_DUMP_RISKS },
 
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
 
@@ -3035,6 +3052,14 @@ int main(int argc, char *argv[])
         case _ND_LO_DUMP_CATS:
 #ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_CATS | dump_flags);
+            exit(0);
+#else
+            fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
+            exit(1);
+#endif
+        case _ND_LO_DUMP_RISKS:
+#ifndef _ND_LEAN_AND_MEAN
+            nd_dump_protocols(ndDUMP_TYPE_RISKS | dump_flags);
             exit(0);
 #else
             fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
