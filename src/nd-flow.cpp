@@ -90,7 +90,7 @@ ndFlow::ndFlow(nd_ifaces::iterator iface)
     category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
     digest_lower{}, digest_mdata{},
-    host_server_name{}, http{},
+    dns_host_name{}, host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
     capture_filename{},
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
@@ -130,7 +130,7 @@ ndFlow::ndFlow(const ndFlow &flow)
     detected_application_name(NULL),
     category { ND_CAT_UNKNOWN, ND_CAT_UNKNOWN, ND_CAT_UNKNOWN },
     ndpi_flow(NULL),
-    host_server_name{}, http{},
+    dns_host_name{}, host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
     capture_filename{},
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
@@ -161,11 +161,6 @@ ndFlow::~ndFlow()
     if (detected_application_name != NULL) {
         free(detected_application_name);
         detected_application_name = NULL;
-    }
-
-    if (has_ssl_server_names()) {
-        free(ssl.server_names);
-        ssl.server_names = NULL;
     }
 
     if (has_ssl_issuer_dn()) {
@@ -233,11 +228,11 @@ void ndFlow::hash(const string &device,
 
         if (host_server_name[0] != '\0') {
             sha1_write(&ctx,
-                host_server_name, strnlen(host_server_name, ND_MAX_HOSTNAME));
+                host_server_name, strnlen(host_server_name, ND_FLOW_HOSTNAME));
         }
         if (has_ssl_client_sni()) {
             sha1_write(&ctx,
-                ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_TLS_CNLEN));
+                ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_HOSTNAME));
         }
         if (has_bt_info_hash()) {
             sha1_write(&ctx, bt.info_hash, ND_FLOW_BTIHASH_LEN);
@@ -398,7 +393,7 @@ bool ndFlow::has_ssl_client_sni(void) const
 {
     return (
         (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
-        ssl.client_sni[0] != '\0'
+        ssl.client_sni != NULL && ssl.client_sni[0] != '\0'
     );
 }
 
@@ -423,22 +418,6 @@ bool ndFlow::has_ssl_subject_dn(void) const
     return (
         (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.subject_dn != NULL
-    );
-}
-
-bool ndFlow::has_ssl_server_names(void) const
-{
-    return (
-        master_protocol() == ND_PROTO_TLS &&
-        ssl.server_names_length > 0 && ssl.server_names != NULL
-    );
-}
-
-bool ndFlow::has_ssl_server_organization(void) const
-{
-    return (
-        master_protocol() == ND_PROTO_TLS &&
-        ssl.server_organization[0] != '\0'
     );
 }
 
@@ -473,31 +452,7 @@ bool ndFlow::has_ssdp_headers(void) const
         ssdp.headers.size()
     );
 }
-
-bool ndFlow::has_kerberos_hostname(void) const
-{
-    return (
-        detected_protocol == ND_PROTO_KERBEROS &&
-        kerberos.hostname[0] != '\0'
-    );
-}
-
-bool ndFlow::has_kerberos_domain(void) const
-{
-    return (
-        detected_protocol == ND_PROTO_KERBEROS &&
-        kerberos.domain[0] != '\0'
-    );
-}
-
-bool ndFlow::has_kerberos_username(void) const
-{
-    return (
-        detected_protocol == ND_PROTO_KERBEROS &&
-        kerberos.username[0] != '\0'
-    );
-}
-
+#if 0
 bool ndFlow::has_mining_variant(void) const
 {
     return (
@@ -505,7 +460,7 @@ bool ndFlow::has_mining_variant(void) const
         mining.variant[0] != '\0'
     );
 }
-
+#endif
 void ndFlow::print(void) const
 {
     const char *lower_name = lower_ip, *upper_name = upper_ip;
@@ -554,8 +509,10 @@ void ndFlow::print(void) const
         (origin == ORIGIN_UNKNOWN) ? '?' : '-',
         (origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ? '-' : '>',
         upper_name, ntohs(upper_port),
-        (host_server_name[0] != '\0') ? " H: " : "",
-        (host_server_name[0] != '\0') ? host_server_name : "",
+        (dns_host_name[0] != '\0' || host_server_name[0] != '\0') ? " H: " : "",
+        (host_server_name[0] != '\0') ? host_server_name : (
+            (dns_host_name[0] != '\0') ? dns_host_name : ""
+        ),
         (has_ssl_client_sni()) ? " SSL" : "",
         (has_ssl_client_sni()) ? " C: " : "",
         (has_ssl_client_sni()) ? ssl.client_sni : "",
@@ -838,6 +795,9 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["category"]["protocol"] = category.protocol;
         j["category"]["domain"] = category.domain;
 
+        if (dns_host_name[0] != '\0')
+            j["dns_host_name"] = dns_host_name;
+
         if (host_server_name[0] != '\0')
             j["host_server_name"] = host_server_name;
 
@@ -890,18 +850,6 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
             if (has_ssl_subject_dn())
                 j["ssl"]["subject_dn"] = ssl.subject_dn;
 
-            if (has_ssl_server_names()) {
-                string name;
-                vector<string> names;
-                stringstream ss(ssl.server_names);
-                while (getline(ss, name, ','))
-                    names.push_back(name);
-                j["ssl"]["server_names"] = names;
-            }
-
-            if (has_ssl_server_organization())
-                j["ssl"]["organization"] = ssl.server_organization;
-
             if (has_ssl_client_ja3())
                 j["ssl"]["client_ja3"] = ssl.client_ja3;
 
@@ -912,6 +860,9 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 nd_sha1_to_string((const uint8_t *)ssl.cert_fingerprint, digest);
                 j["ssl"]["fingerprint"] = digest;
             }
+
+            j["ssl"]["alpn"] = ssl.alpn;
+            j["ssl"]["alpn_server"] = ssl.alpn_server;
         }
 
         if (has_bt_info_hash()) {
@@ -921,19 +872,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
         if (has_ssdp_headers())
             j["ssdp"] = ssdp.headers;
-
-        if (has_kerberos_hostname())
-            j["kerberos"]["hostname"] = kerberos.hostname;
-
-        if (has_kerberos_domain())
-            j["kerberos"]["domain"] = kerberos.domain;
-
-        if (has_kerberos_username())
-            j["kerberos"]["username"] = kerberos.username;
-
+#if 0
         if (has_mining_variant())
             j["mining"]["variant"] = mining.variant;
-
+#endif
         j["first_seen_at"] = ts_first_seen;
         j["first_update_at"] = ts_first_update;
 

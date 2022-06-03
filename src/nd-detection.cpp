@@ -422,20 +422,26 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
             }
 
-            if (ndEF->flags.dhc_hit.load() &&
-                (ndEFNF->host_server_name[0] == '\0' ||
-                nd_is_ipaddr((const char *)ndEFNF->host_server_name))) {
+            if (ndEF->flags.dhc_hit.load()) {
                 snprintf(
-                    (char *)ndEFNF->host_server_name,
-                    sizeof(ndEFNF->host_server_name) - 1,
+                    ndEF->dns_host_name,
+                    sizeof(ndEF->dns_host_name) - 1,
                     "%s", hostname.c_str()
                 );
+                if (ndEFNF->host_server_name[0] == '\0' ||
+                    nd_is_ipaddr((const char *)ndEFNF->host_server_name)) {
+                    snprintf(
+                        (char *)ndEFNF->host_server_name,
+                        sizeof(ndEFNF->host_server_name) - 1,
+                        "%s", hostname.c_str()
+                    );
+                }
             }
         }
 
         // Sanitize host server name; RFC 952 plus underscore for SSDP.
         for(unsigned i = 0;
-            i < ND_MAX_HOSTNAME &&
+            i < ND_FLOW_HOSTNAME &&
             i < sizeof(ndEFNF->host_server_name); i++) {
 
             if (isalnum(ndEFNF->host_server_name[i]) ||
@@ -456,39 +462,39 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         case ND_PROTO_SKYPE_CALL:
         case ND_PROTO_SKYPE_TEAMS:
-            ndEF->detected_application = nd_apps->Lookup("netify.skype");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.skype"));
             break;
 
         case ND_PROTO_SPOTIFY:
-            ndEF->detected_application = nd_apps->Lookup("netify.spotify");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
             break;
 
         case ND_PROTO_UBNTAC2:
-            ndEF->detected_application = nd_apps->Lookup("netify.ubiquiti");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
             break;
 
         case ND_PROTO_VIBER:
-            ndEF->detected_application = nd_apps->Lookup("netify.viber");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.viber"));
             break;
 
         case ND_PROTO_NEST_LOG_SINK:
-            ndEF->detected_application = nd_apps->Lookup("netify.nest");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.nest"));
             break;
 
         case ND_PROTO_STEAM:
-            ndEF->detected_application = nd_apps->Lookup("netify.steam");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.steam"));
             break;
 
         case ND_PROTO_TEAMVIEWER:
-            ndEF->detected_application = nd_apps->Lookup("netify.teamviewer");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
             break;
 
         case ND_PROTO_PPSTREAM:
-            ndEF->detected_application = nd_apps->Lookup("netify.iqiyi");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.iqiyi"));
             break;
 
         case ND_PROTO_APPLE_PUSH:
-            ndEF->detected_application = nd_apps->Lookup("netify.apple-push");
+            SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
             break;
 
         default:
@@ -497,42 +503,54 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         // Determine application by host_server_name if still unknown.
         if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            if (ndEF->host_server_name[0] != '\0') {
-                ndEF->detected_application = nd_apps->Find(
-                    (const char *)ndEF->host_server_name
-                );
-            }
+            if (ndEF->host_server_name[0] != '\0')
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
         }
 
+        // Determine application by dns_host_name if still unknown.
+        if (ndEF->detected_application == ND_APP_UNKNOWN) {
+            if (ndEF->dns_host_name[0] != '\0')
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
+        }
+
+        // Determine application by network CIDR if still unknown.
         if (ndEF->detected_application == ND_APP_UNKNOWN) {
             switch (ndEF->ip_version) {
             case 4:
-                ndEF->detected_application = nd_apps->Find(
-                    AF_INET,
-                    static_cast<void *>(
-                        &ndEF->lower_addr4->sin_addr
+                SetDetectedApplication(entry,
+                    nd_apps->Find(
+                        AF_INET,
+                        static_cast<void *>(
+                            &ndEF->lower_addr4->sin_addr
+                        )
                     )
                 );
                 if (ndEF->detected_application) break;
-                ndEF->detected_application = nd_apps->Find(
-                    AF_INET,
-                    static_cast<void *>(
-                        &ndEF->upper_addr4->sin_addr
+                SetDetectedApplication(entry,
+                    nd_apps->Find(
+                        AF_INET,
+                        static_cast<void *>(
+                            &ndEF->upper_addr4->sin_addr
+                        )
                     )
                 );
                 break;
             case 6:
-                ndEF->detected_application = nd_apps->Find(
-                    AF_INET6,
-                    static_cast<void *>(
-                        &ndEF->lower_addr6->sin6_addr
+                SetDetectedApplication(entry,
+                    nd_apps->Find(
+                        AF_INET6,
+                        static_cast<void *>(
+                            &ndEF->lower_addr6->sin6_addr
+                        )
                     )
                 );
                 if (ndEF->detected_application) break;
-                ndEF->detected_application = nd_apps->Find(
-                    AF_INET6,
-                    static_cast<void *>(
-                        &ndEF->upper_addr6->sin6_addr
+                SetDetectedApplication(entry,
+                    nd_apps->Find(
+                        AF_INET6,
+                        static_cast<void *>(
+                            &ndEF->upper_addr6->sin6_addr
+                        )
                     )
                 );
                 break;
@@ -558,10 +576,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEFNFP.tls_quic.server_cipher;
 
             // TODO: No need for client_sni any longer, it's set in host_server_name.
-            snprintf(ndEF->ssl.client_sni, ND_FLOW_TLS_CNLEN,
-                "%s", ndEFNF->host_server_name);
-            snprintf(ndEF->ssl.client_ja3, ND_FLOW_TLS_JA3LEN,
-                "%s", ndEFNFP.tls_quic.ja3_client);
+            ndEF->ssl.client_sni = ndEFNF->host_server_name;
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
@@ -570,11 +585,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
-                if (ndEF->detected_application == ND_APP_UNKNOWN) {
-                    ndEF->detected_application = nd_apps->Find(
-                        (const char *)ndEF->ssl.server_cn
-                    );
-                }
+                // Detect to application by server CN if still unknown.
+                if (ndEF->detected_application == ND_APP_UNKNOWN)
+                    SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
             }
 
             if (ndEF->ssl.issuer_dn == NULL &&
@@ -655,18 +668,12 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 #endif
             break;
-        case ND_PROTO_KERBEROS:
-            snprintf(ndEF->kerberos.hostname, ND_FLOW_KERBEROS_HOST,
-                "%s", ndEFNFP.kerberos.hostname);
-            snprintf(ndEF->kerberos.domain, ND_FLOW_KERBEROS_DOMAIN,
-                "%s", ndEFNFP.kerberos.domain);
-            snprintf(ndEF->kerberos.username, ND_FLOW_KERBEROS_USER,
-                "%s", ndEFNFP.kerberos.username);
-            break;
+#if 0
         case ND_PROTO_MINING:
             snprintf(ndEF->mining.variant, ND_FLOW_EXTRA_INFO,
                 "%s", ndEFNF->flow_extra_info);
             break;
+#endif
         default:
             break;
         }
@@ -847,16 +854,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->detected_protocol
         );
 
-        if (ndEF->detected_application != ND_APP_UNKNOWN) {
-            ndEF->detected_application_name = strdup(
-                nd_apps->Lookup(ndEF->detected_application)
-            );
-            ndEF->category.application = nd_categories->Lookup(
-                ndCAT_TYPE_APP,
-                (unsigned)ndEF->detected_application
-            );
-        }
-
         if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
             ndEF->category.protocol = nd_categories->Lookup(
                 ndCAT_TYPE_PROTO,
@@ -905,11 +902,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
-                if (ndEF->detected_application == ND_APP_UNKNOWN) {
-                    ndEF->detected_application = nd_apps->Find(
-                        (const char *)ndEF->ssl.server_cn
-                    );
-                }
+                // Detect to application by server CN if still unknown.
+                if (ndEF->detected_application == ND_APP_UNKNOWN)
+                    SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
 
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
@@ -951,77 +946,22 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->flags.detection_updated = true;
             }
 
-            if (ndEF->ssl.server_names_length <
-                ndEFNFP.tls_quic.server_names_len &&
-                ndEFNFP.tls_quic.server_names) {
-
-                ndEF->ssl.server_names_length = ndEFNFP.tls_quic.server_names_len;
-                ndEF->ssl.server_names = (char *)realloc(
-                    (void *)ndEF->ssl.server_names,
-                    ndEF->ssl.server_names_length + 1
-                );
-                if (ndEF->ssl.server_names == NULL)
-                    throw ndDetectionThreadException(strerror(ENOMEM));
-                memcpy(
-                    ndEF->ssl.server_names,
-                    ndEFNFP.tls_quic.server_names,
-                    ndEF->ssl.server_names_length
-                );
-                ndEF->ssl.server_names[ndEF->ssl.server_names_length] = '\0';
-
-                flow_update = true;
-                ndEF->flags.detection_updated = true;
-            }
-
             if (ndEFNFP.tls_quic.alpn) {
 
-                //nd_dprintf("%s: TLS ALPN: %s\n", tag.c_str(),
-                //    ndEFNFP.tls_quic.alpn);
-                stringstream ss(
-                    ndEFNFP.tls_quic.alpn
-                );
-
-                while (ss.good()) {
-                    string alpn;
-                    getline(ss, alpn, ',');
-
-                    //nd_dprintf("%s: TLS ALPN: search for: %s\n", tag.c_str(),
-                    //    alpn.c_str());
-
-                    for (int i = 0; ; i++) {
-                        if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
-                        if (strncmp(alpn.c_str(),
-                            nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
-                        if (nd_alpn_proto_map[i].proto_id == ndEF->detected_protocol)
-                            continue;
-
-                        nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
-                            tag.c_str(), alpn.c_str(),
-                            ndEF->detected_protocol_name,
-                            nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
-                        );
-
-                        ndEF->detected_protocol = nd_alpn_proto_map[i].proto_id;
-                        ndEF->detected_protocol_name = nd_proto_get_name(
-                            nd_alpn_proto_map[i].proto_id
-                        );
-
-                        flow_update = true;
-                        ndEF->flags.detection_updated = true;
-                        break;
-                    }
-                }
+                ProcessALPN(entry, true);
 
                 free(ndEFNFP.tls_quic.alpn);
                 ndEFNFP.tls_quic.alpn = NULL;
             }
+
+            if (ndEFNFP.tls_quic.alpn_server) {
+
+                flow_update = ProcessALPN(entry, false);
+
+                free(ndEFNFP.tls_quic.alpn_server);
+                ndEFNFP.tls_quic.alpn_server = NULL;
+            }
 #if 0
-/*
-            snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                "%s", ndEFNFP.tls_quic.server_certificate);
-            snprintf(ndEF->ssl.server_organization, ND_FLOW_TLS_ORGLEN,
-                "%s", ndEFNFP.tls_quic.server_organization);
-*/
         nd_dprintf("--> PROCESS EXTRA PACKETS: hello: %s\n",
             (ndEFNFP.tls_quic.hello_processed) ?
             "yes" : "no");
@@ -1113,6 +1053,80 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
     if (ndEF->flags.detection_complete.load())
         ndEF->release();
+}
+
+bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
+{
+    bool flow_update = false;
+    const char *detected_alpn = (client) ?
+        ndEFNFP.tls_quic.alpn : ndEFNFP.tls_quic.alpn_server;
+//    nd_dprintf("%s: TLS %s ALPN: %s\n",
+//        tag.c_str(), (client) ? "client" : "server", detected_alpn);
+
+    stringstream ss(detected_alpn);
+
+    while (ss.good()) {
+        string alpn;
+        getline(ss, alpn, ',');
+
+        if (client) {
+            ndEF->ssl.alpn.push_back(alpn);
+            continue;
+        }
+
+        ndEF->ssl.alpn_server.push_back(alpn);
+
+        //nd_dprintf("%s: TLS ALPN: search for: %s\n", tag.c_str(),
+        //    alpn.c_str());
+
+        for (int i = 0; ; i++) {
+            if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
+            if (strncmp(alpn.c_str(),
+                nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
+            if (nd_alpn_proto_map[i].proto_id == ndEF->detected_protocol)
+                continue;
+
+            nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
+                tag.c_str(), alpn.c_str(),
+                ndEF->detected_protocol_name,
+                nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
+            );
+
+            ndEF->detected_protocol = nd_alpn_proto_map[i].proto_id;
+            ndEF->detected_protocol_name = nd_proto_get_name(
+                nd_alpn_proto_map[i].proto_id
+            );
+
+            flow_update = true;
+            ndEF->flags.detection_updated = true;
+            break;
+        }
+    }
+
+    return flow_update;
+}
+
+void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id)
+{
+    if (app_id == ND_APP_UNKNOWN) return;
+
+    ndEF->detected_application = app_id;
+    const char *name = nd_apps->Lookup(ndEF->detected_application);
+    if (ndEF->detected_application_name != NULL) {
+        ndEF->detected_application_name = (char *)realloc(
+            ndEF->detected_application_name,
+            strlen(ndEF->detected_application_name) + 1
+        );
+
+        strcpy(ndEF->detected_application_name, name);
+    }
+    else
+        ndEF->detected_application_name = strdup(name);
+
+    ndEF->category.application = nd_categories->Lookup(
+        ndCAT_TYPE_APP,
+        (unsigned)ndEF->detected_application
+    );
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -99,6 +99,9 @@ protected:
 
     void ProcessPacketQueue(void);
     void ProcessPacket(ndDetectionQueueEntry *entry);
+    bool ProcessALPN(ndDetectionQueueEntry *entry, bool client = true);
+
+    void SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id);
 };
 
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;

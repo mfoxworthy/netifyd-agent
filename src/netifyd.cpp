@@ -1690,7 +1690,6 @@ static void nd_json_process_flows(
                 }
 
                 if (add_flows &&
-                    i->second->detected_protocol == ND_PROTO_UNKNOWN &&
                     (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                     json jf;

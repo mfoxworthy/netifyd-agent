@@ -23,6 +23,7 @@
 // Unfortunately they don't define such constants so we have to define
 // them here.  If they change in nDPI, they'll need to be updated
 // manually.
+#define ND_FLOW_HOSTNAME    80      // nDPI host_server_name length
 #define ND_FLOW_UA_LEN      512     // User agent length
 #define ND_FLOW_URL_LEN     512     // HTTP URL length
 #define ND_FLOW_SSH_UALEN   48      // SSH user-agent (signature) length
@@ -38,12 +39,6 @@
 
 // SSL certificate fingerprint hash length
 #define ND_FLOW_TLS_HASH_LEN    SHA1_DIGEST_LENGTH
-
-// Kerberos fields
-#define ND_FLOW_KERBEROS_FIELD  48
-#define ND_FLOW_KERBEROS_HOST   ND_FLOW_KERBEROS_FIELD
-#define ND_FLOW_KERBEROS_DOMAIN ND_FLOW_KERBEROS_FIELD
-#define ND_FLOW_KERBEROS_USER   ND_FLOW_KERBEROS_FIELD
 
 // Extra protocol info text
 #define ND_FLOW_EXTRA_INFO      16
@@ -147,7 +142,8 @@ public:
     uint8_t digest_lower[SHA1_DIGEST_LENGTH];
     uint8_t digest_mdata[SHA1_DIGEST_LENGTH];
 
-    char host_server_name[ND_MAX_HOSTNAME];
+    char dns_host_name[ND_FLOW_HOSTNAME];
+    char host_server_name[ND_FLOW_HOSTNAME];
 
     union {
         struct {
@@ -168,15 +164,13 @@ public:
         struct {
             uint16_t version;
             uint16_t cipher_suite;
-            char client_sni[ND_FLOW_TLS_CNLEN];
-            char *subject_dn, *issuer_dn, *server_names;
+            char *client_sni, *subject_dn, *issuer_dn;
             char server_cn[ND_FLOW_TLS_CNLEN];
-            unsigned server_names_length;
-            char server_organization[ND_FLOW_TLS_ORGLEN];
             char client_ja3[ND_FLOW_TLS_JA3LEN];
             char server_ja3[ND_FLOW_TLS_JA3LEN];
             bool cert_fingerprint_found;
             char cert_fingerprint[ND_FLOW_TLS_HASH_LEN];
+            vector<string> alpn, alpn_server;
         } ssl;
 
         struct {
@@ -187,16 +181,11 @@ public:
             uint8_t info_hash_valid:1;
             char info_hash[ND_FLOW_BTIHASH_LEN];
         } bt;
-
-        struct {
-            char hostname[ND_FLOW_KERBEROS_HOST];
-            char domain[ND_FLOW_KERBEROS_DOMAIN];
-            char username[ND_FLOW_KERBEROS_USER];
-        } kerberos;
-
+#if 0
         struct {
             char variant[ND_FLOW_EXTRA_INFO];
         } mining;
+#endif
     };
 
     struct {
@@ -312,17 +301,13 @@ public:
     bool has_ssl_server_cn(void) const;
     bool has_ssl_issuer_dn(void) const;
     bool has_ssl_subject_dn(void) const;
-    bool has_ssl_server_names(void) const;
-    bool has_ssl_server_organization(void) const;
     bool has_ssl_client_ja3(void) const;
     bool has_ssl_server_ja3(void) const;
     bool has_bt_info_hash(void) const;
     bool has_ssdp_headers(void) const;
-    bool has_kerberos_hostname(void) const;
-    bool has_kerberos_domain(void) const;
-    bool has_kerberos_username(void) const;
+#if 0
     bool has_mining_variant(void) const;
-
+#endif
     void print(void) const;
 
     void update_lower_maps(void);
