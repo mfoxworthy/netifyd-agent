@@ -254,6 +254,7 @@ public:
         atomic_bool detection_expired;
         atomic_bool detection_guessed;
         atomic_bool detection_updated;
+        atomic_bool risk_checked;
     } flags;
 
     atomic_uint queued;
