@@ -478,8 +478,13 @@ void *ndCaptureThread::Entry(void)
             }
 
             if (rc < 0) {
-                if (rc == -1)
+                if (rc == -1) {
                     nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
+                    if (pcap_file.size())
+                        Terminate();
+                    else
+                        sleep(1);
+                }
                 else if (rc == -2) {
                     nd_dprintf(
                         "%s: end of capture file: %s, flushing queued packets: %lu\n",
