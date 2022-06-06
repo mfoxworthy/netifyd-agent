@@ -4,15 +4,12 @@ lo: [i4---d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: i
 lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53114 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
-lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53105 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53114 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53114 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-----] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53115 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-----] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53116 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53115 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53115 H: api-global.netflix.com SSL C: api-global.netflix.com
-lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53115 H: api-global.netflix.com SSL C: api-global.netflix.com
-lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53116 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53116 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53116 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-----] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53117 H: api-global.netflix.com SSL C: api-global.netflix.com
@@ -20,10 +17,8 @@ lo: [i4-u---] HTTP/S.netify.netflix 52.32.196.36:443 <-- 192.168.1.7:53117 H: ap
 lo: [i4---d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53118 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53118 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53118 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
-lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53118 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-----] SSDP 192.168.1.7:53776 --> 239.255.255.250:1900
 lo: [i4---d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53119 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
-lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53119 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53119 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.69.204.241:443 <-- 192.168.1.7:53119 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-----] IGMP 192.168.1.7:0 --> 239.255.255.250:0
@@ -38,8 +33,6 @@ lo: [i4---d-] HTTP/S.netify.netflix 52.89.39.139:443 <-- 192.168.1.7:53134 H: ap
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.89.39.139:443 <-- 192.168.1.7:53134 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:57719 H: sha2.san.akam.nflximg.net
 lo: [i4---d-] HTTP/S.netify.netflix 104.86.97.179:443 <-- 192.168.1.7:53141 H: art-s.nflximg.net SSL C: art-s.nflximg.net
-lo: [i4-u-d-] HTTP/S.netify.netflix 104.86.97.179:443 <-- 192.168.1.7:53141 H: art-s.nflximg.net SSL C: art-s.nflximg.net
-lo: [i4-u-d-] HTTP/S.netify.netflix 104.86.97.179:443 <-- 192.168.1.7:53141 H: art-s.nflximg.net SSL C: art-s.nflximg.net
 lo: [i4-u-d-] HTTP/S.netify.netflix 104.86.97.179:443 <-- 192.168.1.7:53141 H: art-s.nflximg.net SSL C: art-s.nflximg.net
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:59180 H: artwork.akam.nflximg.net
 lo: [i4---d-] HTTP.netify.netflix 184.25.204.25:80 <-- 192.168.1.7:53148 H: art-2.nflximg.net
@@ -76,7 +69,6 @@ lo: [i4---d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53202 H: io
 lo: [i4---d-] HTTP/S.netify.netflix 52.37.36.252:443 <-- 192.168.1.7:53203 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53193 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53202 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
-lo: [i4-u-d-] HTTP/S.netify.netflix 52.37.36.252:443 <-- 192.168.1.7:53203 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53193 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.37.36.252:443 <-- 192.168.1.7:53203 H: ichnaea.netflix.com SSL C: ichnaea.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 54.191.17.51:443 <-- 192.168.1.7:53202 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
@@ -90,7 +82,6 @@ lo: [i4-u-d-] HTTP/S.netify.netflix 52.32.22.214:443 <-- 192.168.1.7:53238 H: io
 lo: [i4-----] DNS.netify.netflix 192.168.1.1:53 <-- 192.168.1.7:52095 H: api-global.latency.prodaa.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53239 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4---d-] HTTP/S.netify.netflix 52.32.22.214:443 <-- 192.168.1.7:53248 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com
-lo: [i4-u-d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53239 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53239 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.41.30.5:443 <-- 192.168.1.7:53239 H: api-global.netflix.com SSL C: api-global.netflix.com
 lo: [i4-u-d-] HTTP/S.netify.netflix 52.32.22.214:443 <-- 192.168.1.7:53248 H: ios.nccp.netflix.com SSL C: ios.nccp.netflix.com

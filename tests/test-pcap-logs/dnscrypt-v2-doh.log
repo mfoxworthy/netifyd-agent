@@ -11,9 +11,8 @@ lo: [i4-u---] HTTP/S 10.0.0.1:59404 --> 185.253.154.66:443 H: dnses.alekberg.net
 lo: [i4-----] HTTP/S 10.0.0.1:40938 --> 172.104.93.80:443 H: jp.tiar.app SSL C: jp.tiar.app
 lo: [i4-u---] HTTP/S 10.0.0.1:40938 --> 172.104.93.80:443 H: jp.tiar.app SSL C: jp.tiar.app
 lo: [i4-----] TLS 10.0.0.1:37530 --> 167.114.220.125:453 H: dns1.dnscrypt.ca SSL C: dns1.dnscrypt.ca
-lo: [i4-u---] HTTP/S 10.0.0.1:37530 --> 167.114.220.125:453 H: dns1.dnscrypt.ca SSL C: dns1.dnscrypt.ca
+lo: [i4-u---] TLS 10.0.0.1:37530 --> 167.114.220.125:453 H: dns1.dnscrypt.ca SSL C: dns1.dnscrypt.ca
 lo: [i4-----] HTTP/S 10.0.0.1:38186 --> 185.43.135.1:443 H: odvr.nic.cz SSL C: odvr.nic.cz
-lo: [i4-u---] HTTP/S 10.0.0.1:38186 --> 185.43.135.1:443 H: odvr.nic.cz SSL C: odvr.nic.cz
 lo: [i4-----] HTTP/S.netify.quad9 9.9.9.10:443 <-- 10.0.0.1:51770 H: dns10.quad9.net SSL C: dns10.quad9.net
 lo: [i4-u---] HTTP/S.netify.quad9 9.9.9.10:443 <-- 10.0.0.1:51770 H: dns10.quad9.net SSL C: dns10.quad9.net
 lo: [i4-----] HTTP/S 10.0.0.1:55322 --> 185.134.196.55:443 H: rdns.faelix.net SSL C: rdns.faelix.net
@@ -27,7 +26,7 @@ lo: [i4-u---] HTTP/S 10.0.0.1:60026 --> 195.30.94.28:443 H: doh.ffmuc.net SSL C:
 lo: [i4-----] HTTP/S 10.0.0.1:46658 --> 185.233.106.232:443 H: dns.dnshome.de SSL C: dns.dnshome.de
 lo: [i4-u---] HTTP/S 10.0.0.1:46658 --> 185.233.106.232:443 H: dns.dnshome.de SSL C: dns.dnshome.de
 lo: [i4-----] TLS 10.0.0.1:36012 --> 149.56.228.45:453 H: dns2.dnscrypt.ca SSL C: dns2.dnscrypt.ca
-lo: [i4-u---] HTTP/S 10.0.0.1:36012 --> 149.56.228.45:453 H: dns2.dnscrypt.ca SSL C: dns2.dnscrypt.ca
+lo: [i4-u---] TLS 10.0.0.1:36012 --> 149.56.228.45:453 H: dns2.dnscrypt.ca SSL C: dns2.dnscrypt.ca
 lo: [i4-----] HTTP/S 10.0.0.1:38018 --> 45.153.187.96:443 H: dnsse.alekberg.net SSL C: dnsse.alekberg.net
 lo: [i4-u---] HTTP/S 10.0.0.1:38018 --> 45.153.187.96:443 H: dnsse.alekberg.net SSL C: dnsse.alekberg.net
 lo: [i4-----] HTTP/S 10.0.0.1:44640 --> 185.235.81.1:443 H: doh.dnslify.com SSL C: doh.dnslify.com
@@ -47,7 +46,7 @@ lo: [i4-u---] HTTP/S 10.0.0.1:52176 --> 136.144.215.158:443 H: doh.powerdns.org 
 lo: [i4-----] HTTP/S 10.0.0.1:39214 --> 104.28.0.106:443 H: doh.crypto.sx SSL C: doh.crypto.sx
 lo: [i4-u---] HTTP/S 10.0.0.1:39214 --> 104.28.0.106:443 H: doh.crypto.sx SSL C: doh.crypto.sx
 lo: [i4-----] TLS 10.0.0.1:52028 --> 45.76.113.31:8443 H: doh.seby.io SSL C: doh.seby.io
-lo: [i4-u---] HTTP/S 10.0.0.1:52028 --> 45.76.113.31:8443 H: doh.seby.io SSL C: doh.seby.io
+lo: [i4-u---] TLS 10.0.0.1:52028 --> 45.76.113.31:8443 H: doh.seby.io SSL C: doh.seby.io
 lo: [i4-----] HTTP/S 10.0.0.1:34036 --> 217.169.20.23:443 H: dns.aa.net.uk SSL C: dns.aa.net.uk
 lo: [i4-u---] HTTP/S 10.0.0.1:34036 --> 217.169.20.23:443 H: dns.aa.net.uk SSL C: dns.aa.net.uk
 lo: [i4-----] HTTP/S 10.0.0.1:43718 --> 146.255.56.98:443 H: doh.appliedprivacy.net SSL C: doh.appliedprivacy.net
@@ -55,7 +54,6 @@ lo: [i4-u---] HTTP/S 10.0.0.1:43718 --> 146.255.56.98:443 H: doh.appliedprivacy.
 lo: [i4-----] HTTP/S 10.0.0.1:54164 --> 193.70.85.11:443 H: doh.bortzmeyer.fr SSL C: doh.bortzmeyer.fr
 lo: [i4-u---] HTTP/S 10.0.0.1:54164 --> 193.70.85.11:443 H: doh.bortzmeyer.fr SSL C: doh.bortzmeyer.fr
 lo: [i4-----] HTTP/S 10.0.0.1:35714 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl
-lo: [i4-u---] HTTP/S 10.0.0.1:35714 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl
 lo: [i4-u---] HTTP/S 10.0.0.1:35714 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl
 lo: [i4-----] HTTP/S 10.0.0.1:43888 --> 95.216.229.153:443 H: fi.doh.dns.snopyta.org SSL C: fi.doh.dns.snopyta.org
 lo: [i4-u---] HTTP/S 10.0.0.1:43888 --> 95.216.229.153:443 H: fi.doh.dns.snopyta.org SSL C: fi.doh.dns.snopyta.org
@@ -66,5 +64,4 @@ lo: [i4-u---] HTTP/S.netify.quad9 9.9.9.10:443 <-- 10.0.0.1:51846 H: dns10.quad9
 lo: [i4-----] HTTP/S 10.0.0.1:44704 --> 185.235.81.1:443 H: doh.dnslify.com SSL C: doh.dnslify.com
 lo: [i4-u---] HTTP/S 10.0.0.1:44704 --> 185.235.81.1:443 H: doh.dnslify.com SSL C: doh.dnslify.com
 lo: [i4-----] HTTP/S 10.0.0.1:35742 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl
-lo: [i4-u---] HTTP/S 10.0.0.1:35742 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl
 lo: [i4-u---] HTTP/S 10.0.0.1:35742 --> 209.250.241.25:443 H: jarjar.meganerd.nl SSL C: jarjar.meganerd.nl

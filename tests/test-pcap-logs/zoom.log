@@ -3,7 +3,6 @@ lo: [i4-----] MDNS 192.168.1.117:5353 --> 224.0.0.251:5353 H: _spotify-connect._
 lo: [i4-----] TLS 167.99.215.164:4434 <-- 192.168.1.117:54863 H: dati.ntop.org SSL C: dati.ntop.org
 lo: [i4-u---] TLS 167.99.215.164:4434 <-- 192.168.1.117:54863 H: dati.ntop.org SSL C: dati.ntop.org
 lo: [i4-----] IMAP/S 62.149.152.153:993 <-- 192.168.1.117:54341
-lo: [i4-u---] HTTP/S.netify.google-ads 172.217.21.72:443 <-- 192.168.1.117:54854 H: www.googletagmanager.com SSL C: www.googletagmanager.com
 lo: [i4-----] SSDP 192.168.1.117:57025 --> 239.255.255.250:1900
 lo: [i4-----] NETBIOS 192.168.1.117:137 --> 192.168.1.255:137 H: workgroup
 lo: [i4-----] DNS.netify.zoom 192.168.1.1:53 <-- 192.168.1.117:64352 H: log.zoom.us

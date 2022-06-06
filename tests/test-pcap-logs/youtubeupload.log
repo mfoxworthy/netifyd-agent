@@ -1,5 +1,4 @@
 lo: [i4-----] QUIC.netify.youtube 172.217.23.111:443 <-- 192.168.2.27:51925 H: upload.youtube.com SSL C: upload.youtube.com
 lo: [i4-----] HTTP/S.netify.youtube 172.217.23.111:443 <-- 192.168.2.27:57452 H: upload.youtube.com SSL C: upload.youtube.com
 lo: [i4-u---] HTTP/S.netify.youtube 172.217.23.111:443 <-- 192.168.2.27:57452 H: upload.youtube.com SSL C: upload.youtube.com
-lo: [i4-u---] HTTP/S.netify.youtube 172.217.23.111:443 <-- 192.168.2.27:57452 H: upload.youtube.com SSL C: upload.youtube.com
 lo: [i4-----] QUIC.netify.youtube 172.217.23.111:443 <-- 192.168.2.27:62232 H: upload.youtube.com SSL C: upload.youtube.com

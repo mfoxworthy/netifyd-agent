@@ -2,5 +2,3 @@ lo: [i4-----] HTTP/S 10.8.0.1:33233 --> 74.125.136.141:443
 lo: [i4-u---] HTTP/S 10.8.0.1:33233 --> 74.125.136.141:443
 lo: [i4-----] HTTP/S.netify.snapchat 10.8.0.1:44536 --> 74.125.136.141:443 H: feelinsonice-hrd.appspot.com SSL C: feelinsonice-hrd.appspot.com
 lo: [i4-----] HTTP/S.netify.snapchat 10.8.0.1:56193 --> 74.125.136.141:443 H: feelinsonice-hrd.appspot.com SSL C: feelinsonice-hrd.appspot.com
-lo: [i4-u---] HTTP/S.netify.snapchat 10.8.0.1:44536 --> 74.125.136.141:443 H: feelinsonice-hrd.appspot.com SSL C: feelinsonice-hrd.appspot.com
-lo: [i4-u---] HTTP/S.netify.snapchat 10.8.0.1:56193 --> 74.125.136.141:443 H: feelinsonice-hrd.appspot.com SSL C: feelinsonice-hrd.appspot.com

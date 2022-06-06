@@ -26,7 +26,6 @@ lo: [i6-----] ICMPv6 fe80::408:3e45:3abc:1552:0 --> ff02::16:0
 lo: [i4-----] DNS.netify.viasat 10.0.0.227:54851 --> 75.75.76.76:53 H: print.viasat.com
 lo: [i4-----] DNS.netify.slack 10.0.0.227:58155 --> 75.75.76.76:53 H: slack.com
 lo: [i4---d-] HTTP/S.netify.slack 10.0.0.227:56920 --> 99.86.34.156:443 H: slack.com SSL C: slack.com
-lo: [i4-u-d-] HTTP/S.netify.slack 10.0.0.227:56920 --> 99.86.34.156:443 H: slack.com SSL C: slack.com
 lo: [i4-----] HTTP/S 10.0.0.227:56910 --> 35.201.124.9:443
 lo: [i4-----] TLS 8.37.96.194:4287 <-- 10.0.0.227:56921
 lo: [i4-u---] TLS 8.37.96.194:4287 <-- 10.0.0.227:56921

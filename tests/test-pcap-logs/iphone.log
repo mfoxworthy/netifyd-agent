@@ -28,10 +28,8 @@ lo: [i4---d-] HTTP/S.netify.apple 17.130.2.46:443 <-- 192.168.2.17:50577 H: gsp8
 lo: [i4---d-] HTTP/S.netify.apple 17.253.105.202:443 <-- 192.168.2.17:50579 H: mesu.apple.com SSL C: mesu.apple.com
 lo: [i4---d-] HTTP/S.netify.apple 17.253.105.202:443 <-- 192.168.2.17:50578 H: mesu.apple.com SSL C: mesu.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.185.140:443 <-- 192.168.2.17:50575 H: p26-fmfmobile.icloud.com SSL C: p26-fmfmobile.icloud.com
-lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.185.140:443 <-- 192.168.2.17:50575 H: p26-fmfmobile.icloud.com SSL C: p26-fmfmobile.icloud.com
 lo: [i4-u-d-] HTTP/S.netify.apple 17.253.105.202:443 <-- 192.168.2.17:50579 H: mesu.apple.com SSL C: mesu.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple 17.253.105.202:443 <-- 192.168.2.17:50578 H: mesu.apple.com SSL C: mesu.apple.com
-lo: [i4-u-d-] HTTP/S.netify.apple 17.130.2.46:443 <-- 192.168.2.17:50577 H: gsp85-ssl.ls.apple.com SSL C: gsp85-ssl.ls.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple 17.130.2.46:443 <-- 192.168.2.17:50577 H: gsp85-ssl.ls.apple.com SSL C: gsp85-ssl.ls.apple.com
 lo: [i4-----] DNS.netify.apple-icloud 192.168.2.1:53 <-- 192.168.2.17:52682 H: www.icloud.com
 lo: [i4-----] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.17:64203 H: basejumper.apple.com
@@ -43,7 +41,6 @@ lo: [i4-----] DNS.netify.apple-itunes 192.168.2.1:53 <-- 192.168.2.17:53983 H: b
 lo: [i4-----] DNS.netify.apple-itunes 192.168.2.1:53 <-- 192.168.2.17:49880 H: init.itunes.apple.com
 lo: [i4---d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50580 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50580 H: gateway.icloud.com SSL C: gateway.icloud.com
-lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50580 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-----] ICMP 192.168.2.1:0 <-- 192.168.2.17:0
 lo: [i4---d-] HTTP/S.netify.apple 92.122.252.82:443 <-- 192.168.2.17:50582 H: iphone-ld.apple.com SSL C: iphone-ld.apple.com
 lo: [i4---d-] HTTP/S.netify.apple-icloud 17.248.185.87:443 <-- 192.168.2.17:50581 H: p26-keyvalueservice.icloud.com SSL C: p26-keyvalueservice.icloud.com
@@ -51,18 +48,14 @@ lo: [i4-u-d-] HTTP/S.netify.apple 92.122.252.82:443 <-- 192.168.2.17:50582 H: ip
 lo: [i4---d-] HTTP/S.netify.apple 104.73.61.30:443 <-- 192.168.2.17:50583 H: cl4.apple.com SSL C: cl4.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple 104.73.61.30:443 <-- 192.168.2.17:50583 H: cl4.apple.com SSL C: cl4.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.185.87:443 <-- 192.168.2.17:50581 H: p26-keyvalueservice.icloud.com SSL C: p26-keyvalueservice.icloud.com
-lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.185.87:443 <-- 192.168.2.17:50581 H: p26-keyvalueservice.icloud.com SSL C: p26-keyvalueservice.icloud.com
 lo: [i4-----] IGMP 192.168.2.17:0 --> 224.0.0.22:0
 lo: [i4-----] DNS.netify.apple-id 192.168.2.1:53 <-- 192.168.2.17:62160 H: gsa.apple.com
 lo: [i4-----] DNS.netify.apple-id 192.168.2.1:53 <-- 192.168.2.17:52031 H: gsa.apple.com
 lo: [i4---d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50584 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50584 H: gateway.icloud.com SSL C: gateway.icloud.com
-lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50584 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4---d-] HTTP/S.netify.apple-id 17.137.166.35:443 <-- 192.168.2.17:50585 H: gsa.apple.com SSL C: gsa.apple.com
 lo: [i4---d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50586 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-u-d-] HTTP/S.netify.apple-id 17.137.166.35:443 <-- 192.168.2.17:50585 H: gsa.apple.com SSL C: gsa.apple.com
-lo: [i4-u-d-] HTTP/S.netify.apple-id 17.137.166.35:443 <-- 192.168.2.17:50585 H: gsa.apple.com SSL C: gsa.apple.com
-lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50586 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-u-d-] HTTP/S.netify.apple-icloud 17.248.176.75:443 <-- 192.168.2.17:50586 H: gateway.icloud.com SSL C: gateway.icloud.com
 lo: [i4-----] DNS.netify.apple-itunes 192.168.2.1:53 <-- 192.168.2.17:65079 H: play.itunes.apple.com
 lo: [i4---d-] HTTP/S.netify.apple-itunes 92.123.77.26:443 <-- 192.168.2.17:50587 H: play.itunes.apple.com SSL C: play.itunes.apple.com

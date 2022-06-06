@@ -1,8 +1,8 @@
 lo: [i4-----] HTTP/S 95.101.24.53:443 <-- 192.168.2.17:50677
-lo: [i4-----] Unknown.netify.apple 17.248.176.75:443 <-- 192.168.2.17:50584
-lo: [i4-----] Unknown.netify.apple 17.248.176.75:443 <-- 192.168.2.17:50580
+lo: [i4-----] HTTP/S.netify.apple 17.248.176.75:443 <-- 192.168.2.17:50584
+lo: [i4-----] HTTP/S.netify.apple 17.248.176.75:443 <-- 192.168.2.17:50580
 lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-imac
-lo: [i4-----] Unknown.netify.apple 17.248.185.10:443 <-- 192.168.2.17:50702
+lo: [i4-----] HTTP/S.netify.apple 17.248.185.10:443 <-- 192.168.2.17:50702
 lo: [i4-----] Dropbox 192.168.2.1:17500 --> 192.168.2.255:17500
 lo: [i4-----] Spotify.netify.spotify 192.168.2.1:57621 --> 192.168.2.255:57621
 lo: [i4-----] MDNS 169.254.225.216:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
@@ -28,15 +28,12 @@ lo: [i4-u-d-] HTTP/S.netify.google 192.168.2.16:32974 --> 216.239.38.120:443 H: 
 lo: [i4---d-] HTTP/S.netify.google-play 172.217.20.74:443 <-- 192.168.2.16:52486 H: play.googleapis.com SSL C: play.googleapis.com
 lo: [i4-----] DNS.netify.google 192.168.2.1:53 <-- 192.168.2.16:47081 H: connectivitycheck.gstatic.com
 lo: [i4-u-d-] HTTP/S.netify.google-play 172.217.20.74:443 <-- 192.168.2.16:52486 H: play.googleapis.com SSL C: play.googleapis.com
-lo: [i4-u-d-] HTTP/S.netify.google-play 172.217.20.74:443 <-- 192.168.2.16:52486 H: play.googleapis.com SSL C: play.googleapis.com
 lo: [i4---d-] HTTP/S.netify.google 172.217.18.3:443 <-- 192.168.2.16:36890 H: connectivitycheck.gstatic.com SSL C: connectivitycheck.gstatic.com
 lo: [i4-----] DNS.netify.google-ads 192.168.2.1:53 <-- 192.168.2.16:51430 H: app-measurement.com
-lo: [i4-u-d-] HTTP/S.netify.google 172.217.18.3:443 <-- 192.168.2.16:36890 H: connectivitycheck.gstatic.com SSL C: connectivitycheck.gstatic.com
 lo: [i4-u-d-] HTTP/S.netify.google 172.217.18.3:443 <-- 192.168.2.16:36890 H: connectivitycheck.gstatic.com SSL C: connectivitycheck.gstatic.com
 lo: [i4---d-] HTTP/S.netify.google 172.217.18.3:443 <-- 192.168.2.16:36888 H: connectivitycheck.gstatic.com SSL C: connectivitycheck.gstatic.com
 lo: [i4-----] DNS.netify.google-hangouts 192.168.2.1:53 <-- 192.168.2.16:39008 H: mtalk.google.com
 lo: [i4---d-] HTTP/S.netify.google-ads 172.217.168.206:443 <-- 192.168.2.16:50384 H: app-measurement.com SSL C: app-measurement.com
-lo: [i4-u-d-] HTTP/S.netify.google-ads 172.217.168.206:443 <-- 192.168.2.16:50384 H: app-measurement.com SSL C: app-measurement.com
 lo: [i4-u-d-] HTTP/S.netify.google-ads 172.217.168.206:443 <-- 192.168.2.16:50384 H: app-measurement.com SSL C: app-measurement.com
 lo: [i4-----] DNS.netify.android 192.168.2.1:53 <-- 192.168.2.16:36613 H: android.clients.google.com
 lo: [i4-----] DNS.netify.google 192.168.2.1:53 <-- 192.168.2.16:32412 H: check.googlezip.net
@@ -51,7 +48,6 @@ lo: [i4---d-] HTTP/S.netify.google 172.217.21.202:443 <-- 192.168.2.16:51928 H: 
 lo: [i4-u-d-] HTTP/S.netify.google 172.217.21.202:443 <-- 192.168.2.16:51928 H: datasaver.googleapis.com SSL C: datasaver.googleapis.com
 lo: [i4---d-] HTTP/S.netify.google 192.168.2.16:32996 --> 216.239.38.120:443 H: www.google.com SSL C: www.google.com
 lo: [i4---d-] HTTP/S.netify.android 192.168.2.16:32988 --> 216.239.38.120:443 H: android.clients.google.com SSL C: android.clients.google.com
-lo: [i4-u-d-] HTTP/S.netify.google 192.168.2.16:32996 --> 216.239.38.120:443 H: www.google.com SSL C: www.google.com
 lo: [i4-u-d-] HTTP/S.netify.google 192.168.2.16:32996 --> 216.239.38.120:443 H: www.google.com SSL C: www.google.com
 lo: [i4-u-d-] HTTP/S.netify.android 192.168.2.16:32988 --> 216.239.38.120:443 H: android.clients.google.com SSL C: android.clients.google.com
 lo: [i4-----] DNS.netify.google-authentication 192.168.2.1:53 <-- 192.168.2.16:46359 H: accounts.google.com
