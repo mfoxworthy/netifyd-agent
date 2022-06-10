@@ -11,3 +11,8 @@ enable_sink = no
 
 [socket]
 listen_path[0] = @volatilestatedir@/@PACKAGE_TARNAME@.sock
+
+[protocols]
+all=include
+google/meet/duo=exclude
+skype/teams=exclude

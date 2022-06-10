@@ -54,7 +54,7 @@ typedef enum {
     ND_PROTO_OPENFT                 = 33,
     ND_PROTO_FASTTRACK              = 34,
     ND_PROTO_GNUTELLA               = 35,
-    ND_PROTO_EDONKEY                = 36,
+    ND_PROTO_DEPR36                 = 36,   // Deprecated: eDonkey
     ND_PROTO_BITTORRENT             = 37,
     ND_PROTO_SKYPE_CALL             = 38,
     ND_PROTO_SIGNAL_CALL            = 39,
@@ -372,7 +372,6 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_DROPBOX, "Dropbox" },
     { ND_PROTO_DTLS, "DTLS" },
     { ND_PROTO_EAQ, "EAQ" },
-    { ND_PROTO_EDONKEY, "eDonkey" },
     { ND_PROTO_ETHERNET_IP, "EtherNet/IP" },
     { ND_PROTO_FASTTRACK, "FastTrack" },
     { ND_PROTO_FIESTA, "Fiesta" },
@@ -598,7 +597,6 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_DROPBOX, ND_PROTO_DROPBOX },
     { NDPI_PROTOCOL_DTLS, ND_PROTO_DTLS },
     { NDPI_PROTOCOL_EAQ, ND_PROTO_EAQ },
-    { NDPI_PROTOCOL_EDONKEY, ND_PROTO_EDONKEY },
     { NDPI_PROTOCOL_ETHERNET_IP, ND_PROTO_ETHERNET_IP },
     { NDPI_PROTOCOL_FASTTRACK, ND_PROTO_FASTTRACK },
     { NDPI_PROTOCOL_FIESTA, ND_PROTO_FIESTA },
@@ -759,6 +757,7 @@ typedef vector<uint16_t> nd_ndpi_disabled_t;
 
 const nd_ndpi_disabled_t nd_ndpi_disabled = {
     NDPI_PROTOCOL_AMAZON_VIDEO, // No detections and no pcap to test.
+    NDPI_PROTOCOL_EDONKEY,      // Garbage; false-positives.
     NDPI_PROTOCOL_IMO,          // Weak, too many false-positives, and obscure/undocumented.
 };
 

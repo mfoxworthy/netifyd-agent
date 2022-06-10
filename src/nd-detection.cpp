@@ -576,7 +576,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEFNFP.tls_quic.server_cipher;
 
             // TODO: No need for client_sni any longer, it's set in host_server_name.
-            ndEF->ssl.client_sni = ndEFNF->host_server_name;
+            ndEF->ssl.client_sni = ndEF->host_server_name;
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
@@ -605,7 +605,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 
             break;
-
         case ND_PROTO_HTTP:
             if (ndEFNF->http.user_agent != NULL) {
                 for (size_t i = 0;
