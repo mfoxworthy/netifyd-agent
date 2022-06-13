@@ -6,8 +6,8 @@ lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: msedgewin10
 lo: [i4-----] DHCP 10.0.2.2:67 <-- 10.0.2.15:68
 lo: [i6-----] DHCPv6 fe80::c50d:519f:96a4:e108:546 <-- ff02::1:2:547
 lo: [i4-----] IGMP 10.0.2.15:0 --> 224.0.0.22:0
-lo: [i4-----] MDNS 10.0.2.15:5353 --> 224.0.0.251:5353 H: msedgewin10.local
-lo: [i6-----] MDNS fe80::c50d:519f:96a4:e108:5353 --> ff02::fb:5353 H: msedgewin10.local
+lo: [i4-----] MDNS.netify.internal-network 10.0.2.15:5353 --> 224.0.0.251:5353 H: msedgewin10.local
+lo: [i6-----] MDNS.netify.internal-network fe80::c50d:519f:96a4:e108:5353 --> ff02::fb:5353 H: msedgewin10.local
 lo: [i6-----] LLMNR fe80::c50d:519f:96a4:e108:63717 --> ff02::1:3:5355 H: msedgewin10
 lo: [i4-----] LLMNR 10.0.2.15:63717 --> 224.0.0.252:5355 H: msedgewin10
 lo: [i4-----] NETBIOS 10.0.2.15:137 --> 10.0.2.255:137 H: msedgewin10

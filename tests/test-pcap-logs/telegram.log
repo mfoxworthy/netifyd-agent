@@ -1,21 +1,21 @@
 lo: [i4-----] DHCP 192.168.0.1:68 --> 255.255.255.255:67 H: tl-sg116e
 lo: [i4-----] SSDP 192.168.1.53:54306 --> 239.255.255.250:1900
-lo: [i4-----] MDNS 192.168.1.53:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4-----] MDNS 192.168.1.69:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4-----] MDNS 192.168.1.75:5353 --> 224.0.0.251:5353 H: _dacp._tcp.local
-lo: [i6-----] MDNS fe80::4ba:91a:7817:e318:5353 --> ff02::fb:5353 H: _dacp._tcp.local
-lo: [i4-----] MDNS 192.168.1.75:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.53:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.69:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.75:5353 --> 224.0.0.251:5353 H: _dacp._tcp.local
+lo: [i6-----] MDNS.netify.internal-network fe80::4ba:91a:7817:e318:5353 --> ff02::fb:5353 H: _dacp._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.75:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
 lo: [i4-----] DNS.netify.akamai 192.168.1.1:53 <-- 192.168.1.77:61631 H: e7047.e12.akamaiedge.net
 lo: [i4-----] Dropbox 192.168.1.77:17500 --> 255.255.255.255:17500
 lo: [i4-----] Dropbox 192.168.1.77:17500 --> 192.168.1.255:17500
-lo: [i6-----] MDNS fe80::18a0:a412:8935:c01b:5353 --> ff02::fb:5353 H: _homekit._tcp.local
-lo: [i4-----] MDNS 192.168.1.53:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
+lo: [i6-----] MDNS.netify.internal-network fe80::18a0:a412:8935:c01b:5353 --> ff02::fb:5353 H: _homekit._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.53:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
 lo: [i4-----] DNS.netify.microsoft 192.168.1.1:53 <-- 192.168.1.77:52118 H: in.appcenter.ms
 lo: [i4-----] Spotify.netify.spotify 192.168.1.53:57621 --> 192.168.1.255:57621
 lo: [i4-----] SSDP 192.168.1.75:57916 --> 239.255.255.250:1900
 lo: [i4-----] DNS.netify.mpulse-performance 192.168.1.1:53 <-- 192.168.1.77:61120 H: e4518.dscx.akamaiedge.net
-lo: [i4-----] MDNS 192.168.1.52:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
-lo: [i6-----] MDNS fe80::4dc:edec:5b0c:a661:5353 --> ff02::fb:5353 H: _raop._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.52:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
+lo: [i6-----] MDNS.netify.internal-network fe80::4dc:edec:5b0c:a661:5353 --> ff02::fb:5353 H: _raop._tcp.local
 lo: [i4-----] Telegram.netify.telegram 91.108.8.7:521 <-- 192.168.1.77:23174
 lo: [i4-----] Telegram.netify.telegram 91.108.12.5:523 <-- 192.168.1.77:23174
 lo: [i4-----] Telegram.netify.telegram 91.108.16.1:527 <-- 192.168.1.77:23174

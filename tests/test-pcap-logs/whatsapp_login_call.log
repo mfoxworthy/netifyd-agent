@@ -22,10 +22,10 @@ lo: [i4-----] STUN 1.194.90.191:60312 --> 192.168.2.4:51518
 lo: [i4-----] STUN 91.253.176.65:9344 <-- 192.168.2.4:51518
 lo: [i4-----] ICMP 91.253.176.65:0 <-- 192.168.2.4:0
 lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-imac
-lo: [i4-----] MDNS 169.254.166.207:5353 --> 224.0.0.251:5353 H: lucas-imac.local
-lo: [i6-----] MDNS fe80::da30:62ff:fe56:1c:5353 --> ff02::fb:5353 H: lucas-imac.local
-lo: [i4-----] MDNS 192.168.2.1:5353 --> 224.0.0.251:5353 H: lucas-imac.local
-lo: [i6-----] MDNS fe80::c42c:3ff:fe60:6a64:5353 --> ff02::fb:5353 H: lucas-imac.local
+lo: [i4-----] MDNS.netify.internal-network 169.254.166.207:5353 --> 224.0.0.251:5353 H: lucas-imac.local
+lo: [i6-----] MDNS.netify.internal-network fe80::da30:62ff:fe56:1c:5353 --> ff02::fb:5353 H: lucas-imac.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.2.1:5353 --> 224.0.0.251:5353 H: lucas-imac.local
+lo: [i6-----] MDNS.netify.internal-network fe80::c42c:3ff:fe60:6a64:5353 --> ff02::fb:5353 H: lucas-imac.local
 lo: [i4-----] STUN 31.13.73.48:3478 <-- 192.168.2.4:52794
 lo: [i4-----] STUN 31.13.93.48:3478 <-- 192.168.2.4:52794
 lo: [i4-----] STUN 31.13.79.192:3478 <-- 192.168.2.4:52794

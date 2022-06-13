@@ -12,7 +12,7 @@ lo: [i4---d-] HTTP/S.netify.viber 54.230.93.53:443 <-- 192.168.0.17:53934 H: dl-
 lo: [i4-u-d-] HTTP/S.netify.viber 54.230.93.53:443 <-- 192.168.0.17:53934 H: dl-media.viber.com SSL C: dl-media.viber.com
 lo: [i4-----] DNS.netify.google-ads 192.168.0.15:53 <-- 192.168.0.17:35331 H: app-measurement.com
 lo: [i4---d-] HTTP/S.netify.google-ads 172.217.23.78:443 <-- 192.168.0.17:43702 H: app-measurement.com SSL C: app-measurement.com
-lo: [i4-----] MDNS 192.168.0.17:5353 --> 224.0.0.251:5353 H: _805741c9._sub._googlecast._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.0.17:5353 --> 224.0.0.251:5353 H: _805741c9._sub._googlecast._tcp.local
 lo: [i6-----] ICMPv6 fe80::3207:4dff:fea3:5fa7:0 --> ff02::2:0
 lo: [i4-----] DNS.netify.braze 192.168.0.15:53 <-- 192.168.0.17:44376 H: venetia.iad.appboy.com
 lo: [i4---d-] HTTP/S.netify.braze 151.101.1.130:443 <-- 192.168.0.17:55746 H: venetia.iad.appboy.com SSL C: venetia.iad.appboy.com

@@ -5,8 +5,8 @@ lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-imac
 lo: [i4-----] HTTP/S.netify.apple 17.248.185.10:443 <-- 192.168.2.17:50702
 lo: [i4-----] Dropbox 192.168.2.1:17500 --> 192.168.2.255:17500
 lo: [i4-----] Spotify.netify.spotify 192.168.2.1:57621 --> 192.168.2.255:57621
-lo: [i4-----] MDNS 169.254.225.216:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4-----] MDNS 192.168.2.1:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 169.254.225.216:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.2.1:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
 lo: [i4-----] SSDP 169.254.225.216:60538 --> 239.255.255.250:1900
 lo: [i4-----] SSDP 192.168.2.1:51411 --> 239.255.255.250:1900
 lo: [i6-----] ICMPv6 :::0 --> ff02::1:ff9f:f627:0

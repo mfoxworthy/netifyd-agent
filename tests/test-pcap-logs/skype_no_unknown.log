@@ -27,8 +27,8 @@ lo: [i4-----] NETBIOS 192.168.1.1:138 --> 192.168.1.34:138 H: alicegate
 lo: [i4-----] NETBIOS 192.168.1.92:137 --> 192.168.1.255:137 H: workgroup
 lo: [i4-----] NETBIOS 192.168.1.92:138 --> 192.168.1.255:138 H: lucas-imac
 lo: [i4-----] NETBIOS 192.168.1.92:53826 --> 192.168.1.255:137 H: lucas-imac
-lo: [i6-----] MDNS fe80::c62c:3ff:fe06:49fe:5353 --> ff02::fb:5353 H: lucas-imac.local
-lo: [i4-----] MDNS 192.168.1.92:5353 --> 224.0.0.251:5353 H: lucas-imac.local
+lo: [i6-----] MDNS.netify.internal-network fe80::c62c:3ff:fe06:49fe:5353 --> ff02::fb:5353 H: lucas-imac.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.92:5353 --> 224.0.0.251:5353 H: lucas-imac.local
 lo: [i4-----] SkypeCall.netify.skype 157.55.56.170:40015 --> 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 111.221.74.15:40026 --> 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 65.55.223.33:40002 --> 192.168.1.34:13021

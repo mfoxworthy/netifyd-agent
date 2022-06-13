@@ -180,8 +180,8 @@ lo: [i4-----] SkypeCall.netify.skype 176.26.55.167:63773 --> 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 76.185.207.12:45493 --> 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 176.97.100.249:26635 --> 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 71.62.0.85:33647 --> 192.168.1.34:13021
-lo: [i4-----] MDNS 192.168.1.92:5353 --> 224.0.0.251:5353 H: _afpovertcp._tcp.local
-lo: [i6-----] MDNS fe80::c62c:3ff:fe06:49fe:5353 --> ff02::fb:5353 H: _afpovertcp._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.1.92:5353 --> 224.0.0.251:5353 H: _afpovertcp._tcp.local
+lo: [i6-----] MDNS.netify.internal-network fe80::c62c:3ff:fe06:49fe:5353 --> ff02::fb:5353 H: _afpovertcp._tcp.local
 lo: [i4-----] SkypeCall.netify.skype 157.55.130.145:443 <-- 192.168.1.34:13021
 lo: [i4-----] SkypeCall.netify.skype 65.55.223.39:443 <-- 192.168.1.34:13021
 lo: [i4-----] Unknown 86.31.35.30:59621 <-- 192.168.1.34:50119

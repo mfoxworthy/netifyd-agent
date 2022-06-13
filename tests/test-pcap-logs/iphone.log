@@ -10,7 +10,7 @@ lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-iphone
 lo: [i4-----] DHCP 192.168.2.1:67 <-- 192.168.2.17:68
 lo: [i6-----] ICMPv6 :::0 --> ff02::1:ff98:a29c:0
 lo: [i6-----] ICMPv6 fe80::823:3f17:8298:a29c:0 --> ff02::2:0
-lo: [i6-----] MDNS fe80::823:3f17:8298:a29c:5353 --> ff02::fb:5353 H: _homekit._tcp.local
+lo: [i6-----] MDNS.netify.internal-network fe80::823:3f17:8298:a29c:5353 --> ff02::fb:5353 H: _homekit._tcp.local
 lo: [i6-----] ICMPv6 fe80::823:3f17:8298:a29c:0 --> ff02::16:0
 lo: [i4-----] DNS.netify.apple-icloud 192.168.2.1:53 <-- 192.168.2.17:63381 H: p26-keyvalueservice.icloud.com
 lo: [i4-----] DNS.netify.apple-icloud 192.168.2.1:53 <-- 192.168.2.17:63143 H: p26-fmfmobile.icloud.com
@@ -18,7 +18,7 @@ lo: [i4-----] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.17:61862 H: gspe35-s
 lo: [i4-----] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.17:55914 H: gsp85-ssl.ls.apple.com
 lo: [i4-----] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.17:51007 H: captive.apple.com
 lo: [i4-----] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.17:55457 H: mesu.apple.com
-lo: [i4-----] MDNS 192.168.2.17:5353 --> 224.0.0.251:5353 H: _homekit._tcp.local
+lo: [i4-----] MDNS.netify.internal-network 192.168.2.17:5353 --> 224.0.0.251:5353 H: _homekit._tcp.local
 lo: [i4---d-] HTTP/S.netify.apple-icloud 17.248.185.140:443 <-- 192.168.2.17:50575 H: p26-fmfmobile.icloud.com SSL C: p26-fmfmobile.icloud.com
 lo: [i4---d-] HTTP/S.netify.apple 95.101.25.53:443 <-- 192.168.2.17:50576 H: gspe35-ssl.ls.apple.com SSL C: gspe35-ssl.ls.apple.com
 lo: [i4-u-d-] HTTP/S.netify.apple 95.101.25.53:443 <-- 192.168.2.17:50576 H: gspe35-ssl.ls.apple.com SSL C: gspe35-ssl.ls.apple.com

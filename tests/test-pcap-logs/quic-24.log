@@ -1,1 +1,1 @@
-lo: [i4-----] QUIC.netify.internal-network 10.9.0.1:41436 --> 10.9.0.2:443 H: localhost SSL C: localhost
+lo: [i4-----] QUIC 10.9.0.1:41436 --> 10.9.0.2:443 H: localhost SSL C: localhost
