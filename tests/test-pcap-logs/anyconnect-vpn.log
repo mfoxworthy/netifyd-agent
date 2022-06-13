@@ -1,3 +1,4 @@
+lo: [i4-----] Unknown 10.0.0.227:56885 --> 184.25.56.53:80
 lo: [i4-----] TLS 10.0.0.149:8009 <-- 10.0.0.227:56320
 lo: [i4-----] IGMP 10.0.0.1:0 --> 224.0.0.1:0
 lo: [i6-----] ICMPv6 fe80::2e7e:81ff:feb0:4aa1:0 --> ff02::1:0
@@ -15,7 +16,7 @@ lo: [i4-----] HTTP/S 10.0.0.227:56914 --> 52.37.243.173:443
 lo: [i4---d-] HTTP/S.netify.viasat 8.37.102.91:443 <-- 10.0.0.227:56919 H: vco.pandion.viasat.com SSL C: vco.pandion.viasat.com
 lo: [i4-u-d-] HTTP/S.netify.viasat 8.37.102.91:443 <-- 10.0.0.227:56919 H: vco.pandion.viasat.com SSL C: vco.pandion.viasat.com
 lo: [i4-u-d-] HTTP/S.netify.viasat 8.37.102.91:443 <-- 10.0.0.227:56919 H: vco.pandion.viasat.com SSL C: vco.pandion.viasat.com
-lo: [i4-----] DNS 10.0.0.227:63107 --> 75.75.76.76:53 H: local
+lo: [i4-----] DNS.netify.internal-network 10.0.0.227:63107 --> 75.75.76.76:53 H: local
 lo: [i4-----] ICMP 10.0.0.227:0 --> 75.75.76.76:0
 lo: [i4-----] MDNS.netify.internal-network 10.0.0.213:5353 --> 224.0.0.251:5353 H: _companion-link._tcp.local
 lo: [i6-----] MDNS.netify.internal-network fe80::408:3e45:3abc:1552:5353 --> ff02::fb:5353 H: _companion-link._tcp.local
@@ -69,7 +70,6 @@ lo: [i4-----] ICMP 10.0.0.1:0 --> 224.0.0.1:0
 lo: [i4--g--] HTTP/S 10.0.0.227:56874 --> 74.125.197.188:443
 lo: [i4--gd-] HTTP/S.netify.viasat 8.37.103.196:443 <-- 10.0.0.227:56871 H: mail.viasat.com SSL C: mail.viasat.com
 lo: [i4--g--] Cisco/VPN 10.0.0.149:8008 <-- 10.0.0.227:56865
-lo: [i4--g--] HTTP 10.0.0.227:56885 --> 184.25.56.53:80
 lo: [i4-----] Unknown 10.0.0.151:8060 <-- 10.0.0.227:56866
 lo: [i4-----] Unknown 10.0.0.1:192 <-- 10.0.0.227:52595
 lo: [i4--g--] AJP 10.0.0.151:8009 <-- 10.0.0.227:56916

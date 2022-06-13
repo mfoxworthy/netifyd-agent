@@ -36,6 +36,7 @@ public:
 
 typedef map<string, nd_app_id_t> nd_apps_t;
 typedef map<string, ndApplication *> nd_app_tag_map;
+typedef unordered_set<string> nd_tlds_t;
 typedef unordered_map<nd_app_id_t, ndApplication *> nd_app_id_map;
 typedef unordered_map<string, nd_app_id_t> nd_domains_t;
 typedef unordered_map<string, pair<regex *, string>> nd_domain_rx_xforms_t;
@@ -65,6 +66,7 @@ protected:
     mutex lock;
     nd_app_id_map apps;
     nd_app_tag_map app_tags;
+    nd_tlds_t tlds;
     nd_domains_t domains;
     nd_domain_rx_xforms_t domain_xforms;
 

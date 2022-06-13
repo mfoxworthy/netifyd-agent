@@ -411,28 +411,33 @@ nd_app_id_t ndApplications::Find(const string &domain)
     unique_lock<mutex> ul(lock);
 
     vector<string> search;
-    for (auto &rx : domain_xforms) {
-        string result = regex_replace(
-            domain, (*rx.second.first), rx.second.second
-        );
-        if (result.size()) search.push_back(result);
+
+    if (! domain.empty()) {
+        for (auto &rx : domain_xforms) {
+            string result = regex_replace(
+                domain, (*rx.second.first), rx.second.second
+            );
+            if (result.size())
+                search.push_back(result);
+        }
+
+        if (search.empty())
+            search.push_back(domain);
     }
 
-    search.push_back(domain);
+    for (auto &it : search) {
 
-    for (auto &it_search : search) {
-        auto it = domains.find(it_search);
-        if (it != domains.end()) return it->second;
+        for (size_t p = it.find('.'); ! it.empty(); p = it.find('.')) {
 
-        size_t p = 0;
-        string sub = it_search;
-        while ((p = sub.find_first_of(".")) != string::npos) {
+            if (p == string::npos &&
+                tlds.find(it) == tlds.end()) break;
 
-            sub = sub.substr(p + 1);
-            if (sub.find_first_of(".") == string::npos) break;
+            auto it_domain = domains.find(it);
+            if (it_domain != domains.end()) return it_domain->second;
 
-            it = domains.find(sub);
-            if (it != domains.end()) return it->second;
+            if (p == string::npos) break;
+
+            it = it.substr(p + 1);
         }
     }
 
@@ -602,6 +607,7 @@ ndApplication *ndApplications::AddApp(
 bool ndApplications::AddDomain(nd_app_id_t id, const string &domain)
 {
     auto rc = domains.insert(make_pair(domain, id));
+    if (domain.find_first_of(".") == string::npos) tlds.insert(domain);
     return rc.second;
 }
 
