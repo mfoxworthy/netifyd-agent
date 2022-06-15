@@ -1,0 +1,1 @@
+(app == 'netify.google' || app == 'netify.google-hangouts') && (other_port >= 19302 && other_port <= 19309);

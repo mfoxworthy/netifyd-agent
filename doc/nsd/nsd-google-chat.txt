@@ -1,0 +1,1 @@
+(app == 'netify.google-chat' || app == 'netify.google') && (other_port == 5222 || other_port = 5228);

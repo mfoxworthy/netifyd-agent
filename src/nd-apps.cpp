@@ -65,13 +65,21 @@ using json = nlohmann::json;
 using namespace std;
 
 #include "netifyd.h"
-
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-ndpi.h"
 #include "nd-json.h"
 #include "nd-thread.h"
 #include "nd-util.h"
 #include "nd-apps.h"
+#include "nd-category.h"
 #include "nd-protos.h"
+#include "nd-risks.h"
+#include "nd-flow.h"
+#include "nd-flow-map.h"
+#include "nd-flow-parser.h"
+#include "nd-base64.h"
 
 //#define _ND_APPS_DEBUG    1
 
@@ -228,7 +236,7 @@ ndApplications::~ndApplications()
 
 bool ndApplications::Load(const string &filename)
 {
-    size_t ac = 0, dc = 0, nc = 0, xc = 0;
+    size_t ac = 0, dc = 0, nc = 0, sc = 0, xc = 0;
 
     ifstream ifs(filename);
 
@@ -248,8 +256,8 @@ bool ndApplications::Load(const string &filename)
 
         string type = line.substr(0, p);
 
-        if (type != "app" && type != "dom" && type != "net" && type != "xfm")
-            continue;
+        if (type != "app" && type != "dom" &&
+            type != "net" && type != "nsd" && type != "xfm") continue;
 
         line = line.substr(p + 1);
 
@@ -273,11 +281,29 @@ bool ndApplications::Load(const string &filename)
             if ((p = line.find_first_of(":")) == string::npos) continue;
             if (AddDomainTransform(line.substr(0, p), line.substr(p + 1))) xc++;
         }
+        else if (type == "nsd") {
+            if ((p = line.find_last_of(":")) == string::npos) continue;
+
+            string expr = line.substr(p + 1);
+            line = line.substr(0, p);
+            if ((p = line.find_last_of(":")) == string::npos) continue;
+
+            signed pid = (signed)strtol(
+                line.substr(p + 1).c_str(), NULL, 0
+            );
+
+            line = line.substr(0, p);
+            signed aid = (signed)strtol(
+                line.c_str(), NULL, 0
+            );
+
+            if (AddSoftDissector(aid, pid, expr)) sc++;
+        }
     }
 
     if (ac > 0) {
-        nd_dprintf("Loaded %u apps, %u domains, %u networks, %u transforms.\n",
-            ac, dc, nc, xc
+        nd_dprintf("Loaded %u apps, %u domains, %u networks, %u soft-dissectors, %u transforms.\n",
+            ac, dc, nc, sc, xc
         );
     }
 
@@ -569,6 +595,7 @@ void ndApplications::Reset(bool free_only)
     app_tags.clear();
     domains.clear();
     domain_xforms.clear();
+    soft_dissectors.clear();
 }
 
 void ndApplications::Get(nd_apps_t &apps_copy)
@@ -709,6 +736,43 @@ bool ndApplications::AddNetwork(
         nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
         (*rn6)[entry] = id;
         return true;
+    }
+
+    return false;
+}
+
+bool ndApplications::AddSoftDissector(
+    signed aid, signed pid, const string &encoded_expr)
+{
+    string decoded_expr = base64_decode(encoded_expr.c_str(), encoded_expr.size());
+
+    if (aid < 0 && pid < 0) return false;
+
+    nd_dprintf("%s: app: %u, proto: %u, expr: \"%s\"\n",
+        __PRETTY_FUNCTION__, aid, pid, decoded_expr.c_str());
+
+    soft_dissectors.push_back(
+        ndSoftDissector(aid, pid, decoded_expr)
+    );
+
+    return true;
+}
+
+bool ndApplications::SoftDissectorMatch(
+    const ndFlow *flow, ndFlowParser *parser, ndSoftDissector &match)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &it : soft_dissectors) {
+        try {
+            if (! parser->Parse(flow, it.expr)) continue;
+            match = it;
+            return true;
+        } catch (string &e) {
+            nd_dprintf("%s: %s: %s\n", __PRETTY_FUNCTION__,
+                it.expr.c_str(), e.c_str()
+            );
+        }
     }
 
     return false;

@@ -1,0 +1,1 @@
+app == 'netify.telegram' && other_port == 5222;

@@ -1,0 +1,1 @@
+(app == 'netify.apple-push' || app == 'netify.apple') && (local_port == 5223 || other_port == 5223);

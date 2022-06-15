@@ -6,7 +6,7 @@ m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.68])
-AC_INIT([Netify Agent], [4.1.13],
+AC_INIT([Netify Agent], [4.1.14],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
     [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
@@ -22,6 +22,9 @@ AC_DEFINE_UNQUOTED([_ND_HOST_CPU], ["${host_cpu}"], [Defines the canonical host.
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
+AM_PROG_LEX
+AC_PROG_YACC
+AC_DECL_YYTEXT
 AC_CHECK_TOOL([STRIP],[strip])
 AM_PROG_LIBTOOL
 PKG_PROG_PKG_CONFIG([0.23])

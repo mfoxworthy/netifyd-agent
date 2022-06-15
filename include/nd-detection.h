@@ -97,6 +97,8 @@ protected:
 
     size_t flows;
 
+    ndFlowParser parser;
+
     void ProcessPacketQueue(void);
     void ProcessPacket(ndDetectionQueueEntry *entry);
     bool ProcessALPN(ndDetectionQueueEntry *entry, bool client = true);

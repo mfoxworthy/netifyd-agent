@@ -41,6 +41,29 @@ typedef unordered_map<nd_app_id_t, ndApplication *> nd_app_id_map;
 typedef unordered_map<string, nd_app_id_t> nd_domains_t;
 typedef unordered_map<string, pair<regex *, string>> nd_domain_rx_xforms_t;
 
+class ndSoftDissector
+{
+public:
+    signed aid;
+    signed pid;
+    const string expr;
+
+    ndSoftDissector() : aid(-1), pid(-1), expr{} { }
+    ndSoftDissector(signed aid, signed pid, const string &expr)
+        : aid(aid), pid(pid), expr(expr) { }
+    ndSoftDissector &operator=(const ndSoftDissector &other) {
+        aid = other.aid;
+        pid = other.pid;
+
+        return *this;
+    };
+};
+
+typedef vector<ndSoftDissector> nd_nsd_t;
+
+class ndFlow;
+class ndFlowParser;
+
 class ndApplications
 {
 public:
@@ -62,12 +85,16 @@ public:
 
     void Get(nd_apps_t &apps_copy);
 
+    bool SoftDissectorMatch(
+        const ndFlow *flow, ndFlowParser *parser, ndSoftDissector &match);
+
 protected:
     mutex lock;
     nd_app_id_map apps;
     nd_app_tag_map app_tags;
     nd_tlds_t tlds;
     nd_domains_t domains;
+    nd_nsd_t soft_dissectors;
     nd_domain_rx_xforms_t domain_xforms;
 
     void Reset(bool free_only = false);
@@ -76,6 +103,7 @@ protected:
     bool AddDomain(nd_app_id_t id, const string &domain);
     bool AddDomainTransform(const string &search, const string &replace);
     bool AddNetwork(nd_app_id_t id, const string &network);
+    bool AddSoftDissector(signed aid, signed pid, const string &expr);
 
 private:
     void *app_networks4, *app_networks6;

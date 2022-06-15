@@ -89,6 +89,7 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
+#include "nd-flow-parser.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
@@ -807,6 +808,25 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 #endif
+        ndEF->detected_protocol_name = nd_proto_get_name(
+            ndEF->detected_protocol
+        );
+
+        if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+            ndEF->category.protocol = nd_categories->Lookup(
+                ndCAT_TYPE_PROTO,
+                (unsigned)ndEF->detected_protocol
+            );
+        }
+
+        if (ndEFNF->host_server_name[0] != '\0') {
+            ndEF->category.domain = nd_domains->Lookup(
+                ndEFNF->host_server_name
+            );
+        }
+
+        ndEF->update_lower_maps();
+
         for (vector<uint8_t *>::const_iterator i =
             nd_config.privacy_filter_mac.begin();
             i != nd_config.privacy_filter_mac.end() &&
@@ -818,6 +838,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
         }
 
+        // TODO: Update the text IP addresses that were set above...
         for (vector<struct sockaddr *>::const_iterator i =
             nd_config.privacy_filter_host.begin();
             i != nd_config.privacy_filter_host.end() &&
@@ -848,25 +869,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 break;
             }
         }
-
-        ndEF->detected_protocol_name = nd_proto_get_name(
-            ndEF->detected_protocol
-        );
-
-        if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
-            ndEF->category.protocol = nd_categories->Lookup(
-                ndCAT_TYPE_PROTO,
-                (unsigned)ndEF->detected_protocol
-            );
-        }
-
-        if (ndEFNF->host_server_name[0] != '\0') {
-            ndEF->category.domain = nd_domains->Lookup(
-                ndEFNF->host_server_name
-            );
-        }
-
-        ndEF->update_lower_maps();
 
         flow_update = true;
         ndEF->flags.detection_init = true;
@@ -1016,6 +1018,36 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->category.domain = nd_domains->Lookup(
                 ndEFNF->host_server_name
             );
+        }
+
+        ndSoftDissector nsd;
+        if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
+            nd_dprintf("%s: soft-dissector matched.\n", tag.c_str());
+
+            if (nsd.aid > -1) {
+                if (nsd.aid == ND_APP_UNKNOWN) {
+                    ndEF->detected_application = 0;
+                    if (ndEF->detected_application_name != NULL) {
+                        free(ndEF->detected_application_name);
+                        ndEF->detected_application_name = NULL;
+                    }
+                    ndEF->category.application = ND_CAT_UNKNOWN;
+                }
+                else
+                    SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
+            }
+
+            if (nsd.pid > -1) {
+                ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
+
+                ndEF->category.protocol = nd_categories->Lookup(
+                    ndCAT_TYPE_PROTO,
+                    (unsigned)ndEF->detected_protocol
+                );
+                ndEF->detected_protocol_name = nd_proto_get_name(
+                    ndEF->detected_protocol
+                );
+            }
         }
 
         if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
