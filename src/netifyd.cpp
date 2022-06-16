@@ -3342,7 +3342,7 @@ int main(int argc, char *argv[])
     if (flow_hash_cache) flow_hash_cache->load();
 
     nd_sha1_file(
-        nd_config.path_legacy_config, nd_config.digest_app_config
+        nd_config.path_app_config, nd_config.digest_app_config
     );
     nd_sha1_file(
         nd_config.path_legacy_config, nd_config.digest_legacy_config

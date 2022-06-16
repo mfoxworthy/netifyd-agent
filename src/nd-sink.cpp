@@ -413,7 +413,7 @@ void ndSinkThread::CreateHeaders(void)
 
     nd_sha1_to_string(nd_config.digest_app_config, digest);
     ostringstream app_digest;
-    conf_digest << "X-Digest-Apps: " << digest;
+    app_digest << "X-Digest-Apps: " << digest;
 
     headers = curl_slist_append(headers, user_agent.str().c_str());
     headers = curl_slist_append(headers, "Content-Type: application/json");
