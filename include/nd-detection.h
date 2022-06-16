@@ -104,6 +104,7 @@ protected:
     bool ProcessALPN(ndDetectionQueueEntry *entry, bool client = true);
 
     void SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id);
+    void CopyHostname(char *dst, const char *src, size_t length);
 };
 
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;

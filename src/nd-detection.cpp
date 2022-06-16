@@ -440,22 +440,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        // Sanitize host server name; RFC 952 plus underscore for SSDP.
-        for(unsigned i = 0;
-            i < ND_FLOW_HOSTNAME &&
-            i < sizeof(ndEFNF->host_server_name); i++) {
-
-            if (isalnum(ndEFNF->host_server_name[i]) ||
-                ndEFNF->host_server_name[i] == '-' ||
-                ndEFNF->host_server_name[i] == '_' ||
-                ndEFNF->host_server_name[i] == '.') {
-                ndEF->host_server_name[i] = tolower(ndEFNF->host_server_name[i]);
-            }
-            else {
-                ndEF->host_server_name[i] = '\0';
-                break;
-            }
-        }
+        CopyHostname(
+            ndEF->host_server_name, ndEFNF->host_server_name,
+            min((size_t)ND_FLOW_HOSTNAME, (size_t)sizeof(ndEFNF->host_server_name))
+        );
 
         // Determine application based on master protocol metadata for
         // Protocol / Application "Twins"
@@ -576,13 +564,15 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEF->ssl.cipher_suite =
                 ndEFNFP.tls_quic.server_cipher;
 
-            // TODO: No need for client_sni any longer, it's set in host_server_name.
             ndEF->ssl.client_sni = ndEF->host_server_name;
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
-                snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                    "%s", ndEFNFP.tls_quic.serverCN);
+                CopyHostname(
+                    ndEF->ssl.server_cn,
+                    ndEFNFP.tls_quic.serverCN,
+                    ND_FLOW_TLS_CNLEN
+                );
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
@@ -898,8 +888,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
-                snprintf(ndEF->ssl.server_cn, ND_FLOW_TLS_CNLEN,
-                    "%s", ndEFNFP.tls_quic.serverCN);
+                CopyHostname(
+                    ndEF->ssl.server_cn,
+                    ndEFNFP.tls_quic.serverCN,
+                    ND_FLOW_TLS_CNLEN
+                );
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
@@ -1158,6 +1151,29 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
         ndCAT_TYPE_APP,
         (unsigned)ndEF->detected_application
     );
+}
+
+void ndDetectionThread::CopyHostname(char *dst, const char *src, size_t length)
+{
+    ssize_t i;
+
+    // Sanitize host server name; RFC 952 plus underscore for SSDP.
+    for (i = 0; i < (ssize_t)length; i++) {
+
+        if (isalnum(src[i]) || src[i] == '-' ||
+            src[i] == '_' || src[i] == '.')
+            dst[i] = tolower(src[i]);
+        else {
+            dst[i] = '\0';
+            break;
+        }
+    }
+
+    // Ensure dst is terminated.
+    dst[length - 1] = '\0';
+
+    // Right-trim dots.
+    for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
