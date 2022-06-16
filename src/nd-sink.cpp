@@ -406,10 +406,14 @@ void ndSinkThread::CreateHeaders(void)
     }
 
     string digest;
-    nd_sha1_to_string(nd_config.digest_legacy_config, digest);
 
+    nd_sha1_to_string(nd_config.digest_legacy_config, digest);
     ostringstream conf_digest;
     conf_digest << "X-Digest-Sink: " << digest;
+
+    nd_sha1_to_string(nd_config.digest_app_config, digest);
+    ostringstream app_digest;
+    conf_digest << "X-Digest-Apps: " << digest;
 
     headers = curl_slist_append(headers, user_agent.str().c_str());
     headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -417,6 +421,7 @@ void ndSinkThread::CreateHeaders(void)
     headers = curl_slist_append(headers, uuid_serial.str().c_str());
     headers = curl_slist_append(headers, uuid_site.str().c_str());
     headers = curl_slist_append(headers, conf_digest.str().c_str());
+    headers = curl_slist_append(headers, app_digest.str().c_str());
 
     headers_gz = curl_slist_append(headers_gz, user_agent.str().c_str());
     headers_gz = curl_slist_append(headers_gz, "Content-Type: application/json");
@@ -425,6 +430,7 @@ void ndSinkThread::CreateHeaders(void)
     headers_gz = curl_slist_append(headers_gz, uuid_serial.str().c_str());
     headers_gz = curl_slist_append(headers_gz, uuid_site.str().c_str());
     headers_gz = curl_slist_append(headers_gz, conf_digest.str().c_str());
+    headers_gz = curl_slist_append(headers_gz, app_digest.str().c_str());
 
     for (map<string, string>::const_iterator i = nd_config.custom_headers.begin();
         i != nd_config.custom_headers.end(); i++) {
@@ -708,6 +714,15 @@ void ndSinkThread::ProcessResponse(void)
 
             for (ndJsonData::const_iterator i = response->data.begin();
                 i != response->data.end(); i++) {
+
+                if (i->first == ND_CONF_APP_BASE) {
+
+                    if (nd_save_response_data(ND_CONF_APP_PATH, i->second) == 0 &&
+                        nd_sha1_file(
+                            nd_config.path_app_config, nd_config.digest_app_config
+                        ) == 0)
+                        create_headers = true;
+                }
 
                 if (i->first == ND_CONF_LEGACY_BASE) {
 

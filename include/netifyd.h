@@ -283,6 +283,7 @@ typedef struct nd_global_config_t {
     size_t max_backlog;
     size_t max_packet_queue;
     uint32_t flags;
+    uint8_t digest_app_config[SHA1_DIGEST_LENGTH];
     uint8_t digest_legacy_config[SHA1_DIGEST_LENGTH];
     uint16_t max_capture_length;
     unsigned max_detection_pkts;

@@ -223,6 +223,7 @@ static void nd_config_init(void)
     nd_config.ca_sink = -1;
     nd_config.ca_socket = -1;
 
+    memset(nd_config.digest_app_config, 0, SHA1_DIGEST_LENGTH);
     memset(nd_config.digest_legacy_config, 0, SHA1_DIGEST_LENGTH);
 
     nd_config.fhc_save = ndFHC_PERSISTENT;
@@ -1347,21 +1348,19 @@ static int nd_sink_process_responses(void)
             for (ndJsonData::const_iterator i = response->data.begin();
                 i != response->data.end(); i++) {
 
-                if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
-                    nd_apps->LoadLegacy(nd_config.path_legacy_config);
-#ifdef NETIFY_TODO
-                    if (! nd_capture_stopped_by_signal) {
-                        nd_reload_detection_threads();
-                    }
-
-                    if (thread_socket) {
-                        string json;
-                        nd_json_protocols(json);
-                        thread_socket->QueueWrite(json);
-                    }
-#endif
-                    reloaded = true;
+                if (! reloaded && i->first == ND_CONF_APP_BASE) {
+                    reloaded = nd_apps->Load(nd_config.path_app_config);
                 }
+
+                if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
+                    reloaded = nd_apps->LoadLegacy(nd_config.path_legacy_config);
+                }
+            }
+
+            if (reloaded && thread_socket) {
+                string json;
+                nd_json_protocols(json);
+                thread_socket->QueueWrite(json);
             }
 #ifdef _ND_USE_PLUGINS
             for (ndJsonPluginRequest::const_iterator
@@ -3342,6 +3341,9 @@ int main(int argc, char *argv[])
     if (dns_hint_cache) dns_hint_cache->load();
     if (flow_hash_cache) flow_hash_cache->load();
 
+    nd_sha1_file(
+        nd_config.path_legacy_config, nd_config.digest_app_config
+    );
     nd_sha1_file(
         nd_config.path_legacy_config, nd_config.digest_legacy_config
     );
