@@ -714,28 +714,33 @@ bool ndApplications::AddNetwork(
         }
     }
 
-    if (af == AF_INET) {
-        ndRadixNetworkEntry<32> entry;
-        entry.prefix_len = prefix_len;
-        entry.addr = ntohl(nw_addr.s_addr);
-        entry.addr &= mask32;
+    try {
+        if (af == AF_INET) {
+            ndRadixNetworkEntry<32> entry;
+            entry.prefix_len = prefix_len;
+            entry.addr = ntohl(nw_addr.s_addr);
+            entry.addr &= mask32;
 
-        nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
-        (*rn4)[entry] = id;
-        return true;
-    }
-    else {
-        ndRadixNetworkEntry<128> entry;
-        entry.prefix_len = prefix_len;
-        for (auto i = 0; i < 4; i++) {
-            entry.addr |= ntohl(nw6_addr.s6_addr32[i]);
-            if (i != 3) entry.addr <<= 32;
+            nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+            (*rn4)[entry] = id;
+            return true;
         }
-        entry.addr &= mask128;
+        else {
+            ndRadixNetworkEntry<128> entry;
+            entry.prefix_len = prefix_len;
+            for (auto i = 0; i < 4; i++) {
+                entry.addr |= ntohl(nw6_addr.s6_addr32[i]);
+                if (i != 3) entry.addr <<= 32;
+            }
+            entry.addr &= mask128;
 
-        nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
-        (*rn6)[entry] = id;
-        return true;
+            nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+            (*rn6)[entry] = id;
+            return true;
+        }
+    }
+    catch (runtime_error &e) {
+        nd_dprintf("Error adding network: %s: %s\n", network.c_str(), e.what());
     }
 
     return false;

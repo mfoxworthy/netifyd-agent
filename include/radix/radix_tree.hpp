@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include <stdexcept>
+
 #include "radix_tree_it.hpp"
 #include "radix_tree_node.hpp"
 #include <functional>
@@ -386,7 +388,7 @@ radix_tree_node<K, T, Compare>* radix_tree<K, T, Compare>::prepend(radix_tree_no
             break;
     }
 
-    assert(count != 0);
+    if (count == 0) throw std::runtime_error("overlapping network detected");
 
     node->m_parent->m_children.erase(node->m_key);
 
