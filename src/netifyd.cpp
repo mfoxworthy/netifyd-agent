@@ -204,6 +204,7 @@ static void nd_config_init(void)
 #ifdef _ND_USE_NETLINK
     nd_config.flags |= ndGF_USE_NETLINK;
 #endif
+    nd_config.flags |= ndGF_SOFT_DISSECTORS;
 
     nd_config.max_detection_pkts = ND_MAX_DETECTION_PKTS;
     nd_config.max_fhc = ND_MAX_FHC_ENTRIES;
@@ -351,6 +352,9 @@ static int nd_config_load(void)
 
     nd_config.max_flows = (size_t)reader.GetInteger(
         "netifyd", "max_flows", 0);
+
+    ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
+        reader.GetBoolean("netifyd", "soft_dissectors", false));
 
     // Threading section
     nd_config.ca_capture_base = (int16_t)reader.GetInteger(

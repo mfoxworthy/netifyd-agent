@@ -1013,33 +1013,35 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             );
         }
 
-        ndSoftDissector nsd;
-        if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
-            nd_dprintf("%s: soft-dissector matched.\n", tag.c_str());
+        if (ND_SOFT_DISSECTORS) {
 
-            if (nsd.aid > -1) {
-                if (nsd.aid == ND_APP_UNKNOWN) {
-                    ndEF->detected_application = 0;
-                    if (ndEF->detected_application_name != NULL) {
-                        free(ndEF->detected_application_name);
-                        ndEF->detected_application_name = NULL;
+            ndSoftDissector nsd;
+            if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
+
+                if (nsd.aid > -1) {
+                    if (nsd.aid == ND_APP_UNKNOWN) {
+                        ndEF->detected_application = 0;
+                        if (ndEF->detected_application_name != NULL) {
+                            free(ndEF->detected_application_name);
+                            ndEF->detected_application_name = NULL;
+                        }
+                        ndEF->category.application = ND_CAT_UNKNOWN;
                     }
-                    ndEF->category.application = ND_CAT_UNKNOWN;
+                    else
+                        SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
                 }
-                else
-                    SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
-            }
 
-            if (nsd.pid > -1) {
-                ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
+                if (nsd.pid > -1) {
+                    ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
 
-                ndEF->category.protocol = nd_categories->Lookup(
-                    ndCAT_TYPE_PROTO,
-                    (unsigned)ndEF->detected_protocol
-                );
-                ndEF->detected_protocol_name = nd_proto_get_name(
-                    ndEF->detected_protocol
-                );
+                    ndEF->category.protocol = nd_categories->Lookup(
+                        ndCAT_TYPE_PROTO,
+                        (unsigned)ndEF->detected_protocol
+                    );
+                    ndEF->detected_protocol_name = nd_proto_get_name(
+                        ndEF->detected_protocol
+                    );
+                }
             }
         }
 
