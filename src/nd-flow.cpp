@@ -489,7 +489,7 @@ void ndFlow::print(void) const
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
 
     nd_flow_printf(
-        "%s: [%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
+        "%s: [%c%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
         iface_name.c_str(),
         (iface->first) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
@@ -501,6 +501,7 @@ void ndFlow::print(void) const
             (privacy_mask & PRIVATE_UPPER) ? 'P' :
             (privacy_mask & (PRIVATE_LOWER | PRIVATE_UPPER)) ? 'X' :
             '-',
+        (flags.soft_dissector.load()) ? 's' : '-',
         detected_protocol_name,
         (detected_application_name != NULL) ? "." : "",
         (detected_application_name != NULL) ? detected_application_name : "",

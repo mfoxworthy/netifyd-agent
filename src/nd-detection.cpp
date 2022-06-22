@@ -546,12 +546,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        if (ndEF->detected_protocol == ND_PROTO_STUN) {
-            // TODO
-            //ndEF->detected_application == ND_PROTO_GOOGLE
-            //    ndEF->detected_protocol.app_protocol = ND_PROTO_HANGOUT;
-        }
-
         // Additional protocol-specific processing...
         nd_proto_id_t nd_proto = ndEF->master_protocol();
 
@@ -576,7 +570,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
-                // Detect to application by server CN if still unknown.
+                // Detect application by server CN if still unknown.
                 if (ndEF->detected_application == ND_APP_UNKNOWN)
                     SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
             }
@@ -658,12 +652,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 #endif
             break;
-#if 0
-        case ND_PROTO_MINING:
-            snprintf(ndEF->mining.variant, ND_FLOW_EXTRA_INFO,
-                "%s", ndEFNF->flow_extra_info);
-            break;
-#endif
         default:
             break;
         }
@@ -828,7 +816,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
         }
 
-        // TODO: Update the text IP addresses that were set above...
         for (vector<struct sockaddr *>::const_iterator i =
             nd_config.privacy_filter_host.begin();
             i != nd_config.privacy_filter_host.end() &&
@@ -858,6 +845,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
                 break;
             }
+
+            // TODO: Update the text IP addresses that were set above...
         }
 
         flow_update = true;
@@ -896,9 +885,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 free(ndEFNFP.tls_quic.serverCN);
                 ndEFNFP.tls_quic.serverCN = NULL;
 
-                // Detect to application by server CN if still unknown.
-                if (ndEF->detected_application == ND_APP_UNKNOWN)
-                    SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
+                // Detect application by server CN if still unknown.
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
 
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
@@ -955,24 +943,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 free(ndEFNFP.tls_quic.alpn_server);
                 ndEFNFP.tls_quic.alpn_server = NULL;
             }
-#if 0
-        nd_dprintf("--> PROCESS EXTRA PACKETS: hello: %s\n",
-            (ndEFNFP.tls_quic.hello_processed) ?
-            "yes" : "no");
-
-        if (ndEF->ip_protocol != IPPROTO_TCP ||
-            ! ndEFNF->l4.tcp.tls.certificate_processed) return;
-
-            if (ndEF->detected_application == ND_APP_UNKNOWN &&
-                ndEFNFP.tls_quic.server_certificate[0] != '\0') {
-                ndEF->detected_protocol.app_protocol = (uint16_t)ndpi_match_host_app_proto(
-                    ndpi,
-                    ndEFNF,
-                    (char *)ndEFNFP.tls_quic.server_certificate,
-                    strlen((const char*)ndEFNFP.tls_quic.server_certificate),
-                    &npmr);
-            }
-#endif
         break;
         case ND_PROTO_DNS:
         case ND_PROTO_MDNS:
@@ -1017,6 +987,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             ndSoftDissector nsd;
             if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
+
+                ndEF->flags.soft_dissector = true;
 
                 if (nsd.aid > -1) {
                     if (nsd.aid == ND_APP_UNKNOWN) {
