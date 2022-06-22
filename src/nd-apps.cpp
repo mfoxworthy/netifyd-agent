@@ -753,7 +753,7 @@ bool ndApplications::AddSoftDissector(
 
     if (aid < 0 && pid < 0) return false;
 
-    nd_dprintf("%s: app: %u, proto: %u, expr: \"%s\"\n",
+    nd_dprintf("%s: app: %d, proto: %d, expr: \"%s\"\n",
         __PRETTY_FUNCTION__, aid, pid, decoded_expr.c_str());
 
     soft_dissectors.push_back(

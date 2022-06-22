@@ -354,7 +354,7 @@ static int nd_config_load(void)
         "netifyd", "max_flows", 0);
 
     ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
-        reader.GetBoolean("netifyd", "soft_dissectors", false));
+        reader.GetBoolean("netifyd", "soft_dissectors", true));
 
     // Threading section
     nd_config.ca_capture_base = (int16_t)reader.GetInteger(
