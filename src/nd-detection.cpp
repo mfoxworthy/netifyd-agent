@@ -990,8 +990,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
                 ndEF->flags.soft_dissector = true;
 
-                nd_dprintf("%s: soft-dissector matched.\n", tag.c_str());
-
                 if (nsd.aid > -1) {
                     if (nsd.aid == ND_APP_UNKNOWN) {
                         ndEF->detected_application = 0;
