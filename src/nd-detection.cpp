@@ -1109,11 +1109,12 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
     if (app_id == ND_APP_UNKNOWN) return;
 
     ndEF->detected_application = app_id;
-    const char *name = nd_apps->Lookup(ndEF->detected_application);
+    const char *name = nd_apps->Lookup(app_id);
+
     if (ndEF->detected_application_name != NULL) {
         ndEF->detected_application_name = (char *)realloc(
             ndEF->detected_application_name,
-            strlen(ndEF->detected_application_name) + 1
+            strlen(name) + 1
         );
 
         strcpy(ndEF->detected_application_name, name);
@@ -1122,8 +1123,7 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
         ndEF->detected_application_name = strdup(name);
 
     ndEF->category.application = nd_categories->Lookup(
-        ndCAT_TYPE_APP,
-        (unsigned)ndEF->detected_application
+        ndCAT_TYPE_APP, app_id
     );
 }
 
