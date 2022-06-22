@@ -707,6 +707,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     if (encode_includes & ENCODE_METADATA) {
         j["ip_nat"] = (bool)flags.ip_nat.load();
         j["dhc_hit"] = (bool)flags.dhc_hit.load();
+        j["soft_dissector"] = (bool)flags.soft_dissector.load();
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         j["ct_id"] = ct_id;
         j["ct_mark"] = ct_mark;
