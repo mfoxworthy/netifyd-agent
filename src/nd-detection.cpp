@@ -449,21 +449,12 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         // Protocol / Application "Twins"
         switch (ndEF->master_protocol()) {
 
-        case ND_PROTO_SKYPE_CALL:
-        case ND_PROTO_SKYPE_TEAMS:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.skype"));
-            break;
-
         case ND_PROTO_SPOTIFY:
             SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
             break;
 
         case ND_PROTO_UBNTAC2:
             SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
-            break;
-
-        case ND_PROTO_VIBER:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.viber"));
             break;
 
         case ND_PROTO_NEST_LOG_SINK:
@@ -476,10 +467,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         case ND_PROTO_TEAMVIEWER:
             SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
-            break;
-
-        case ND_PROTO_PPSTREAM:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.iqiyi"));
             break;
 
         case ND_PROTO_APPLE_PUSH:
