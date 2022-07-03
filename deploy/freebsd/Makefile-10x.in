@@ -30,6 +30,7 @@ INSTALL_TARGET=install-strip
 post-install:
 	${MKDIR} ${STAGEDIR}/var/run/netifyd
 	${MV} ${STAGEDIR}/usr/local/etc/netifyd.conf ${STAGEDIR}/usr/local/etc/netifyd.conf.sample
-	${MV} ${STAGEDIR}/usr/local/etc/netify.d/netify-sink.conf ${STAGEDIR}/usr/local/etc/netify.d/netify-sink.conf.sample
+	${MV} ${STAGEDIR}/usr/local/etc/netify.d/netify-apps.conf ${STAGEDIR}/usr/local/etc/netify.d/netify-apps.conf.sample
+	${MV} ${STAGEDIR}/usr/local/etc/netify.d/netify-categories.json ${STAGEDIR}/usr/local/etc/netify.d/netify-categories.json.sample
 
 .include <bsd.port.mk>

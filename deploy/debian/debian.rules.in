@@ -56,6 +56,8 @@ install: build
 	install -d -m 0755 $(DESTDIR)@volatilestatedir@
 	install -d -m 0755 $(DESTDIR)@sysconfdir@/netify.d
 
+	rm -f $(DESTDIR)@sysconfdir@/netify.d/netify-sink.conf
+
 	chmod a+x $(DESTDIR)@datadir@/*.sh
 
 	dh_systemd_enable

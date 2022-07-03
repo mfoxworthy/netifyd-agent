@@ -1,3 +1,7 @@
 @sysconfdir@/default/netifyd
+@sysconfdir@/netify.d/agent.uuid
 @sysconfdir@/netifyd.conf
-@sysconfdir@/netify.d/netify-sink.conf
+@sysconfdir@/netify.d/netify-apps.conf
+@sysconfdir@/netify.d/netify-categories.json
+@sysconfdir@/netify.d/sink.url
+@sysconfdir@/netify.d/site.uuid

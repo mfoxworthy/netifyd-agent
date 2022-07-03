@@ -10,13 +10,14 @@ TEMPLATEFILES_IN = functions.sh.in netifyd.conf.in netifyd.init.in watchdog.cron
 
 sharedatadir = $(datadir)/netifyd
 sharedata_DATA = functions.sh watchdog.sh
+
 sysconf_DATA = netifyd.conf
 
-persistentstate_DATA = netify-sink.conf
+persistentstate_DATA = netify-apps.conf netify-categories.json netify-sink.conf
 
 BUILT_SOURCES = $(TEMPLATEFILES)
 CLEANFILES = $(TEMPLATEFILES)
-EXTRA_DIST = $(TEMPLATEFILES_IN) freebsd netifyd.default netify-sink.conf pfsense
+EXTRA_DIST = $(TEMPLATEFILES_IN) freebsd netifyd.default netify-apps.conf netify-categories.json netify-sink.conf pfsense
 
 %: %.in
 	$(SED) \
