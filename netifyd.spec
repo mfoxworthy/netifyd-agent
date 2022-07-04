@@ -137,6 +137,7 @@ rm -rf %{buildroot}/%{_libdir}/pkgconfig/libprofiler*
 rm -rf %{buildroot}/%{_libdir}/pkgconfig/libtcmalloc*
 rm -rf %{buildroot}/%{_docdir}/gperftools
 rm -rf %{buildroot}/%{_mandir}/man1/pprof*
+rm -f %{buildroot}/%{statedir_pdata}/netify-sink.conf
 
 install -d -m 0750 %{buildroot}/%{statedir_vdata}
 
@@ -193,7 +194,8 @@ exit 0
 %attr(755,root,root) %{_datadir}/%{name}/
 %attr(755,root,root) %{_sysconfdir}/init.d/%{name}
 %config(noreplace) %attr(644,root,root) %{_sysconfdir}/sysconfig/%{name}
-%config(noreplace) %attr(640,root,root) %{statedir_pdata}/netify-sink.conf
+%config(noreplace) %attr(640,root,root) %{statedir_pdata}/netify-apps.conf
+%config(noreplace) %attr(640,root,root) %{statedir_pdata}/netify-categories.json
 %config(noreplace) %attr(660,root,root) %{_sysconfdir}/%{name}.conf
 %{_sbindir}/%{name}
 %{_libdir}/lib%{name}.so*
