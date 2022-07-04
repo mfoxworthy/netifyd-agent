@@ -1,0 +1,174 @@
+## Summary
+
+Netify Agent v4.2.0 stable release incorporates a host of new features and improvements such as a completely new application definitions implementation, a new applications configuration file-format, Netify API integration with automatic application/protocol category updates, refined classifications using "soft-dissectors", support for applying application categories to lists of custom domains, significant memory utilization reductions, and a complete reintegration of the latest nDPI master branch.
+
+## Improvements
+
+- Decoupled application definitions from nDPI.  The Agent now processes all application definitions and look-ups internally.  A new radix tree implementation is used to store application network blocks (CIDR).  These changes significantly reduce memory utilization.
+- With the new application definition implementation comes a new configuration file-format.  The new format supports Application Domain Transforms for matching complex domains which are commonly used by CDNs.  Documentation for the new file-format can be found [here](https://gitlab.com/netify.ai/public/netify-agent/-/wikis/application%20definitions).
+- Added application and protocol category support with automatic Netify API updates.
+- Added the ability to enable or disable specific protocols at start-up.  It's now possible to customize the DPI processing for the environment and/or platform capabilities.
+- Implemented additional packet processing.  Some dissectors can extract additional metadata but require addition packet processing after detection (ex: TLS).  Flows can now be updated post-detection which is indicated by a new "_flow_updated_" field.
+- For pcap capture sources, the "_snap length_" has been increased from 1,536 to 65,535 bytes.  Some dissectors have interesting metadata that could be past 1,536 bytes.  This value is now a configurable option, "_max_capture_length_".
+- The maximum number of packets to process used to be set individually for TCP and UDP.  This is now unified as "_max_detection_pkts_", and has been increased from 10 to 32 packets.  Some dissectors with extra packet processing require more than 10 packets.
+- Improved packet processing performance.  Removed unnecessary select() calls.
+- Significantly reduced the amount of packets queued during flow statistics collection.  Instead of entirely locking a capture source flows are now associated with a locking bucket (flow_map mutex).
+- Further reduced the amount of time a flow lock bucket is held during statistics collection / processing.
+- Introduced "soft-dissectors".  Detections can now be refined using simple flow-criteria expressions.
+- Custom lists of domains can now be loaded to apply a user-selected application category.
+- Added support for plugin version reporting.
+- Added plugin event system.  Plugins can now be notified of certain Agent events such as a SIGHUP (reload) signal.
+- Added tracking of TCP resets.
+- Immediately purge TCP flows on FIN.
+- Added protocol refinement using new port map (#41, #40, #39, #36, #35).
+- Improved application, category, and protocol "_dump_" command-line options.
+- Added complete command-line options help.
+- Added support for nDPI debug messages.
+- [**lxc**] Added SIGPWR handler.
+- [**linux**] Extract connection tracking ID and mark values for all flows (when enabled).
+- [**openwrt**] Added daemon reload support via procd.
+- [**openwrt**] Improved network interface auto-detection for 21.02.
+- [**freebsd**] Added support for PKG files.
+
+## Bug Fixes
+- Fixed crash on start-up when a connecting socket client is waiting.
+- Fixed default provisioning URL fall-back (sink_url).
+- Fixed crashes on purge by refactoring flow expiration and purge logic.
+- Fixed packet timestamps for offline captures.
+- Fixed tracking of TCP sequence errors.
+- Added missing newline for "_agent_status_" socket messages.
+- [**freebsd**] Various compilation and packaging fixes.
+
+## Protocols Added
+- [**Amazon Video**]
+- [**AVAST SecureDNS**]
+- [**CAPWAP**]
+- [**Cassandra**]
+- [**CPHA**]
+- [**DNP3**] Scala distributed network protocol.
+- [**DNScrypt**]
+- [**Ethernet-in-IP**] TCP
+- [**FTP Data**]
+- [**Genshin Impact**]
+- [**HP VirtGrp**]
+- [**HSRP**] Hot Standby Router Protocol
+- [**IEC60870**] IEC 60870-5-104: Extension for industrial 104 protocol recognition.
+- [**IMO**]
+- [**NATS**]
+- [**S7comm**]
+- [**SOAP**]
+- [**Targus Dataspeed**]
+- [**VXLAN**]
+- [**Websocket**]
+- [**Z39.50**] International standard client–server, application layer communications protocol.
+- [**Zabbix**]
+
+## Protocols Updated
+- [**Aimini**]
+- [**AIX**]
+- [**AJP**]
+- [**Among Us**]
+- [**AYIYA**]
+- [**Bittorrent**]
+- [**BJNP**]
+- [**CISCO VPN**]
+- [**COAP**]
+- [**CSGO**] Counter Strike: GO
+- [**DHCP**]
+- [**Diameter**]
+- [**Direct Connect**]
+- [**Direct Download**]
+- [**Direct Download Link**]
+- [**DNS**]
+- [**Dropbox**]
+- [**Fasttrack**]
+- [**FIX**]
+- [**FTP Control**]
+- [**Git**]
+- [**Gnutella**]
+- [**GTP**]
+- [**H323**]
+- [**Icecast**]
+- [**IMAP**]
+- [**IRC**]
+- [**Jabber**]
+- [**Kerberos**]
+- [**LDAP**]
+- [**memcached**]
+- [**Mining**] Crypto-mining.
+- [**MongoDB**]
+- [**MQTT**]
+- [**MS-SQL TDS**]
+- [**MySQL**]
+- [**NetBIOS**]
+- [**Netflow**]
+- [**NOE**]
+- [**NTP**]
+- [**OOKLA**]
+- [**OpenVPN**]
+- [**Oracle**]
+- [**POP3**]
+- [**PostgreSQL**]
+- [**PPStream**]
+- [**QQ**]
+- [**QUIC**]
+- [**RADIUS**]
+- [**RDP**]
+- [**RTCP**]
+- [**RTMP**]
+- [**RTP**]
+- [**RTSP**]
+- [**RX**]
+- [**sFlow**]
+- [**SIP**]
+- [**SMB**]
+- [**SMPP**]
+- [**SMTP**]
+- [**SNMP**]
+- [**SOCKS**]
+- [**SOMEIP**]
+- [**Spotify**]
+- [**SSH**]
+- [**Starcraft**]
+- [**Steam**]
+- [**STUN**]
+- [**Syslog**]
+- [**TCP/UDP**]
+- [**Teamspeak**]
+- [**Teamviewer**]
+- [**Telegram**]
+- [**TFTP**]
+- [**Thunder**]
+- [**TLS**]
+- [**UBNTAC2**]
+- [**VHUA**]
+- [**VIBER**] Updated and re-enabled.
+- [**VNC**]
+- [**WhatsApp**]
+- [**WHOIS DAS**]
+- [**Wireguard**]
+- [**World of Warcraft**]
+- [**XBOX**]
+- [**Zattoo**]
+- [**ZeroMQ**]
+
+## Protocols Deprecated
+- [**Apple Push**] Moved to Agent.
+- [**eDonkey**]
+- [**Google Hangout/Duo**] Moved to Agent.
+- [**HEP**]
+- [**MDNS**] Merged into DNS dissector.
+- [**OSCAR**]
+- [**SoulSeek**]
+- [**Tor**]
+- [**TVants**]
+
+## Protocol Notes
+- [**IRCS**] Added portmap for IRC over TLS.
+- [**IRCS**] Updated ALPN map for IRC over TLS.
+- [**Kerberos**] Extract hostname, domain, and username.
+- [**Mining**] Added variant field for crypto-mining.
+- [**QUIC**] Export TLS metadata when available.
+- [**TLS**] Extract ALPN and optionally refine protocol detection based on ALPN value.
+- [**TLS**] Extract alternate server names.
+- [**ALL**] Export nDPI protocol risk scores.
