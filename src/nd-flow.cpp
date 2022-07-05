@@ -52,6 +52,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
@@ -67,10 +68,11 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_DEBUG_FHC 1
 
-extern nd_global_config nd_config;
-extern nd_device_ethers device_ethers;
+extern nd_global_config *nd_config;
 
-ndFlow::ndFlow(nd_ifaces::iterator iface)
+nd_device_ether nd_device_ethers;
+
+ndFlow::ndFlow(nd_interface::iterator iface)
     : iface(iface), dpi_thread_id(-1),
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
@@ -467,18 +469,18 @@ void ndFlow::print(void) const
 
     if (ND_DEBUG_WITH_ETHERS) {
         string key;
-        nd_device_ethers::const_iterator i;
+        nd_device_ether::const_iterator i;
 
         key.assign((const char *)lower_mac, ETH_ALEN);
 
-        i = device_ethers.find(key);
-        if (i != device_ethers.end())
+        i = nd_device_ethers.find(key);
+        if (i != nd_device_ethers.end())
             lower_name = i->second.c_str();
 
         key.assign((const char *)upper_mac, ETH_ALEN);
 
-        i = device_ethers.find(key);
-        if (i != device_ethers.end())
+        i = nd_device_ethers.find(key);
+        if (i != nd_device_ethers.end())
             upper_name = i->second.c_str();
     }
 

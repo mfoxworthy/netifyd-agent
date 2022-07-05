@@ -50,12 +50,16 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-netlink.h"
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
+
+ndNetlink *netlink = NULL;
+nd_netlink_device nd_netlink_devices;
 
 inline bool ndNetlinkNetworkAddr::operator==(const ndNetlinkNetworkAddr &n) const
 {
@@ -120,7 +124,7 @@ inline bool ndNetlinkNetworkAddr::operator!=(const ndNetlinkNetworkAddr &n) cons
 
     return (rc != 0);
 }
-ndNetlink::ndNetlink(const nd_ifaces &ifaces)
+ndNetlink::ndNetlink(const nd_interface &ifaces)
 #ifdef HAVE_LINUX_NETLINK_H
     : nd(-1), seq(0)
 #endif
@@ -170,7 +174,7 @@ ndNetlink::ndNetlink(const nd_ifaces &ifaces)
         throw ndNetlinkException(strerror(rc));
     }
 #endif
-    for (nd_ifaces::const_iterator i = ifaces.begin(); i != ifaces.end(); i++)
+    for (nd_interface::const_iterator i = ifaces.begin(); i != ifaces.end(); i++)
         AddInterface((*i).second);
 
     // Add private networks for when all else fails...

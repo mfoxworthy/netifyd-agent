@@ -83,6 +83,8 @@ using namespace std;
 
 //#define _ND_APPS_DEBUG    1
 
+ndApplications *nd_apps = NULL;
+
 template<size_t N>
 bool operator<(const bitset<N> &x, const bitset<N> &y)
 {

@@ -78,6 +78,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
@@ -106,7 +107,7 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_LOG_FHC             1
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
@@ -139,7 +140,7 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_PLUGINS
     nd_plugins *plugin_detections,
 #endif
-    nd_devices &devices,
+    nd_device &devices,
     ndDNSHintCache *dhc,
     ndFlowHashCache *fhc,
     uint8_t private_addr)
@@ -369,11 +370,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
     bool check_extra_packets = (
         ndEFNF->check_extra_packets
-        && ndEF->detection_packets < nd_config.max_detection_pkts);
+        && ndEF->detection_packets < nd_config->max_detection_pkts);
 
     if (! ndEF->flags.detection_init.load() && (
         ndEF->detected_protocol != ND_PROTO_UNKNOWN
-        || ndEF->detection_packets == nd_config.max_detection_pkts
+        || ndEF->detection_packets == nd_config->max_detection_pkts
         || ndEF->flags.detection_expiring.load())) {
 
         if (! ndEF->flags.detection_guessed.load()
@@ -793,8 +794,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEF->update_lower_maps();
 
         for (vector<uint8_t *>::const_iterator i =
-            nd_config.privacy_filter_mac.begin();
-            i != nd_config.privacy_filter_mac.end() &&
+            nd_config->privacy_filter_mac.begin();
+            i != nd_config->privacy_filter_mac.end() &&
                 ndEF->privacy_mask !=
                 (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
             if (! memcmp((*i), ndEF->lower_mac, ETH_ALEN))
@@ -804,8 +805,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         for (vector<struct sockaddr *>::const_iterator i =
-            nd_config.privacy_filter_host.begin();
-            i != nd_config.privacy_filter_host.end() &&
+            nd_config->privacy_filter_host.begin();
+            i != nd_config->privacy_filter_host.end() &&
                 ndEF->privacy_mask !=
                 (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
 
@@ -1004,7 +1005,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
+        if ((ND_DEBUG && ND_VERBOSE) || nd_config->h_flow != stderr)
             ndEF->print();
 
         for (nd_plugins::iterator i = plugins->begin();

@@ -53,7 +53,7 @@ class ndCaptureThread : public ndThread
 public:
     ndCaptureThread(
         int16_t cpu,
-        nd_ifaces::iterator iface,
+        nd_interface::iterator iface,
         const uint8_t *dev_mac,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
@@ -68,7 +68,7 @@ public:
     int GetCaptureStats(struct pcap_stat &stats);
 
 protected:
-    nd_ifaces::iterator iface;
+    nd_interface::iterator iface;
     uint8_t dev_mac[ETH_ALEN];
     ndSocketThread *thread_socket;
     bool capture_unknown_flows;

@@ -44,6 +44,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
@@ -56,7 +57,7 @@ using namespace std;
 
 #include "nd-fhc.h"
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
 
 ndFlowHashCache::ndFlowHashCache(size_t cache_size)
     : cache_size(cache_size)
@@ -89,7 +90,7 @@ void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
 //#if _ND_DEBUG_FHC
             nd_dprintf("Purging old flow hash cache entries.\n");
 //#endif
-            for (size_t n = 0; n < cache_size / nd_config.fhc_purge_divisor; n++) {
+            for (size_t n = 0; n < cache_size / nd_config->fhc_purge_divisor; n++) {
                 pair<string, string> j = index.back();
 
                 nd_fhc_map::iterator k = lookup.find(j.first);
@@ -145,7 +146,7 @@ void ndFlowHashCache::save(void)
 {
     ostringstream os;
 
-    switch (nd_config.fhc_save) {
+    switch (nd_config->fhc_save) {
     case ndFHC_PERSISTENT:
         os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
         break;
@@ -177,7 +178,7 @@ void ndFlowHashCache::load(void)
 {
     ostringstream os;
 
-    switch (nd_config.fhc_save) {
+    switch (nd_config->fhc_save) {
     case ndFHC_PERSISTENT:
         os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
         break;

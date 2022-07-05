@@ -68,10 +68,6 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-#ifndef AF_LINK
-#define AF_LINK AF_PACKET
-#endif
-
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #endif
@@ -90,6 +86,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #ifdef _ND_USE_INOTIFY
 #include "nd-inotify.h"
@@ -125,12 +122,9 @@ using namespace std;
 
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
-static nd_ifaces ifaces;
-static nd_devices devices;
 static nd_stats stats;
 static nd_capture_threads capture_threads;
 static nd_detection_threads detection_threads;
-static nd_agent_stats nda_stats;
 static nd_packet_stats pkt_totals;
 static ostringstream *nd_stats_os = NULL;
 static ndSinkThread *thread_sink = NULL;
@@ -148,429 +142,29 @@ static ndConntrackThread *thread_conntrack = NULL;
 #endif
 #ifdef _ND_USE_INOTIFY
 static ndInotify *inotify = NULL;
-static nd_inotify_watch inotify_watches;
-#endif
-#ifdef _ND_USE_NETLINK
-static ndNetlink *netlink = NULL;
-nd_device_netlink device_netlink;
 #endif
 static nd_device_filter device_filters;
 static bool nd_capture_stopped_by_signal = false;
 static ndDNSHintCache *dns_hint_cache = NULL;
 static ndFlowHashCache *flow_hash_cache = NULL;
 static time_t nd_ethers_mtime = 0;
-static nd_interface_addr_map nd_interface_addrs;
 
-ndFlowMap *nd_flow_buckets;
-
-nd_device_ethers device_ethers;
-
-nd_global_config nd_config;
-pthread_mutex_t *nd_printf_mutex = NULL;
-
-ndApplications *nd_apps = NULL;
-ndCategories *nd_categories = NULL;
-ndDomains *nd_domains = NULL;
-
-atomic_uint nd_flow_count;
-
-static void nd_config_init(void)
-{
-    nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
-    nd_config.h_flow = stderr;
-
-    nd_config.path_config = NULL;
-    nd_config.path_export_json = NULL;
-    nd_config.path_app_config = strdup(ND_CONF_APP_PATH);
-    nd_config.path_cat_config = strdup(ND_CONF_CAT_PATH);
-    nd_config.path_legacy_config = strdup(ND_CONF_LEGACY_PATH);
-    nd_config.path_uuid = NULL;
-    nd_config.path_uuid_serial = NULL;
-    nd_config.path_uuid_site = NULL;
-    nd_config.url_sink = NULL;
-    nd_config.url_sink_provision = NULL;
-    nd_config.uuid = NULL;
-    nd_config.uuid_serial = NULL;
-    nd_config.uuid_site = NULL;
-
-    nd_config.max_backlog = ND_MAX_BACKLOG_KB * 1024;
-    nd_config.max_packet_queue = ND_MAX_PKT_QUEUE_KB * 1024;
-
-    nd_config.flags |= ndGF_SSL_VERIFY;
-#ifdef _ND_USE_CONNTRACK
-    nd_config.flags |= ndGF_USE_CONNTRACK;
-#endif
+extern nd_global_config *nd_config;
+extern pthread_mutex_t *nd_printf_mutex;
+extern nd_device nd_devices;
+extern nd_device_ether nd_device_ethers;
+extern ndFlowMap *nd_flow_buckets;
+extern ndApplications *nd_apps;
+extern ndCategories *nd_categories;
+extern ndDomains *nd_domains;
+extern atomic_uint nd_flow_count;
+extern nd_agent_stats nd_json_agent_stats;
+extern nd_interface nd_interfaces;
+extern nd_interface_addr_map nd_interface_addrs;
 #ifdef _ND_USE_NETLINK
-    nd_config.flags |= ndGF_USE_NETLINK;
+extern ndNetlink *netlink;
+extern nd_netlink_device nd_netlink_devices;
 #endif
-    nd_config.flags |= ndGF_SOFT_DISSECTORS;
-
-    nd_config.max_detection_pkts = ND_MAX_DETECTION_PKTS;
-    nd_config.max_fhc = ND_MAX_FHC_ENTRIES;
-    nd_config.max_flows = 0;
-    nd_config.sink_max_post_errors = ND_SINK_MAX_POST_ERRORS;
-    nd_config.sink_connect_timeout = ND_SINK_CONNECT_TIMEOUT;
-    nd_config.sink_xfer_timeout = ND_SINK_XFER_TIMEOUT;
-    nd_config.ttl_dns_entry = ND_TTL_IDLE_DHC_ENTRY;
-    nd_config.ttl_idle_flow = ND_TTL_IDLE_FLOW;
-    nd_config.ttl_idle_tcp_flow = ND_TTL_IDLE_TCP_FLOW;
-    nd_config.update_interval = ND_STATS_INTERVAL;
-    nd_config.update_imf = 1;
-    nd_config.ca_capture_base = 0;
-    nd_config.ca_conntrack = -1;
-    nd_config.ca_detection_base = 0;
-    nd_config.ca_detection_cores = -1;
-    nd_config.ca_sink = -1;
-    nd_config.ca_socket = -1;
-
-    memset(nd_config.digest_app_config, 0, SHA1_DIGEST_LENGTH);
-    memset(nd_config.digest_legacy_config, 0, SHA1_DIGEST_LENGTH);
-
-    nd_config.fhc_save = ndFHC_PERSISTENT;
-    nd_config.fhc_purge_divisor = ND_FHC_PURGE_DIVISOR;
-}
-
-static int nd_config_load(void)
-{
-    typedef map<string, string> nd_config_section;
-
-    if (nd_conf_filename == NULL) {
-        fprintf(stderr, "Configuration file not defined.\n");
-        return -1;
-    }
-
-    struct stat extern_config_stat;
-    if (stat(nd_conf_filename, &extern_config_stat) < 0) {
-        fprintf(stderr, "Can not stat configuration file: %s: %s\n",
-            nd_conf_filename, strerror(errno));
-        return -1;
-    }
-
-    INIReader reader(nd_conf_filename);
-
-    if (reader.ParseError() != 0) {
-        fprintf(stderr, "Error while parsing configuration file: %s\n",
-            nd_conf_filename);
-        return -1;
-    }
-
-    // Netify section
-    nd_config_section netifyd_section;
-    reader.GetSection("netifyd", netifyd_section);
-
-    if (nd_config.uuid == NULL) {
-        string uuid = reader.Get("netifyd", "uuid", ND_AGENT_UUID_NULL);
-        if (uuid.size() > 0)
-            nd_config.uuid = strdup(uuid.c_str());
-    }
-
-    if (nd_config.uuid_serial == NULL) {
-        string serial = reader.Get("netifyd", "uuid_serial", ND_AGENT_SERIAL_NULL);
-        if (serial.size() > 0)
-            nd_config.uuid_serial = strdup(serial.c_str());
-    }
-
-    if (nd_config.uuid_site == NULL) {
-        string uuid_site = reader.Get("netifyd", "uuid_site", ND_SITE_UUID_NULL);
-        if (uuid_site.size() > 0)
-            nd_config.uuid_site = strdup(uuid_site.c_str());
-    }
-
-    string path_uuid = reader.Get(
-        "netifyd", "path_uuid", ND_AGENT_UUID_PATH);
-    nd_config.path_uuid = strdup(path_uuid.c_str());
-
-    string path_uuid_serial = reader.Get(
-        "netifyd", "path_uuid_serial", ND_AGENT_SERIAL_PATH);
-    nd_config.path_uuid_serial = strdup(path_uuid_serial.c_str());
-
-    string path_uuid_site = reader.Get(
-        "netifyd", "path_uuid_site", ND_SITE_UUID_PATH);
-    nd_config.path_uuid_site = strdup(path_uuid_site.c_str());
-
-    string url_sink_provision = reader.Get(
-        "netifyd", "url_sink", ND_URL_SINK);
-    nd_config.url_sink_provision = strdup(url_sink_provision.c_str());
-    nd_config.url_sink = strdup(url_sink_provision.c_str());
-
-    nd_config.update_interval = (unsigned)reader.GetInteger(
-        "netifyd", "update_interval", ND_STATS_INTERVAL);
-
-    nd_config.sink_connect_timeout = (unsigned)reader.GetInteger(
-        "netifyd", "upload_connect_timeout", ND_SINK_CONNECT_TIMEOUT);
-    nd_config.sink_xfer_timeout = (unsigned)reader.GetInteger(
-        "netifyd", "upload_timeout", ND_SINK_XFER_TIMEOUT);
-    ND_GF_SET_FLAG(ndGF_UPLOAD_NAT_FLOWS, reader.GetBoolean(
-        "netifyd", "upload_nat_flows", false));
-
-    ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
-        reader.GetBoolean("netifyd", "export_json", false));
-    if (! ND_EXPORT_JSON) {
-        ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
-            reader.GetBoolean("netifyd", "json_save", false));
-    }
-
-    nd_config.max_backlog = reader.GetInteger(
-        "netifyd", "max_backlog_kb", ND_MAX_BACKLOG_KB) * 1024;
-
-    nd_config.max_packet_queue = reader.GetInteger(
-        "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
-
-    ND_GF_SET_FLAG(ndGF_USE_SINK,
-        reader.GetBoolean("netifyd", "enable_sink", false));
-
-    if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
-        ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
-            reader.GetBoolean("netifyd", "ssl_verify", true));
-    } else if (netifyd_section.find("ssl_verify_peer") != netifyd_section.end()) {
-        ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
-            reader.GetBoolean("netifyd", "ssl_verify_peer", true));
-    }
-
-    ND_GF_SET_FLAG(ndGF_SSL_USE_TLSv1,
-        reader.GetBoolean("netifyd", "ssl_use_tlsv1", false));
-
-    nd_config.max_capture_length = (uint16_t)reader.GetInteger(
-        "netifyd", "max_capture_length", ND_PCAP_SNAPLEN);
-
-    // TODO: Deprecated:
-    // max_tcp_pkts, max_udp_pkts
-    nd_config.max_detection_pkts = (unsigned)reader.GetInteger(
-        "netifyd", "max_detection_pkts", ND_MAX_DETECTION_PKTS);
-
-    nd_config.sink_max_post_errors = (unsigned)reader.GetInteger(
-        "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
-
-    nd_config.ttl_idle_flow = (unsigned)reader.GetInteger(
-        "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
-    nd_config.ttl_idle_tcp_flow = (unsigned)reader.GetInteger(
-        "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
-
-    ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS,
-        reader.GetBoolean("netifyd", "capture_unknown_flows", false));
-
-    nd_config.max_flows = (size_t)reader.GetInteger(
-        "netifyd", "max_flows", 0);
-
-    ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
-        reader.GetBoolean("netifyd", "soft_dissectors", true));
-
-    // Threading section
-    nd_config.ca_capture_base = (int16_t)reader.GetInteger(
-        "threads", "capture_base", nd_config.ca_capture_base);
-    nd_config.ca_conntrack = (int16_t)reader.GetInteger(
-        "threads", "conntrack", nd_config.ca_conntrack);
-    nd_config.ca_detection_base = (int16_t)reader.GetInteger(
-        "threads", "detection_base", nd_config.ca_detection_base);
-    nd_config.ca_detection_cores = (int16_t)reader.GetInteger(
-        "threads", "detection_cores", nd_config.ca_detection_cores);
-    nd_config.ca_sink = (int16_t)reader.GetInteger(
-        "threads", "sink", nd_config.ca_sink);
-    nd_config.ca_socket = (int16_t)reader.GetInteger(
-        "threads", "socket", nd_config.ca_socket);
-
-    // Flow Hash Cache section
-    ND_GF_SET_FLAG(ndGF_USE_FHC,
-        reader.GetBoolean("flow_hash_cache", "enable", true));
-
-    string fhc_save_mode = reader.Get(
-        "flow_hash_cache", "save", "persistent"
-    );
-
-    if (fhc_save_mode == "persistent")
-        nd_config.fhc_save = ndFHC_PERSISTENT;
-    else if (fhc_save_mode == "volatile")
-        nd_config.fhc_save = ndFHC_VOLATILE;
-    else
-        nd_config.fhc_save = ndFHC_DISABLED;
-
-    nd_config.max_fhc = (size_t)reader.GetInteger(
-        "flow_hash_cache", "cache_size", ND_MAX_FHC_ENTRIES);
-    nd_config.fhc_purge_divisor = (size_t)reader.GetInteger(
-        "flow_hash_cache", "purge_divisor", ND_FHC_PURGE_DIVISOR);
-
-    // DNS Cache section
-    ND_GF_SET_FLAG(ndGF_USE_DHC,
-        reader.GetBoolean("dns_hint_cache", "enable", true));
-
-    string dhc_save_mode = reader.Get(
-        "dns_hint_cache", "save", "persistent"
-    );
-
-    if (dhc_save_mode == "persistent" ||
-        dhc_save_mode == "1" ||
-        dhc_save_mode == "yes" ||
-        dhc_save_mode == "true")
-        nd_config.dhc_save = ndDHC_PERSISTENT;
-    else if (dhc_save_mode == "volatile")
-        nd_config.dhc_save = ndDHC_VOLATILE;
-    else
-        nd_config.dhc_save = ndDHC_DISABLED;
-
-    nd_config.ttl_dns_entry = (unsigned)reader.GetInteger(
-        "dns_hint_cache", "ttl", ND_TTL_IDLE_DHC_ENTRY);
-
-    // Socket section
-    ND_GF_SET_FLAG(ndGF_FLOW_DUMP_ESTABLISHED,
-        reader.GetBoolean("socket", "dump_established_flows", false));
-    ND_GF_SET_FLAG(ndGF_FLOW_DUMP_UNKNOWN,
-        reader.GetBoolean("socket", "dump_unknown_flows", false));
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "listen_address[" << i << "]";
-        string socket_node = reader.Get("socket", os.str(), "");
-        if (socket_node.size() > 0) {
-            os.str("");
-            os << "listen_port[" << i << "]";
-            string socket_port = reader.Get(
-                "socket", os.str(), ND_SOCKET_PORT);
-            nd_config.socket_host.push_back(
-                make_pair(socket_node, socket_port));
-            continue;
-        }
-
-        break;
-    }
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "listen_path[" << i << "]";
-        string socket_node = reader.Get("socket", os.str(), "");
-        if (socket_node.size() > 0) {
-            nd_config.socket_path.push_back(socket_node);
-            continue;
-        }
-
-        break;
-    }
-
-    // Privacy filter section
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "mac[" << i << "]";
-        string mac_addr = reader.Get("privacy_filter", os.str(), "");
-
-        if (mac_addr.size() == 0) break;
-
-        /*
-        if (mac_addr.size() != ND_STR_ETHALEN) continue;
-
-        uint8_t mac[ETH_ALEN], *p = mac;
-        const char *a = mac_addr.c_str();
-        for (int j = 0; j < ND_STR_ETHALEN; j += 3, p++)
-            sscanf(a + j, "%2hhx", p);
-        p = new uint8_t[ETH_ALEN];
-        */
-        uint8_t mac[ETH_ALEN];
-        if (nd_string_to_mac(mac_addr, mac)) {
-            uint8_t *p = new uint8_t[ETH_ALEN];
-            memcpy(p, mac, ETH_ALEN);
-            nd_config.privacy_filter_mac.push_back(p);
-        }
-    }
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "host[" << i << "]";
-        string host_addr = reader.Get("privacy_filter", os.str(), "");
-
-        if (host_addr.size() == 0) break;
-
-        struct addrinfo hints;
-        struct addrinfo *result, *rp;
-
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC;
-
-        int rc = getaddrinfo(host_addr.c_str(), NULL, &hints, &result);
-        if (rc != 0) {
-            fprintf(stderr, "host[%d]: %s: %s\n",
-                i, host_addr.c_str(), gai_strerror(rc));
-            continue;
-        }
-
-        for (rp = result; rp != NULL; rp = rp->ai_next) {
-            struct sockaddr *saddr = reinterpret_cast<struct sockaddr *>(
-                new uint8_t[rp->ai_addrlen]
-            );
-            if (! saddr)
-                throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
-            memcpy(saddr, rp->ai_addr, rp->ai_addrlen);
-            nd_config.privacy_filter_host.push_back(saddr);
-        }
-
-        freeaddrinfo(result);
-    }
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "regex_search[" << i << "]";
-        string search = reader.Get("privacy_filter", os.str(), "");
-
-        os.str("");
-        os << "regex_replace[" << i << "]";
-        string replace = reader.Get("privacy_filter", os.str(), "");
-
-        if (search.size() == 0 || replace.size() == 0) break;
-
-        try {
-            regex *rx_search = new regex(
-                search,
-                regex::extended |
-                regex::icase |
-                regex::optimize
-            );
-            nd_config.privacy_regex.push_back(make_pair(rx_search, replace));
-        } catch (const regex_error &e) {
-            string error;
-            nd_regex_error(e, error);
-            fprintf(stderr, "WARNING: %s: Error compiling privacy regex: %s: %s [%d]\n",
-                nd_conf_filename, search.c_str(), error.c_str(), e.code());
-        } catch (bad_alloc &e) {
-            throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
-        }
-    }
-
-    ND_GF_SET_FLAG(ndGF_PRIVATE_EXTADDR,
-        reader.GetBoolean("privacy_filter", "private_external_addresses", false));
-
-#ifdef _ND_USE_INOTIFY
-    // Watches section
-    reader.GetSection("watches", inotify_watches);
-#endif
-#ifdef _ND_USE_PLUGINS
-    // Plugins section
-    reader.GetSection("plugin_services", nd_config.plugin_services);
-    reader.GetSection("plugin_tasks", nd_config.plugin_tasks);
-    reader.GetSection("plugin_detections", nd_config.plugin_detections);
-    reader.GetSection("plugin_stats", nd_config.plugin_stats);
-#endif
-
-    // Sink headers section
-    reader.GetSection("sink_headers", nd_config.custom_headers);
-
-    // Netify API section
-    ND_GF_SET_FLAG(ndGF_USE_NAPI,
-        reader.GetBoolean("netify_api", "enable_updates", true));
-
-    nd_config.ttl_napi_update = reader.GetInteger(
-        "netify_api", "update_interval", ND_API_UPDATE_TTL);
-
-    string url_napi = reader.Get(
-        "netify_api", "url_api", ND_API_UPDATE_URL);
-    nd_config.url_napi = strdup(url_napi.c_str());
-
-    string napi_vendor = reader.Get(
-        "netify_api", "vendor", ND_API_VENDOR);
-    nd_config.napi_vendor = strdup(napi_vendor.c_str());
-
-    // Protocols section
-    reader.GetSection("protocols", nd_config.protocols);
-
-    return 0;
-}
 
 #define _ND_LO_ENABLE_SINK          1
 #define _ND_LO_DISABLE_SINK         2
@@ -628,7 +222,7 @@ static void nd_usage(int rc = 0, bool version = false)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    nd_config_load();
+    nd_config_load(nd_conf_filename);
 
     ND_GF_SET_FLAG(ndGF_QUIET, true);
 
@@ -652,10 +246,10 @@ static void nd_usage(int rc = 0, bool version = false)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (nd_config.plugin_services.size())
+        if (nd_config->plugin_services.size())
             fprintf(stderr, "\nService plugins:\n");
 
-        for (auto i : nd_config.plugin_services) {
+        for (auto i : nd_config->plugin_services) {
 
             string plugin_version("?.?.?");
 
@@ -669,10 +263,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config.plugin_tasks.size())
+        if (nd_config->plugin_tasks.size())
             fprintf(stderr, "\nTask plugins:\n");
 
-        for (auto i : nd_config.plugin_tasks) {
+        for (auto i : nd_config->plugin_tasks) {
 
             string plugin_version("?.?.?");
 
@@ -686,10 +280,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config.plugin_detections.size())
+        if (nd_config->plugin_detections.size())
             fprintf(stderr, "\nDetection plugins:\n");
 
-        for (auto i : nd_config.plugin_detections) {
+        for (auto i : nd_config->plugin_detections) {
 
             string plugin_version("?.?.?");
 
@@ -703,10 +297,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config.plugin_stats.size())
+        if (nd_config->plugin_stats.size())
             fprintf(stderr, "\nStatistics plugins:\n");
 
-        for (auto i : nd_config.plugin_stats) {
+        for (auto i : nd_config->plugin_stats) {
 
             string plugin_version("?.?.?");
 
@@ -779,7 +373,7 @@ static void nd_usage(int rc = 0, bool version = false)
 
             ND_CONF_FILE_NAME,
             ND_CONF_LEGACY_PATH,
-            nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
+            nd_config->path_uuid, nd_config->path_uuid_site, ND_URL_SINK_PATH
         );
     }
 
@@ -791,11 +385,11 @@ static void nd_force_reset(void)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load() < 0)
+    if (nd_config_load(nd_conf_filename) < 0)
         return;
 
     vector<string> files = {
-        nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
+        nd_config->path_uuid, nd_config->path_uuid_site, ND_URL_SINK_PATH
     };
 
     int seconds = 3;
@@ -841,8 +435,8 @@ static void nd_init(void)
     if (nd_apps == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_apps", ENOMEM);
 
-    if (! nd_apps->Load(nd_config.path_app_config))
-        nd_apps->LoadLegacy(nd_config.path_legacy_config);
+    if (! nd_apps->Load(nd_config->path_app_config))
+        nd_apps->LoadLegacy(nd_config->path_legacy_config);
 
     nd_categories = new ndCategories();
     if (nd_categories == nullptr)
@@ -860,8 +454,8 @@ static void nd_init(void)
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
-    for (nd_ifaces::iterator i = ifaces.begin();
-        i != ifaces.end(); i++) {
+    for (nd_interface::iterator i = nd_interfaces.begin();
+        i != nd_interfaces.end(); i++) {
 
         stats[(*i).second] = new nd_packet_stats;
         if (stats[(*i).second] == NULL)
@@ -869,21 +463,21 @@ static void nd_init(void)
 
         if (! (*i).first) {
             // XXX: Only collect device MAC/addresses on LAN interfaces.
-            devices[(*i).second] = make_pair(
+            nd_devices[(*i).second] = make_pair(
                 (pthread_mutex_t *)NULL, (nd_device_addrs *)NULL
             );
         }
         else {
             int rc;
 
-            devices[(*i).second] = make_pair(
+            nd_devices[(*i).second] = make_pair(
                 new pthread_mutex_t, new nd_device_addrs
             );
-            if (devices[(*i).second].first == NULL)
+            if (nd_devices[(*i).second].first == NULL)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new pthread_mutex_t", ENOMEM);
-            if (devices[(*i).second].second == NULL)
+            if (nd_devices[(*i).second].second == NULL)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new nd_device_addrs", ENOMEM);
-            if ((rc = pthread_mutex_init(devices[(*i).second].first, NULL)) != 0)
+            if ((rc = pthread_mutex_init(nd_devices[(*i).second].first, NULL)) != 0)
                 throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_init", rc);
         }
     }
@@ -893,21 +487,21 @@ static void nd_init(void)
 
 static void nd_destroy(void)
 {
-    for (nd_ifaces::iterator i = ifaces.begin(); i != ifaces.end(); i++) {
+    for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
 
         delete stats[(*i).second];
-        if (devices.find((*i).second) != devices.end()) {
-            if (devices[(*i).second].first != NULL) {
-                pthread_mutex_destroy(devices[(*i).second].first);
-                delete devices[(*i).second].first;
+        if (nd_devices.find((*i).second) != nd_devices.end()) {
+            if (nd_devices[(*i).second].first != NULL) {
+                pthread_mutex_destroy(nd_devices[(*i).second].first);
+                delete nd_devices[(*i).second].first;
             }
-            if (devices[(*i).second].second != NULL)
-                delete devices[(*i).second].second;
+            if (nd_devices[(*i).second].second != NULL)
+                delete nd_devices[(*i).second].second;
         }
     }
 
     stats.clear();
-    devices.clear();
+    nd_devices.clear();
 
     if (nd_flow_buckets) {
         delete nd_flow_buckets;
@@ -931,21 +525,21 @@ static int nd_start_capture_threads(void)
 
     try {
         int16_t cpu = (
-                nd_config.ca_capture_base > -1 &&
-                nd_config.ca_capture_base < (int16_t)nda_stats.cpus
-            ) ? nd_config.ca_capture_base : 0;
+                nd_config->ca_capture_base > -1 &&
+                nd_config->ca_capture_base < (int16_t)nd_json_agent_stats.cpus
+            ) ? nd_config->ca_capture_base : 0;
         string netlink_dev;
         uint8_t private_addr = 0;
         uint8_t mac[ETH_ALEN];
 
-        for (nd_ifaces::iterator i = ifaces.begin();
-            i != ifaces.end(); i++) {
+        for (nd_interface::iterator i = nd_interfaces.begin();
+            i != nd_interfaces.end(); i++) {
 
             if (! nd_ifaddrs_get_mac(nd_interface_addrs, (*i).second, mac))
                 memset(mac, 0, ETH_ALEN);
 
             capture_threads[(*i).second] = new ndCaptureThread(
-                (ifaces.size() > 1) ? cpu++ : -1,
+                (nd_interfaces.size() > 1) ? cpu++ : -1,
                 i,
                 mac,
                 thread_socket,
@@ -957,7 +551,7 @@ static int nd_start_capture_threads(void)
 
             capture_threads[(*i).second]->Create();
 
-            if (cpu == (int16_t)nda_stats.cpus) cpu = 0;
+            if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }
     }
     catch (exception &e) {
@@ -972,7 +566,7 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 {
     if (capture_threads.size() == 0) return;
 
-    for (nd_ifaces::iterator i = ifaces.begin(); i != ifaces.end(); i++) {
+    for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
         capture_threads[(*i).second]->Terminate();
         delete capture_threads[(*i).second];
     }
@@ -1016,13 +610,13 @@ static int nd_start_detection_threads(void)
 
     try {
         int16_t cpu = (
-                nd_config.ca_detection_base > -1 &&
-                nd_config.ca_detection_base < (int16_t)nda_stats.cpus
-            ) ? nd_config.ca_detection_base : 0;
+                nd_config->ca_detection_base > -1 &&
+                nd_config->ca_detection_base < (int16_t)nd_json_agent_stats.cpus
+            ) ? nd_config->ca_detection_base : 0;
         int16_t cpus = (
-                nd_config.ca_detection_cores > (int16_t)nda_stats.cpus ||
-                nd_config.ca_detection_cores <= 0
-            ) ? (int16_t)nda_stats.cpus : nd_config.ca_detection_cores;
+                nd_config->ca_detection_cores > (int16_t)nd_json_agent_stats.cpus ||
+                nd_config->ca_detection_cores <= 0
+            ) ? (int16_t)nd_json_agent_stats.cpus : nd_config->ca_detection_cores;
 
         nd_dprintf("Creating %hd detection threads at offset: %hd\n", cpus, cpu);
 
@@ -1043,7 +637,7 @@ static int nd_start_detection_threads(void)
 #ifdef _ND_USE_PLUGINS
                 &plugin_detections,
 #endif
-                devices,
+                nd_devices,
                 dns_hint_cache,
                 flow_hash_cache,
                 (uint8_t)cpu
@@ -1091,8 +685,8 @@ static int nd_reload_detection_threads(void)
 
 static int nd_plugin_start_services(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.plugin_services.begin();
-        i != nd_config.plugin_services.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config->plugin_services.begin();
+        i != nd_config->plugin_services.end(); i++) {
         try {
             plugin_services[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_services[i->first]->GetPlugin()->Create();
@@ -1165,9 +759,9 @@ static int nd_plugin_dispatch_service_param(
 static int nd_plugin_start_task(
     const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
 {
-    map<string, string>::const_iterator task_iter = nd_config.plugin_tasks.find(name);
+    map<string, string>::const_iterator task_iter = nd_config->plugin_tasks.find(name);
 
-    if (task_iter == nd_config.plugin_tasks.end()) {
+    if (task_iter == nd_config->plugin_tasks.end()) {
         nd_printf("Unable to initialize plugin; task not found: %s\n",
             name.c_str());
         return -1;
@@ -1240,8 +834,8 @@ static void nd_plugin_reap_tasks(void)
 
 static int nd_plugin_start_detections(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.plugin_detections.begin();
-        i != nd_config.plugin_detections.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config->plugin_detections.begin();
+        i != nd_config->plugin_detections.end(); i++) {
         try {
             plugin_detections[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_detections[i->first]->GetPlugin()->Create();
@@ -1279,8 +873,8 @@ static void nd_plugin_stop_detections(void)
 
 static int nd_plugin_start_stats(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.plugin_stats.begin();
-        i != nd_config.plugin_stats.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config->plugin_stats.begin();
+        i != nd_config->plugin_stats.end(); i++) {
         try {
             plugin_stats[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_stats[i->first]->GetPlugin()->Create();
@@ -1353,11 +947,11 @@ static int nd_sink_process_responses(void)
                 i != response->data.end(); i++) {
 
                 if (! reloaded && i->first == ND_CONF_APP_BASE) {
-                    reloaded = nd_apps->Load(nd_config.path_app_config);
+                    reloaded = nd_apps->Load(nd_config->path_app_config);
                 }
 
                 if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
-                    reloaded = nd_apps->LoadLegacy(nd_config.path_legacy_config);
+                    reloaded = nd_apps->LoadLegacy(nd_config->path_legacy_config);
                 }
             }
 
@@ -1403,7 +997,7 @@ static int nd_sink_process_responses(void)
 #endif
         }
 
-        nda_stats.sink_resp_code = response->resp_code;
+        nd_json_agent_stats.sink_resp_code = response->resp_code;
 
         delete response;
     }
@@ -1411,237 +1005,7 @@ static int nd_sink_process_responses(void)
     return count;
 }
 
-void nd_json_agent_hello(string &json_string)
-{
-    json j;
-
-    j["type"] = "agent_hello";
-    j["build_version"] = nd_get_version_and_features();
-    j["agent_version"] = strtod(PACKAGE_VERSION, NULL);
-    j["json_version"] = (double)ND_JSON_VERSION;
-
-    nd_json_to_string(j, json_string);
-    json_string.append("\n");
-}
-
-void nd_json_agent_status(json &j)
-{
-    j["version"] = (double)ND_JSON_VERSION;
-    j["timestamp"] = time(NULL);
-    j["update_interval"] = nd_config.update_interval;
-    j["update_imf"] = nd_config.update_imf;
-    j["uptime"] =
-        unsigned(nda_stats.ts_now.tv_sec - nda_stats.ts_epoch.tv_sec);
-    j["cpu_cores"] = (unsigned)nda_stats.cpus;
-    j["cpu_user"] = nda_stats.cpu_user;
-    j["cpu_user_prev"] = nda_stats.cpu_user_prev;
-    j["cpu_system"] = nda_stats.cpu_system;
-    j["cpu_system_prev"] = nda_stats.cpu_system_prev;
-    j["flow_count"] = nda_stats.flows;
-    j["flow_count_prev"] = nda_stats.flows_prev;
-    j["maxrss_kb"] = nda_stats.maxrss_kb;
-    j["maxrss_kb_prev"] = nda_stats.maxrss_kb_prev;
-#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
-    j["tcm_kb"] = (unsigned)nda_stats.tcm_alloc_kb;
-    j["tcm_kb_prev"] = (unsigned)nda_stats.tcm_alloc_kb_prev;
-#endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
-    j["dhc_status"] = nda_stats.dhc_status;
-    if (nda_stats.dhc_status)
-        j["dhc_size"] = nda_stats.dhc_size;
-
-    j["sink_status"] = nda_stats.sink_status;
-    j["sink_uploads"] = (ND_UPLOAD_ENABLED) ? true : false;
-    if (nda_stats.sink_status) {
-        j["sink_queue_size_kb"] = nda_stats.sink_queue_size / 1024;
-        j["sink_queue_max_size_kb"] = nd_config.max_backlog / 1024;
-        j["sink_resp_code"] = nda_stats.sink_resp_code;
-    }
-}
-
-void nd_json_protocols(string &json_string)
-{
-    json j, ja;
-    j["type"] = "definitions";
-
-    for (auto &proto : nd_protos) {
-        json jo;
-
-        jo["id"] = proto.first;
-        jo["tag"] = proto.second;
-
-        ja.push_back(jo);
-    }
-
-    j["protocols"] = ja;
-
-    nd_apps_t apps;
-    nd_apps->Get(apps);
-    for (auto &app : apps) {
-        json jo;
-
-        jo["id"] = app.second;
-        jo["tag"] = app.first;
-
-        ja.push_back(jo);
-    }
-
-    j["applications"] = ja;
-
-    nd_json_to_string(j, json_string);
-    json_string.append("\n");
-}
-
-static void nd_json_add_interfaces(json &parent)
-{
-    nd_ifaddrs_update(nd_interface_addrs);
-
-    for (nd_ifaces::const_iterator i = ifaces.begin(); i != ifaces.end(); i++) {
-        string iface_name;
-        nd_iface_name(i->second, iface_name);
-
-        json jo;
-
-        jo["role"] = (i->first) ? "LAN" : "WAN";
-
-        vector<string> addrs;
-        bool found_mac = false;
-        string iface_lookup = iface_name;
-        auto iface_it = nd_interface_addrs.find(iface_lookup);
-
-        while (iface_it != nd_interface_addrs.end()) {
-
-            for (auto addr_it = iface_it->second->begin();
-                addr_it != iface_it->second->end(); addr_it++) {
-
-                string ip;
-                if (! found_mac && (*addr_it)->family == AF_LINK) {
-                    char mac_addr[ND_STR_ETHALEN + 1];
-                    snprintf(mac_addr, sizeof(mac_addr),
-                        "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-                        (*addr_it)->mac[0], (*addr_it)->mac[1], (*addr_it)->mac[2],
-                        (*addr_it)->mac[3], (*addr_it)->mac[4], (*addr_it)->mac[5]
-                    );
-                    jo["mac"] = mac_addr;
-                    found_mac = true;
-                }
-                else if (((*addr_it)->family == AF_INET
-                    || (*addr_it)->family == AF_INET6)
-                    && nd_ip_to_string((*addr_it)->ip, ip)) {
-                    addrs.push_back(ip);
-                }
-            }
-
-            auto nld_it = device_netlink.find(iface_lookup);
-            if (nld_it == device_netlink.end()) break;
-
-            iface_lookup = nld_it->second;
-            iface_it = nd_interface_addrs.find(iface_lookup);
-        }
-
-        if (! found_mac)
-            jo["mac"] = "00:00:00:00:00:00";
-
-        jo["addr"] = addrs;
-
-        parent[iface_name] = jo;
-    }
-}
-
-static void nd_json_add_devices(json &parent)
-{
-    nd_device_addrs device_addrs;
-
-    for (nd_devices::const_iterator i = devices.begin(); i != devices.end(); i++) {
-        if (i->second.first == NULL) continue;
-
-        pthread_mutex_lock(i->second.first);
-
-        for (nd_device_addrs::const_iterator j = i->second.second->begin();
-            j != i->second.second->end(); j++) {
-
-            for (vector<string>::const_iterator k = j->second.begin();
-                k != j->second.end(); k++) {
-
-                bool duplicate = false;
-
-                if (device_addrs.find(j->first) != device_addrs.end()) {
-
-                    vector<string>::const_iterator l;
-                    for (l = device_addrs[j->first].begin();
-                        l != device_addrs[j->first].end(); l++) {
-                        if ((*k) != (*l)) continue;
-                        duplicate = true;
-                        break;
-                    }
-                }
-
-                if (! duplicate)
-                    device_addrs[j->first].push_back((*k));
-            }
-        }
-
-        i->second.second->clear();
-
-        pthread_mutex_unlock(i->second.first);
-    }
-
-    for (nd_device_addrs::const_iterator i = device_addrs.begin();
-        i != device_addrs.end(); i++) {
-
-        uint8_t mac_src[ETH_ALEN];
-        memcpy(mac_src, i->first.c_str(), ETH_ALEN);
-        char mac_dst[ND_STR_ETHALEN + 1];
-
-        sprintf(mac_dst, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            mac_src[0], mac_src[1], mac_src[2],
-            mac_src[3], mac_src[4], mac_src[5]);
-
-        json ja;
-
-        for (vector<string>::const_iterator j = i->second.begin();
-            j != i->second.end(); j++) {
-            ja.push_back((*j));
-        }
-
-        parent[mac_dst] = ja;
-    }
-}
-
-static void nd_json_add_stats(json &parent,
-    nd_packet_stats *stats, struct pcap_stat *pcap)
-{
-    parent["raw"] = stats->pkt.raw;
-    parent["ethernet"] = stats->pkt.eth;
-    parent["mpls"] = stats->pkt.mpls;
-    parent["pppoe"] = stats->pkt.pppoe;
-    parent["vlan"] = stats->pkt.vlan;
-    parent["fragmented"] = stats->pkt.frags;
-    parent["discarded"] = stats->pkt.discard;
-    parent["discarded_bytes"] = stats->pkt.discard_bytes;
-    parent["largest_bytes"] = stats->pkt.maxlen;
-    parent["ip"] = stats->pkt.ip;
-    parent["tcp"] = stats->pkt.tcp;
-    parent["tcp_seq_error"] = stats->pkt.tcp_seq_error;
-    parent["tcp_resets"] = stats->pkt.tcp_resets;
-    parent["udp"] = stats->pkt.udp;
-    parent["icmp"] = stats->pkt.icmp;
-    parent["igmp"] = stats->pkt.igmp;
-    parent["ip_bytes"] = stats->pkt.ip_bytes;
-    parent["wire_bytes"] = stats->pkt.wire_bytes;
-
-    parent["pcap_recv"] = pcap->ps_recv - stats->pcap_last.ps_recv;
-    parent["pcap_drop"] = pcap->ps_drop - stats->pcap_last.ps_drop;
-    parent["pcap_ifdrop"] = pcap->ps_ifdrop - stats->pcap_last.ps_ifdrop;
-
-    parent["queue_dropped"] = stats->pkt.queue_dropped;
-
-    stats->pcap_last.ps_recv = pcap->ps_recv;
-    stats->pcap_last.ps_drop = pcap->ps_drop;
-    stats->pcap_last.ps_ifdrop = pcap->ps_ifdrop;
-}
-
-static void nd_json_process_flows(
+static void nd_process_flows(
     unordered_map<string, json> &jflows, bool add_flows)
 {
     uint32_t now = time(NULL);
@@ -1658,13 +1022,13 @@ static void nd_json_process_flows(
         nd_flow_map::const_iterator i = fm->begin();
 
         total += fm->size();
-        nda_stats.flows += fm->size();
+        nd_json_agent_stats.flows += fm->size();
 
         while (i != fm->end()) {
             uint32_t last_seen = i->second->ts_last_seen / 1000;
             uint32_t ttl = (
                 i->second->ip_protocol != IPPROTO_TCP
-            ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
+            ) ? nd_config->ttl_idle_flow : nd_config->ttl_idle_tcp_flow;
 
             if (nd_terminate)
                 i->second->flags.detection_expired = true;
@@ -1970,7 +1334,7 @@ static void nd_print_stats(void)
 {
 #ifndef _ND_LEAN_AND_MEAN
     string uptime;
-    nd_uptime(nda_stats.ts_now.tv_sec - nda_stats.ts_epoch.tv_sec, uptime);
+    nd_uptime(nd_json_agent_stats.ts_now.tv_sec - nd_json_agent_stats.ts_epoch.tv_sec, uptime);
 
     nd_dprintf("\n");
     nd_dprintf("Cumulative Packet Totals [Uptime: %s]:\n",
@@ -2036,11 +1400,11 @@ static void nd_print_stats(void)
     nd_dprintf("%39s: %s ", "Discarded", (*nd_stats_os).str().c_str());
 
     (*nd_stats_os).str("");
-    (*nd_stats_os) << setw(8) << nda_stats.flows;
+    (*nd_stats_os) << setw(8) << nd_json_agent_stats.flows;
 
     nd_dprintf("%12s: %s (%s%d)", "Flows", (*nd_stats_os).str().c_str(),
-        (nda_stats.flows > nda_stats.flows_prev) ? "+" : "",
-        int(nda_stats.flows - nda_stats.flows_prev));
+        (nd_json_agent_stats.flows > nd_json_agent_stats.flows_prev) ? "+" : "",
+        int(nd_json_agent_stats.flows - nd_json_agent_stats.flows_prev));
 
     nd_dprintf("\n\n");
 #endif // _ND_LEAN_AND_MEAN
@@ -2065,7 +1429,7 @@ static void nd_load_ethers(void)
 
     if (fh == NULL) return;
 
-    device_ethers.clear();
+    nd_device_ethers.clear();
 
     size_t line = 0;
     while (! feof(fh)) {
@@ -2093,7 +1457,7 @@ static void nd_load_ethers(void)
                 sscanf(a + j, "%2hhx", m);
             string key;
             key.assign((const char *)mac, ETH_ALEN);
-            device_ethers[key] = name;
+            nd_device_ethers[key] = name;
             //nd_dprintf("%2lu: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx (%s): %s\n", line,
             //    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ether, name);
         }
@@ -2102,7 +1466,7 @@ static void nd_load_ethers(void)
     fclose(fh);
 
     nd_dprintf("Loaded %lu entries from: %s\n",
-        device_ethers.size(), ND_ETHERS_FILE_NAME);
+        nd_device_ethers.size(), ND_ETHERS_FILE_NAME);
 }
 #endif
 
@@ -2115,8 +1479,8 @@ static void nd_dump_stats(void)
     MallocExtension::instance()->ReleaseFreeMemory();
     MallocExtension::instance()->
         GetNumericProperty("generic.current_allocated_bytes", &tcm_alloc_bytes);
-    nda_stats.tcm_alloc_kb_prev = nda_stats.tcm_alloc_kb;
-    nda_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
+    nd_json_agent_stats.tcm_alloc_kb_prev = nd_json_agent_stats.tcm_alloc_kb;
+    nd_json_agent_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
 #elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
     size_t tcm_alloc_bytes = 0;
     size_t je_opt_size = sizeof(size_t);
@@ -2134,41 +1498,41 @@ static void nd_dump_stats(void)
     nd_dprintf("JEMALLOC: %s: %d: %ld\n", je_opt, rc, tcm_alloc_bytes);
 
     if (rc == 0) {
-        nda_stats.tcm_alloc_kb_prev = nda_stats.tcm_alloc_kb;
-        nda_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
+        nd_json_agent_stats.tcm_alloc_kb_prev = nd_json_agent_stats.tcm_alloc_kb;
+        nd_json_agent_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
     }
 #endif
     struct rusage rusage_data;
     getrusage(RUSAGE_SELF, &rusage_data);
 
-    nda_stats.cpu_user_prev = nda_stats.cpu_user;
-    nda_stats.cpu_user = (double)rusage_data.ru_utime.tv_sec +
+    nd_json_agent_stats.cpu_user_prev = nd_json_agent_stats.cpu_user;
+    nd_json_agent_stats.cpu_user = (double)rusage_data.ru_utime.tv_sec +
         ((double)rusage_data.ru_utime.tv_usec / 1000000.0);
-    nda_stats.cpu_system_prev = nda_stats.cpu_system;
-    nda_stats.cpu_system = (double)rusage_data.ru_stime.tv_sec +
+    nd_json_agent_stats.cpu_system_prev = nd_json_agent_stats.cpu_system;
+    nd_json_agent_stats.cpu_system = (double)rusage_data.ru_stime.tv_sec +
         ((double)rusage_data.ru_stime.tv_usec / 1000000.0);
 
-    nda_stats.maxrss_kb_prev = nda_stats.maxrss_kb;
-    nda_stats.maxrss_kb = rusage_data.ru_maxrss;
+    nd_json_agent_stats.maxrss_kb_prev = nd_json_agent_stats.maxrss_kb;
+    nd_json_agent_stats.maxrss_kb = rusage_data.ru_maxrss;
 
-    nda_stats.flows_prev = nda_stats.flows;
-    nda_stats.flows = 0;
+    nd_json_agent_stats.flows_prev = nd_json_agent_stats.flows;
+    nd_json_agent_stats.flows = 0;
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &nda_stats.ts_now) != 0)
-        memcpy(&nda_stats.ts_now, &nda_stats.ts_epoch, sizeof(struct timespec));
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_now) != 0)
+        memcpy(&nd_json_agent_stats.ts_now, &nd_json_agent_stats.ts_epoch, sizeof(struct timespec));
 
     if (ND_USE_DHC) {
-        nda_stats.dhc_status = true;
-        nda_stats.dhc_size = dns_hint_cache->size();
+        nd_json_agent_stats.dhc_status = true;
+        nd_json_agent_stats.dhc_size = dns_hint_cache->size();
     }
     else
-        nda_stats.dhc_status = false;
+        nd_json_agent_stats.dhc_status = false;
 
     if (thread_sink == NULL)
-        nda_stats.sink_status = false;
+        nd_json_agent_stats.sink_status = false;
     else {
-        nda_stats.sink_status = true;
-        nda_stats.sink_queue_size = thread_sink->QueuePendingSize();
+        nd_json_agent_stats.sink_status = true;
+        nd_json_agent_stats.sink_queue_size = thread_sink->QueuePendingSize();
     }
 
     json jstatus;
@@ -2226,7 +1590,7 @@ static void nd_dump_stats(void)
         p->ProcessStats(nd_flow_buckets);
     }
 
-    nd_json_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
+    nd_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
 
     for (nd_capture_threads::iterator i = capture_threads.begin();
         i != capture_threads.end(); i++) {
@@ -2236,8 +1600,8 @@ static void nd_dump_stats(void)
         i->second->Unlock();
     }
 
-    jstatus["flow_count"] = nda_stats.flows;
-    jstatus["flow_count_prev"] = nda_stats.flows_prev;
+    jstatus["flow_count"] = nd_json_agent_stats.flows;
+    jstatus["flow_count_prev"] = nd_json_agent_stats.flows_prev;
 
     json j = jstatus;
 
@@ -2277,8 +1641,8 @@ static void nd_dump_stats(void)
     if (ND_USE_SINK) {
         try {
 #ifdef _ND_USE_INOTIFY
-            for (nd_inotify_watch::const_iterator i = inotify_watches.begin();
-                i != inotify_watches.end(); i++) {
+            for (nd_inotify_watch::const_iterator i = nd_config->inotify_watches.begin();
+                i != nd_config->inotify_watches.end(); i++) {
                 if (! inotify->EventOccured(i->first)) continue;
 
                 json jd;
@@ -2295,7 +1659,7 @@ static void nd_dump_stats(void)
             else {
                 j["version"] = (double)ND_JSON_VERSION;
                 j["timestamp"] = time(NULL);
-                j["uptime"] = nda_stats.ts_now.tv_sec - nda_stats.ts_epoch.tv_sec;
+                j["uptime"] = nd_json_agent_stats.ts_now.tv_sec - nd_json_agent_stats.ts_epoch.tv_sec;
                 j["ping"] = true;
 
                 nd_json_to_string(j, json_string);
@@ -2309,11 +1673,11 @@ static void nd_dump_stats(void)
 
     try {
         if (ND_EXPORT_JSON)
-            nd_json_save_to_file(json_string, nd_config.path_export_json);
+            nd_json_save_to_file(json_string, nd_config->path_export_json);
     }
     catch (runtime_error &e) {
         nd_printf("Error writing JSON export playload to file: %s: %s\n",
-            nd_config.path_export_json, e.what());
+            nd_config->path_export_json, e.what());
     }
 
     if (ND_DEBUG) {
@@ -2381,8 +1745,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
         if (nd_apps == NULL) {
             nd_apps = new ndApplications();
-            if (! nd_apps->Load(nd_config.path_app_config))
-                nd_apps->LoadLegacy(nd_config.path_legacy_config);
+            if (! nd_apps->Load(nd_config->path_app_config))
+                nd_apps->LoadLegacy(nd_config->path_legacy_config);
         }
 
         nd_apps_t apps;
@@ -2418,8 +1782,8 @@ int static nd_export_applications(void)
 {
     if (nd_apps == NULL) {
         nd_apps = new ndApplications();
-        if (! nd_apps->Load(nd_config.path_app_config))
-            nd_apps->LoadLegacy(nd_config.path_legacy_config);
+        if (! nd_apps->Load(nd_config->path_app_config))
+            nd_apps->LoadLegacy(nd_config->path_legacy_config);
     }
 
     if (! nd_apps->Save("/dev/stdout")) return 1;
@@ -2452,14 +1816,14 @@ static void nd_status(void)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load() < 0)
+    if (nd_config_load(nd_conf_filename) < 0)
         return;
 
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config.url_sink);
-            nd_config.url_sink = strdup(url_sink.c_str());
+            free(nd_config->url_sink);
+            nd_config->url_sink = strdup(url_sink.c_str());
         }
     }
 
@@ -2575,7 +1939,7 @@ static void nd_status(void)
     }
 
     fprintf(stderr, "%s-%s sink URL: %s\n",
-        ND_C_GREEN, ND_C_RESET, nd_config.url_sink);
+        ND_C_GREEN, ND_C_RESET, nd_config->url_sink);
     fprintf(stderr, "%s-%s sink services are %s.\n",
         (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
         (ND_USE_SINK) ? "enabled" : "disabled"
@@ -2593,9 +1957,9 @@ static void nd_status(void)
 
     string uuid;
 
-    uuid = (nd_config.uuid != NULL) ? nd_config.uuid : "00-00-00-00";
-    if (nd_file_exists(nd_config.path_uuid) > 0)
-        nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN);
+    uuid = (nd_config->uuid != NULL) ? nd_config->uuid : "00-00-00-00";
+    if (nd_file_exists(nd_config->path_uuid) > 0)
+        nd_load_uuid(uuid, nd_config->path_uuid, ND_AGENT_UUID_LEN);
 
     if (uuid.size() != ND_AGENT_UUID_LEN || uuid == "00-00-00-00") {
         fprintf(stderr, "%s-%s sink agent UUID is not set.\n",
@@ -2608,18 +1972,18 @@ static void nd_status(void)
             ND_C_GREEN, ND_C_RESET, uuid.c_str());
     }
 
-    uuid = (nd_config.uuid_serial != NULL) ? nd_config.uuid_serial : "-";
-    if (nd_file_exists(nd_config.path_uuid_serial) > 0)
-        nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN);
+    uuid = (nd_config->uuid_serial != NULL) ? nd_config->uuid_serial : "-";
+    if (nd_file_exists(nd_config->path_uuid_serial) > 0)
+        nd_load_uuid(uuid, nd_config->path_uuid_serial, ND_AGENT_SERIAL_LEN);
 
     if (uuid.size() && uuid != "-") {
         fprintf(stderr, "%s-%s sink serial UUID: %s\n",
             ND_C_GREEN, ND_C_RESET, uuid.c_str());
     }
 
-    uuid = (nd_config.uuid_site != NULL) ? nd_config.uuid_site : "-";
-    if (nd_file_exists(nd_config.path_uuid_site) > 0)
-        nd_load_uuid(uuid, nd_config.path_uuid_site, ND_SITE_UUID_LEN);
+    uuid = (nd_config->uuid_site != NULL) ? nd_config->uuid_site : "-";
+    if (nd_file_exists(nd_config->path_uuid_site) > 0)
+        nd_load_uuid(uuid, nd_config->path_uuid_site, ND_SITE_UUID_LEN);
 
     if (! uuid.size() || uuid == "-") {
         fprintf(stderr, "%s-%s sink site UUID is not set.\n",
@@ -2831,8 +2195,8 @@ static void nd_add_device_addresses(nd_device_addr &device_addresses)
 
 static int nd_check_agent_uuid(void)
 {
-    if (nd_config.uuid == NULL ||
-        ! strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+    if (nd_config->uuid == NULL ||
+        ! strncmp(nd_config->uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
         string uuid;
         if (! nd_load_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN) ||
             ! uuid.size() ||
@@ -2842,9 +2206,9 @@ static int nd_check_agent_uuid(void)
             if (! nd_save_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN))
                 return 1;
         }
-        if (nd_config.uuid != NULL)
-            free(nd_config.uuid);
-        nd_config.uuid = strdup(uuid.c_str());
+        if (nd_config->uuid != NULL)
+            free(nd_config->uuid);
+        nd_config->uuid = strdup(uuid.c_str());
     }
 
     return 0;
@@ -2877,6 +2241,7 @@ int main(int argc, char *argv[])
 #endif
 
     nd_config_init();
+    nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
     openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
 
@@ -2887,8 +2252,8 @@ int main(int argc, char *argv[])
 
     nd_flow_count = 0;
 
-    memset(&nda_stats, 0, sizeof(nd_agent_stats));
-    nda_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    memset(&nd_json_agent_stats, 0, sizeof(nd_agent_stats));
+    nd_json_agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
     static struct option options[] =
     {
@@ -2964,49 +2329,49 @@ int main(int argc, char *argv[])
             nd_force_reset();
             exit(0);
         case _ND_LO_CA_CAPTURE_BASE:
-            nd_config.ca_capture_base = (int16_t)atoi(optarg);
-            if (nd_config.ca_capture_base > nda_stats.cpus) {
+            nd_config->ca_capture_base = (int16_t)atoi(optarg);
+            if (nd_config->ca_capture_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Capture thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_CONNTRACK:
-            nd_config.ca_conntrack = (int16_t)atoi(optarg);
-            if (nd_config.ca_conntrack > nda_stats.cpus) {
+            nd_config->ca_conntrack = (int16_t)atoi(optarg);
+            if (nd_config->ca_conntrack > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Conntrack thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
-            nd_config.ca_detection_base = (int16_t)atoi(optarg);
-            if (nd_config.ca_detection_base > nda_stats.cpus) {
+            nd_config->ca_detection_base = (int16_t)atoi(optarg);
+            if (nd_config->ca_detection_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
-            nd_config.ca_detection_cores = (int16_t)atoi(optarg);
-            if (nd_config.ca_detection_cores > nda_stats.cpus) {
+            nd_config->ca_detection_cores = (int16_t)atoi(optarg);
+            if (nd_config->ca_detection_cores > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection cores greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SINK:
-            nd_config.ca_sink = (int16_t)atoi(optarg);
-            if (nd_config.ca_sink > nda_stats.cpus) {
+            nd_config->ca_sink = (int16_t)atoi(optarg);
+            if (nd_config->ca_sink > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Sink thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SOCKET:
-            nd_config.ca_socket = (int16_t)atoi(optarg);
-            if (nd_config.ca_socket > nda_stats.cpus) {
+            nd_config->ca_socket = (int16_t)atoi(optarg);
+            if (nd_config->ca_socket > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Socket thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
-            nd_config.flags |= ndGF_WAIT_FOR_CLIENT;
+            nd_config->flags |= ndGF_WAIT_FOR_CLIENT;
             break;
 
         case _ND_LO_DUMP_SORT_BY_TAG:
@@ -3083,64 +2448,64 @@ int main(int argc, char *argv[])
             nd_conf_filename = strdup(optarg);
             break;
         case 'd':
-            nd_config.flags |= ndGF_DEBUG;
+            nd_config->flags |= ndGF_DEBUG;
             break;
         case 'D':
-            nd_config.flags |= ndGF_DEBUG_UPLOAD;
+            nd_config->flags |= ndGF_DEBUG_UPLOAD;
             break;
         case 'E':
-            for (nd_ifaces::iterator i = ifaces.begin();
-                i != ifaces.end(); i++) {
+            for (nd_interface::iterator i = nd_interfaces.begin();
+                i != nd_interfaces.end(); i++) {
                 if (strcasecmp((*i).second.c_str(), optarg) == 0) {
                     fprintf(stderr, "Duplicate interface specified: %s\n", optarg);
                     exit(1);
                 }
             }
             last_device = optarg;
-            ifaces.push_back(make_pair(false, optarg));
+            nd_interfaces.push_back(make_pair(false, optarg));
             break;
         case 'e':
-            nd_config.flags |= ndGF_DEBUG_WITH_ETHERS;
+            nd_config->flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
         case 'F':
             if (last_device.size() == 0) {
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            if (nd_config.device_filters
-                .find(last_device) != nd_config.device_filters.end()) {
+            if (nd_config->device_filters
+                .find(last_device) != nd_config->device_filters.end()) {
                 fprintf(stderr, "Only one filter can be applied to a device.\n");
                 exit(1);
             }
-            nd_config.device_filters[last_device] = optarg;
+            nd_config->device_filters[last_device] = optarg;
             break;
         case 'f':
-            free(nd_config.path_legacy_config);
-            nd_config.path_legacy_config = strdup(optarg);
+            free(nd_config->path_legacy_config);
+            nd_config->path_legacy_config = strdup(optarg);
             break;
         case 'h':
             nd_usage();
         case 'I':
-            for (nd_ifaces::iterator i = ifaces.begin(); i != ifaces.end(); i++) {
+            for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
                 if (strcasecmp((*i).second.c_str(), optarg) == 0) {
                     fprintf(stderr, "Duplicate interface specified: %s\n", optarg);
                     exit(1);
                 }
             }
             last_device = optarg;
-            ifaces.push_back(make_pair(true, optarg));
+            nd_interfaces.push_back(make_pair(true, optarg));
             break;
         case 'i':
-            nd_config.update_interval = atoi(optarg);
+            nd_config->update_interval = atoi(optarg);
             break;
         case 'j':
-            nd_config.path_export_json = strdup(optarg);
+            nd_config->path_export_json = strdup(optarg);
             break;
         case 'l':
-            nd_config.flags &= ~ndGF_USE_NETLINK;
+            nd_config->flags &= ~ndGF_USE_NETLINK;
             break;
         case 'n':
-            nd_config.flags |= ndGF_DEBUG_NDPI;
+            nd_config->flags |= ndGF_DEBUG_NDPI;
             break;
         case 'N':
 #if _ND_USE_NETLINK
@@ -3148,7 +2513,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            device_netlink[last_device] = optarg;
+            nd_netlink_devices[last_device] = optarg;
 #else
             fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             return 1;
@@ -3165,16 +2530,16 @@ int main(int argc, char *argv[])
         case 'p':
             if (nd_conf_filename == NULL)
                 nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-            if (nd_config_load() < 0)
+            if (nd_config_load(nd_conf_filename) < 0)
                 return 1;
-            if (nd_check_agent_uuid() || nd_config.uuid == NULL) return 1;
-            printf("Agent UUID: %s\n", nd_config.uuid);
+            if (nd_check_agent_uuid() || nd_config->uuid == NULL) return 1;
+            printf("Agent UUID: %s\n", nd_config->uuid);
             return 0;
         case 'R':
-            nd_config.flags |= ndGF_REMAIN_IN_FOREGROUND;
+            nd_config->flags |= ndGF_REMAIN_IN_FOREGROUND;
             break;
         case 'r':
-            nd_config.flags |= ndGF_REPLAY_DELAY;
+            nd_config->flags |= ndGF_REPLAY_DELAY;
             break;
         case 'S':
 #ifndef _ND_LEAN_AND_MEAN
@@ -3197,10 +2562,10 @@ int main(int argc, char *argv[])
             nd_status();
             exit(0);
         case 't':
-            nd_config.flags &= ~ndGF_USE_CONNTRACK;
+            nd_config->flags &= ~ndGF_USE_CONNTRACK;
             break;
         case 'T':
-            if ((nd_config.h_flow = fopen(optarg, "w")) == NULL) {
+            if ((nd_config->h_flow = fopen(optarg, "w")) == NULL) {
                 fprintf(stderr, "Error while opening test output log: %s: %s\n",
                     optarg, strerror(errno));
                 exit(1);
@@ -3214,37 +2579,37 @@ int main(int argc, char *argv[])
             }
             exit(0);
         case 'u':
-            nd_config.uuid = strdup(optarg);
+            nd_config->uuid = strdup(optarg);
             break;
         case 'V':
             nd_usage(0, true);
             break;
         case 'v':
-            nd_config.flags |= ndGF_VERBOSE;
+            nd_config->flags |= ndGF_VERBOSE;
             break;
         default:
             nd_usage(1);
         }
     }
 
-    if (nd_config.path_export_json == NULL)
-        nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
+    if (nd_config->path_export_json == NULL)
+        nd_config->path_export_json = strdup(ND_JSON_FILE_EXPORT);
 
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load() < 0)
+    if (nd_config_load(nd_conf_filename) < 0)
         return 1;
 
     {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config.url_sink);
-            nd_config.url_sink = strdup(url_sink.c_str());
+            free(nd_config->url_sink);
+            nd_config->url_sink = strdup(url_sink.c_str());
         }
     }
 
-    if (nd_config.h_flow != stderr) {
+    if (nd_config->h_flow != stderr) {
         // Test mode enabled, disable/set certain config parameters
         ND_GF_SET_FLAG(ndGF_USE_DHC, true);
         ND_GF_SET_FLAG(ndGF_USE_FHC, true);
@@ -3252,18 +2617,18 @@ int main(int argc, char *argv[])
         ND_GF_SET_FLAG(ndGF_EXPORT_JSON, false);
         ND_GF_SET_FLAG(ndGF_REMAIN_IN_FOREGROUND, true);
 
-        nd_config.update_interval = 1;
+        nd_config->update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        nd_config.plugin_services.clear();
-        nd_config.plugin_tasks.clear();
-        nd_config.plugin_detections.clear();
-        nd_config.plugin_stats.clear();
+        nd_config->plugin_services.clear();
+        nd_config->plugin_tasks.clear();
+        nd_config->plugin_detections.clear();
+        nd_config->plugin_stats.clear();
 #endif
-        nd_config.dhc_save = ndDHC_DISABLED;
-        nd_config.fhc_save = ndFHC_DISABLED;
+        nd_config->dhc_save = ndDHC_DISABLED;
+        nd_config->fhc_save = ndFHC_DISABLED;
     }
 
-    if (ifaces.size() == 0) {
+    if (nd_interfaces.size() == 0) {
         fprintf(stderr,
             "Required argument, (-I, --internal, or -E, --external) missing.\n");
         return 1;
@@ -3286,7 +2651,7 @@ int main(int argc, char *argv[])
         dns_hint_cache = new ndDNSHintCache();
 
     if (ND_USE_FHC)
-        flow_hash_cache = new ndFlowHashCache(nd_config.max_fhc);
+        flow_hash_cache = new ndFlowHashCache(nd_config->max_fhc);
 
     nd_printf("%s\n", nd_get_version_and_features().c_str());
 
@@ -3337,7 +2702,7 @@ int main(int argc, char *argv[])
 
     memset(&pkt_totals, 0, sizeof(nd_packet_stats));
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &nda_stats.ts_epoch) != 0) {
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_epoch) != 0) {
         nd_printf("Error getting epoch time: %s\n", strerror(errno));
         return 1;
     }
@@ -3346,10 +2711,10 @@ int main(int argc, char *argv[])
     if (flow_hash_cache) flow_hash_cache->load();
 
     nd_sha1_file(
-        nd_config.path_app_config, nd_config.digest_app_config
+        nd_config->path_app_config, nd_config->digest_app_config
     );
     nd_sha1_file(
-        nd_config.path_legacy_config, nd_config.digest_legacy_config
+        nd_config->path_legacy_config, nd_config->digest_legacy_config
     );
 
     sigfillset(&sigset);
@@ -3381,15 +2746,15 @@ int main(int argc, char *argv[])
     try {
 #ifdef _ND_USE_CONNTRACK
         if (ND_USE_CONNTRACK) {
-            thread_conntrack = new ndConntrackThread(nd_config.ca_conntrack);
+            thread_conntrack = new ndConntrackThread(nd_config->ca_conntrack);
             thread_conntrack->Create();
         }
 #endif
-        if (nd_config.socket_host.size() || nd_config.socket_path.size())
-            thread_socket = new ndSocketThread(nd_config.ca_socket);
+        if (nd_config->socket_host.size() || nd_config->socket_path.size())
+            thread_socket = new ndSocketThread(nd_config->ca_socket);
 
         if (ND_USE_SINK) {
-            thread_sink = new ndSinkThread(nd_config.ca_sink);
+            thread_sink = new ndSinkThread(nd_config->ca_sink);
             thread_sink->Create();
         }
     }
@@ -3426,10 +2791,10 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_INOTIFY
     try {
         inotify = new ndInotify();
-        for (nd_inotify_watch::const_iterator i = inotify_watches.begin();
-            i != inotify_watches.end(); i++)
+        for (nd_inotify_watch::const_iterator i = nd_config->inotify_watches.begin();
+            i != nd_config->inotify_watches.end(); i++)
             inotify->AddWatch(i->first, i->second);
-        if (inotify_watches.size()) inotify->RefreshWatches();
+        if (nd_config->inotify_watches.size()) inotify->RefreshWatches();
     }
     catch (exception &e) {
         nd_printf("Error creating file watches: %s\n", e.what());
@@ -3439,10 +2804,10 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) {
         try {
-            netlink = new ndNetlink(ifaces);
+            netlink = new ndNetlink(nd_interfaces);
 
-            nd_device_netlink::const_iterator i;
-            for (i = device_netlink.begin(); i != device_netlink.end(); i++)
+            nd_netlink_device::const_iterator i;
+            for (i = nd_netlink_devices.begin(); i != nd_netlink_devices.end(); i++)
                 netlink->AddInterface(i->second);
         }
         catch (exception &e) {
@@ -3456,7 +2821,7 @@ int main(int argc, char *argv[])
     nd_init();
     ndpi_global_init();
 
-    nd_dprintf("Online CPU cores: %ld\n", nda_stats.cpus);
+    nd_dprintf("Online CPU cores: %ld\n", nd_json_agent_stats.cpus);
 
     if (nd_start_detection_threads() < 0)
         return 1;
@@ -3507,9 +2872,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    itspec_update.it_value.tv_sec = nd_config.update_interval;
+    itspec_update.it_value.tv_sec = nd_config->update_interval;
     itspec_update.it_value.tv_nsec = 0;
-    itspec_update.it_interval.tv_sec = nd_config.update_interval;
+    itspec_update.it_interval.tv_sec = nd_config->update_interval;
     itspec_update.it_interval.tv_nsec = 0;
 
     timer_settime(timer_update, 0, &itspec_update, NULL);
@@ -3527,15 +2892,15 @@ int main(int argc, char *argv[])
         time_t ttl = 3;
         if (nd_categories->GetLastUpdate() > 0) {
             time_t age = time(NULL) - nd_categories->GetLastUpdate();
-            if (age < nd_config.ttl_napi_update)
-                ttl = nd_config.ttl_napi_update - age;
-            else if (age == nd_config.ttl_napi_update)
-                ttl = nd_config.ttl_napi_update;
+            if (age < nd_config->ttl_napi_update)
+                ttl = nd_config->ttl_napi_update - age;
+            else if (age == nd_config->ttl_napi_update)
+                ttl = nd_config->ttl_napi_update;
         }
 
         itspec_update.it_value.tv_sec = ttl;
         itspec_update.it_value.tv_nsec = 0;
-        itspec_update.it_interval.tv_sec = nd_config.ttl_napi_update;
+        itspec_update.it_interval.tv_sec = nd_config->ttl_napi_update;
         itspec_update.it_interval.tv_nsec = 0;
 
         timer_settime(timer_napi, 0, &itspec_update, NULL);
@@ -3544,7 +2909,7 @@ int main(int argc, char *argv[])
     tspec_sigwait.tv_sec = 1;
     tspec_sigwait.tv_nsec = 0;
 
-    while (! nd_terminate || (! nd_terminate_force && nda_stats.flows > 0)) {
+    while (! nd_terminate || (! nd_terminate_force && nd_json_agent_stats.flows > 0)) {
         int sig;
         siginfo_t si;
 

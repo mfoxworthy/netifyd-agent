@@ -55,7 +55,7 @@ typedef unordered_map<string, string> nd_flow_kvmap;
 class ndFlow
 {
 public:
-    nd_ifaces::iterator iface;
+    nd_interface::iterator iface;
 
     int16_t dpi_thread_id;
 
@@ -275,7 +275,7 @@ public:
     uint16_t ndpi_risk_score_client;
     uint16_t ndpi_risk_score_server;
 
-    ndFlow(nd_ifaces::iterator iface);
+    ndFlow(nd_interface::iterator iface);
     ndFlow(const ndFlow &flow);
     virtual ~ndFlow();
 

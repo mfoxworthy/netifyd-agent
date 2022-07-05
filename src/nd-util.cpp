@@ -73,10 +73,6 @@
 
 #include <net/if.h>
 
-#ifndef AF_LINK
-#define AF_LINK AF_PACKET
-#endif
-
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
@@ -86,12 +82,15 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-sha1.h"
 #include "nd-json.h"
 #include "nd-util.h"
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
+
+pthread_mutex_t *nd_printf_mutex = NULL;
 
 ndException::ndException(const string &where_arg, const string &what_arg) throw()
     : runtime_error(what_arg), where_arg(where_arg), what_arg(what_arg), message(NULL)
@@ -141,8 +140,6 @@ void nd_mem_free(void *ptr)
     free(ptr);
 }
 
-extern pthread_mutex_t *nd_printf_mutex;
-
 void nd_printf(const char *format, ...)
 {
     if (ND_QUIET) return;
@@ -191,7 +188,7 @@ void nd_flow_printf(const char *format, ...)
 
     va_list ap;
     va_start(ap, format);
-    vfprintf(nd_config.h_flow, format, ap);
+    vfprintf(nd_config->h_flow, format, ap);
     va_end(ap);
 
     pthread_mutex_unlock(nd_printf_mutex);

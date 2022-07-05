@@ -62,6 +62,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-json.h"
 #include "nd-thread.h"
@@ -70,7 +71,7 @@ using namespace std;
 #include "nd-napi.h"
 #include "nd-signal.h"
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
 
 #define _ND_DEBUG_CURL     1
 
@@ -212,27 +213,27 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     header.str("");
 
-    if (strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
-        header << "X-UUID: " << nd_config.uuid;
+    if (strncmp(nd_config->uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
+        header << "X-UUID: " << nd_config->uuid;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN))
+        if (nd_load_uuid(uuid, nd_config->path_uuid, ND_AGENT_UUID_LEN))
             header << "X-UUID: " << uuid;
         else
-            header << "X-UUID: " << nd_config.uuid;
+            header << "X-UUID: " << nd_config->uuid;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
-    if (strncmp(nd_config.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
-        header << "X-UUID-Serial: " << nd_config.uuid_serial;
+    if (strncmp(nd_config->uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
+        header << "X-UUID-Serial: " << nd_config->uuid_serial;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN))
+        if (nd_load_uuid(uuid, nd_config->path_uuid_serial, ND_AGENT_SERIAL_LEN))
             header << "X-UUID-Serial: " << uuid;
         else
-            header << "X-UUID-Serial: " << nd_config.uuid_serial;
+            header << "X-UUID-Serial: " << nd_config->uuid_serial;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
@@ -285,8 +286,8 @@ void *ndNetifyApiThread::Entry(void)
         }
 
         ostringstream url;
-        url << nd_config.url_napi << requests[cid];
-        url << "?vendor=" << nd_config.napi_vendor;
+        url << nd_config->url_napi << requests[cid];
+        url << "?vendor=" << nd_config->napi_vendor;
         url << "&settings_limit=100";
 
         if (page > 0) url << "&page=" << page;

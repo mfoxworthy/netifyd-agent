@@ -82,7 +82,7 @@ enum ndNetlinkAddressType
 class ndNetlink
 {
 public:
-    ndNetlink(const nd_ifaces &iface);
+    ndNetlink(const nd_interface &iface);
     virtual ~ndNetlink();
 
 #ifdef HAVE_LINUX_NETLINK_H

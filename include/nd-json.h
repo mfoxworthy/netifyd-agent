@@ -32,8 +32,19 @@ public:
 };
 
 void nd_json_to_string(const json &j, string &output, bool pretty = false);
+
 void nd_json_save_to_file(const json &j, const string &filename, bool pretty = false);
 void nd_json_save_to_file(const string &j, const string &filename);
+
+void nd_json_agent_hello(string &json_string);
+void nd_json_agent_status(json &j);
+
+void nd_json_protocols(string &json_string);
+
+void nd_json_add_interfaces(json &parent);
+void nd_json_add_devices(json &parent);
+void nd_json_add_stats(json &parent,
+    nd_packet_stats *stats, struct pcap_stat *pcap);
 
 typedef vector<string> ndJsonDataChunks;
 typedef map<string, ndJsonDataChunks> ndJsonData;

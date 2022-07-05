@@ -54,13 +54,14 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-json.h"
 #include "nd-ndpi.h"
 #include "nd-sha1.h"
 #include "nd-util.h"
 #include "nd-dhc.h"
 
-extern nd_global_config nd_config;
+extern nd_global_config *nd_config;
 
 ndDNSHintCache::ndDNSHintCache()
 {
@@ -94,11 +95,11 @@ void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &h
 
     if (pthread_mutex_lock(&lock) == 0) {
 
-        nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
+        nd_dns_tuple ar(time_t(time(NULL) + nd_config->ttl_dns_entry), hostname);
         nd_dhc_insert i = map_ar.insert(nd_dhc_insert_pair(digest, ar));
 
         if (! i.second)
-            i.first->second.first = time(NULL) + nd_config.ttl_dns_entry;
+            i.first->second.first = time(NULL) + nd_config->ttl_dns_entry;
 
         pthread_mutex_unlock(&lock);
     }
@@ -122,7 +123,7 @@ void ndDNSHintCache::insert(const string &digest, const string &hostname)
 
     if (_digest.size() != SHA1_DIGEST_LENGTH) return;
 
-    nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
+    nd_dns_tuple ar(time_t(time(NULL) + nd_config->ttl_dns_entry), hostname);
     map_ar.insert(nd_dhc_insert_pair(_digest, ar));
 }
 
@@ -162,7 +163,7 @@ bool ndDNSHintCache::lookup(const string &digest, string &hostname)
         if (i != map_ar.end()) {
             found = true;
             hostname = i->second.second;
-            i->second.first = time(NULL) + nd_config.ttl_dns_entry;
+            i->second.first = time(NULL) + nd_config->ttl_dns_entry;
         }
 
         pthread_mutex_unlock(&lock);
@@ -207,7 +208,7 @@ void ndDNSHintCache::load(void)
     const char *filename = NULL;
     FILE *hf = NULL;
 
-    switch (nd_config.dhc_save) {
+    switch (nd_config->dhc_save) {
     case ndDHC_PERSISTENT:
         filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
         break;
@@ -260,7 +261,7 @@ void ndDNSHintCache::save(void)
     const char *filename = NULL;
     FILE *hf = NULL;
 
-    switch (nd_config.dhc_save) {
+    switch (nd_config->dhc_save) {
     case ndDHC_PERSISTENT:
         filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
         break;

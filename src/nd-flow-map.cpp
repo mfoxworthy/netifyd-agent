@@ -65,7 +65,7 @@ using namespace std;
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 
-extern nd_global_config nd_config;
+ndFlowMap *nd_flow_buckets = NULL;
 
 ndFlowMap::ndFlowMap(size_t buckets)
     : buckets(buckets)

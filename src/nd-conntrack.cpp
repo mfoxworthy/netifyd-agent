@@ -81,8 +81,6 @@ using namespace std;
 
 #include "nd-conntrack.h"
 
-extern nd_global_config nd_config;
-
 static time_t nd_ct_last_flow_purge_ttl = 0;
 
 static int nd_ct_event_callback(

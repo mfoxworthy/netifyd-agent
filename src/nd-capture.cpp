@@ -149,6 +149,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
@@ -191,9 +192,14 @@ using namespace std;
 // Enable GTP tunnel dissection
 #define _ND_DISSECT_GTP         1
 
-extern nd_global_config nd_config;
-extern atomic_uint nd_flow_count;
+extern nd_global_config *nd_config;
 extern ndFlowMap *nd_flow_buckets;
+
+atomic_uint nd_flow_count;
+
+nd_device nd_devices;
+nd_interface_addr_map nd_interface_addrs;
+nd_interface nd_interfaces;
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -299,12 +305,12 @@ size_t ndPacketQueue::push(struct pcap_pkthdr *pkt_header, const uint8_t *pkt_da
     nd_dprintf("%s: packet queue push, new size: %lu\n",
         tag.c_str(), pkt_queue_size);
 #endif
-    if (pkt_queue_size >= nd_config.max_packet_queue) {
+    if (pkt_queue_size >= nd_config->max_packet_queue) {
 
         nd_dprintf("%s: packet queue full: %lu\n",
             tag.c_str(), pkt_queue_size);
 
-        size_t target = nd_config.max_packet_queue / ND_PKTQ_FLUSH_DIVISOR;
+        size_t target = nd_config->max_packet_queue / ND_PKTQ_FLUSH_DIVISOR;
 
         do {
             pop("flush");
@@ -350,7 +356,7 @@ void ndPacketQueue::pop(const string &oper)
 
 ndCaptureThread::ndCaptureThread(
     int16_t cpu,
-    nd_ifaces::iterator iface,
+    nd_interface::iterator iface,
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
@@ -547,7 +553,7 @@ pcap_t *ndCaptureThread::OpenCapture(void)
     else {
         pcap_new = pcap_open_live(
             tag.c_str(),
-            nd_config.max_capture_length,
+            nd_config->max_capture_length,
             1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
         );
 
@@ -587,9 +593,9 @@ pcap_t *ndCaptureThread::OpenCapture(void)
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
-        nd_device_filter::const_iterator i = nd_config.device_filters.find(tag);
+        nd_device_filter::const_iterator i = nd_config->device_filters.find(tag);
 
-        if (i != nd_config.device_filters.end()) {
+        if (i != nd_config->device_filters.end()) {
 
             if (pcap_compile(pcap_new, &pcap_filter,
                 i->second.c_str(), 1, PCAP_NETMASK_UNKNOWN) < 0) {
@@ -1301,13 +1307,13 @@ nd_process_ip:
         }
     }
     else {
-        if (nd_config.max_flows > 0 && nd_flow_count + 1 > nd_config.max_flows) {
+        if (nd_config->max_flows > 0 && nd_flow_count + 1 > nd_config->max_flows) {
             stats->pkt.discard++;
             stats->pkt.discard_bytes += pkt_header->len;
             stats->flow.dropped++;
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
-                tag.c_str(), nd_config.max_flows);
+                tag.c_str(), nd_config->max_flows);
 #endif
             return;
         }
@@ -1485,8 +1491,8 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.detection_expired.load() == false &&
-        nf->detection_packets <= nd_config.max_detection_pkts &&
-        nf->queued.load() <= nd_config.max_detection_pkts) {
+        nf->detection_packets <= nd_config->max_detection_pkts &&
+        nf->queued.load() <= nd_config->max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;
