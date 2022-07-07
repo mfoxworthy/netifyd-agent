@@ -21,7 +21,7 @@ include:
 # Debian OS Targets
 #------------------
 
-debian 10 build:
+.debian 10 build:
   extends: .debian_build
   tags:
     - docker
