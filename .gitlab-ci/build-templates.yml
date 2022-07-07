@@ -19,10 +19,10 @@
     - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
     - make -C deploy/debian
     - cp deploy/debian/debian.changelog debian/changelog
-    - cp deploy/debian/debian.ci-control debian/control
+    - cp deploy/debian/debian.control-ci debian/control
     - cp deploy/debian/debian.init debian/init
     - cp deploy/debian/debian.postinst debian/postinst
-    - cp deploy/debian/debian.ci-rules debian/rules
+    - cp deploy/debian/debian.rules-ci debian/rules
     - cp deploy/debian/netifyd.dsc debian/netifyd.dsc
     - cp deploy/debian/netifyd.install debian/netifyd.install
     - cp deploy/debian/netifyd-dev.install debian/netifyd-dev.install
