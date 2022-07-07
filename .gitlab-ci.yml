@@ -31,10 +31,18 @@ debian 10 build:
     OS_VERSION: "10"
     OS_ARCH: "amd64"
 
-.debian 11 build:
-  extends: .debian11_build
+# Ubuntu OS Targets
+#------------------
+
+ubuntu 20.04 build:
+  extends: .debian_build
   tags:
-    - debian11
+    - docker
+  variables:
+    OS_IMAGE: "ubuntu:20.04"
+    OS_NAME: "ubuntu"
+    OS_VERSION: "20.04"
+    OS_ARCH: "amd64"
 
 # RPM OS Targets
 #---------------

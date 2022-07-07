@@ -37,18 +37,6 @@
     - builds
     expire_in: 1 day
 
-
-.debian11_build:
-  stage: build
-  before_script:
-    - git submodule sync --recursive
-    - git submodule update --init --recursive --force
-  script:
-    - ./autogen.sh
-    - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
-    - make clean
-    - make DESTDIR=/tmp/netify-agent install
-
 # RPM build
 #----------
 
