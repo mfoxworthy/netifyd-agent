@@ -19,11 +19,6 @@ override_dh_install:
 	dh_install
 
 	rm -rf $(DESTDIR)/usr/bin
-	# rm -rf $(DESTDIR)/usr/include
-	# rm -rf $(DESTDIR)/usr/lib/*/*.a
-	# rm -rf $(DESTDIR)/usr/lib/*/*.la
-	# rm -rf $(DESTDIR)/usr/lib/*/libndpi*
-	# rm -rf $(DESTDIR)/usr/lib/*/pkgconfig
 
 	install -d -m 0755 $(DESTDIR)/var/run/netifyd
 	install -d -m 0755 $(DESTDIR)/etc/netify.d
@@ -40,3 +35,4 @@ override_dh_install:
 	dh_systemd_start
 
 	install -D -m 0644 deploy/netifyd.default \
+		$(DESTDIR)/etc/default/netifyd

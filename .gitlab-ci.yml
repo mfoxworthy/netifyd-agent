@@ -39,7 +39,7 @@ debian 10 build:
 # RPM OS Targets
 #---------------
 
-centos 7 build:
+.centos 7 build:
   extends: .rpmos_build
   tags:
     - docker
@@ -49,7 +49,7 @@ centos 7 build:
     RPMOS_VERSION: "7"
     RPMOS_ARCH: "x86_64"
 
-almalinux 8 build:
+.almalinux 8 build:
   extends: .rpmos_build
   tags:
     - docker
