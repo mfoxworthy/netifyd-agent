@@ -127,7 +127,7 @@ freebsd 12.3 build:
 # CentOS
 #-------
 
-centos 7 test:
+.centos 7 test:
   extends: .rpmos_test
   tags:
     - docker
@@ -139,7 +139,7 @@ centos 7 test:
     RPMOS_UUID: "NE-CE-07-X1"
   needs: ["centos 7 build"]
 
-almalinux 8 test:
+.almalinux 8 test:
   extends: .rpmos_test
   tags:
     - docker
