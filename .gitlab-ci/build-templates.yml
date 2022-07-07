@@ -13,11 +13,30 @@
   script:
     # Build environment
     - apt update
-    - apt install -y rsync debhelper dh-systemd autoconf automake bc build-essential libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtool zlib1g-dev libgoogle-perftools-dev
+    - apt install -y rsync debhelper dh-systemd autoconf automake bc build-essential libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtool zlib1g-dev libgoogle-perftools-dev systemd
     # Build packages
     - ./autogen.sh
     - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
-    - echo "to be continued?"
+    - make -C deploy/debian
+    - cp deploy/debian/debian.changelog debian/changelog
+    - cp deploy/debian/debian.ci-control debian/control
+    - cp deploy/debian/debian.init debian/init
+    - cp deploy/debian/debian.postinst debian/postinst
+    - cp deploy/debian/debian.ci-rules debian/rules
+    - cp deploy/debian/netifyd.dsc debian/netifyd.dsc
+    - cp deploy/debian/netifyd.install debian/netifyd.install
+    - cp deploy/debian/netifyd-dev.install debian/netifyd-dev.install
+    - dpkg-buildpackage -b
+    # Push build to master node
+    - mkdir -p builds/$CI_PROJECT_NAME/$OS_NAME/$OS_VERSION/$OS_ARCH
+    - mv -v ../*.deb builds/$CI_PROJECT_NAME/$OS_NAME/$OS_VERSION/$OS_ARCH
+    - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
+  artifacts:
+    when: always
+    paths:
+    - builds
+    expire_in: 1 day
+
 
 .debian11_build:
   stage: build

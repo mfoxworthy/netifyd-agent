@@ -21,7 +21,7 @@ include:
 # Debian OS Targets
 #------------------
 
-.debian 10 build:
+debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -29,7 +29,7 @@ include:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
     OS_VERSION: "10"
-    OS_ARCH: "x86_64"
+    OS_ARCH: "amd64"
 
 .debian 11 build:
   extends: .debian11_build
