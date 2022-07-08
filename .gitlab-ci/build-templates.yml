@@ -45,8 +45,7 @@
   image: $RPMOS_IMAGE
   before_script:
     # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - apt update
-    - env DEBIAN_FRONTEND=noninteractive apt install -y git
+    - yum install -y git
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
