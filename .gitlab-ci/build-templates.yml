@@ -48,20 +48,20 @@
     - git submodule sync --recursive
     - git submodule update --init --recursive
   script:
+    # Build environment
+    - yum -y install git make rpm-build which expect yum-utils sudo wget autoconf gcc gcc-c++ automake libtool rsync
+    - wget --no-check-certificate https://dl.fedoraproject.org/pub/epel/epel-release-latest-${RPMOS_VERSION}.noarch.rpm
+    - yum -y install epel-release-latest-${RPMOS_VERSION}.noarch.rpm
     # Build via raw source only
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
     - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
     # Build packages
-    - mkdir -p result builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH logs/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH
     - rpmbuild -bs netifyd.spec --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
-    - mock -v --old-chroot --resultdir=result *.src.rpm
+    - rpmbuild --rebuild *.src.rpm
     # Copy packages and logs to artifacts
-    - grep -v DEBUG result/root.log
-    - mv result/*rpm builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
-    - mv result/*log logs/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
-    - rm -rf result
+    - mkdir -p builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH
+    - mv -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
     # Push build to master node
-    - sudo yum -y install rsync
     - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
   allow_failure: true
   artifacts:
