@@ -88,7 +88,7 @@ ubuntu 22.04 build:
     OS_NAME: "ubuntu"
     OS_VERSION: "22.04"
     OS_ARCH: "amd64"
-    OS_EXTRA_PACKAGES: "byacc"
+    OS_EXTRA_PACKAGES: "byacc flex"
 
 # RPM OS Targets
 #---------------
