@@ -50,9 +50,11 @@
     - git submodule update --init --recursive
   script:
     # Build environment
-    - yum -y install git make rpm-build which expect yum-utils sudo wget autoconf gcc gcc-c++ automake libtool rsync
+    - yum -y install wget git
     - wget --no-check-certificate https://dl.fedoraproject.org/pub/epel/epel-release-latest-${RPMOS_VERSION}.noarch.rpm
     - yum -y install epel-release-latest-${RPMOS_VERSION}.noarch.rpm
+    - yum -y install make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync
+    - yum -y install $RPMOS_REPOS curl-devel gperftools-devel libmnl-devel libnetfilter_conntrack-devel libpcap-devel zlib-devel
     # Build via raw source only
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
     - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
