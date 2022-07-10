@@ -13,7 +13,7 @@
   script:
     # Build environment
     - apt update
-    - env DEBIAN_FRONTEND=noninteractive apt install -y rsync debhelper autoconf automake bc build-essential libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtool zlib1g-dev libgoogle-perftools-dev systemd $OS_EXTRAS_PACKAGES
+    - env DEBIAN_FRONTEND=noninteractive apt install -y rsync debhelper autoconf automake bc build-essential libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtool zlib1g-dev libgoogle-perftools-dev systemd $OS_EXTRA_PACKAGES
     # Build packages
     - ./autogen.sh
     - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
@@ -53,7 +53,7 @@
     - yum -y install wget git
     - wget --no-check-certificate https://dl.fedoraproject.org/pub/epel/epel-release-latest-${RPMOS_VERSION}.noarch.rpm
     - yum -y install epel-release-latest-${RPMOS_VERSION}.noarch.rpm
-    - yum -y install make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync
+    - yum -y install make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync bc
     - yum -y install $RPMOS_REPOS curl-devel gperftools-devel libmnl-devel libnetfilter_conntrack-devel libpcap-devel zlib-devel
     # Build via raw source only
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
