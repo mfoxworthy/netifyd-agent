@@ -40,7 +40,7 @@ BuildRequires: autoconf >= 2.63
 BuildRequires: automake
 BuildRequires: bc
 BuildRequires: libcurl-devel
-BuildRequires: gperftools-devel
+#BuildRequires: gperftools-devel
 BuildRequires: libmnl-devel
 BuildRequires: libnetfilter_conntrack-devel
 BuildRequires: libpcap-devel
