@@ -21,7 +21,7 @@ include:
 # Debian OS Targets
 #------------------
 
-.debian 9 build:
+debian 9 build:
   extends: .debian_build
   tags:
     - docker
@@ -32,7 +32,18 @@ include:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-.debian 10 build:
+debian 9 i386 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "i386/debian:9"
+    OS_NAME: "debian"
+    OS_VERSION: "9"
+    OS_ARCH: "i386"
+    OS_EXTRA_PACKAGES: ""
+
+debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -43,7 +54,7 @@ include:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 10 build:
+debian 10 i386 build:
   extends: .debian_build
   tags:
     - docker
@@ -54,7 +65,7 @@ debian 10 build:
     OS_ARCH: "i386"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-.debian 11 build:
+debian 11 build:
   extends: .debian_build
   tags:
     - docker
@@ -65,10 +76,21 @@ debian 10 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
+debian 11 i386 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "i386/debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "i386"
+    OS_EXTRA_PACKAGES: ""
+
 # Ubuntu OS Targets
 #------------------
 
-.ubuntu 18.04 build:
+ubuntu 18.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -79,7 +101,7 @@ debian 10 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
-.ubuntu 20.04 build:
+ubuntu 20.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -90,7 +112,7 @@ debian 10 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-.ubuntu 22.04 build:
+ubuntu 22.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -104,7 +126,7 @@ debian 10 build:
 # RPM OS Targets
 #---------------
 
-.centos 7 build:
+centos 7 build:
   extends: .rpmos_build
   tags:
     - docker
@@ -115,7 +137,7 @@ debian 10 build:
     RPMOS_ARCH: "x86_64"
     RPMOS_REPOS: ""
 
-.almalinux 8 build:
+almalinux 8 build:
   extends: .rpmos_build
   tags:
     - docker
@@ -194,7 +216,7 @@ freebsd 12.3 build:
 # CentOS
 #-------
 
-.centos 7 test:
+centos 7 test:
   extends: .rpmos_test
   tags:
     - docker
@@ -206,7 +228,7 @@ freebsd 12.3 build:
     RPMOS_UUID: "NE-CE-07-X1"
   needs: ["centos 7 build"]
 
-.almalinux 8 test:
+almalinux 8 test:
   extends: .rpmos_test
   tags:
     - docker
