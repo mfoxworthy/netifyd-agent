@@ -52,7 +52,7 @@ debian 10 build:
     OS_NAME: "debian"
     OS_VERSION: "10"
     OS_ARCH: "amd64"
-    OS_EXTRA_PACKAGES: "byacc flex"
+    OS_EXTRA_PACKAGES: ""
 
 debian 10 i386 build:
   extends: .debian_build
@@ -85,7 +85,7 @@ debian 11 i386 build:
     OS_NAME: "debian"
     OS_VERSION: "11"
     OS_ARCH: "i386"
-    OS_EXTRA_PACKAGES: ""
+    OS_EXTRA_PACKAGES: "byacc flex"
 
 # Ubuntu OS Targets
 #------------------
