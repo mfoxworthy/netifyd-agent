@@ -30,7 +30,7 @@ debian 9 build:
     OS_NAME: "debian"
     OS_VERSION: "9"
     OS_ARCH: "amd64"
-    OS_EXTRA_PACKAGES: ""
+    OS_EXTRA_PACKAGES: "byacc flex"
 
 debian 9 i386 build:
   extends: .debian_build
@@ -41,7 +41,7 @@ debian 9 i386 build:
     OS_NAME: "debian"
     OS_VERSION: "9"
     OS_ARCH: "i386"
-    OS_EXTRA_PACKAGES: ""
+    OS_EXTRA_PACKAGES: "byacc flex"
 
 debian 10 build:
   extends: .debian_build
