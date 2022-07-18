@@ -61,11 +61,12 @@
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
     - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
     # Build packages
-    - rpmbuild -bs netifyd.spec --define "dist .os{$RPMOS_VERSION}" --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
+    - rpmbuild -bs netifyd.spec --define "_dist .os{$RPMOS_VERSION}" --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
     - rpmbuild --rebuild *.src.rpm
     # Copy packages to artifacts
     - mkdir -p builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH
     - mv -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
+    - mv -v *.src.rpm builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/
     # Push build to master node
     - rsync -rtv builds/* master-mirror.egloo.ca::netify-builds/
   artifacts:
