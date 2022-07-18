@@ -61,7 +61,7 @@
     - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
     - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
     # Build packages
-    - rpmbuild -bs netifyd.spec --define "_dist .os{$RPMOS_VERSION}" --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
+    - rpmbuild -bs netifyd.spec --define "disttag .os{$RPMOS_VERSION}" --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
     - rpmbuild --rebuild *.src.rpm
     # Copy packages to mirror
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH
