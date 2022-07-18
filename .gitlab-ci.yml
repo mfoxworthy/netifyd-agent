@@ -97,7 +97,7 @@ ubuntu 18.04 build:
   variables:
     OS_IMAGE: "ubuntu:18.04"
     OS_NAME: "ubuntu"
-    OS_VERSION: "18.04"
+    OS_VERSION: "bionic"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
@@ -108,7 +108,7 @@ ubuntu 20.04 build:
   variables:
     OS_IMAGE: "ubuntu:20.04"
     OS_NAME: "ubuntu"
-    OS_VERSION: "20.04"
+    OS_VERSION: "focal"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
@@ -119,7 +119,7 @@ ubuntu 22.04 build:
   variables:
     OS_IMAGE: "ubuntu:22.04"
     OS_NAME: "ubuntu"
-    OS_VERSION: "22.04"
+    OS_VERSION: "jammy"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
