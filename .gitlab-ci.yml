@@ -21,7 +21,7 @@ include:
 # Debian OS Targets
 #------------------
 
-debian 9 build:
+.debian 9 build:
   extends: .debian_build
   tags:
     - docker
@@ -32,7 +32,7 @@ debian 9 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-debian 10 build:
+.debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -43,7 +43,7 @@ debian 10 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 11 build:
+.debian 11 build:
   extends: .debian_build
   tags:
     - docker
@@ -57,7 +57,7 @@ debian 11 build:
 # Ubuntu OS Targets
 #------------------
 
-ubuntu 18.04 build:
+.ubuntu 18.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -68,7 +68,7 @@ ubuntu 18.04 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
-ubuntu 20.04 build:
+.ubuntu 20.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -79,7 +79,7 @@ ubuntu 20.04 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-ubuntu 22.04 build:
+.ubuntu 22.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -93,7 +93,7 @@ ubuntu 22.04 build:
 # RPM OS Targets
 #---------------
 
-centos 7 build:
+.centos 7 build:
   extends: .rpmos_build
   tags:
     - docker
