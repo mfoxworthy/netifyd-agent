@@ -38,8 +38,6 @@
     - mv -v ../*.dsc builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     - mv -v ../*.tar.gz builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     # Push build to master node
-    - mkdir -p builds/$CI_PROJECT_NAME/$OS_NAME/$OS_VERSION/$OS_ARCH
-    - mv -v ../*.deb builds/$CI_PROJECT_NAME/$OS_NAME/$OS_VERSION/$OS_ARCH
     - rsync -rtv builds/* master-mirror.egloo.ca::netify/
   artifacts:
     when: always
