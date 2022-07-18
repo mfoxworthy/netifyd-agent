@@ -183,7 +183,7 @@ freebsd 12.3 build:
 # CentOS
 #-------
 
-centos 7 test:
+.centos 7 test:
   extends: .rpmos_test
   tags:
     - docker
