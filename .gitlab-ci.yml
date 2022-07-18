@@ -32,7 +32,7 @@ include:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-.debian 10 build:
+debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -195,7 +195,7 @@ freebsd 12.3 build:
     RPMOS_UUID: "NE-CE-07-X1"
   needs: ["centos 7 build"]
 
-almalinux 8 test:
+.almalinux 8 test:
   extends: .rpmos_test
   tags:
     - docker
