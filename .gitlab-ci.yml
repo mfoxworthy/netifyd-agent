@@ -32,7 +32,7 @@ include:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-debian 10 build:
+.debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -41,6 +41,17 @@ debian 10 build:
     OS_NAME: "debian"
     OS_VERSION: "10"
     OS_ARCH: "amd64"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+debian 10 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "i386/debian:10"
+    OS_NAME: "debian"
+    OS_VERSION: "10"
+    OS_ARCH: "i386"
     OS_EXTRA_PACKAGES: "byacc flex"
 
 .debian 11 build:
