@@ -52,7 +52,7 @@ debian 10 build:
     OS_NAME: "debian"
     OS_VERSION: "10"
     OS_ARCH: "amd64"
-    OS_EXTRA_PACKAGES: ""
+    OS_EXTRA_PACKAGES: "flex"
 
 debian 10 i386 build:
   extends: .debian_build
@@ -110,7 +110,7 @@ ubuntu 20.04 build:
     OS_NAME: "ubuntu"
     OS_VERSION: "focal"
     OS_ARCH: "amd64"
-    OS_EXTRA_PACKAGES: ""
+    OS_EXTRA_PACKAGES: "byacc"
 
 ubuntu 22.04 build:
   extends: .debian_build
