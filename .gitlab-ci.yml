@@ -30,7 +30,7 @@ include:
   variables:
     OS_IMAGE: "debian:9"
     OS_NAME: "debian"
-    OS_VERSION: "9"
+    OS_VERSION: "9.0"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
