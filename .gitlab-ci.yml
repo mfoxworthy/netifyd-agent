@@ -329,6 +329,7 @@ clearos 7 variant:
   tags:
     - docker
   variables:
+    RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "clearos"
     RPMOS_VERSION: "7"
     RPMOS_IMAGE: "centos:7"

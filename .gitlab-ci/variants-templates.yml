@@ -7,8 +7,8 @@
   script:
     # Copy packages to mirror
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
-    - mv builds/netify/$SOURCE_RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
-    - mv builds/netify/$SOURCE_RPMOS_OS/$RPMOS_VERSION/devel/source builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
+    - mv builds/netify/$RPMOS_OS_SOURCE/$RPMOS_VERSION/devel/$RPMOS_ARCH builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
+    - mv builds/netify/$RPMOS_OS_SOURCE/$RPMOS_VERSION/devel/source builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
     - find builds
     # Push build to master node
     #- rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify/
