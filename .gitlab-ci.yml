@@ -89,7 +89,7 @@ include:
     OS_IMAGE: "ubuntu:18.04"
     OS_NAME: "ubuntu"
     OS_VERSION: "bionic"
-    OS_ARCH: "amd64"
+    OS_ARCH: "binary-amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
 .ubuntu 20.04 build:
@@ -100,7 +100,7 @@ include:
     OS_IMAGE: "ubuntu:20.04"
     OS_NAME: "ubuntu"
     OS_VERSION: "focal"
-    OS_ARCH: "amd64"
+    OS_ARCH: "binary-amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
 .ubuntu 22.04 build:
@@ -111,7 +111,7 @@ include:
     OS_IMAGE: "ubuntu:22.04"
     OS_NAME: "ubuntu"
     OS_VERSION: "jammy"
-    OS_ARCH: "amd64"
+    OS_ARCH: "binary-amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
 # RPM OS Targets
