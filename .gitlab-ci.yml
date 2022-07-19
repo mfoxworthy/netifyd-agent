@@ -335,3 +335,15 @@ clearos 7 variant:
     RPMOS_IMAGE: "centos:7"
     RPMOS_ARCH: "x86_64"
   needs: ["centos 7 test"]
+
+nethserver 7 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS_SOURCE: "centos"
+    RPMOS_OS: "nethserver"
+    RPMOS_VERSION: "7"
+    RPMOS_IMAGE: "centos:7"
+    RPMOS_ARCH: "x86_64"
+  needs: ["centos 7 test"]
