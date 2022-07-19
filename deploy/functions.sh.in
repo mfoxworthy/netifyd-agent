@@ -132,10 +132,10 @@ load_openwrt()
     local options="-I br-lan"
 
     # Obtain interface on 21.02
-    ifn=$(uci get network.wan.device)
+    ifn=$(uci get network.wan.device 2>/dev/null)
 
     # If getting interface name failed try 19.07 and earlier approach
-    [ -z "$ifn"] && ifn=$(uci get network.wan.ifname)
+    [ -z "$ifn" ] && ifn=$(uci get network.wan.ifname 2>/dev/null)
     [ ! -z "$ifn" ] && options="$options -E $ifn"
 
     options=$(echo "$options" |\
