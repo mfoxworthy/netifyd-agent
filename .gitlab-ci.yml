@@ -5,6 +5,7 @@
 stages:
   - build
   - test
+  - variants
 
 # variables:
 #  CI_DEBUG_TRACE: "true"
@@ -13,6 +14,7 @@ stages:
 include:
   - '/.gitlab-ci/build-templates.yml'
   - '/.gitlab-ci/test-templates.yml'
+  - '/.gitlab-ci/variants-templates.yml'
 
 # -------------------------------------------------------------------------
 # Build stage
@@ -21,7 +23,7 @@ include:
 # Debian OS Targets
 #------------------
 
-debian 9 build:
+.debian 9 build:
   extends: .debian_build
   tags:
     - docker
@@ -32,7 +34,7 @@ debian 9 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 10 build:
+.debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -43,7 +45,7 @@ debian 10 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "flex"
 
-debian 10 i386 build:
+.debian 10 i386 build:
   extends: .debian_build
   tags:
     - docker
@@ -54,7 +56,7 @@ debian 10 i386 build:
     OS_ARCH: "i386"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 11 build:
+.debian 11 build:
   extends: .debian_build
   tags:
     - docker
@@ -65,7 +67,7 @@ debian 11 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: ""
 
-debian 11 i386 build:
+.debian 11 i386 build:
   extends: .debian_build
   tags:
     - docker
@@ -79,7 +81,7 @@ debian 11 i386 build:
 # Ubuntu OS Targets
 #------------------
 
-ubuntu 18.04 build:
+.ubuntu 18.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -90,7 +92,7 @@ ubuntu 18.04 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
-ubuntu 20.04 build:
+.ubuntu 20.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -101,7 +103,7 @@ ubuntu 20.04 build:
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc"
 
-ubuntu 22.04 build:
+.ubuntu 22.04 build:
   extends: .debian_build
   tags:
     - docker
@@ -126,7 +128,7 @@ centos 7 build:
     RPMOS_ARCH: "x86_64"
     RPMOS_REPOS: ""
 
-almalinux 8 build:
+.almalinux 8 build:
   extends: .rpmos_build
   tags:
     - docker
@@ -217,7 +219,7 @@ centos 7 test:
     RPMOS_UUID: "NE-CE-07-X1"
   needs: ["centos 7 build"]
 
-almalinux 8 test:
+.almalinux 8 test:
   extends: .rpmos_test
   tags:
     - docker
@@ -314,3 +316,21 @@ almalinux 8 test:
     FREEBSD_RELEASE: "3"
     FREEBSD_PKG_EXTENSION: "pkg"
   needs: ["freebsd 12.3 build"]
+
+# -------------------------------------------------------------------------
+# Variants stage
+# -------------------------------------------------------------------------
+
+# CentOS
+#-------
+
+clearos 7 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS: "clearos"
+    RPMOS_VERSION: "7"
+    RPMOS_IMAGE: "centos:7"
+    RPMOS_ARCH: "x86_64"
+  needs: ["centos 7 test"]

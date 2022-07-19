@@ -73,8 +73,8 @@
     # Copy packages to mirror
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source
-    - mv -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
-    - mv -v *.src.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source/
+    - cp -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
+    - cp -v *.src.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source/
     # Push build to master node
     - rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify/
   artifacts:
