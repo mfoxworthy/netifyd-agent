@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <regex>
 #include <memory>
+#include <mutex>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -90,7 +91,7 @@ using namespace std;
 
 extern nd_global_config *nd_config;
 
-pthread_mutex_t *nd_printf_mutex = NULL;
+static mutex nd_printf_mutex;
 
 ndException::ndException(const string &where_arg, const string &what_arg) throw()
     : runtime_error(what_arg), where_arg(where_arg), what_arg(what_arg), message(NULL)
@@ -154,11 +155,9 @@ void nd_printf(const char *format, va_list ap)
 {
     if (ND_QUIET) return;
 
-    pthread_mutex_lock(nd_printf_mutex);
+    unique_lock<mutex> lock(nd_printf_mutex);
 
     vsyslog(LOG_DAEMON | LOG_INFO, format, ap);
-
-    pthread_mutex_unlock(nd_printf_mutex);
 }
 
 void nd_dprintf(const char *format, ...)
@@ -175,23 +174,19 @@ void nd_dprintf(const char *format, va_list ap)
 {
     if (! ND_DEBUG) return;
 
-    pthread_mutex_lock(nd_printf_mutex);
+    unique_lock<mutex> lock(nd_printf_mutex);
 
     vfprintf(stderr, format, ap);
-
-    pthread_mutex_unlock(nd_printf_mutex);
 }
 
 void nd_flow_printf(const char *format, ...)
 {
-    pthread_mutex_lock(nd_printf_mutex);
+    unique_lock<mutex> lock(nd_printf_mutex);
 
     va_list ap;
     va_start(ap, format);
     vfprintf(nd_config->h_flow, format, ap);
     va_end(ap);
-
-    pthread_mutex_unlock(nd_printf_mutex);
 }
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
@@ -201,7 +196,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
 {
     if (ND_DEBUG && (ND_DEBUG_NDPI || level == NDPI_LOG_ERROR)) {
 
-        pthread_mutex_lock(nd_printf_mutex);
+        unique_lock<mutex> lock(nd_printf_mutex);
 
         va_list ap;
         va_start(ap, format);
@@ -217,8 +212,6 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
 
         vfprintf(stdout, format, ap);
         va_end(ap);
-
-        pthread_mutex_unlock(nd_printf_mutex);
     }
 }
 #endif // NDPI_ENABLE_DEBUG_MESSAGES

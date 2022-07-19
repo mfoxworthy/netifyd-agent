@@ -150,7 +150,6 @@ static ndFlowHashCache *flow_hash_cache = NULL;
 static time_t nd_ethers_mtime = 0;
 
 extern nd_global_config *nd_config;
-extern pthread_mutex_t *nd_printf_mutex;
 extern nd_device nd_devices;
 extern nd_device_ether nd_device_ethers;
 extern ndFlowMap *nd_flow_buckets;
@@ -2245,9 +2244,6 @@ int main(int argc, char *argv[])
 
     openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-    nd_printf_mutex = new pthread_mutex_t;
-    pthread_mutex_init(nd_printf_mutex, NULL);
-
     nd_seed_rng();
 
     nd_flow_count = 0;
@@ -3110,8 +3106,6 @@ int main(int argc, char *argv[])
     nd_ifaddrs_free(nd_interface_addrs);
 
     nd_dprintf("Normal exit.\n");
-    pthread_mutex_destroy(nd_printf_mutex);
-    delete nd_printf_mutex;
 
     curl_global_cleanup();
 
