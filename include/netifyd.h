@@ -183,7 +183,7 @@
 #include "nd-sha1.h"
 
 typedef unordered_map<string, vector<string> > nd_device_addrs;
-typedef map<string, pair<pthread_mutex_t *, nd_device_addrs *> > nd_device;
+typedef map<string, pair<mutex *, nd_device_addrs *> > nd_device;
 typedef unordered_map<string, string> nd_device_ether;
 typedef vector<pair<bool, string> > nd_interface;
 typedef vector<pair<string, string> > nd_device_addr;

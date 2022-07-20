@@ -463,21 +463,19 @@ static void nd_init(void)
         if (! (*i).first) {
             // XXX: Only collect device MAC/addresses on LAN interfaces.
             nd_devices[(*i).second] = make_pair(
-                (pthread_mutex_t *)NULL, (nd_device_addrs *)NULL
+                (mutex *)NULL, (nd_device_addrs *)NULL
             );
         }
         else {
             int rc;
 
             nd_devices[(*i).second] = make_pair(
-                new pthread_mutex_t, new nd_device_addrs
+                new mutex, new nd_device_addrs
             );
             if (nd_devices[(*i).second].first == NULL)
-                throw ndSystemException(__PRETTY_FUNCTION__, "new pthread_mutex_t", ENOMEM);
+                throw ndSystemException(__PRETTY_FUNCTION__, "new mutex", ENOMEM);
             if (nd_devices[(*i).second].second == NULL)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new nd_device_addrs", ENOMEM);
-            if ((rc = pthread_mutex_init(nd_devices[(*i).second].first, NULL)) != 0)
-                throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_init", rc);
         }
     }
 
@@ -490,10 +488,8 @@ static void nd_destroy(void)
 
         delete stats[(*i).second];
         if (nd_devices.find((*i).second) != nd_devices.end()) {
-            if (nd_devices[(*i).second].first != NULL) {
-                pthread_mutex_destroy(nd_devices[(*i).second].first);
+            if (nd_devices[(*i).second].first != NULL)
                 delete nd_devices[(*i).second].first;
-            }
             if (nd_devices[(*i).second].second != NULL)
                 delete nd_devices[(*i).second].second;
         }

@@ -232,10 +232,10 @@ void nd_json_add_devices(json &parent)
 {
     nd_device_addrs device_addrs;
 
-    for (nd_device::const_iterator i = nd_devices.begin(); i != nd_devices.end(); i++) {
+    for (auto i = nd_devices.begin(); i != nd_devices.end(); i++) {
         if (i->second.first == NULL) continue;
 
-        pthread_mutex_lock(i->second.first);
+        unique_lock<mutex> lock(*i->second.first);
 
         for (nd_device_addrs::const_iterator j = i->second.second->begin();
             j != i->second.second->end(); j++) {
@@ -262,8 +262,6 @@ void nd_json_add_devices(json &parent)
         }
 
         i->second.second->clear();
-
-        pthread_mutex_unlock(i->second.first);
     }
 
     for (nd_device_addrs::const_iterator i = device_addrs.begin();

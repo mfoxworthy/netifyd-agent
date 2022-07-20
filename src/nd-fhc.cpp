@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <regex>
+#include <mutex>
 
 #include <sys/types.h>
 #include <sys/stat.h>

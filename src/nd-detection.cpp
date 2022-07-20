@@ -705,7 +705,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         nd_device_addrs *device_addrs = devices[ndEF->iface->second].second;
         if (device_addrs != NULL) {
 
-            pthread_mutex_lock(devices[ndEF->iface->second].first);
+            unique_lock<mutex> lock(*devices[ndEF->iface->second].first);
 
             for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
                 string ip;
@@ -757,8 +757,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                     }
                 }
             }
-
-            pthread_mutex_unlock(devices[ndEF->iface->second].first);
         }
 #endif
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_USE_NETLINK)

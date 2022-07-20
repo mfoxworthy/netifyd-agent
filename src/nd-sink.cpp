@@ -32,6 +32,7 @@
 #include <sstream>
 #include <atomic>
 #include <regex>
+#include <mutex>
 
 #include <sys/types.h>
 #include <sys/stat.h>

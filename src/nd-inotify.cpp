@@ -28,6 +28,7 @@
 #include <vector>
 #include <map>
 #include <regex>
+#include <mutex>
 
 #include <sys/inotify.h>
 #include <sys/stat.h>

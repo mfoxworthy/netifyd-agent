@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <regex>
+#include <mutex>
 
 #include <unistd.h>
 #include <string.h>
