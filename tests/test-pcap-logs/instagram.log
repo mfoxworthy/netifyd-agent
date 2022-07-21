@@ -28,11 +28,11 @@ lo: [i4-u-d--] HTTP/S.netify.akamai 82.85.26.154:443 <-- 192.168.0.103:41181 H: 
 lo: [i4-u-d--] HTTP/S.netify.akamai 82.85.26.154:443 <-- 192.168.0.103:41181 H: igcdn-photos-a-a.akamaihd.net SSL C: igcdn-photos-a-a.akamaihd.net
 lo: [i4-u-d--] HTTP/S.netify.akamai 82.85.26.154:443 <-- 192.168.0.103:41182 H: igcdn-photos-a-a.akamaihd.net SSL C: igcdn-photos-a-a.akamaihd.net
 lo: [i4-u-d--] HTTP/S.netify.akamai 82.85.26.154:443 <-- 192.168.0.103:41182 H: igcdn-photos-a-a.akamaihd.net SSL C: igcdn-photos-a-a.akamaihd.net
+lo: [i4--g---] HTTP 82.85.26.185:80 <-- 192.168.0.103:57966
+lo: [i4--gd--] HTTP.netify.akamai 46.33.70.160:80 <-- 192.168.0.103:38817 H: a1408.dspw43.akamai.net
 lo: [i4------] HTTP.netify.instagram 82.85.26.162:80 <-- 192.168.0.103:58052 H: photos-g.ak.instagram.com
 lo: [i4------] HTTP.netify.instagram 82.85.26.162:80 <-- 192.168.0.103:58053 H: photos-g.ak.instagram.com
 lo: [i4--g---] HTTP.netify.meta-cdn 31.13.86.52:80 <-- 192.168.0.103:58216
-lo: [i4--g---] HTTP 82.85.26.185:80 <-- 192.168.0.103:57966
-lo: [i4--gd--] HTTP.netify.akamai 46.33.70.160:80 <-- 192.168.0.103:38817 H: a1408.dspw43.akamai.net
 lo: [i4------] HTTP/S 46.33.70.159:443 <-- 192.168.0.103:58690
 lo: [i4------] DNS.netify.instagram 8.8.8.8:53 <-- 192.168.0.103:27124 H: photos-b.ak.instagram.com
 lo: [i4--g---] HTTP 2.22.236.51:80 <-- 192.168.0.103:44151

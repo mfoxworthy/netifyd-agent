@@ -70,7 +70,6 @@ lo: [i6------] HTTP/S.netify.quantcast 2600:9000:219c:ee00:6:44e3:f8c0:93a1:443 
 lo: [i6-u----] HTTP/S.netify.google-ads 64:ff9b::d83a:d1e6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:51100 H: ad.doubleclick.net SSL C: ad.doubleclick.net
 lo: [i6-u----] HTTP/S.netify.google-ads 64:ff9b::d83a:d1e6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:51102 H: ad.doubleclick.net SSL C: ad.doubleclick.net
 lo: [i6-u----] HTTP/S.netify.quantcast 2600:9000:219c:ee00:6:44e3:f8c0:93a1:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56186 H: rules.quantcount.com SSL C: rules.quantcount.com
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::d83a:d1e6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:51102
 lo: [i6------] HTTP/S.netify.twitter 2606:2800:134:1a0d:1429:742:782:b6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39736 H: cdn.syndication.twimg.com SSL C: cdn.syndication.twimg.com
 lo: [i6-u----] HTTP/S.netify.twitter 2606:2800:134:1a0d:1429:742:782:b6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39736 H: cdn.syndication.twimg.com SSL C: cdn.syndication.twimg.com
 lo: [i6------] HTTP/S.netify.google-ads 2a00:1450:4007:808::2006:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:54726 H: static.doubleclick.net SSL C: static.doubleclick.net
