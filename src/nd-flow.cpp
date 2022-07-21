@@ -68,7 +68,7 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_DEBUG_FHC 1
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 nd_device_ether nd_device_ethers;
 
@@ -865,8 +865,8 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 j["ssl"]["fingerprint"] = digest;
             }
 
-            j["ssl"]["alpn"] = ssl.alpn;
-            j["ssl"]["alpn_server"] = ssl.alpn_server;
+            j["ssl"]["alpn"] = tls_alpn;
+            j["ssl"]["alpn_server"] = tls_alpn_server;
         }
 
         if (has_bt_info_hash()) {

@@ -57,40 +57,42 @@ enum nd_global_flags {
     ndGF_SOFT_DISSECTORS = 0x1000000
 };
 
-#define ND_DEBUG (nd_config->flags & ndGF_DEBUG)
-#define ND_DEBUG_UPLOAD (nd_config->flags & ndGF_DEBUG_UPLOAD)
-#define ND_DEBUG_WITH_ETHERS (nd_config->flags & ndGF_DEBUG_WITH_ETHERS)
-#define ND_DEBUG_NDPI (nd_config->flags & ndGF_DEBUG_NDPI)
-#define ND_QUIET (nd_config->flags & ndGF_QUIET)
-#define ND_OVERRIDE_LEGACY_CONFIG (nd_config->flags & ndGF_OVERRIDE_LEGACY_CONFIG)
-#define ND_CAPTURE_UNKNOWN_FLOWS (nd_config->flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
-#define ND_PRIVATE_EXTADDR (nd_config->flags & ndGF_PRIVATE_EXTADDR)
-#define ND_SSL_USE_TLSv1 (nd_config->flags & ndGF_SSL_USE_TLSv1)
-#define ND_SSL_VERIFY (nd_config->flags & ndGF_SSL_VERIFY)
-#define ND_USE_CONNTRACK (nd_config->flags & ndGF_USE_CONNTRACK)
-#define ND_USE_NETLINK (nd_config->flags & ndGF_USE_NETLINK)
-#define ND_USE_NAPI (nd_config->flags & ndGF_USE_NAPI)
-#define ND_USE_SINK (nd_config->flags & ndGF_USE_SINK)
-#define ND_USE_DHC (nd_config->flags & ndGF_USE_DHC)
-#define ND_USE_FHC (nd_config->flags & ndGF_USE_FHC)
-#define ND_EXPORT_JSON (nd_config->flags & ndGF_EXPORT_JSON)
-#define ND_VERBOSE (nd_config->flags & ndGF_VERBOSE)
-#define ND_REPLAY_DELAY (nd_config->flags & ndGF_REPLAY_DELAY)
-#define ND_REMAIN_IN_FOREGROUND (nd_config->flags & ndGF_REMAIN_IN_FOREGROUND)
-#define ND_FLOW_DUMP_ESTABLISHED (nd_config->flags & ndGF_FLOW_DUMP_ESTABLISHED)
-#define ND_FLOW_DUMP_UNKNOWN (nd_config->flags & ndGF_FLOW_DUMP_UNKNOWN)
-#define ND_UPLOAD_ENABLED (nd_config->flags & ndGF_UPLOAD_ENABLED)
-#define ND_UPLOAD_NAT_FLOWS (nd_config->flags & ndGF_UPLOAD_NAT_FLOWS)
-#define ND_WAIT_FOR_CLIENT (nd_config->flags & ndGF_WAIT_FOR_CLIENT)
-#define ND_SOFT_DISSECTORS (nd_config->flags & ndGF_SOFT_DISSECTORS)
+#define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
+#define ND_DEBUG_UPLOAD (nd_config.flags & ndGF_DEBUG_UPLOAD)
+#define ND_DEBUG_WITH_ETHERS (nd_config.flags & ndGF_DEBUG_WITH_ETHERS)
+#define ND_DEBUG_NDPI (nd_config.flags & ndGF_DEBUG_NDPI)
+#define ND_QUIET (nd_config.flags & ndGF_QUIET)
+#define ND_OVERRIDE_LEGACY_CONFIG (nd_config.flags & ndGF_OVERRIDE_LEGACY_CONFIG)
+#define ND_CAPTURE_UNKNOWN_FLOWS (nd_config.flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
+#define ND_PRIVATE_EXTADDR (nd_config.flags & ndGF_PRIVATE_EXTADDR)
+#define ND_SSL_USE_TLSv1 (nd_config.flags & ndGF_SSL_USE_TLSv1)
+#define ND_SSL_VERIFY (nd_config.flags & ndGF_SSL_VERIFY)
+#define ND_USE_CONNTRACK (nd_config.flags & ndGF_USE_CONNTRACK)
+#define ND_USE_NETLINK (nd_config.flags & ndGF_USE_NETLINK)
+#define ND_USE_NAPI (nd_config.flags & ndGF_USE_NAPI)
+#define ND_USE_SINK (nd_config.flags & ndGF_USE_SINK)
+#define ND_USE_DHC (nd_config.flags & ndGF_USE_DHC)
+#define ND_USE_FHC (nd_config.flags & ndGF_USE_FHC)
+#define ND_EXPORT_JSON (nd_config.flags & ndGF_EXPORT_JSON)
+#define ND_VERBOSE (nd_config.flags & ndGF_VERBOSE)
+#define ND_REPLAY_DELAY (nd_config.flags & ndGF_REPLAY_DELAY)
+#define ND_REMAIN_IN_FOREGROUND (nd_config.flags & ndGF_REMAIN_IN_FOREGROUND)
+#define ND_FLOW_DUMP_ESTABLISHED (nd_config.flags & ndGF_FLOW_DUMP_ESTABLISHED)
+#define ND_FLOW_DUMP_UNKNOWN (nd_config.flags & ndGF_FLOW_DUMP_UNKNOWN)
+#define ND_UPLOAD_ENABLED (nd_config.flags & ndGF_UPLOAD_ENABLED)
+#define ND_UPLOAD_NAT_FLOWS (nd_config.flags & ndGF_UPLOAD_NAT_FLOWS)
+#define ND_WAIT_FOR_CLIENT (nd_config.flags & ndGF_WAIT_FOR_CLIENT)
+#define ND_SOFT_DISSECTORS (nd_config.flags & ndGF_SOFT_DISSECTORS)
 
 #define ND_GF_SET_FLAG(flag, value) \
 { \
-    if (value) nd_config->flags |= flag; \
-    else nd_config->flags &= ~flag; \
+    if (value) nd_config.flags |= flag; \
+    else nd_config.flags &= ~flag; \
 }
 
-typedef struct nd_global_config_t {
+class ndGlobalConfig
+{
+public:
     char *napi_vendor;
     char *path_app_config;
     char *path_cat_config;
@@ -106,34 +108,34 @@ typedef struct nd_global_config_t {
     char *uuid;
     char *uuid_serial;
     char *uuid_site;
-    size_t max_backlog;
-    size_t max_packet_queue;
-    uint32_t flags;
-    uint8_t digest_app_config[SHA1_DIGEST_LENGTH];
-    uint8_t digest_legacy_config[SHA1_DIGEST_LENGTH];
-    uint16_t max_capture_length;
-    unsigned max_detection_pkts;
-    unsigned max_fhc;
-    unsigned max_flows;
-    unsigned sink_max_post_errors;
-    unsigned sink_connect_timeout;
-    unsigned sink_xfer_timeout;
-    unsigned ttl_dns_entry;
-    unsigned ttl_idle_flow;
-    unsigned ttl_idle_tcp_flow;
-    unsigned ttl_napi_update;
-    unsigned update_interval;
-    unsigned update_imf;
+    enum nd_dhc_save dhc_save;
+    enum nd_fhc_save fhc_save;
+    FILE *h_flow;
     int16_t ca_capture_base;
     int16_t ca_conntrack;
     int16_t ca_detection_base;
     int16_t ca_detection_cores;
     int16_t ca_sink;
     int16_t ca_socket;
-    FILE *h_flow;
-    enum nd_dhc_save dhc_save;
-    enum nd_fhc_save fhc_save;
+    size_t max_backlog;
+    size_t max_packet_queue;
+    uint16_t max_capture_length;
+    uint32_t flags;
+    uint8_t digest_app_config[SHA1_DIGEST_LENGTH];
+    uint8_t digest_legacy_config[SHA1_DIGEST_LENGTH];
     unsigned fhc_purge_divisor;
+    unsigned max_detection_pkts;
+    unsigned max_fhc;
+    unsigned max_flows;
+    unsigned sink_connect_timeout;
+    unsigned sink_max_post_errors;
+    unsigned sink_xfer_timeout;
+    unsigned ttl_dns_entry;
+    unsigned ttl_idle_flow;
+    unsigned ttl_idle_tcp_flow;
+    unsigned ttl_napi_update;
+    unsigned update_imf;
+    unsigned update_interval;
 
     vector<pair<string, string> > socket_host;
     vector<string> socket_path;
@@ -152,11 +154,12 @@ typedef struct nd_global_config_t {
 #endif
     map<string, string> custom_headers;
     map<string, string> protocols;
-} nd_global_config;
 
-void nd_config_init(void);
+    ndGlobalConfig();
+    virtual ~ndGlobalConfig();
 
-int nd_config_load(const string &filename);
+    int Load(const string &filename);
+};
 
 #endif // _ND_CONFIG_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -1,18 +1,18 @@
-lo: [i4-----] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51110 H: www.ct7ctrgb6cr7.com SSL C: www.ct7ctrgb6cr7.com
-lo: [i4-u---] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51110 H: www.ct7ctrgb6cr7.com SSL C: www.ct7ctrgb6cr7.com
-lo: [i4-----] HTTP/S 46.59.52.31:443 <-- 192.168.1.252:51111 H: www.e6r5p57kbafwrxj3plz.com SSL C: www.e6r5p57kbafwrxj3plz.com
-lo: [i4-u---] HTTP/S 46.59.52.31:443 <-- 192.168.1.252:51111 H: www.e6r5p57kbafwrxj3plz.com SSL C: www.e6r5p57kbafwrxj3plz.com
-lo: [i4-----] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51112 H: www.q4cyamnc6mtokjurvdclt.com SSL C: www.q4cyamnc6mtokjurvdclt.com
-lo: [i4-u---] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51112 H: www.q4cyamnc6mtokjurvdclt.com SSL C: www.q4cyamnc6mtokjurvdclt.com
-lo: [i4-----] Dropbox 192.168.1.1:17500 --> 192.168.1.255:17500
-lo: [i4-----] NETBIOS 192.168.1.252:138 --> 192.168.1.255:138 H: endian-pc
-lo: [i4-----] HTTP/S 192.168.1.252:51174 --> 212.83.155.250:443 H: www.t3i3ru.com SSL C: www.t3i3ru.com
-lo: [i4-----] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51175 H: www.gfu7hbxpfp.com SSL C: www.gfu7hbxpfp.com
-lo: [i4-u---] HTTP/S 192.168.1.252:51174 --> 212.83.155.250:443 H: www.t3i3ru.com SSL C: www.t3i3ru.com
-lo: [i4-u---] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51175 H: www.gfu7hbxpfp.com SSL C: www.gfu7hbxpfp.com
-lo: [i4-----] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51176 H: www.jmts2id.com SSL C: www.jmts2id.com
-lo: [i4-u---] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51176 H: www.jmts2id.com SSL C: www.jmts2id.com
-lo: [i4-----] HTTP/S 62.210.137.230:443 <-- 192.168.1.252:51185 H: www.6gyip7tqim7sieb.com SSL C: www.6gyip7tqim7sieb.com
-lo: [i4-u---] HTTP/S 62.210.137.230:443 <-- 192.168.1.252:51185 H: www.6gyip7tqim7sieb.com SSL C: www.6gyip7tqim7sieb.com
-lo: [i6-----] DHCPv6 fe80::c583:1972:5728:7323:546 <-- ff02::1:2:547
-lo: [i4--g--] HTTP/S 157.56.30.46:443 <-- 192.168.1.252:51104
+lo: [i4------] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51110 H: www.ct7ctrgb6cr7.com SSL C: www.ct7ctrgb6cr7.com
+lo: [i4-u----] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51110 H: www.ct7ctrgb6cr7.com SSL C: www.ct7ctrgb6cr7.com
+lo: [i4------] HTTP/S 46.59.52.31:443 <-- 192.168.1.252:51111 H: www.e6r5p57kbafwrxj3plz.com SSL C: www.e6r5p57kbafwrxj3plz.com
+lo: [i4-u----] HTTP/S 46.59.52.31:443 <-- 192.168.1.252:51111 H: www.e6r5p57kbafwrxj3plz.com SSL C: www.e6r5p57kbafwrxj3plz.com
+lo: [i4------] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51112 H: www.q4cyamnc6mtokjurvdclt.com SSL C: www.q4cyamnc6mtokjurvdclt.com
+lo: [i4-u----] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51112 H: www.q4cyamnc6mtokjurvdclt.com SSL C: www.q4cyamnc6mtokjurvdclt.com
+lo: [i4------] Dropbox 192.168.1.1:17500 --> 192.168.1.255:17500
+lo: [i4------] NETBIOS 192.168.1.252:138 --> 192.168.1.255:138 H: endian-pc
+lo: [i4------] HTTP/S 192.168.1.252:51174 --> 212.83.155.250:443 H: www.t3i3ru.com SSL C: www.t3i3ru.com
+lo: [i4------] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51175 H: www.gfu7hbxpfp.com SSL C: www.gfu7hbxpfp.com
+lo: [i4-u----] HTTP/S 192.168.1.252:51174 --> 212.83.155.250:443 H: www.t3i3ru.com SSL C: www.t3i3ru.com
+lo: [i4-u----] HTTP/S 91.143.93.242:443 <-- 192.168.1.252:51175 H: www.gfu7hbxpfp.com SSL C: www.gfu7hbxpfp.com
+lo: [i4------] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51176 H: www.jmts2id.com SSL C: www.jmts2id.com
+lo: [i4-u----] HTTP/S 38.229.70.53:443 <-- 192.168.1.252:51176 H: www.jmts2id.com SSL C: www.jmts2id.com
+lo: [i4------] HTTP/S 62.210.137.230:443 <-- 192.168.1.252:51185 H: www.6gyip7tqim7sieb.com SSL C: www.6gyip7tqim7sieb.com
+lo: [i4-u----] HTTP/S 62.210.137.230:443 <-- 192.168.1.252:51185 H: www.6gyip7tqim7sieb.com SSL C: www.6gyip7tqim7sieb.com
+lo: [i6------] DHCPv6 fe80::c583:1972:5728:7323:546 <-- ff02::1:2:547
+lo: [i4--g---] HTTP/S 157.56.30.46:443 <-- 192.168.1.252:51104

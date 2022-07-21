@@ -149,7 +149,7 @@ static ndDNSHintCache *dns_hint_cache = NULL;
 static ndFlowHashCache *flow_hash_cache = NULL;
 static time_t nd_ethers_mtime = 0;
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 extern nd_device nd_devices;
 extern nd_device_ether nd_device_ethers;
 extern ndFlowMap *nd_flow_buckets;
@@ -221,7 +221,7 @@ static void nd_usage(int rc = 0, bool version = false)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    nd_config_load(nd_conf_filename);
+    nd_config.Load(nd_conf_filename);
 
     ND_GF_SET_FLAG(ndGF_QUIET, true);
 
@@ -245,10 +245,10 @@ static void nd_usage(int rc = 0, bool version = false)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (nd_config->plugin_services.size())
+        if (nd_config.plugin_services.size())
             fprintf(stderr, "\nService plugins:\n");
 
-        for (auto i : nd_config->plugin_services) {
+        for (auto i : nd_config.plugin_services) {
 
             string plugin_version("?.?.?");
 
@@ -262,10 +262,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config->plugin_tasks.size())
+        if (nd_config.plugin_tasks.size())
             fprintf(stderr, "\nTask plugins:\n");
 
-        for (auto i : nd_config->plugin_tasks) {
+        for (auto i : nd_config.plugin_tasks) {
 
             string plugin_version("?.?.?");
 
@@ -279,10 +279,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config->plugin_detections.size())
+        if (nd_config.plugin_detections.size())
             fprintf(stderr, "\nDetection plugins:\n");
 
-        for (auto i : nd_config->plugin_detections) {
+        for (auto i : nd_config.plugin_detections) {
 
             string plugin_version("?.?.?");
 
@@ -296,10 +296,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config->plugin_stats.size())
+        if (nd_config.plugin_stats.size())
             fprintf(stderr, "\nStatistics plugins:\n");
 
-        for (auto i : nd_config->plugin_stats) {
+        for (auto i : nd_config.plugin_stats) {
 
             string plugin_version("?.?.?");
 
@@ -372,7 +372,7 @@ static void nd_usage(int rc = 0, bool version = false)
 
             ND_CONF_FILE_NAME,
             ND_CONF_LEGACY_PATH,
-            nd_config->path_uuid, nd_config->path_uuid_site, ND_URL_SINK_PATH
+            nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
         );
     }
 
@@ -384,11 +384,11 @@ static void nd_force_reset(void)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load(nd_conf_filename) < 0)
+    if (nd_config.Load(nd_conf_filename) < 0)
         return;
 
     vector<string> files = {
-        nd_config->path_uuid, nd_config->path_uuid_site, ND_URL_SINK_PATH
+        nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
     };
 
     int seconds = 3;
@@ -434,8 +434,8 @@ static void nd_init(void)
     if (nd_apps == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_apps", ENOMEM);
 
-    if (! nd_apps->Load(nd_config->path_app_config))
-        nd_apps->LoadLegacy(nd_config->path_legacy_config);
+    if (! nd_apps->Load(nd_config.path_app_config))
+        nd_apps->LoadLegacy(nd_config.path_legacy_config);
 
     nd_categories = new ndCategories();
     if (nd_categories == nullptr)
@@ -520,9 +520,9 @@ static int nd_start_capture_threads(void)
 
     try {
         int16_t cpu = (
-                nd_config->ca_capture_base > -1 &&
-                nd_config->ca_capture_base < (int16_t)nd_json_agent_stats.cpus
-            ) ? nd_config->ca_capture_base : 0;
+                nd_config.ca_capture_base > -1 &&
+                nd_config.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
+            ) ? nd_config.ca_capture_base : 0;
         string netlink_dev;
         uint8_t private_addr = 0;
         uint8_t mac[ETH_ALEN];
@@ -605,13 +605,13 @@ static int nd_start_detection_threads(void)
 
     try {
         int16_t cpu = (
-                nd_config->ca_detection_base > -1 &&
-                nd_config->ca_detection_base < (int16_t)nd_json_agent_stats.cpus
-            ) ? nd_config->ca_detection_base : 0;
+                nd_config.ca_detection_base > -1 &&
+                nd_config.ca_detection_base < (int16_t)nd_json_agent_stats.cpus
+            ) ? nd_config.ca_detection_base : 0;
         int16_t cpus = (
-                nd_config->ca_detection_cores > (int16_t)nd_json_agent_stats.cpus ||
-                nd_config->ca_detection_cores <= 0
-            ) ? (int16_t)nd_json_agent_stats.cpus : nd_config->ca_detection_cores;
+                nd_config.ca_detection_cores > (int16_t)nd_json_agent_stats.cpus ||
+                nd_config.ca_detection_cores <= 0
+            ) ? (int16_t)nd_json_agent_stats.cpus : nd_config.ca_detection_cores;
 
         nd_dprintf("Creating %hd detection threads at offset: %hd\n", cpus, cpu);
 
@@ -680,8 +680,8 @@ static int nd_reload_detection_threads(void)
 
 static int nd_plugin_start_services(void)
 {
-    for (map<string, string>::const_iterator i = nd_config->plugin_services.begin();
-        i != nd_config->plugin_services.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config.plugin_services.begin();
+        i != nd_config.plugin_services.end(); i++) {
         try {
             plugin_services[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_services[i->first]->GetPlugin()->Create();
@@ -754,9 +754,9 @@ static int nd_plugin_dispatch_service_param(
 static int nd_plugin_start_task(
     const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
 {
-    map<string, string>::const_iterator task_iter = nd_config->plugin_tasks.find(name);
+    map<string, string>::const_iterator task_iter = nd_config.plugin_tasks.find(name);
 
-    if (task_iter == nd_config->plugin_tasks.end()) {
+    if (task_iter == nd_config.plugin_tasks.end()) {
         nd_printf("Unable to initialize plugin; task not found: %s\n",
             name.c_str());
         return -1;
@@ -829,8 +829,8 @@ static void nd_plugin_reap_tasks(void)
 
 static int nd_plugin_start_detections(void)
 {
-    for (map<string, string>::const_iterator i = nd_config->plugin_detections.begin();
-        i != nd_config->plugin_detections.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config.plugin_detections.begin();
+        i != nd_config.plugin_detections.end(); i++) {
         try {
             plugin_detections[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_detections[i->first]->GetPlugin()->Create();
@@ -868,8 +868,8 @@ static void nd_plugin_stop_detections(void)
 
 static int nd_plugin_start_stats(void)
 {
-    for (map<string, string>::const_iterator i = nd_config->plugin_stats.begin();
-        i != nd_config->plugin_stats.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config.plugin_stats.begin();
+        i != nd_config.plugin_stats.end(); i++) {
         try {
             plugin_stats[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_stats[i->first]->GetPlugin()->Create();
@@ -942,11 +942,11 @@ static int nd_sink_process_responses(void)
                 i != response->data.end(); i++) {
 
                 if (! reloaded && i->first == ND_CONF_APP_BASE) {
-                    reloaded = nd_apps->Load(nd_config->path_app_config);
+                    reloaded = nd_apps->Load(nd_config.path_app_config);
                 }
 
                 if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
-                    reloaded = nd_apps->LoadLegacy(nd_config->path_legacy_config);
+                    reloaded = nd_apps->LoadLegacy(nd_config.path_legacy_config);
                 }
             }
 
@@ -1023,7 +1023,7 @@ static void nd_process_flows(
             uint32_t last_seen = i->second->ts_last_seen / 1000;
             uint32_t ttl = (
                 i->second->ip_protocol != IPPROTO_TCP
-            ) ? nd_config->ttl_idle_flow : nd_config->ttl_idle_tcp_flow;
+            ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
             if (nd_terminate)
                 i->second->flags.detection_expired = true;
@@ -1636,8 +1636,8 @@ static void nd_dump_stats(void)
     if (ND_USE_SINK) {
         try {
 #ifdef _ND_USE_INOTIFY
-            for (nd_inotify_watch::const_iterator i = nd_config->inotify_watches.begin();
-                i != nd_config->inotify_watches.end(); i++) {
+            for (nd_inotify_watch::const_iterator i = nd_config.inotify_watches.begin();
+                i != nd_config.inotify_watches.end(); i++) {
                 if (! inotify->EventOccured(i->first)) continue;
 
                 json jd;
@@ -1668,11 +1668,11 @@ static void nd_dump_stats(void)
 
     try {
         if (ND_EXPORT_JSON)
-            nd_json_save_to_file(json_string, nd_config->path_export_json);
+            nd_json_save_to_file(json_string, nd_config.path_export_json);
     }
     catch (runtime_error &e) {
         nd_printf("Error writing JSON export playload to file: %s: %s\n",
-            nd_config->path_export_json, e.what());
+            nd_config.path_export_json, e.what());
     }
 
     if (ND_DEBUG) {
@@ -1740,8 +1740,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
         if (nd_apps == NULL) {
             nd_apps = new ndApplications();
-            if (! nd_apps->Load(nd_config->path_app_config))
-                nd_apps->LoadLegacy(nd_config->path_legacy_config);
+            if (! nd_apps->Load(nd_config.path_app_config))
+                nd_apps->LoadLegacy(nd_config.path_legacy_config);
         }
 
         nd_apps_t apps;
@@ -1777,8 +1777,8 @@ int static nd_export_applications(void)
 {
     if (nd_apps == NULL) {
         nd_apps = new ndApplications();
-        if (! nd_apps->Load(nd_config->path_app_config))
-            nd_apps->LoadLegacy(nd_config->path_legacy_config);
+        if (! nd_apps->Load(nd_config.path_app_config))
+            nd_apps->LoadLegacy(nd_config.path_legacy_config);
     }
 
     if (! nd_apps->Save("/dev/stdout")) return 1;
@@ -1811,14 +1811,14 @@ static void nd_status(void)
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load(nd_conf_filename) < 0)
+    if (nd_config.Load(nd_conf_filename) < 0)
         return;
 
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config->url_sink);
-            nd_config->url_sink = strdup(url_sink.c_str());
+            free(nd_config.url_sink);
+            nd_config.url_sink = strdup(url_sink.c_str());
         }
     }
 
@@ -1934,7 +1934,7 @@ static void nd_status(void)
     }
 
     fprintf(stderr, "%s-%s sink URL: %s\n",
-        ND_C_GREEN, ND_C_RESET, nd_config->url_sink);
+        ND_C_GREEN, ND_C_RESET, nd_config.url_sink);
     fprintf(stderr, "%s-%s sink services are %s.\n",
         (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
         (ND_USE_SINK) ? "enabled" : "disabled"
@@ -1952,9 +1952,9 @@ static void nd_status(void)
 
     string uuid;
 
-    uuid = (nd_config->uuid != NULL) ? nd_config->uuid : "00-00-00-00";
-    if (nd_file_exists(nd_config->path_uuid) > 0)
-        nd_load_uuid(uuid, nd_config->path_uuid, ND_AGENT_UUID_LEN);
+    uuid = (nd_config.uuid != NULL) ? nd_config.uuid : "00-00-00-00";
+    if (nd_file_exists(nd_config.path_uuid) > 0)
+        nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN);
 
     if (uuid.size() != ND_AGENT_UUID_LEN || uuid == "00-00-00-00") {
         fprintf(stderr, "%s-%s sink agent UUID is not set.\n",
@@ -1967,18 +1967,18 @@ static void nd_status(void)
             ND_C_GREEN, ND_C_RESET, uuid.c_str());
     }
 
-    uuid = (nd_config->uuid_serial != NULL) ? nd_config->uuid_serial : "-";
-    if (nd_file_exists(nd_config->path_uuid_serial) > 0)
-        nd_load_uuid(uuid, nd_config->path_uuid_serial, ND_AGENT_SERIAL_LEN);
+    uuid = (nd_config.uuid_serial != NULL) ? nd_config.uuid_serial : "-";
+    if (nd_file_exists(nd_config.path_uuid_serial) > 0)
+        nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN);
 
     if (uuid.size() && uuid != "-") {
         fprintf(stderr, "%s-%s sink serial UUID: %s\n",
             ND_C_GREEN, ND_C_RESET, uuid.c_str());
     }
 
-    uuid = (nd_config->uuid_site != NULL) ? nd_config->uuid_site : "-";
-    if (nd_file_exists(nd_config->path_uuid_site) > 0)
-        nd_load_uuid(uuid, nd_config->path_uuid_site, ND_SITE_UUID_LEN);
+    uuid = (nd_config.uuid_site != NULL) ? nd_config.uuid_site : "-";
+    if (nd_file_exists(nd_config.path_uuid_site) > 0)
+        nd_load_uuid(uuid, nd_config.path_uuid_site, ND_SITE_UUID_LEN);
 
     if (! uuid.size() || uuid == "-") {
         fprintf(stderr, "%s-%s sink site UUID is not set.\n",
@@ -2190,8 +2190,8 @@ static void nd_add_device_addresses(nd_device_addr &device_addresses)
 
 static int nd_check_agent_uuid(void)
 {
-    if (nd_config->uuid == NULL ||
-        ! strncmp(nd_config->uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+    if (nd_config.uuid == NULL ||
+        ! strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
         string uuid;
         if (! nd_load_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN) ||
             ! uuid.size() ||
@@ -2201,9 +2201,9 @@ static int nd_check_agent_uuid(void)
             if (! nd_save_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN))
                 return 1;
         }
-        if (nd_config->uuid != NULL)
-            free(nd_config->uuid);
-        nd_config->uuid = strdup(uuid.c_str());
+        if (nd_config.uuid != NULL)
+            free(nd_config.uuid);
+        nd_config.uuid = strdup(uuid.c_str());
     }
 
     return 0;
@@ -2235,7 +2235,6 @@ int main(int argc, char *argv[])
     os.imbue(lc);
 #endif
 
-    nd_config_init();
     nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
     openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
@@ -2321,49 +2320,49 @@ int main(int argc, char *argv[])
             nd_force_reset();
             exit(0);
         case _ND_LO_CA_CAPTURE_BASE:
-            nd_config->ca_capture_base = (int16_t)atoi(optarg);
-            if (nd_config->ca_capture_base > nd_json_agent_stats.cpus) {
+            nd_config.ca_capture_base = (int16_t)atoi(optarg);
+            if (nd_config.ca_capture_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Capture thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_CONNTRACK:
-            nd_config->ca_conntrack = (int16_t)atoi(optarg);
-            if (nd_config->ca_conntrack > nd_json_agent_stats.cpus) {
+            nd_config.ca_conntrack = (int16_t)atoi(optarg);
+            if (nd_config.ca_conntrack > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Conntrack thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
-            nd_config->ca_detection_base = (int16_t)atoi(optarg);
-            if (nd_config->ca_detection_base > nd_json_agent_stats.cpus) {
+            nd_config.ca_detection_base = (int16_t)atoi(optarg);
+            if (nd_config.ca_detection_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
-            nd_config->ca_detection_cores = (int16_t)atoi(optarg);
-            if (nd_config->ca_detection_cores > nd_json_agent_stats.cpus) {
+            nd_config.ca_detection_cores = (int16_t)atoi(optarg);
+            if (nd_config.ca_detection_cores > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection cores greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SINK:
-            nd_config->ca_sink = (int16_t)atoi(optarg);
-            if (nd_config->ca_sink > nd_json_agent_stats.cpus) {
+            nd_config.ca_sink = (int16_t)atoi(optarg);
+            if (nd_config.ca_sink > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Sink thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SOCKET:
-            nd_config->ca_socket = (int16_t)atoi(optarg);
-            if (nd_config->ca_socket > nd_json_agent_stats.cpus) {
+            nd_config.ca_socket = (int16_t)atoi(optarg);
+            if (nd_config.ca_socket > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Socket thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
-            nd_config->flags |= ndGF_WAIT_FOR_CLIENT;
+            nd_config.flags |= ndGF_WAIT_FOR_CLIENT;
             break;
 
         case _ND_LO_DUMP_SORT_BY_TAG:
@@ -2440,10 +2439,10 @@ int main(int argc, char *argv[])
             nd_conf_filename = strdup(optarg);
             break;
         case 'd':
-            nd_config->flags |= ndGF_DEBUG;
+            nd_config.flags |= ndGF_DEBUG;
             break;
         case 'D':
-            nd_config->flags |= ndGF_DEBUG_UPLOAD;
+            nd_config.flags |= ndGF_DEBUG_UPLOAD;
             break;
         case 'E':
             for (nd_interface::iterator i = nd_interfaces.begin();
@@ -2457,23 +2456,23 @@ int main(int argc, char *argv[])
             nd_interfaces.push_back(make_pair(false, optarg));
             break;
         case 'e':
-            nd_config->flags |= ndGF_DEBUG_WITH_ETHERS;
+            nd_config.flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
         case 'F':
             if (last_device.size() == 0) {
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            if (nd_config->device_filters
-                .find(last_device) != nd_config->device_filters.end()) {
+            if (nd_config.device_filters
+                .find(last_device) != nd_config.device_filters.end()) {
                 fprintf(stderr, "Only one filter can be applied to a device.\n");
                 exit(1);
             }
-            nd_config->device_filters[last_device] = optarg;
+            nd_config.device_filters[last_device] = optarg;
             break;
         case 'f':
-            free(nd_config->path_legacy_config);
-            nd_config->path_legacy_config = strdup(optarg);
+            free(nd_config.path_legacy_config);
+            nd_config.path_legacy_config = strdup(optarg);
             break;
         case 'h':
             nd_usage();
@@ -2488,16 +2487,16 @@ int main(int argc, char *argv[])
             nd_interfaces.push_back(make_pair(true, optarg));
             break;
         case 'i':
-            nd_config->update_interval = atoi(optarg);
+            nd_config.update_interval = atoi(optarg);
             break;
         case 'j':
-            nd_config->path_export_json = strdup(optarg);
+            nd_config.path_export_json = strdup(optarg);
             break;
         case 'l':
-            nd_config->flags &= ~ndGF_USE_NETLINK;
+            nd_config.flags &= ~ndGF_USE_NETLINK;
             break;
         case 'n':
-            nd_config->flags |= ndGF_DEBUG_NDPI;
+            nd_config.flags |= ndGF_DEBUG_NDPI;
             break;
         case 'N':
 #if _ND_USE_NETLINK
@@ -2522,16 +2521,16 @@ int main(int argc, char *argv[])
         case 'p':
             if (nd_conf_filename == NULL)
                 nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-            if (nd_config_load(nd_conf_filename) < 0)
+            if (nd_config.Load(nd_conf_filename) < 0)
                 return 1;
-            if (nd_check_agent_uuid() || nd_config->uuid == NULL) return 1;
-            printf("Agent UUID: %s\n", nd_config->uuid);
+            if (nd_check_agent_uuid() || nd_config.uuid == NULL) return 1;
+            printf("Agent UUID: %s\n", nd_config.uuid);
             return 0;
         case 'R':
-            nd_config->flags |= ndGF_REMAIN_IN_FOREGROUND;
+            nd_config.flags |= ndGF_REMAIN_IN_FOREGROUND;
             break;
         case 'r':
-            nd_config->flags |= ndGF_REPLAY_DELAY;
+            nd_config.flags |= ndGF_REPLAY_DELAY;
             break;
         case 'S':
 #ifndef _ND_LEAN_AND_MEAN
@@ -2554,10 +2553,10 @@ int main(int argc, char *argv[])
             nd_status();
             exit(0);
         case 't':
-            nd_config->flags &= ~ndGF_USE_CONNTRACK;
+            nd_config.flags &= ~ndGF_USE_CONNTRACK;
             break;
         case 'T':
-            if ((nd_config->h_flow = fopen(optarg, "w")) == NULL) {
+            if ((nd_config.h_flow = fopen(optarg, "w")) == NULL) {
                 fprintf(stderr, "Error while opening test output log: %s: %s\n",
                     optarg, strerror(errno));
                 exit(1);
@@ -2571,37 +2570,37 @@ int main(int argc, char *argv[])
             }
             exit(0);
         case 'u':
-            nd_config->uuid = strdup(optarg);
+            nd_config.uuid = strdup(optarg);
             break;
         case 'V':
             nd_usage(0, true);
             break;
         case 'v':
-            nd_config->flags |= ndGF_VERBOSE;
+            nd_config.flags |= ndGF_VERBOSE;
             break;
         default:
             nd_usage(1);
         }
     }
 
-    if (nd_config->path_export_json == NULL)
-        nd_config->path_export_json = strdup(ND_JSON_FILE_EXPORT);
+    if (nd_config.path_export_json == NULL)
+        nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
 
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config_load(nd_conf_filename) < 0)
+    if (nd_config.Load(nd_conf_filename) < 0)
         return 1;
 
     {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config->url_sink);
-            nd_config->url_sink = strdup(url_sink.c_str());
+            free(nd_config.url_sink);
+            nd_config.url_sink = strdup(url_sink.c_str());
         }
     }
 
-    if (nd_config->h_flow != stderr) {
+    if (nd_config.h_flow != stderr) {
         // Test mode enabled, disable/set certain config parameters
         ND_GF_SET_FLAG(ndGF_USE_DHC, true);
         ND_GF_SET_FLAG(ndGF_USE_FHC, true);
@@ -2609,15 +2608,15 @@ int main(int argc, char *argv[])
         ND_GF_SET_FLAG(ndGF_EXPORT_JSON, false);
         ND_GF_SET_FLAG(ndGF_REMAIN_IN_FOREGROUND, true);
 
-        nd_config->update_interval = 1;
+        nd_config.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        nd_config->plugin_services.clear();
-        nd_config->plugin_tasks.clear();
-        nd_config->plugin_detections.clear();
-        nd_config->plugin_stats.clear();
+        nd_config.plugin_services.clear();
+        nd_config.plugin_tasks.clear();
+        nd_config.plugin_detections.clear();
+        nd_config.plugin_stats.clear();
 #endif
-        nd_config->dhc_save = ndDHC_DISABLED;
-        nd_config->fhc_save = ndFHC_DISABLED;
+        nd_config.dhc_save = ndDHC_DISABLED;
+        nd_config.fhc_save = ndFHC_DISABLED;
     }
 
     if (nd_interfaces.size() == 0) {
@@ -2643,7 +2642,7 @@ int main(int argc, char *argv[])
         dns_hint_cache = new ndDNSHintCache();
 
     if (ND_USE_FHC)
-        flow_hash_cache = new ndFlowHashCache(nd_config->max_fhc);
+        flow_hash_cache = new ndFlowHashCache(nd_config.max_fhc);
 
     nd_printf("%s\n", nd_get_version_and_features().c_str());
 
@@ -2703,10 +2702,10 @@ int main(int argc, char *argv[])
     if (flow_hash_cache) flow_hash_cache->load();
 
     nd_sha1_file(
-        nd_config->path_app_config, nd_config->digest_app_config
+        nd_config.path_app_config, nd_config.digest_app_config
     );
     nd_sha1_file(
-        nd_config->path_legacy_config, nd_config->digest_legacy_config
+        nd_config.path_legacy_config, nd_config.digest_legacy_config
     );
 
     sigfillset(&sigset);
@@ -2738,15 +2737,15 @@ int main(int argc, char *argv[])
     try {
 #ifdef _ND_USE_CONNTRACK
         if (ND_USE_CONNTRACK) {
-            thread_conntrack = new ndConntrackThread(nd_config->ca_conntrack);
+            thread_conntrack = new ndConntrackThread(nd_config.ca_conntrack);
             thread_conntrack->Create();
         }
 #endif
-        if (nd_config->socket_host.size() || nd_config->socket_path.size())
-            thread_socket = new ndSocketThread(nd_config->ca_socket);
+        if (nd_config.socket_host.size() || nd_config.socket_path.size())
+            thread_socket = new ndSocketThread(nd_config.ca_socket);
 
         if (ND_USE_SINK) {
-            thread_sink = new ndSinkThread(nd_config->ca_sink);
+            thread_sink = new ndSinkThread(nd_config.ca_sink);
             thread_sink->Create();
         }
     }
@@ -2783,10 +2782,10 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_INOTIFY
     try {
         inotify = new ndInotify();
-        for (nd_inotify_watch::const_iterator i = nd_config->inotify_watches.begin();
-            i != nd_config->inotify_watches.end(); i++)
+        for (nd_inotify_watch::const_iterator i = nd_config.inotify_watches.begin();
+            i != nd_config.inotify_watches.end(); i++)
             inotify->AddWatch(i->first, i->second);
-        if (nd_config->inotify_watches.size()) inotify->RefreshWatches();
+        if (nd_config.inotify_watches.size()) inotify->RefreshWatches();
     }
     catch (exception &e) {
         nd_printf("Error creating file watches: %s\n", e.what());
@@ -2864,9 +2863,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    itspec_update.it_value.tv_sec = nd_config->update_interval;
+    itspec_update.it_value.tv_sec = nd_config.update_interval;
     itspec_update.it_value.tv_nsec = 0;
-    itspec_update.it_interval.tv_sec = nd_config->update_interval;
+    itspec_update.it_interval.tv_sec = nd_config.update_interval;
     itspec_update.it_interval.tv_nsec = 0;
 
     timer_settime(timer_update, 0, &itspec_update, NULL);
@@ -2884,15 +2883,15 @@ int main(int argc, char *argv[])
         time_t ttl = 3;
         if (nd_categories->GetLastUpdate() > 0) {
             time_t age = time(NULL) - nd_categories->GetLastUpdate();
-            if (age < nd_config->ttl_napi_update)
-                ttl = nd_config->ttl_napi_update - age;
-            else if (age == nd_config->ttl_napi_update)
-                ttl = nd_config->ttl_napi_update;
+            if (age < nd_config.ttl_napi_update)
+                ttl = nd_config.ttl_napi_update - age;
+            else if (age == nd_config.ttl_napi_update)
+                ttl = nd_config.ttl_napi_update;
         }
 
         itspec_update.it_value.tv_sec = ttl;
         itspec_update.it_value.tv_nsec = 0;
-        itspec_update.it_interval.tv_sec = nd_config->ttl_napi_update;
+        itspec_update.it_interval.tv_sec = nd_config.ttl_napi_update;
         itspec_update.it_interval.tv_nsec = 0;
 
         timer_settime(timer_napi, 0, &itspec_update, NULL);

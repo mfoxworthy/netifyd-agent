@@ -170,7 +170,6 @@ public:
             char server_ja3[ND_FLOW_TLS_JA3LEN];
             bool cert_fingerprint_found;
             char cert_fingerprint[ND_FLOW_TLS_HASH_LEN];
-            vector<string> alpn, alpn_server;
         } ssl;
 
         struct {
@@ -187,6 +186,8 @@ public:
         } mining;
 #endif
     };
+
+    vector<string> tls_alpn, tls_alpn_server;
 
     struct {
         nd_flow_kvmap headers;

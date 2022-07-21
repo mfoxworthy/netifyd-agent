@@ -89,7 +89,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 static mutex nd_printf_mutex;
 
@@ -185,7 +185,7 @@ void nd_flow_printf(const char *format, ...)
 
     va_list ap;
     va_start(ap, format);
-    vfprintf(nd_config->h_flow, format, ap);
+    vfprintf(nd_config.h_flow, format, ap);
     va_end(ap);
 }
 

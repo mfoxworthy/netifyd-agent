@@ -58,7 +58,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 static ndpi_init_prefs nd_ndpi_prefs = ndpi_no_prefs;
 static NDPI_PROTOCOL_BITMASK ndpi_protos;
@@ -95,14 +95,14 @@ void ndpi_global_init(void)
 
     NDPI_BITMASK_RESET(ndpi_protos);
 
-    auto it = nd_config->protocols.find("ALL");
-    if (it == nd_config->protocols.end()) {
-        it = nd_config->protocols.find("all");
-        if (it == nd_config->protocols.end())
-            it = nd_config->protocols.find("All");
+    auto it = nd_config.protocols.find("ALL");
+    if (it == nd_config.protocols.end()) {
+        it = nd_config.protocols.find("all");
+        if (it == nd_config.protocols.end())
+            it = nd_config.protocols.find("All");
     }
 
-    if (it != nd_config->protocols.end()) {
+    if (it != nd_config.protocols.end()) {
         if (strcasecmp(it->second.c_str(), "include") == 0) {
             NDPI_BITMASK_SET_ALL(ndpi_protos);
             nd_dprintf("Enabled all protocols.\n");
@@ -112,7 +112,7 @@ void ndpi_global_init(void)
         }
     }
 
-    for (auto it : nd_config->protocols) {
+    for (auto it : nd_config.protocols) {
         signed action = -1;
         if (strcasecmp(it.second.c_str(), "include") == 0)
             action = 0;
@@ -144,7 +144,7 @@ void ndpi_global_init(void)
         }
     }
 
-    if (nd_config->protocols.empty()) {
+    if (nd_config.protocols.empty()) {
         NDPI_BITMASK_SET_ALL(ndpi_protos);
         nd_dprintf("Enabled all protocols.\n");
     }

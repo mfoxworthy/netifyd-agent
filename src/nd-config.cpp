@@ -120,70 +120,67 @@ using namespace std;
 #include "nd-signal.h"
 #include "nd-napi.h"
 
-nd_global_config *nd_config = NULL;
+ndGlobalConfig nd_config;
 
-void nd_config_init(void)
+ndGlobalConfig::ndGlobalConfig() :
+    napi_vendor(NULL),
+    path_app_config(strdup(ND_CONF_APP_PATH)),
+    path_cat_config(strdup(ND_CONF_CAT_PATH)),
+    path_config(NULL),
+    path_legacy_config(strdup(ND_CONF_LEGACY_PATH)),
+    path_uuid(NULL),
+    path_uuid_serial(NULL),
+    path_uuid_site(NULL),
+    url_napi(NULL),
+    url_sink(NULL),
+    url_sink_provision(NULL),
+    uuid(NULL),
+    uuid_serial(NULL),
+    uuid_site(NULL),
+    dhc_save(ndDHC_PERSISTENT),
+    fhc_save(ndFHC_PERSISTENT),
+    h_flow(stderr),
+    ca_capture_base(0),
+    ca_conntrack(-1),
+    ca_detection_base(0),
+    ca_detection_cores(-1),
+    ca_sink(-1),
+    ca_socket(-1),
+    max_backlog(ND_MAX_BACKLOG_KB * 1024),
+    max_packet_queue(ND_MAX_PKT_QUEUE_KB * 1024),
+    max_capture_length(ND_PCAP_SNAPLEN),
+    flags(0),
+    digest_app_config{0},
+    digest_legacy_config{0},
+    fhc_purge_divisor(ND_FHC_PURGE_DIVISOR),
+    max_detection_pkts(ND_MAX_DETECTION_PKTS),
+    max_fhc(ND_MAX_FHC_ENTRIES),
+    max_flows(0),
+    sink_connect_timeout(ND_SINK_CONNECT_TIMEOUT),
+    sink_max_post_errors(ND_SINK_MAX_POST_ERRORS),
+    sink_xfer_timeout(ND_SINK_XFER_TIMEOUT),
+    ttl_dns_entry(ND_TTL_IDLE_DHC_ENTRY),
+    ttl_idle_flow(ND_TTL_IDLE_FLOW),
+    ttl_idle_tcp_flow(ND_TTL_IDLE_TCP_FLOW),
+    ttl_napi_update(ND_API_UPDATE_TTL),
+    update_imf(1),
+    update_interval(ND_STATS_INTERVAL)
 {
-    if (nd_config == NULL) {
-        nd_config = new nd_global_config;
-        if (nd_config == NULL)
-            throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
-    }
-
-    nd_config->h_flow = stderr;
-
-    nd_config->path_config = NULL;
-    nd_config->path_export_json = NULL;
-    nd_config->path_app_config = strdup(ND_CONF_APP_PATH);
-    nd_config->path_cat_config = strdup(ND_CONF_CAT_PATH);
-    nd_config->path_legacy_config = strdup(ND_CONF_LEGACY_PATH);
-    nd_config->path_uuid = NULL;
-    nd_config->path_uuid_serial = NULL;
-    nd_config->path_uuid_site = NULL;
-    nd_config->url_sink = NULL;
-    nd_config->url_sink_provision = NULL;
-    nd_config->uuid = NULL;
-    nd_config->uuid_serial = NULL;
-    nd_config->uuid_site = NULL;
-
-    nd_config->max_backlog = ND_MAX_BACKLOG_KB * 1024;
-    nd_config->max_packet_queue = ND_MAX_PKT_QUEUE_KB * 1024;
-
-    nd_config->flags |= ndGF_SSL_VERIFY;
+    flags |= ndGF_SSL_VERIFY;
 #ifdef _ND_USE_CONNTRACK
-    nd_config->flags |= ndGF_USE_CONNTRACK;
+    flags |= ndGF_USE_CONNTRACK;
 #endif
 #ifdef _ND_USE_NETLINK
-    nd_config->flags |= ndGF_USE_NETLINK;
+    flags |= ndGF_USE_NETLINK;
 #endif
-    nd_config->flags |= ndGF_SOFT_DISSECTORS;
-
-    nd_config->max_detection_pkts = ND_MAX_DETECTION_PKTS;
-    nd_config->max_fhc = ND_MAX_FHC_ENTRIES;
-    nd_config->max_flows = 0;
-    nd_config->sink_max_post_errors = ND_SINK_MAX_POST_ERRORS;
-    nd_config->sink_connect_timeout = ND_SINK_CONNECT_TIMEOUT;
-    nd_config->sink_xfer_timeout = ND_SINK_XFER_TIMEOUT;
-    nd_config->ttl_dns_entry = ND_TTL_IDLE_DHC_ENTRY;
-    nd_config->ttl_idle_flow = ND_TTL_IDLE_FLOW;
-    nd_config->ttl_idle_tcp_flow = ND_TTL_IDLE_TCP_FLOW;
-    nd_config->update_interval = ND_STATS_INTERVAL;
-    nd_config->update_imf = 1;
-    nd_config->ca_capture_base = 0;
-    nd_config->ca_conntrack = -1;
-    nd_config->ca_detection_base = 0;
-    nd_config->ca_detection_cores = -1;
-    nd_config->ca_sink = -1;
-    nd_config->ca_socket = -1;
-
-    memset(nd_config->digest_app_config, 0, SHA1_DIGEST_LENGTH);
-    memset(nd_config->digest_legacy_config, 0, SHA1_DIGEST_LENGTH);
-
-    nd_config->fhc_save = ndFHC_PERSISTENT;
-    nd_config->fhc_purge_divisor = ND_FHC_PURGE_DIVISOR;
+    flags |= ndGF_SOFT_DISSECTORS;
 }
 
-int nd_config_load(const string &filename)
+ndGlobalConfig::~ndGlobalConfig()
+{
+}
+
+int ndGlobalConfig::Load(const string &filename)
 {
     typedef map<string, string> nd_config_section;
 
@@ -206,47 +203,47 @@ int nd_config_load(const string &filename)
     nd_config_section netifyd_section;
     reader.GetSection("netifyd", netifyd_section);
 
-    if (nd_config->uuid == NULL) {
+    if (this->uuid == NULL) {
         string uuid = reader.Get("netifyd", "uuid", ND_AGENT_UUID_NULL);
         if (uuid.size() > 0)
-            nd_config->uuid = strdup(uuid.c_str());
+            this->uuid = strdup(uuid.c_str());
     }
 
-    if (nd_config->uuid_serial == NULL) {
+    if (this->uuid_serial == NULL) {
         string serial = reader.Get("netifyd", "uuid_serial", ND_AGENT_SERIAL_NULL);
         if (serial.size() > 0)
-            nd_config->uuid_serial = strdup(serial.c_str());
+            this->uuid_serial = strdup(serial.c_str());
     }
 
-    if (nd_config->uuid_site == NULL) {
+    if (this->uuid_site == NULL) {
         string uuid_site = reader.Get("netifyd", "uuid_site", ND_SITE_UUID_NULL);
         if (uuid_site.size() > 0)
-            nd_config->uuid_site = strdup(uuid_site.c_str());
+            this->uuid_site = strdup(uuid_site.c_str());
     }
 
     string path_uuid = reader.Get(
         "netifyd", "path_uuid", ND_AGENT_UUID_PATH);
-    nd_config->path_uuid = strdup(path_uuid.c_str());
+    this->path_uuid = strdup(path_uuid.c_str());
 
     string path_uuid_serial = reader.Get(
         "netifyd", "path_uuid_serial", ND_AGENT_SERIAL_PATH);
-    nd_config->path_uuid_serial = strdup(path_uuid_serial.c_str());
+    this->path_uuid_serial = strdup(path_uuid_serial.c_str());
 
     string path_uuid_site = reader.Get(
         "netifyd", "path_uuid_site", ND_SITE_UUID_PATH);
-    nd_config->path_uuid_site = strdup(path_uuid_site.c_str());
+    this->path_uuid_site = strdup(path_uuid_site.c_str());
 
     string url_sink_provision = reader.Get(
         "netifyd", "url_sink", ND_URL_SINK);
-    nd_config->url_sink_provision = strdup(url_sink_provision.c_str());
-    nd_config->url_sink = strdup(url_sink_provision.c_str());
+    this->url_sink_provision = strdup(url_sink_provision.c_str());
+    this->url_sink = strdup(url_sink_provision.c_str());
 
-    nd_config->update_interval = (unsigned)reader.GetInteger(
+    this->update_interval = (unsigned)reader.GetInteger(
         "netifyd", "update_interval", ND_STATS_INTERVAL);
 
-    nd_config->sink_connect_timeout = (unsigned)reader.GetInteger(
+    this->sink_connect_timeout = (unsigned)reader.GetInteger(
         "netifyd", "upload_connect_timeout", ND_SINK_CONNECT_TIMEOUT);
-    nd_config->sink_xfer_timeout = (unsigned)reader.GetInteger(
+    this->sink_xfer_timeout = (unsigned)reader.GetInteger(
         "netifyd", "upload_timeout", ND_SINK_XFER_TIMEOUT);
     ND_GF_SET_FLAG(ndGF_UPLOAD_NAT_FLOWS, reader.GetBoolean(
         "netifyd", "upload_nat_flows", false));
@@ -258,10 +255,10 @@ int nd_config_load(const string &filename)
             reader.GetBoolean("netifyd", "json_save", false));
     }
 
-    nd_config->max_backlog = reader.GetInteger(
+    this->max_backlog = reader.GetInteger(
         "netifyd", "max_backlog_kb", ND_MAX_BACKLOG_KB) * 1024;
 
-    nd_config->max_packet_queue = reader.GetInteger(
+    this->max_packet_queue = reader.GetInteger(
         "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
 
     ND_GF_SET_FLAG(ndGF_USE_SINK,
@@ -278,44 +275,44 @@ int nd_config_load(const string &filename)
     ND_GF_SET_FLAG(ndGF_SSL_USE_TLSv1,
         reader.GetBoolean("netifyd", "ssl_use_tlsv1", false));
 
-    nd_config->max_capture_length = (uint16_t)reader.GetInteger(
+    this->max_capture_length = (uint16_t)reader.GetInteger(
         "netifyd", "max_capture_length", ND_PCAP_SNAPLEN);
 
     // TODO: Deprecated:
     // max_tcp_pkts, max_udp_pkts
-    nd_config->max_detection_pkts = (unsigned)reader.GetInteger(
+    this->max_detection_pkts = (unsigned)reader.GetInteger(
         "netifyd", "max_detection_pkts", ND_MAX_DETECTION_PKTS);
 
-    nd_config->sink_max_post_errors = (unsigned)reader.GetInteger(
+    this->sink_max_post_errors = (unsigned)reader.GetInteger(
         "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
 
-    nd_config->ttl_idle_flow = (unsigned)reader.GetInteger(
+    this->ttl_idle_flow = (unsigned)reader.GetInteger(
         "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
-    nd_config->ttl_idle_tcp_flow = (unsigned)reader.GetInteger(
+    this->ttl_idle_tcp_flow = (unsigned)reader.GetInteger(
         "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
 
     ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS,
         reader.GetBoolean("netifyd", "capture_unknown_flows", false));
 
-    nd_config->max_flows = (size_t)reader.GetInteger(
+    this->max_flows = (size_t)reader.GetInteger(
         "netifyd", "max_flows", 0);
 
     ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
         reader.GetBoolean("netifyd", "soft_dissectors", true));
 
     // Threading section
-    nd_config->ca_capture_base = (int16_t)reader.GetInteger(
-        "threads", "capture_base", nd_config->ca_capture_base);
-    nd_config->ca_conntrack = (int16_t)reader.GetInteger(
-        "threads", "conntrack", nd_config->ca_conntrack);
-    nd_config->ca_detection_base = (int16_t)reader.GetInteger(
-        "threads", "detection_base", nd_config->ca_detection_base);
-    nd_config->ca_detection_cores = (int16_t)reader.GetInteger(
-        "threads", "detection_cores", nd_config->ca_detection_cores);
-    nd_config->ca_sink = (int16_t)reader.GetInteger(
-        "threads", "sink", nd_config->ca_sink);
-    nd_config->ca_socket = (int16_t)reader.GetInteger(
-        "threads", "socket", nd_config->ca_socket);
+    this->ca_capture_base = (int16_t)reader.GetInteger(
+        "threads", "capture_base", this->ca_capture_base);
+    this->ca_conntrack = (int16_t)reader.GetInteger(
+        "threads", "conntrack", this->ca_conntrack);
+    this->ca_detection_base = (int16_t)reader.GetInteger(
+        "threads", "detection_base", this->ca_detection_base);
+    this->ca_detection_cores = (int16_t)reader.GetInteger(
+        "threads", "detection_cores", this->ca_detection_cores);
+    this->ca_sink = (int16_t)reader.GetInteger(
+        "threads", "sink", this->ca_sink);
+    this->ca_socket = (int16_t)reader.GetInteger(
+        "threads", "socket", this->ca_socket);
 
     // Flow Hash Cache section
     ND_GF_SET_FLAG(ndGF_USE_FHC,
@@ -326,15 +323,15 @@ int nd_config_load(const string &filename)
     );
 
     if (fhc_save_mode == "persistent")
-        nd_config->fhc_save = ndFHC_PERSISTENT;
+        this->fhc_save = ndFHC_PERSISTENT;
     else if (fhc_save_mode == "volatile")
-        nd_config->fhc_save = ndFHC_VOLATILE;
+        this->fhc_save = ndFHC_VOLATILE;
     else
-        nd_config->fhc_save = ndFHC_DISABLED;
+        this->fhc_save = ndFHC_DISABLED;
 
-    nd_config->max_fhc = (size_t)reader.GetInteger(
+    this->max_fhc = (size_t)reader.GetInteger(
         "flow_hash_cache", "cache_size", ND_MAX_FHC_ENTRIES);
-    nd_config->fhc_purge_divisor = (size_t)reader.GetInteger(
+    this->fhc_purge_divisor = (size_t)reader.GetInteger(
         "flow_hash_cache", "purge_divisor", ND_FHC_PURGE_DIVISOR);
 
     // DNS Cache section
@@ -349,13 +346,13 @@ int nd_config_load(const string &filename)
         dhc_save_mode == "1" ||
         dhc_save_mode == "yes" ||
         dhc_save_mode == "true")
-        nd_config->dhc_save = ndDHC_PERSISTENT;
+        this->dhc_save = ndDHC_PERSISTENT;
     else if (dhc_save_mode == "volatile")
-        nd_config->dhc_save = ndDHC_VOLATILE;
+        this->dhc_save = ndDHC_VOLATILE;
     else
-        nd_config->dhc_save = ndDHC_DISABLED;
+        this->dhc_save = ndDHC_DISABLED;
 
-    nd_config->ttl_dns_entry = (unsigned)reader.GetInteger(
+    this->ttl_dns_entry = (unsigned)reader.GetInteger(
         "dns_hint_cache", "ttl", ND_TTL_IDLE_DHC_ENTRY);
 
     // Socket section
@@ -373,7 +370,7 @@ int nd_config_load(const string &filename)
             os << "listen_port[" << i << "]";
             string socket_port = reader.Get(
                 "socket", os.str(), ND_SOCKET_PORT);
-            nd_config->socket_host.push_back(
+            this->socket_host.push_back(
                 make_pair(socket_node, socket_port));
             continue;
         }
@@ -386,7 +383,7 @@ int nd_config_load(const string &filename)
         os << "listen_path[" << i << "]";
         string socket_node = reader.Get("socket", os.str(), "");
         if (socket_node.size() > 0) {
-            nd_config->socket_path.push_back(socket_node);
+            this->socket_path.push_back(socket_node);
             continue;
         }
 
@@ -414,7 +411,7 @@ int nd_config_load(const string &filename)
         if (nd_string_to_mac(mac_addr, mac)) {
             uint8_t *p = new uint8_t[ETH_ALEN];
             memcpy(p, mac, ETH_ALEN);
-            nd_config->privacy_filter_mac.push_back(p);
+            this->privacy_filter_mac.push_back(p);
         }
     }
 
@@ -445,7 +442,7 @@ int nd_config_load(const string &filename)
             if (! saddr)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
             memcpy(saddr, rp->ai_addr, rp->ai_addrlen);
-            nd_config->privacy_filter_host.push_back(saddr);
+            this->privacy_filter_host.push_back(saddr);
         }
 
         freeaddrinfo(result);
@@ -469,7 +466,7 @@ int nd_config_load(const string &filename)
                 regex::icase |
                 regex::optimize
             );
-            nd_config->privacy_regex.push_back(make_pair(rx_search, replace));
+            this->privacy_regex.push_back(make_pair(rx_search, replace));
         } catch (const regex_error &e) {
             string error;
             nd_regex_error(e, error);
@@ -485,36 +482,36 @@ int nd_config_load(const string &filename)
 
 #ifdef _ND_USE_INOTIFY
     // Watches section
-    reader.GetSection("watches", nd_config->inotify_watches);
+    reader.GetSection("watches", this->inotify_watches);
 #endif
 #ifdef _ND_USE_PLUGINS
     // Plugins section
-    reader.GetSection("plugin_services", nd_config->plugin_services);
-    reader.GetSection("plugin_tasks", nd_config->plugin_tasks);
-    reader.GetSection("plugin_detections", nd_config->plugin_detections);
-    reader.GetSection("plugin_stats", nd_config->plugin_stats);
+    reader.GetSection("plugin_services", this->plugin_services);
+    reader.GetSection("plugin_tasks", this->plugin_tasks);
+    reader.GetSection("plugin_detections", this->plugin_detections);
+    reader.GetSection("plugin_stats", this->plugin_stats);
 #endif
 
     // Sink headers section
-    reader.GetSection("sink_headers", nd_config->custom_headers);
+    reader.GetSection("sink_headers", this->custom_headers);
 
     // Netify API section
     ND_GF_SET_FLAG(ndGF_USE_NAPI,
         reader.GetBoolean("netify_api", "enable_updates", true));
 
-    nd_config->ttl_napi_update = reader.GetInteger(
+    this->ttl_napi_update = reader.GetInteger(
         "netify_api", "update_interval", ND_API_UPDATE_TTL);
 
     string url_napi = reader.Get(
         "netify_api", "url_api", ND_API_UPDATE_URL);
-    nd_config->url_napi = strdup(url_napi.c_str());
+    this->url_napi = strdup(url_napi.c_str());
 
     string napi_vendor = reader.Get(
         "netify_api", "vendor", ND_API_VENDOR);
-    nd_config->napi_vendor = strdup(napi_vendor.c_str());
+    this->napi_vendor = strdup(napi_vendor.c_str());
 
     // Protocols section
-    reader.GetSection("protocols", nd_config->protocols);
+    reader.GetSection("protocols", this->protocols);
 
     return 0;
 }

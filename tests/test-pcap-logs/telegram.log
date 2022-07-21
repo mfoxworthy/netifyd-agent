@@ -1,48 +1,48 @@
-lo: [i4-----] DHCP 192.168.0.1:68 --> 255.255.255.255:67 H: tl-sg116e
-lo: [i4-----] SSDP 192.168.1.53:54306 --> 239.255.255.250:1900
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.53:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.69:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.75:5353 --> 224.0.0.251:5353 H: _dacp._tcp.local
-lo: [i6-----] MDNS.netify.internal-network fe80::4ba:91a:7817:e318:5353 --> ff02::fb:5353 H: _dacp._tcp.local
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.75:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
-lo: [i4-----] DNS.netify.akamai 192.168.1.1:53 <-- 192.168.1.77:61631 H: e7047.e12.akamaiedge.net
-lo: [i4-----] Dropbox 192.168.1.77:17500 --> 255.255.255.255:17500
-lo: [i4-----] Dropbox 192.168.1.77:17500 --> 192.168.1.255:17500
-lo: [i6-----] MDNS.netify.internal-network fe80::18a0:a412:8935:c01b:5353 --> ff02::fb:5353 H: _homekit._tcp.local
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.53:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
-lo: [i4-----] DNS.netify.microsoft 192.168.1.1:53 <-- 192.168.1.77:52118 H: in.appcenter.ms
-lo: [i4-----] Spotify.netify.spotify 192.168.1.53:57621 --> 192.168.1.255:57621
-lo: [i4-----] SSDP 192.168.1.75:57916 --> 239.255.255.250:1900
-lo: [i4-----] DNS.netify.mpulse-performance 192.168.1.1:53 <-- 192.168.1.77:61120 H: e4518.dscx.akamaiedge.net
-lo: [i4-----] MDNS.netify.internal-network 192.168.1.52:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
-lo: [i6-----] MDNS.netify.internal-network fe80::4dc:edec:5b0c:a661:5353 --> ff02::fb:5353 H: _raop._tcp.local
-lo: [i4-----] Telegram.netify.telegram 91.108.8.7:521 <-- 192.168.1.77:23174
-lo: [i4-----] Telegram.netify.telegram 91.108.12.5:523 <-- 192.168.1.77:23174
-lo: [i4-----] Telegram.netify.telegram 91.108.16.1:527 <-- 192.168.1.77:23174
-lo: [i4-----] Telegram.netify.telegram 91.108.12.1:536 <-- 192.168.1.77:23174
-lo: [i4-----] Telegram.netify.telegram 91.108.8.8:538 <-- 192.168.1.77:23174
-lo: [i4-----] Telegram.netify.telegram 91.108.16.4:538 <-- 192.168.1.77:23174
-lo: [i4-----] OpenVPN 87.11.205.195:60723 --> 192.168.1.77:23174
-lo: [i4-----] DNS.netify.google-ads 192.168.1.1:53 <-- 192.168.1.77:47127 H: www.googletagservices.com
-lo: [i4-----] Unknown 192.168.1.52:31480 --> 192.168.1.77:23174
-lo: [i4-----] DHCP 0.0.0.0:68 --> 255.255.255.255:67
-lo: [i4-----] NETBIOS 192.168.1.43:138 --> 192.168.1.255:138 H: desktop-rb5t12g
-lo: [i4-----] NETBIOS 192.168.1.77:137 --> 192.168.1.255:137 H: workgroup
-lo: [i4-----] DNS 192.168.1.1:53 <-- 192.168.1.77:49764 H: dati.ntop.org
-lo: [i4-----] DNS.netify.wordpress 192.168.1.1:53 <-- 192.168.1.77:5812 H: pixel.wp.com
-lo: [i4-----] DNS 192.168.1.1:53 <-- 192.168.1.77:54595 H: b._dns-sd._udp.ntop.org
-lo: [i4-----] QUIC.netify.google 192.168.1.77:61974 --> 216.58.205.68:443 H: www.google.com SSL C: www.google.com
-lo: [i4-----] QUIC.netify.google 192.168.1.77:50822 --> 216.58.205.68:443 H: www.google.com SSL C: www.google.com
-lo: [i4-----] Spotify.netify.spotify 192.168.1.77:57621 --> 192.168.1.255:57621
-lo: [i4-----] Telegram.netify.telegram 91.108.8.8:529 <-- 192.168.1.77:28150
-lo: [i4-----] Telegram.netify.telegram 91.108.16.1:529 <-- 192.168.1.77:28150
-lo: [i4-----] Telegram.netify.telegram 91.108.12.3:530 <-- 192.168.1.77:28150
-lo: [i4-----] Telegram.netify.telegram 91.108.8.1:533 <-- 192.168.1.77:28150
-lo: [i4-----] Telegram.netify.telegram 91.108.12.5:537 <-- 192.168.1.77:28150
-lo: [i4-----] Telegram.netify.telegram 91.108.16.3:537 <-- 192.168.1.77:28150
-lo: [i4-----] SSDP 192.168.1.77:52127 --> 239.255.255.250:1900
-lo: [i4-----] SSDP 192.168.1.53:50698 --> 239.255.255.250:1900
-lo: [i4-----] SSDP 192.168.1.53:56384 --> 239.255.255.250:1900
-lo: [i4-----] DNS.netify.dropbox 192.168.1.1:53 <-- 192.168.1.77:58615 H: telemetry.dropbox.com
-lo: [i4-----] DNS.netify.mpulse-performance 192.168.1.1:53 <-- 192.168.1.77:49533 H: e4518.dscx.akamaiedge.net
-lo: [i4-----] Unknown 87.11.205.195:59772 --> 192.168.1.77:28150
+lo: [i4------] DHCP 192.168.0.1:68 --> 255.255.255.255:67 H: tl-sg116e
+lo: [i4------] SSDP 192.168.1.53:54306 --> 239.255.255.250:1900 H: 239.255.255.250
+lo: [i4------] MDNS.netify.internal-network 192.168.1.53:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4------] MDNS.netify.internal-network 192.168.1.69:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
+lo: [i4------] MDNS.netify.internal-network 192.168.1.75:5353 --> 224.0.0.251:5353 H: _dacp._tcp.local
+lo: [i6------] MDNS.netify.internal-network fe80::4ba:91a:7817:e318:5353 --> ff02::fb:5353 H: _dacp._tcp.local
+lo: [i4------] MDNS.netify.internal-network 192.168.1.75:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
+lo: [i4------] DNS.netify.akamai 192.168.1.1:53 <-- 192.168.1.77:61631 H: e7047.e12.akamaiedge.net
+lo: [i4------] Dropbox 192.168.1.77:17500 --> 255.255.255.255:17500
+lo: [i4------] Dropbox 192.168.1.77:17500 --> 192.168.1.255:17500
+lo: [i6------] MDNS.netify.internal-network fe80::18a0:a412:8935:c01b:5353 --> ff02::fb:5353 H: _homekit._tcp.local
+lo: [i4------] MDNS.netify.internal-network 192.168.1.53:5353 <-- 192.168.1.77:5353 H: _companion-link._tcp.local
+lo: [i4------] DNS.netify.microsoft 192.168.1.1:53 <-- 192.168.1.77:52118 H: in.appcenter.ms
+lo: [i4------] Spotify.netify.spotify 192.168.1.53:57621 --> 192.168.1.255:57621
+lo: [i4------] SSDP 192.168.1.75:57916 --> 239.255.255.250:1900 H: 239.255.255.250
+lo: [i4------] DNS.netify.mpulse-performance 192.168.1.1:53 <-- 192.168.1.77:61120 H: e4518.dscx.akamaiedge.net
+lo: [i4------] MDNS.netify.internal-network 192.168.1.52:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
+lo: [i6------] MDNS.netify.internal-network fe80::4dc:edec:5b0c:a661:5353 --> ff02::fb:5353 H: _raop._tcp.local
+lo: [i4------] Telegram.netify.telegram 91.108.8.7:521 <-- 192.168.1.77:23174
+lo: [i4------] Telegram.netify.telegram 91.108.12.5:523 <-- 192.168.1.77:23174
+lo: [i4------] Telegram.netify.telegram 91.108.16.1:527 <-- 192.168.1.77:23174
+lo: [i4------] Telegram.netify.telegram 91.108.12.1:536 <-- 192.168.1.77:23174
+lo: [i4------] Telegram.netify.telegram 91.108.8.8:538 <-- 192.168.1.77:23174
+lo: [i4------] Telegram.netify.telegram 91.108.16.4:538 <-- 192.168.1.77:23174
+lo: [i4------] OpenVPN 87.11.205.195:60723 --> 192.168.1.77:23174
+lo: [i4------] DNS.netify.google-ads 192.168.1.1:53 <-- 192.168.1.77:47127 H: www.googletagservices.com
+lo: [i4------] Unknown 192.168.1.52:31480 --> 192.168.1.77:23174
+lo: [i4------] DHCP 0.0.0.0:68 --> 255.255.255.255:67
+lo: [i4------] NETBIOS 192.168.1.43:138 --> 192.168.1.255:138 H: desktop-rb5t12g
+lo: [i4------] NETBIOS 192.168.1.77:137 --> 192.168.1.255:137 H: workgroup
+lo: [i4------] DNS 192.168.1.1:53 <-- 192.168.1.77:49764 H: dati.ntop.org
+lo: [i4------] DNS.netify.wordpress 192.168.1.1:53 <-- 192.168.1.77:5812 H: pixel.wp.com
+lo: [i4------] DNS 192.168.1.1:53 <-- 192.168.1.77:54595 H: b._dns-sd._udp.ntop.org
+lo: [i4------] QUIC.netify.google 192.168.1.77:61974 --> 216.58.205.68:443 H: www.google.com SSL C: www.google.com
+lo: [i4------] QUIC.netify.google 192.168.1.77:50822 --> 216.58.205.68:443 H: www.google.com SSL C: www.google.com
+lo: [i4------] Spotify.netify.spotify 192.168.1.77:57621 --> 192.168.1.255:57621
+lo: [i4------] Telegram.netify.telegram 91.108.8.8:529 <-- 192.168.1.77:28150
+lo: [i4------] Telegram.netify.telegram 91.108.16.1:529 <-- 192.168.1.77:28150
+lo: [i4------] Telegram.netify.telegram 91.108.12.3:530 <-- 192.168.1.77:28150
+lo: [i4------] Telegram.netify.telegram 91.108.8.1:533 <-- 192.168.1.77:28150
+lo: [i4------] Telegram.netify.telegram 91.108.12.5:537 <-- 192.168.1.77:28150
+lo: [i4------] Telegram.netify.telegram 91.108.16.3:537 <-- 192.168.1.77:28150
+lo: [i4------] SSDP 192.168.1.77:52127 --> 239.255.255.250:1900 H: 239.255.255.250
+lo: [i4------] SSDP 192.168.1.53:50698 --> 239.255.255.250:1900 H: 239.255.255.250
+lo: [i4------] SSDP 192.168.1.53:56384 --> 239.255.255.250:1900 H: 239.255.255.250
+lo: [i4------] DNS.netify.dropbox 192.168.1.1:53 <-- 192.168.1.77:58615 H: telemetry.dropbox.com
+lo: [i4------] DNS.netify.mpulse-performance 192.168.1.1:53 <-- 192.168.1.77:49533 H: e4518.dscx.akamaiedge.net
+lo: [i4------] Unknown 87.11.205.195:59772 --> 192.168.1.77:28150

@@ -1,7 +1,7 @@
-lo: [i4-----] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
-lo: [i4-u---] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
-lo: [i4-u---] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
-lo: [i4--g--] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:60653
-lo: [i4--g--] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:58117
-lo: [i4--g--] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:57953
-lo: [i4-----] ICMP.netify.zoom 144.195.73.154:0 <-- 192.168.1.178:0
+lo: [i4------] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
+lo: [i4-u----] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
+lo: [i4-u----] HTTP/S.netify.zoom 144.195.73.154:443 <-- 192.168.1.178:50076 H: zoomsjccv154mmr.sjc.zoom.us SSL C: zoomsjccv154mmr.sjc.zoom.us
+lo: [i4--g---] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:60653
+lo: [i4--g---] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:58117
+lo: [i4--g---] ZOOM.netify.zoom 144.195.73.154:8801 <-- 192.168.1.178:57953
+lo: [i4------] ICMP.netify.zoom 144.195.73.154:0 <-- 192.168.1.178:0

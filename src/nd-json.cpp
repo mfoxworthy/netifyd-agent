@@ -51,7 +51,7 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-util.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern nd_device nd_devices;
 extern nd_interface_addr_map nd_interface_addrs;
@@ -70,8 +70,8 @@ void nd_json_to_string(const json &j, string &output, bool pretty)
     );
 
     vector<pair<regex *, string> >::const_iterator i;
-    for (i = nd_config->privacy_regex.begin();
-        i != nd_config->privacy_regex.end(); i++) {
+    for (i = nd_config.privacy_regex.begin();
+        i != nd_config.privacy_regex.end(); i++) {
 
         string result = regex_replace(output, *((*i).first), (*i).second);
         if (result.size()) output = result;
@@ -108,8 +108,8 @@ void nd_json_agent_status(json &j)
 {
     j["version"] = (double)ND_JSON_VERSION;
     j["timestamp"] = time(NULL);
-    j["update_interval"] = nd_config->update_interval;
-    j["update_imf"] = nd_config->update_imf;
+    j["update_interval"] = nd_config.update_interval;
+    j["update_imf"] = nd_config.update_imf;
     j["uptime"] =
         unsigned(nd_json_agent_stats.ts_now.tv_sec - nd_json_agent_stats.ts_epoch.tv_sec);
     j["cpu_cores"] = (unsigned)nd_json_agent_stats.cpus;
@@ -134,7 +134,7 @@ void nd_json_agent_status(json &j)
     j["sink_uploads"] = (ND_UPLOAD_ENABLED) ? true : false;
     if (nd_json_agent_stats.sink_status) {
         j["sink_queue_size_kb"] = nd_json_agent_stats.sink_queue_size / 1024;
-        j["sink_queue_max_size_kb"] = nd_config->max_backlog / 1024;
+        j["sink_queue_max_size_kb"] = nd_config.max_backlog / 1024;
         j["sink_resp_code"] = nd_json_agent_stats.sink_resp_code;
     }
 }

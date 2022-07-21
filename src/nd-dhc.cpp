@@ -62,11 +62,10 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-dhc.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 ndDNSHintCache::ndDNSHintCache()
 {
-    pthread_mutex_init(&lock, NULL);
 #ifdef HAVE_CXX11
     map_ar.reserve(ND_HASH_BUCKETS_DNSARS);
 #endif
@@ -74,7 +73,6 @@ ndDNSHintCache::ndDNSHintCache()
 
 ndDNSHintCache::~ndDNSHintCache()
 {
-    pthread_mutex_destroy(&lock);
 }
 
 void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &hostname)
@@ -94,16 +92,13 @@ void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &h
         sizeof(struct in_addr) : sizeof(struct in6_addr));
     digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
 
-    if (pthread_mutex_lock(&lock) == 0) {
+    unique_lock<mutex> ul(lock);
 
-        nd_dns_tuple ar(time_t(time(NULL) + nd_config->ttl_dns_entry), hostname);
-        nd_dhc_insert i = map_ar.insert(nd_dhc_insert_pair(digest, ar));
+    nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
+    nd_dhc_insert i = map_ar.insert(nd_dhc_insert_pair(digest, ar));
 
-        if (! i.second)
-            i.first->second.first = time(NULL) + nd_config->ttl_dns_entry;
-
-        pthread_mutex_unlock(&lock);
-    }
+    if (! i.second)
+        i.first->second.first = time(NULL) + nd_config.ttl_dns_entry;
 }
 
 void ndDNSHintCache::insert(const string &digest, const string &hostname)
@@ -124,7 +119,7 @@ void ndDNSHintCache::insert(const string &digest, const string &hostname)
 
     if (_digest.size() != SHA1_DIGEST_LENGTH) return;
 
-    nd_dns_tuple ar(time_t(time(NULL) + nd_config->ttl_dns_entry), hostname);
+    nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
     map_ar.insert(nd_dhc_insert_pair(_digest, ar));
 }
 
@@ -157,17 +152,13 @@ bool ndDNSHintCache::lookup(const struct sockaddr_storage *addr, string &hostnam
 bool ndDNSHintCache::lookup(const string &digest, string &hostname)
 {
     bool found = false;
+    unique_lock<mutex> ul(lock);
 
-    if (pthread_mutex_lock(&lock) == 0) {
-
-        nd_dns_ar::iterator i = map_ar.find(digest);
-        if (i != map_ar.end()) {
-            found = true;
-            hostname = i->second.second;
-            i->second.first = time(NULL) + nd_config->ttl_dns_entry;
-        }
-
-        pthread_mutex_unlock(&lock);
+    nd_dns_ar::iterator i = map_ar.find(digest);
+    if (i != map_ar.end()) {
+        found = true;
+        hostname = i->second.second;
+        i->second.first = time(NULL) + nd_config.ttl_dns_entry;
     }
 
     return found;
@@ -175,24 +166,20 @@ bool ndDNSHintCache::lookup(const string &digest, string &hostname)
 
 size_t ndDNSHintCache::purge(void)
 {
+    unique_lock<mutex> ul(lock);
     size_t purged = 0, remaining = 0;
 
-    if (pthread_mutex_lock(&lock) == 0) {
-
-        nd_dns_ar::iterator i = map_ar.begin();
-        while (i != map_ar.end()) {
-            if (i->second.first < time(NULL)) {
-                i = map_ar.erase(i);
-                purged++;
-            }
-            else
-                i++;
+    nd_dns_ar::iterator i = map_ar.begin();
+    while (i != map_ar.end()) {
+        if (i->second.first < time(NULL)) {
+            i = map_ar.erase(i);
+            purged++;
         }
-
-        remaining = map_ar.size();
-
-        pthread_mutex_unlock(&lock);
+        else
+            i++;
     }
+
+    remaining = map_ar.size();
 
     if (purged > 0 && remaining > 0)
         nd_dprintf("Purged %u DNS cache entries, %u active.\n", purged, remaining);
@@ -209,7 +196,7 @@ void ndDNSHintCache::load(void)
     const char *filename = NULL;
     FILE *hf = NULL;
 
-    switch (nd_config->dhc_save) {
+    switch (nd_config.dhc_save) {
     case ndDHC_PERSISTENT:
         filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
         break;
@@ -224,33 +211,30 @@ void ndDNSHintCache::load(void)
 
     if (fgets(header, sizeof(header), hf) == NULL) { fclose(hf); return; }
 
-    if (pthread_mutex_lock(&lock) == 0) {
+    unique_lock<mutex> ul(lock);
 
-        while (! feof(hf)) {
-            line++;
-            if ((rc = fscanf(hf,
-                " \"%m[0-9A-z.-]\" , %m[0-9A-Fa-f] , %ld\n",
-                &host, &digest, &ttl)) != 3) {
-                nd_printf("%s: parse error at line #%u [%d]\n",
-                    filename, line, rc);
-                if (rc >= 1) free(host);
-                if (rc >= 2) free(digest);
-                break;
-            }
-
-            insert(digest, host);
-
-            free(host);
-            free(digest);
-
-            loaded++;
+    while (! feof(hf)) {
+        line++;
+        if ((rc = fscanf(hf,
+            " \"%m[0-9A-z.-]\" , %m[0-9A-Fa-f] , %ld\n",
+            &host, &digest, &ttl)) != 3) {
+            nd_printf("%s: parse error at line #%u [%d]\n",
+                filename, line, rc);
+            if (rc >= 1) free(host);
+            if (rc >= 2) free(digest);
+            break;
         }
 
-        nd_dprintf("Loaded %u of %u DNS cache entries.\n",
-            map_ar.size(), loaded);
+        insert(digest, host);
 
-        pthread_mutex_unlock(&lock);
+        free(host);
+        free(digest);
+
+        loaded++;
     }
+
+    nd_dprintf("Loaded %u of %u DNS cache entries.\n",
+        map_ar.size(), loaded);
 
     fclose(hf);
 }
@@ -262,7 +246,7 @@ void ndDNSHintCache::save(void)
     const char *filename = NULL;
     FILE *hf = NULL;
 
-    switch (nd_config->dhc_save) {
+    switch (nd_config.dhc_save) {
     case ndDHC_PERSISTENT:
         filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
         break;
@@ -275,21 +259,18 @@ void ndDNSHintCache::save(void)
 
     if (! (hf = fopen(filename, "w"))) return;
 
-    if (pthread_mutex_lock(&lock) == 0) {
+    unique_lock<mutex> ul(lock);
 
-        fprintf(hf, "\"host\",\"addr_digest\",\"ttl\"\n");
+    fprintf(hf, "\"host\",\"addr_digest\",\"ttl\"\n");
 
-        for (nd_dns_ar::iterator i = map_ar.begin();
-            i != map_ar.end(); i++) {
+    for (nd_dns_ar::iterator i = map_ar.begin();
+        i != map_ar.end(); i++) {
 
-            nd_sha1_to_string((const uint8_t *)i->first.c_str(), digest);
+        nd_sha1_to_string((const uint8_t *)i->first.c_str(), digest);
 
-            if (fprintf(hf, "\"%s\",%s,%u\n", i->second.second.c_str(),
-                digest.c_str(), (unsigned)(i->second.first - time(NULL))) > 0)
-                saved++;
-        }
-
-        pthread_mutex_unlock(&lock);
+        if (fprintf(hf, "\"%s\",%s,%u\n", i->second.second.c_str(),
+            digest.c_str(), (unsigned)(i->second.first - time(NULL))) > 0)
+            saved++;
     }
 
     nd_dprintf("Saved %u of %u DNS cache entries.\n",

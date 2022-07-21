@@ -57,7 +57,7 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-netlink.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 ndNetlink *netlink = NULL;
 nd_netlink_device nd_netlink_devices;

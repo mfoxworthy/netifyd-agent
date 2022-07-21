@@ -107,7 +107,7 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_LOG_FHC             1
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
@@ -370,11 +370,11 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
     bool check_extra_packets = (
         ndEFNF->check_extra_packets
-        && ndEF->detection_packets < nd_config->max_detection_pkts);
+        && ndEF->detection_packets < nd_config.max_detection_pkts);
 
     if (! ndEF->flags.detection_init.load() && (
         ndEF->detected_protocol != ND_PROTO_UNKNOWN
-        || ndEF->detection_packets == nd_config->max_detection_pkts
+        || ndEF->detection_packets == nd_config.max_detection_pkts
         || ndEF->flags.detection_expiring.load())) {
 
         if (! ndEF->flags.detection_guessed.load()
@@ -792,8 +792,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEF->update_lower_maps();
 
         for (vector<uint8_t *>::const_iterator i =
-            nd_config->privacy_filter_mac.begin();
-            i != nd_config->privacy_filter_mac.end() &&
+            nd_config.privacy_filter_mac.begin();
+            i != nd_config.privacy_filter_mac.end() &&
                 ndEF->privacy_mask !=
                 (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
             if (! memcmp((*i), ndEF->lower_mac, ETH_ALEN))
@@ -803,8 +803,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         for (vector<struct sockaddr *>::const_iterator i =
-            nd_config->privacy_filter_host.begin();
-            i != nd_config->privacy_filter_host.end() &&
+            nd_config.privacy_filter_host.begin();
+            i != nd_config.privacy_filter_host.end() &&
                 ndEF->privacy_mask !=
                 (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
 
@@ -1003,7 +1003,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         }
 
-        if ((ND_DEBUG && ND_VERBOSE) || nd_config->h_flow != stderr)
+        if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
             ndEF->print();
 
         for (nd_plugins::iterator i = plugins->begin();
@@ -1054,16 +1054,16 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
         getline(ss, alpn, ',');
 
         if (client) {
-            ndEF->ssl.alpn.push_back(alpn);
+            ndEF->tls_alpn.push_back(alpn);
             continue;
         }
 
-        ndEF->ssl.alpn_server.push_back(alpn);
+        ndEF->tls_alpn_server.push_back(alpn);
 
         //nd_dprintf("%s: TLS ALPN: search for: %s\n", tag.c_str(),
         //    alpn.c_str());
 
-        for (int i = 0; ; i++) {
+        for (unsigned i = 0; ; i++) {
             if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
             if (strncmp(alpn.c_str(),
                 nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;

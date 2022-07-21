@@ -64,7 +64,7 @@ using namespace std;
 #include "nd-sink.h"
 #include "nd-signal.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 static int nd_curl_debug(CURL *ch __attribute__((unused)),
     curl_infotype type, char *data, size_t size, void *param)
@@ -185,12 +185,12 @@ void ndSinkThread::CreateHandle(void)
     if ((ch = curl_easy_init()) == NULL)
         throw ndSinkThreadException("curl_easy_init");
 
-    curl_easy_setopt(ch, CURLOPT_URL, nd_config->url_sink);
+    curl_easy_setopt(ch, CURLOPT_URL, nd_config.url_sink);
     curl_easy_setopt(ch, CURLOPT_POST, 1L);
     curl_easy_setopt(ch, CURLOPT_POSTREDIR, 3L);
     curl_easy_setopt(ch, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(ch, CURLOPT_CONNECTTIMEOUT, (long)nd_config->sink_connect_timeout);
-    curl_easy_setopt(ch, CURLOPT_TIMEOUT, (long)nd_config->sink_xfer_timeout);
+    curl_easy_setopt(ch, CURLOPT_CONNECTTIMEOUT, (long)nd_config.sink_connect_timeout);
+    curl_easy_setopt(ch, CURLOPT_TIMEOUT, (long)nd_config.sink_xfer_timeout);
     curl_easy_setopt(ch, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(ch, CURLOPT_COOKIEFILE, (ND_DEBUG_UPLOAD) ? ND_COOKIE_JAR : "");
 
@@ -276,7 +276,7 @@ void *ndSinkThread::Entry(void)
             pending_size += pending.back().second.size();
             uploads.pop();
 
-            while (pending_size > nd_config->max_backlog) {
+            while (pending_size > nd_config.max_backlog) {
                 pending_size -= pending.front().second.size();
                 pending.pop_front();
             }
@@ -375,45 +375,45 @@ void ndSinkThread::CreateHeaders(void)
     user_agent << "User-Agent: " << nd_get_version_and_features();
 
     ostringstream uuid;
-    if (strncmp(nd_config->uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
-        uuid << "X-UUID: " << nd_config->uuid;
+    if (strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
+        uuid << "X-UUID: " << nd_config.uuid;
     else {
         string _uuid;
-        if (nd_load_uuid(_uuid, nd_config->path_uuid, ND_AGENT_UUID_LEN))
+        if (nd_load_uuid(_uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN))
             uuid << "X-UUID: " << _uuid;
         else
-            uuid << "X-UUID: " << nd_config->uuid;
+            uuid << "X-UUID: " << nd_config.uuid;
     }
 
     ostringstream uuid_serial;
-    if (strncmp(nd_config->uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
-        uuid_serial << "X-UUID-Serial: " << nd_config->uuid_serial;
+    if (strncmp(nd_config.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
+        uuid_serial << "X-UUID-Serial: " << nd_config.uuid_serial;
     else {
         string _uuid;
-        if (nd_load_uuid(_uuid, nd_config->path_uuid_serial, ND_AGENT_SERIAL_LEN))
+        if (nd_load_uuid(_uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN))
             uuid_serial << "X-UUID-Serial: " << _uuid;
         else
-            uuid_serial << "X-UUID-Serial: " << nd_config->uuid_serial;
+            uuid_serial << "X-UUID-Serial: " << nd_config.uuid_serial;
     }
 
     ostringstream uuid_site;
-    if (strncmp(nd_config->uuid_site, ND_SITE_UUID_NULL, ND_SITE_UUID_LEN))
-        uuid_site << "X-UUID-Site: " << nd_config->uuid_site;
+    if (strncmp(nd_config.uuid_site, ND_SITE_UUID_NULL, ND_SITE_UUID_LEN))
+        uuid_site << "X-UUID-Site: " << nd_config.uuid_site;
     else {
         string _uuid;
-        if (nd_load_uuid(_uuid, nd_config->path_uuid_site, ND_SITE_UUID_LEN))
+        if (nd_load_uuid(_uuid, nd_config.path_uuid_site, ND_SITE_UUID_LEN))
             uuid_site << "X-UUID-Site: " << _uuid;
         else
-            uuid_site << "X-UUID-Site: " << nd_config->uuid_site;
+            uuid_site << "X-UUID-Site: " << nd_config.uuid_site;
     }
 
     string digest;
 
-    nd_sha1_to_string(nd_config->digest_legacy_config, digest);
+    nd_sha1_to_string(nd_config.digest_legacy_config, digest);
     ostringstream conf_digest;
     conf_digest << "X-Digest-Sink: " << digest;
 
-    nd_sha1_to_string(nd_config->digest_app_config, digest);
+    nd_sha1_to_string(nd_config.digest_app_config, digest);
     ostringstream app_digest;
     app_digest << "X-Digest-Apps: " << digest;
 
@@ -434,8 +434,8 @@ void ndSinkThread::CreateHeaders(void)
     headers_gz = curl_slist_append(headers_gz, conf_digest.str().c_str());
     headers_gz = curl_slist_append(headers_gz, app_digest.str().c_str());
 
-    for (map<string, string>::const_iterator i = nd_config->custom_headers.begin();
-        i != nd_config->custom_headers.end(); i++) {
+    for (map<string, string>::const_iterator i = nd_config.custom_headers.begin();
+        i != nd_config.custom_headers.end(); i++) {
         ostringstream os;
         os << (*i).first << ": " << (*i).second;
         headers = curl_slist_append(headers, os.str().c_str());
@@ -462,16 +462,16 @@ void ndSinkThread::Upload(void)
     bool flush_queue = true;
     size_t xfer = 0, total = pending.size();
 
-    if (post_errors == nd_config->sink_max_post_errors) {
-        free(nd_config->url_sink);
-        nd_config->url_sink = strdup(nd_config->url_sink_provision);
+    if (post_errors == nd_config.sink_max_post_errors) {
+        free(nd_config.url_sink);
+        nd_config.url_sink = strdup(nd_config.url_sink_provision);
         nd_printf("%s: reverted to default sink URL: %s\n", tag.c_str(),
-            nd_config->url_sink);
+            nd_config.url_sink);
 
         DestroyHandle();
         CreateHandle();
 
-        curl_easy_setopt(ch, CURLOPT_URL, nd_config->url_sink);
+        curl_easy_setopt(ch, CURLOPT_URL, nd_config.url_sink);
 
         post_errors = 0;
     }
@@ -694,7 +694,7 @@ void ndSinkThread::ProcessResponse(void)
             if (response->uuid_site.size() == ND_SITE_UUID_LEN
                 && nd_save_uuid(
                     response->uuid_site,
-                    nd_config->path_uuid_site, ND_SITE_UUID_LEN
+                    nd_config.path_uuid_site, ND_SITE_UUID_LEN
                 )) {
                 nd_printf("%s: saved new site UUID: %s\n", tag.c_str(),
                     response->uuid_site.c_str());
@@ -703,14 +703,14 @@ void ndSinkThread::ProcessResponse(void)
             }
 
             if (response->url_sink.size() &&
-                response->url_sink != nd_config->url_sink) {
+                response->url_sink != nd_config.url_sink) {
                 if (nd_save_sink_url(response->url_sink)) {
-                    free(nd_config->url_sink);
-                    nd_config->url_sink = strdup(response->url_sink.c_str());
+                    free(nd_config.url_sink);
+                    nd_config.url_sink = strdup(response->url_sink.c_str());
                     nd_printf("%s: saved new sink URL: %s\n", tag.c_str(),
                         response->url_sink.c_str());
 
-                    curl_easy_setopt(ch, CURLOPT_URL, nd_config->url_sink);
+                    curl_easy_setopt(ch, CURLOPT_URL, nd_config.url_sink);
                 }
             }
 
@@ -721,7 +721,7 @@ void ndSinkThread::ProcessResponse(void)
 
                     if (nd_save_response_data(ND_CONF_APP_PATH, i->second) == 0 &&
                         nd_sha1_file(
-                            nd_config->path_app_config, nd_config->digest_app_config
+                            nd_config.path_app_config, nd_config.digest_app_config
                         ) == 0)
                         create_headers = true;
                 }
@@ -730,7 +730,7 @@ void ndSinkThread::ProcessResponse(void)
 
                     if (nd_save_response_data(ND_CONF_LEGACY_PATH, i->second) == 0 &&
                         nd_sha1_file(
-                            nd_config->path_legacy_config, nd_config->digest_legacy_config
+                            nd_config.path_legacy_config, nd_config.digest_legacy_config
                         ) == 0)
                         create_headers = true;
                 }
@@ -748,9 +748,9 @@ void ndSinkThread::ProcessResponse(void)
         if (response->upload_enabled != (ND_UPLOAD_ENABLED > 0)) {
 
             if (response->upload_enabled)
-                nd_config->flags |= ndGF_UPLOAD_ENABLED;
+                nd_config.flags |= ndGF_UPLOAD_ENABLED;
             else
-                nd_config->flags &= ~ndGF_UPLOAD_ENABLED;
+                nd_config.flags &= ~ndGF_UPLOAD_ENABLED;
 
             nd_printf("%s: payload uploads: %s\n",
                 tag.c_str(), ND_UPLOAD_ENABLED ? "enabled" : "disabled");

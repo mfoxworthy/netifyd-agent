@@ -69,7 +69,7 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-category.h"
 
-extern nd_global_config *nd_config;
+extern ndGlobalConfig nd_config;
 
 ndCategories *nd_categories = NULL;
 ndDomains *nd_domains = NULL;
@@ -80,10 +80,10 @@ bool ndCategories::Load(void)
 
     json jdata;
 
-    ifstream ifs(nd_config->path_cat_config);
+    ifstream ifs(nd_config.path_cat_config);
     if (! ifs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            nd_config->path_cat_config, strerror(ENOENT));
+            nd_config.path_cat_config, strerror(ENOENT));
         return false;
     }
 
@@ -92,8 +92,8 @@ bool ndCategories::Load(void)
     }
     catch (exception &e) {
         nd_printf("Error loading categories: %s: JSON parse error\n",
-            nd_config->path_cat_config);
-        nd_dprintf("%s: %s\n", nd_config->path_cat_config, e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
@@ -129,7 +129,7 @@ bool ndCategories::Load(void)
 
 bool ndCategories::LoadLegacy(json &jdata) {
     nd_printf("Legacy category format detected: %s\n",
-        nd_config->path_cat_config);
+        nd_config.path_cat_config);
 
     for (auto &ci : categories) {
         string key;
@@ -237,17 +237,17 @@ bool ndCategories::Save(void)
         }
     } catch (exception &e) {
         nd_printf("Error JSON encoding categories: %s\n",
-            nd_config->path_cat_config);
-        nd_dprintf("%s: %s\n", nd_config->path_cat_config, e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
 
-    ofstream ofs(nd_config->path_cat_config);
+    ofstream ofs(nd_config.path_cat_config);
 
     if (! ofs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            nd_config->path_cat_config, strerror(ENOENT));
+            nd_config.path_cat_config, strerror(ENOENT));
         return false;
     }
 
@@ -256,8 +256,8 @@ bool ndCategories::Save(void)
     }
     catch (exception &e) {
         nd_printf("Error saving categories: %s: JSON parse error\n",
-            nd_config->path_cat_config);
-        nd_dprintf("%s: %s\n", nd_config->path_cat_config, e.what());
+            nd_config.path_cat_config);
+        nd_dprintf("%s: %s\n", nd_config.path_cat_config, e.what());
 
         return false;
     }
