@@ -78,20 +78,21 @@ void ndpi_global_init(void)
 
     nd_ndpi_prefs = ndpi_no_prefs;
 
-    nd_ndpi_prefs |= ndpi_dont_load_tor_list;
-    nd_ndpi_prefs |= ndpi_enable_ja3_plus;
-    nd_ndpi_prefs |= ndpi_dont_load_azure_list;
-    nd_ndpi_prefs |= ndpi_dont_load_whatsapp_list;
-    nd_ndpi_prefs |= ndpi_dont_load_amazon_aws_list;
-    nd_ndpi_prefs |= ndpi_dont_load_ethereum_list;
-    nd_ndpi_prefs |= ndpi_dont_load_zoom_list;
-    nd_ndpi_prefs |= ndpi_dont_load_cloudflare_list;
-    nd_ndpi_prefs |= ndpi_dont_load_microsoft_list;
-    nd_ndpi_prefs |= ndpi_dont_load_google_list;
-    nd_ndpi_prefs |= ndpi_dont_load_google_cloud_list;
-    nd_ndpi_prefs |= ndpi_dont_load_asn_lists;
-    nd_ndpi_prefs |= ndpi_dont_load_icloud_private_relay_list;
     nd_ndpi_prefs |= ndpi_dont_init_risk_ptree;
+    nd_ndpi_prefs |= ndpi_dont_load_amazon_aws_list;
+    nd_ndpi_prefs |= ndpi_dont_load_asn_lists;
+    nd_ndpi_prefs |= ndpi_dont_load_azure_list;
+    nd_ndpi_prefs |= ndpi_dont_load_cachefly_list;
+    nd_ndpi_prefs |= ndpi_dont_load_cloudflare_list;
+    nd_ndpi_prefs |= ndpi_dont_load_ethereum_list;
+    nd_ndpi_prefs |= ndpi_dont_load_google_cloud_list;
+    nd_ndpi_prefs |= ndpi_dont_load_google_list;
+    nd_ndpi_prefs |= ndpi_dont_load_icloud_private_relay_list;
+    nd_ndpi_prefs |= ndpi_dont_load_microsoft_list;
+    nd_ndpi_prefs |= ndpi_dont_load_tor_list;
+    nd_ndpi_prefs |= ndpi_dont_load_whatsapp_list;
+    nd_ndpi_prefs |= ndpi_dont_load_zoom_list;
+    nd_ndpi_prefs |= ndpi_enable_ja3_plus;
 
     NDPI_BITMASK_RESET(ndpi_protos);
 
