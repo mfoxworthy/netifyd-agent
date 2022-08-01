@@ -1058,7 +1058,10 @@ static void nd_process_flows(
                     json jf;
                     i->second->json_encode(jf);
 
-                    jflows[i->second->iface->second].push_back(jf);
+                    string iface_name;
+                    nd_iface_name(i->second->iface->second, iface_name);
+
+                    jflows[iface_name].push_back(jf);
                 }
 
                 if (socket_queue) {
@@ -1137,7 +1140,10 @@ static void nd_process_flows(
                         json jf;
                         i->second->json_encode(jf);
 
-                        jflows[i->second->iface->second].push_back(jf);
+                        string iface_name;
+                        nd_iface_name(i->second->iface->second, iface_name);
+
+                        jflows[iface_name].push_back(jf);
                     }
 
                     i->second->reset();
@@ -1552,7 +1558,7 @@ static void nd_dump_stats(void)
         string iface_name;
         nd_iface_name(i->first, iface_name);
 
-        jflows[i->first] = vector<json>();
+        jflows[iface_name] = vector<json>();
 
         i->second->Lock();
 
