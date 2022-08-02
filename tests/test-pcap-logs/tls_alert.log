@@ -1,2 +1,2 @@
-lo: [i4------] HTTP/S.netify.google-ads 192.168.1.20:443 <-- 192.168.1.192:63158 H: www.google-analytics.com SSL C: www.google-analytics.com
-lo: [i4------] HTTP/S 160.44.202.202:443 <-- 192.168.2.100:37780
+lo: [i4------] Unknown 192.168.1.20:443 <-- 192.168.1.192:63158
+lo: [i4------] Unknown 160.44.202.202:443 <-- 192.168.2.100:37780

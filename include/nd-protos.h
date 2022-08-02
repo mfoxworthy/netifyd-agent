@@ -332,6 +332,10 @@ typedef enum {
     ND_PROTO_TOCA_BOCA              = 295,
     ND_PROTO_ULTRASURF              = 296,
     ND_PROTO_XIAOMI                 = 297,
+    ND_PROTO_IP_PGM                 = 298,
+    ND_PROTO_IP_PIM                 = 299,
+    ND_PROTO_THREEMA                = 300,
+    ND_PROTO_ALICLOUD               = 301,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -343,6 +347,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_AFP, "AFP" },
     { ND_PROTO_AIMINI, "Aimini" },
     { ND_PROTO_AJP, "AJP" },
+    { ND_PROTO_ALICLOUD, "Alibaba/Cloud" },
     { ND_PROTO_AMONG_US, "AmongUs" },
     { ND_PROTO_AMQP, "AMQP" },
     { ND_PROTO_APPLEJUICE, "APPLJ" },
@@ -418,6 +423,8 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_IP_IGMP, "IGMP" },
     { ND_PROTO_IP_IP_IN_IP, "IPinIP" },
     { ND_PROTO_IP_OSPF, "OSPF" },
+    { ND_PROTO_IP_PGM, "PGM" },
+    { ND_PROTO_IP_PIM, "PIM" },
     { ND_PROTO_IPP, "IPP" },
     { ND_PROTO_IP_SCTP, "SCTP" },
     { ND_PROTO_IPSEC, "IPSEC" },
@@ -519,6 +526,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_TELNET, "Telnet" },
     { ND_PROTO_TEREDO, "Teredo" },
     { ND_PROTO_TFTP, "TFTP" },
+    { ND_PROTO_THREEMA, "Threema" },
     { ND_PROTO_THUNDER, "Thunder" },
     { ND_PROTO_TINC, "TINC" },
     { ND_PROTO_TLS, "TLS" },
@@ -577,6 +585,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_AFP, ND_PROTO_AFP },
     { NDPI_PROTOCOL_AIMINI, ND_PROTO_AIMINI },
     { NDPI_PROTOCOL_AJP, ND_PROTO_AJP },
+    { NDPI_PROTOCOL_ALICLOUD, ND_PROTO_ALICLOUD },
     { NDPI_PROTOCOL_AMONG_US, ND_PROTO_AMONG_US },
     { NDPI_PROTOCOL_AMQP, ND_PROTO_AMQP },
     { NDPI_PROTOCOL_APPLEJUICE, ND_PROTO_APPLEJUICE },
@@ -593,6 +602,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_CISCOVPN, ND_PROTO_CISCO_VPN },
     { NDPI_PROTOCOL_CITRIX, ND_PROTO_CITRIX },
     { NDPI_PROTOCOL_COAP, ND_PROTO_COAP },
+    { NDPI_PROTOCOL_COLLECTD, ND_PROTO_COLLECTD },
     { NDPI_PROTOCOL_CORBA, ND_PROTO_CORBA },
     { NDPI_PROTOCOL_CPHA, ND_PROTO_CPHA },
     { NDPI_PROTOCOL_CROSSFIRE, ND_PROTO_CROSSFIRE },
@@ -646,6 +656,8 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_IP_IGMP, ND_PROTO_IP_IGMP },
     { NDPI_PROTOCOL_IP_IP_IN_IP, ND_PROTO_IP_IP_IN_IP },
     { NDPI_PROTOCOL_IP_OSPF, ND_PROTO_IP_OSPF },
+    { NDPI_PROTOCOL_IP_PGM, ND_PROTO_IP_PGM },
+    { NDPI_PROTOCOL_IP_PIM, ND_PROTO_IP_PIM },
     { NDPI_PROTOCOL_IPP, ND_PROTO_IPP },
     { NDPI_PROTOCOL_IP_SCTP, ND_PROTO_IP_SCTP },
     { NDPI_PROTOCOL_IPSEC, ND_PROTO_IPSEC },
@@ -742,6 +754,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_TELNET, ND_PROTO_TELNET },
     { NDPI_PROTOCOL_TEREDO, ND_PROTO_TEREDO },
     { NDPI_PROTOCOL_TFTP, ND_PROTO_TFTP },
+    { NDPI_PROTOCOL_THREEMA, ND_PROTO_THREEMA },
     { NDPI_PROTOCOL_THUNDER, ND_PROTO_THUNDER },
     { NDPI_PROTOCOL_TIKTOK, ND_PROTO_TIKTOK },
     { NDPI_PROTOCOL_TINC, ND_PROTO_TINC },
@@ -780,9 +793,107 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
 typedef vector<uint16_t> nd_ndpi_disabled_t;
 
 const nd_ndpi_disabled_t nd_ndpi_disabled = {
+    NDPI_PROTOCOL_1KXUN,        // Not a protocol (no dissector): ID# 295 (1kxun)
+    NDPI_PROTOCOL_ACCUWEATHER,  // Not a protocol: ID# 280 (AccuWeather)
+    NDPI_PROTOCOL_ACTIVISION,   // Not a protocol (no dissector): ID# 258 (Activision)
+    NDPI_PROTOCOL_ALIBABA,      // Not a protocol (see ALICLOUD): ID# 274 (Alibaba)
+    NDPI_PROTOCOL_AMAZON_ALEXA, // Not a protocol (no dissector): ID# 110 (AmazonAlexa)
+    NDPI_PROTOCOL_AMAZON_AWS,   // Not a protocol (no dissector): ID# 265 (AmazonAWS)
+    NDPI_PROTOCOL_AMAZON,       // Not a protocol: ID# 178 (Amazon)
     NDPI_PROTOCOL_AMAZON_VIDEO, // No detections and no pcap to test.
+    NDPI_PROTOCOL_ANYDESK,      // Not a protocol (no dissector): ID# 252 (AnyDesk)
+    NDPI_PROTOCOL_APPLE_ICLOUD, // Not a protocol (no dissector): ID# 143 (AppleiCloud)
+    NDPI_PROTOCOL_APPLE_ITUNES, // Not a protocol (no dissector): ID# 145 (AppleiTunes)
+    NDPI_PROTOCOL_APPLE,        // Not a protocol: ID# 140 (Apple)
+    NDPI_PROTOCOL_APPLE_SIRI,   // Not a protocol (no dissector): ID# 254 (AppleSiri)
+    NDPI_PROTOCOL_APPLESTORE,   // Not a protocol: ID# 224 (AppleStore)
+    NDPI_PROTOCOL_BADOO,        // Not a protocol: ID# 279 (Badoo)
+    NDPI_PROTOCOL_BLOOMBERG,    // Not a protocol: ID# 246 (Bloomberg)
+    NDPI_PROTOCOL_CACHEFLY,     // Not a protocol: ID# 289 (Cachefly)
+    NDPI_PROTOCOL_CLOUDFLARE,   // Not a protocol: ID# 220 (Cloudflare)
+    NDPI_PROTOCOL_CLOUDFLARE_WARP, // Not a protocol: ID# 300 (CloudflareWarp)
+    NDPI_PROTOCOL_CNN,          // Not a protocol: ID# 180 (CNN)
+    NDPI_PROTOCOL_CRASHLYSTICS, // Not a protocol (no dissector): ID# 275 (Crashlytics)
+    NDPI_PROTOCOL_CYBERSECURITY, // Not a protocol: ID# 283 (Cybersec)
+    NDPI_PROTOCOL_DAZN,         // Not a protocol: ID# 292 (Dazn)
+    NDPI_PROTOCOL_DEEZER,       // Not a protocol: ID# 210 (Deezer)
+    NDPI_PROTOCOL_DISCORD,      // Not a protocol (no dissector): ID# 58 (Discord)
+    NDPI_PROTOCOL_DISNEYPLUS,   // Not a protocol: ID# 71 (DisneyPlus)
+    NDPI_PROTOCOL_EBAY,         // Not a protocol: ID# 179 (eBay)
+    NDPI_PROTOCOL_EDGECAST,     // Not a protocol (no dissector): ID# 288 (Edgecast)
     NDPI_PROTOCOL_EDONKEY,      // Garbage; false-positives.
+    NDPI_PROTOCOL_FACEBOOK,     // Not a protocol: ID# 119 (Facebook)
+    NDPI_PROTOCOL_FACEBOOK_VOIP, // Not a protocol (no dissector): ID# 268 (FacebookVoip)
+    NDPI_PROTOCOL_FORTICLIENT,  // Not a protocol (no dissector): ID# 259 (FortiClient)
+    NDPI_PROTOCOL_FUZE,         // Not a protocol: ID# 270 (Fuze)
+    NDPI_PROTOCOL_GITHUB,       // Not a protocol: ID# 203 (Github)
+    NDPI_PROTOCOL_GITLAB,       // Not a protocol: ID# 262 (GitLab)
+    NDPI_PROTOCOL_GMAIL,        // Not a protocol: ID# 122 (GMail)
+    NDPI_PROTOCOL_GOOGLE_CLASSROOM, // Not a protocol: ID# 281 (GoogleClassroom)
+    NDPI_PROTOCOL_GOOGLE_CLOUD, // Not a protocol: ID# 284 (GoogleCloud)
+    NDPI_PROTOCOL_GOOGLE_DOCS,  // Not a protocol: ID# 241 (GoogleDocs)
+    NDPI_PROTOCOL_GOOGLE_DRIVE, // Not a protocol (no dissector): ID# 217 (GoogleDrive)
+    NDPI_PROTOCOL_GOOGLE_MAPS,  // Not a protocol: ID# 123 (GoogleMaps)
+    NDPI_PROTOCOL_GOOGLE,       // Not a protocol: ID# 126 (Google)
+    NDPI_PROTOCOL_GOOGLE_PLUS,  // Not a protocol: ID# 72 (GooglePlus)
+    NDPI_PROTOCOL_GOOGLE_SERVICES, // Not a protocol: ID# 239 (GoogleServices)
+    NDPI_PROTOCOL_GOTO,         // Not a protocol: ID# 293 (GoTo)
+    NDPI_PROTOCOL_HOTSPOT_SHIELD, // Not a protocol: ID# 215 (HotspotShield)
+    NDPI_PROTOCOL_HULU,         // Not a protocol: ID# 137 (Hulu)
+    NDPI_PROTOCOL_ICLOUD_PRIVATE_RELAY, // Not a protocol (no dissector): ID# 277 (iCloudPrivateRelay)
+    NDPI_PROTOCOL_IFLIX,        // Not a protocol: ID# 202 (IFLIX)
     NDPI_PROTOCOL_IMO,          // Weak, too many false-positives, and obscure/undocumented.
+    NDPI_PROTOCOL_INSTAGRAM,    // Not a protocol: ID# 211 (Instagram)
+    NDPI_PROTOCOL_KAKAOTALK,    // Not a protocol (see KAKAOTALK_VOICE): ID# 193 (KakaoTalk)
+    NDPI_PROTOCOL_LASTFM,       // Not a protocol: ID# 134 (LastFM)
+    NDPI_PROTOCOL_LIKEE,        // Not a protocol: ID# 261 (Likee)
+    NDPI_PROTOCOL_LINKEDIN,     // Not a protocol: ID# 233 (LinkedIn)
+    NDPI_PROTOCOL_MESSENGER,    // Not a protocol (no dissector): ID# 157 (Messenger)
+    NDPI_PROTOCOL_MICROSOFT_365, // Not a protocol: ID# 219 (Microsoft365)
+    NDPI_PROTOCOL_MICROSOFT_AZURE, // Not a protocol (no dissector): ID# 276 (Azure)
+    NDPI_PROTOCOL_MICROSOFT,    // Not a protocol: ID# 212 (Microsoft)
+    NDPI_PROTOCOL_MS_ONE_DRIVE, // Not a protocol (no dissector): ID# 221 (MS_OneDrive)
+    NDPI_PROTOCOL_MS_OUTLOOK,   // Not a protocol: ID# 21 (Outlook)
+    NDPI_PROTOCOL_MSTEAMS,      // Not a protocol (see SKYPE_TEAMS_CALL): ID# 250 (Teams)
+    NDPI_PROTOCOL_NETFLIX,      // Not a protocol: ID# 133 (NetFlix)
+    NDPI_PROTOCOL_NTOP,         // Not a protocol: ID# 26 (ntop)
+    NDPI_PROTOCOL_OCS,          // Not a protocol: ID# 218 (OCS)
+    NDPI_PROTOCOL_OCSP,         // Not a protocol (HTTP): ID# 63 (OCSP)
+    NDPI_PROTOCOL_OPENDNS,      // Not a protocol (no dissector): ID# 225 (OpenDNS)
+    NDPI_PROTOCOL_PANDORA,      // Not a protocol: ID# 187 (Pandora)
+    NDPI_PROTOCOL_PASTEBIN,     // Not a protocol: ID# 232 (Pastebin)
+    NDPI_PROTOCOL_PINTEREST,    // Not a protocol: ID# 183 (Pinterest)
+    NDPI_PROTOCOL_PLAYSTATION,  // Not a protocol (no dissector): ID# 231 (Playstation)
+    NDPI_PROTOCOL_PLAYSTORE,    // Not a protocol: ID# 228 (PlayStore)
+    NDPI_PROTOCOL_PLURALSIGHT,  // Not a protocol (no dissector): ID# 61 (Pluralsight)
+    NDPI_PROTOCOL_PSIPHON,      // Not a protocol: ID# 303 (Psiphon)
+    NDPI_PROTOCOL_REDDIT,       // Not a protocol: ID# 205 (Reddit)
+    NDPI_PROTOCOL_SALESFORCE,   // Not a protocol: ID# 266 (Salesforce)
+    NDPI_PROTOCOL_SIGNAL,       // Not a protocol (see SIGNAL_VOIP): ID# 39 (Signal)
+    NDPI_PROTOCOL_SINA,         // Not a protocol (no dissector): ID# 200 (Sina(Weibo))
+    NDPI_PROTOCOL_SLACK,        // Not a protocol (no dissector): ID# 118 (Slack)
+    NDPI_PROTOCOL_SNAPCHAT,     // Not a protocol (no dissector): ID# 199 (Snapchat)
+    NDPI_PROTOCOL_SOFTETHER,    // Not a protocol (no dissector): ID# 290 (Softether)
+    NDPI_PROTOCOL_SOUNDCLOUD,   // Not a protocol: ID# 234 (SoundCloud)
+    NDPI_PROTOCOL_TENCENT,      // Not a protocol: ID# 285 (Tencent)
+    NDPI_PROTOCOL_TOR,          // Not a protocol (no dissector): ID# 163 (Tor)
+    NDPI_PROTOCOL_TUENTI,       // Not a protocol: ID# 149 (Tuenti)
+    NDPI_PROTOCOL_TUMBLR,       // Not a protocol: ID# 90 (Tumblr)
+    NDPI_PROTOCOL_TUNNELBEAR,   // Not a protocol (no dissector): ID# 299 (TunnelBear)
+    NDPI_PROTOCOL_TWITCH,       // Not a protocol (no dissector): ID# 195 (Twitch)
+    NDPI_PROTOCOL_TWITTER,      // Not a protocol: ID# 120 (Twitter)
+    NDPI_PROTOCOL_UBUNTUONE,    // Not a protocol: ID# 169 (UbuntuONE)
+    NDPI_PROTOCOL_VEVO,         // Not a protocol: ID# 186 (Vevo)
+    NDPI_PROTOCOL_VIMEO,        // Not a protocol: ID# 267 (Vimeo)
+    NDPI_PROTOCOL_WAZE,         // Not a protocol: ID# 135 (Waze)
+    NDPI_PROTOCOL_WEBEX,        // Not a protocol (no dissector): ID# 141 (Webex)
+    NDPI_PROTOCOL_WECHAT,       // Not a protocol (no dissector): ID# 197 (WeChat)
+    NDPI_PROTOCOL_WHATSAPP_FILES, // Not a protocol: ID# 242 (WhatsAppFiles)
+    NDPI_PROTOCOL_WIKIPEDIA,    // Not a protocol: ID# 176 (Wikipedia)
+    NDPI_PROTOCOL_WINDOWS_UPDATE, // Not a protocol (no dissector): ID# 147 (WindowsUpdate)
+    NDPI_PROTOCOL_YAHOO,        // Not a protocol: ID# 70 (Yahoo)
+    NDPI_PROTOCOL_YOUTUBE,      // Not a protocol: ID# 124 (YouTube)
+    NDPI_PROTOCOL_YOUTUBE_UPLOAD, // Not a protocol: ID# 136 (YouTubeUpload)
 };
 
 typedef unordered_map<uint16_t, vector<pair<uint16_t, nd_proto_id_t>>> nd_ndpi_portmap_t;
