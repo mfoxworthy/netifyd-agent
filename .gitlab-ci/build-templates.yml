@@ -63,14 +63,16 @@
     - yum -y install epel-release-latest-${RPMOS_VERSION}.noarch.rpm
     - yum -y install make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync bc git
     - yum -y install $RPMOS_REPOS curl-devel libmnl-devel libnetfilter_conntrack-devel libpcap-devel zlib-devel
-    # Build via raw source only
-    - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
-    - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
     # Build packages
+    - ./autogen.sh
+    - ./configure --prefix=/usr --includedir=\${prefix}/include --mandir=\${prefix}/share/man --sysconfdir=/etc --localstatedir=/var
+    - make -C deploy/rpm
+    - grep ^Version deploy/rpm/netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
+    - tar --exclude=.git --transform "s,^,netifyd-`cat /tmp/version`/," -czf netifyd-`cat /tmp/version`.tar.gz *
     - echo "%dist .os${RPMOS_VERSION}" > ~/.rpmmacros
     - rpmbuild -bs netifyd.spec  --define "_sourcedir $PWD" --define "_srcrpmdir $PWD"
     - rpmbuild --rebuild *.src.rpm
-    # Copy packages to mirror
+    # Copy artifacts (packages) to mirror
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH
     - mkdir -p builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source
     - cp -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
