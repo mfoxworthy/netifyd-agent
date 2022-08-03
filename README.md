@@ -1,6 +1,8 @@
 # Netify Agent
 Copyright ©2015-2021 eGloo Incorporated ([www.egloo.ca](https://www.egloo.ca))
 
+CI Status: [![pipeline status](https://gitlab.com/netify.ai/public/netify-agent/badges/master/pipeline.svg)](https://gitlab.com/netify.ai/public/netify-agent/-/commits/master)
+
 ## Network Intelligence - Simplified
 The [Netify Agent](https://www.netify.ai/) is a deep-packet inspection server.  The Agent is built on top of [nDPI](http://www.ntop.org/products/deep-packet-inspection/ndpi/) (formerly OpenDPI) to detect network protocols and applications.  Detections can be saved locally, served over a UNIX or TCP socket, and/or "pushed" (via HTTP POSTs) to a remote third-party server.  Flow metadata, network statistics, and detection classifications are stored using JSON encoding.
 
