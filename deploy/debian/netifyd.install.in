@@ -1,0 +1,10 @@
+etc/*
+lib/systemd/system/netifyd.service
+usr/lib/libndpi.so.*
+usr/lib/tmpfiles.d/netifyd.conf
+usr/lib/*/libnetifyd.so.*
+usr/sbin/netifyd
+usr/share/man/man5/*
+usr/share/man/man8/*
+usr/share/ndpi/*
+usr/share/netifyd/*

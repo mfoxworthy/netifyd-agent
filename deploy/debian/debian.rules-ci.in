@@ -1,0 +1,38 @@
+#!/usr/bin/make -f
+
+CFLAGS=-g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS+=-O0
+else
+CFLAGS+=-O2
+endif
+
+# Build destination directory
+export DESTDIR=debian/netifyd
+
+
+%:
+	dh $@
+
+
+override_dh_install:
+	dh_install
+
+	rm -rf $(DESTDIR)/usr/bin
+
+	install -d -m 0755 $(DESTDIR)/var/run/netifyd
+	install -d -m 0755 $(DESTDIR)/etc/netify.d
+
+	rm -f $(DESTDIR)/etc/netify.d/netify-sink.conf
+
+	chmod a+x $(DESTDIR)/usr/share/netifyd/*.sh
+
+	dh_systemd_enable
+
+	install -D -m 0755 deploy/debian/debian.init \
+		$(DESTDIR)/etc/init.d/netifyd
+
+	dh_systemd_start
+
+	install -D -m 0644 deploy/netifyd.default \
+		$(DESTDIR)/etc/default/netifyd

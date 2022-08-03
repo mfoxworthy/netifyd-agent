@@ -5,6 +5,7 @@
 stages:
   - build
   - test
+  - variants
 
 # variables:
 #  CI_DEBUG_TRACE: "true"
@@ -13,6 +14,7 @@ stages:
 include:
   - '/.gitlab-ci/build-templates.yml'
   - '/.gitlab-ci/test-templates.yml'
+  - '/.gitlab-ci/variants-templates.yml'
 
 # -------------------------------------------------------------------------
 # Build stage
@@ -21,7 +23,18 @@ include:
 # Debian OS Targets
 #------------------
 
-.debian 10 build:
+debian 9 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "debian:9"
+    OS_NAME: "debian"
+    OS_VERSION: "9.0"
+    OS_ARCH: "amd64"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+debian 10 build:
   extends: .debian_build
   tags:
     - docker
@@ -29,12 +42,77 @@ include:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
     OS_VERSION: "10"
-    OS_ARCH: "x86_64"
+    OS_ARCH: "amd64"
+    OS_EXTRA_PACKAGES: "flex"
 
-.debian 11 build:
-  extends: .debian11_build
+debian 10 i386 build:
+  extends: .debian_build
   tags:
-    - debian11
+    - docker
+  variables:
+    OS_IMAGE: "i386/debian:10"
+    OS_NAME: "debian"
+    OS_VERSION: "10"
+    OS_ARCH: "i386"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+debian 11 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "amd64"
+    OS_EXTRA_PACKAGES: ""
+
+debian 11 i386 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "i386/debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "i386"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+# Ubuntu OS Targets
+#------------------
+
+ubuntu 18.04 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "ubuntu:18.04"
+    OS_NAME: "ubuntu"
+    OS_VERSION: "bionic"
+    OS_ARCH: "binary-amd64"
+    OS_EXTRA_PACKAGES: "byacc"
+
+ubuntu 20.04 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "ubuntu:20.04"
+    OS_NAME: "ubuntu"
+    OS_VERSION: "focal"
+    OS_ARCH: "binary-amd64"
+    OS_EXTRA_PACKAGES: "byacc"
+
+ubuntu 22.04 build:
+  extends: .debian_build
+  tags:
+    - docker
+  variables:
+    OS_IMAGE: "ubuntu:22.04"
+    OS_NAME: "ubuntu"
+    OS_VERSION: "jammy"
+    OS_ARCH: "binary-amd64"
+    OS_EXTRA_PACKAGES: "byacc flex"
 
 # RPM OS Targets
 #---------------
@@ -44,25 +122,27 @@ centos 7 build:
   tags:
     - docker
   variables:
-    RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os7"
+    RPMOS_IMAGE: "centos:7.9.2009"
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
     RPMOS_ARCH: "x86_64"
+    RPMOS_REPOS: ""
 
 almalinux 8 build:
   extends: .rpmos_build
   tags:
     - docker
   variables:
-    RPMOS_IMAGE: "registry.gitlab.com/egloo.ca/os-manager/builder-image:os8"
+    RPMOS_IMAGE: "almalinux:8"
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
     RPMOS_ARCH: "x86_64"
+    RPMOS_REPOS: "--enablerepo=powertools,epel"
 
 # FreeBSD OS Targets
 #-------------------
 
-freebsd 11.2 build:
+.freebsd 11.2 build:
   extends: .xbsd_build
   tags:
     - freebsd112
@@ -90,7 +170,7 @@ freebsd 11.2 build:
 #     OS_CONFIGURE_FLAGS: ""
 #     OS_PKG_EXTENSION: "txz"
 
-freebsd 12.1 build:
+.freebsd 12.1 build:
   extends: .xbsd_build
   tags:
     - freebsd121
@@ -105,7 +185,7 @@ freebsd 12.1 build:
     OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
     OS_PKG_EXTENSION: "txz"
 
-freebsd 12.3 build:
+.freebsd 12.3 build:
   extends: .xbsd_build
   tags:
     - freebsd123
@@ -154,7 +234,7 @@ almalinux 8 test:
 # OPNsense/pfSense
 #-----------------
 
-opnsense 19.7 test:
+.opnsense 19.7 test:
   extends: .xsense_test
   tags:
     - opnsense197
@@ -172,7 +252,7 @@ opnsense 19.7 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
 
-opnsense 20.1 test:
+.opnsense 20.1 test:
   extends: .xsense_test
   tags:
     - opnsense201
@@ -190,7 +270,7 @@ opnsense 20.1 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
 
-opnsense 20.7 test:
+.opnsense 20.7 test:
   extends: .xsense_test
   tags:
    - opnsense207
@@ -206,7 +286,7 @@ opnsense 20.7 test:
     - ntpdate -u time.nist.gov
   needs: ["freebsd 12.1 build"]
 
-pfsense 2.4.5 test:
+.pfsense 2.4.5 test:
   extends: .xsense_test
   tags:
     - pfsense245
@@ -224,7 +304,7 @@ pfsense 2.4.5 test:
     - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
   needs: ["freebsd 11.2 build"]
 
-pfsense 2.6.0 test:
+.pfsense 2.6.0 test:
   extends: .xsense_test
   tags:
     - pfsense260
@@ -236,3 +316,58 @@ pfsense 2.6.0 test:
     FREEBSD_RELEASE: "3"
     FREEBSD_PKG_EXTENSION: "pkg"
   needs: ["freebsd 12.3 build"]
+
+# -------------------------------------------------------------------------
+# Variants stage
+# -------------------------------------------------------------------------
+
+# CentOS
+#-------
+
+clearos 7 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS_SOURCE: "centos"
+    RPMOS_OS: "clearos"
+    RPMOS_VERSION: "7"
+    RPMOS_IMAGE: "centos:7"
+    RPMOS_ARCH: "x86_64"
+  needs: ["centos 7 test"]
+
+nethserver 7 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS_SOURCE: "centos"
+    RPMOS_OS: "nethserver"
+    RPMOS_VERSION: "7"
+    RPMOS_IMAGE: "centos:7"
+    RPMOS_ARCH: "x86_64"
+  needs: ["centos 7 test"]
+
+rhel 7 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS_SOURCE: "centos"
+    RPMOS_OS: "rhel"
+    RPMOS_VERSION: "7"
+    RPMOS_IMAGE: "centos:7"
+    RPMOS_ARCH: "x86_64"
+  needs: ["centos 7 test"]
+
+rhel 8 variant:
+  extends: .rpmos_variants
+  tags:
+    - docker
+  variables:
+    RPMOS_OS_SOURCE: "almalinux"
+    RPMOS_OS: "rhel"
+    RPMOS_VERSION: "8"
+    RPMOS_IMAGE: "almalinux:8"
+    RPMOS_ARCH: "x86_64"
+  needs: ["almalinux 8 test"]

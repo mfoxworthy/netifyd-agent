@@ -6,7 +6,7 @@
   image: $RPMOS_IMAGE
   script:
     - yum -y install epel-release
-    - yum -y --nogpgcheck localinstall builds/$CI_PROJECT_NAME/$RPMOS_OS/$RPMOS_VERSION/$RPMOS_ARCH/netifyd-[0-9]*.*.$RPMOS_ARCH.rpm
+    - yum -y --nogpgcheck localinstall builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/netifyd-[0-9]*.*.$RPMOS_ARCH.rpm
     # yum returns exit code 0 even if target is corrupt or invalid, so verify with rpm
     - rpm -qV netifyd
     # CentOS is used for mirror port mode only
@@ -19,6 +19,11 @@
     - grep "enable_sink.*=.*yes" /etc/netifyd.conf || exit 1
     - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I eth0 )
     - curl "https://manager.netify.ai/api/v1/deployment/agents/status/$RPMOS_UUID"
+  artifacts:
+    when: always
+    paths:
+    - builds
+    expire_in: 1 day
 
 # OPNsense/pfSense
 #-----------------
