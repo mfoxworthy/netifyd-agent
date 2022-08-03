@@ -2939,8 +2939,14 @@ int main(int argc, char *argv[])
 #else
         if (sig == SIGINT || sig == SIGTERM || sig == SIGPWR) {
 #endif
-            if (! nd_terminate)
+            if (! nd_terminate) {
                 nd_printf("Shutdown requested, waiting for threads to exit...\n");
+
+                itspec_update.it_value = { 1, 0 };
+                itspec_update.it_interval = { 1, 0 };
+
+                timer_settime(timer_update, 0, &itspec_update, NULL);
+            }
             else {
                 nd_printf("Shutdown forced, exiting now...\n");
                 nd_terminate_force = true;
