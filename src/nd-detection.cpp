@@ -331,7 +331,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndEFNF,
             (const uint8_t *)entry->pkt_data,
             entry->pkt_length,
-            ndEF->ts_last_seen
+            ndEF->ts_last_seen,
+            NULL
         );
 
         // XXX: Preserve app_protocol.
