@@ -19,15 +19,15 @@ lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54091 --> 203.205.151.162:443 
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54091 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4------] HTTP/S.netify.google 192.168.1.103:47627 --> 216.58.205.78:443
 lo: [i4------] HTTP/S.netify.google 172.217.23.78:443 <-- 192.168.1.103:53220
-lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4---d--] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54092 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4---d--] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54094 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4---d--] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
+lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54095 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4---d--] HTTP/S.netify.wechat 192.168.1.103:54096 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54096 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u-d--] HTTP/S.netify.wechat 192.168.1.103:54096 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com

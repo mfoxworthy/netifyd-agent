@@ -1,8 +1,8 @@
-lo: [i4------] Unknown.netify.google 8.8.8.8:853 <-- 192.168.1.159:55856
 lo: [i4------] DoT.netify.google-dns 8.8.4.4:853 <-- 192.168.1.159:48044 H: dns.google
 lo: [i4------] DoT.netify.google-dns 8.8.8.8:853 <-- 192.168.1.159:56024 H: dns.google
 lo: [i4------] DoT.netify.google-dns 8.8.4.4:853 <-- 192.168.1.159:48048 H: dns.google
 lo: [i4------] ICMP.netify.google 8.8.8.8:0 <-- 192.168.1.159:0
 lo: [i4------] DoT.netify.google-dns 8.8.4.4:853 <-- 192.168.1.159:48098 H: dns.google
 lo: [i4------] DoT.netify.google-dns 8.8.4.4:853 <-- 192.168.1.159:48210 H: dns.google
+lo: [i4--g---] DoQ.netify.google 8.8.8.8:853 <-- 192.168.1.159:55856
 lo: [i4--g---] DoQ.netify.google 8.8.4.4:853 <-- 192.168.1.159:47968
