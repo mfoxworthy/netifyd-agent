@@ -1144,6 +1144,27 @@ static void nd_process_flows(
                         nd_iface_name(i->second->iface->second, iface_name);
 
                         jflows[iface_name].push_back(jf);
+
+                        if (socket_queue) {
+                            json j;
+
+                            j["type"] = "flow_stats";
+                            j["interface"] = i->second->iface->second;
+                            j["internal"] = i->second->iface->first;
+                            j["established"] = false;
+
+                            jf.clear();
+                            i->second->json_encode(
+                                jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
+                            );
+                            j["flow"] = jf;
+
+                            string json_string;
+                            nd_json_to_string(j, json_string, false);
+                            json_string.append("\n");
+
+                            thread_socket->QueueWrite(json_string);
+                        }
                     }
 
                     i->second->reset();
