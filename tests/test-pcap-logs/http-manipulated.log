@@ -1,2 +1,2 @@
-lo: [i4------] Unknown 192.168.0.7:8080 <-- 192.168.0.20:33632
+lo: [i4------] HTTP.netify.internal-network 192.168.0.7:8080 <-- 192.168.0.20:33632 H: wwww.lan
 lo: [i4------] HTTP.netify.internal-network 192.168.0.7:8080 <-- 192.168.0.20:33684 H: www.lan

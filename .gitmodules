@@ -19,3 +19,6 @@
 [submodule "doc/wiki"]
 	path = doc/wiki
 	url = git@gitlab.com:netify.ai/public/netify-agent.wiki.git
+[submodule "libs/mpack"]
+	path = libs/mpack
+	url = https://github.com/ludocode/mpack.git

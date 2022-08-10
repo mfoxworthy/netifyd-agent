@@ -9,7 +9,8 @@ ACLOCAL_AMFLAGS = -I m4
 AM_YFLAGS = -d
 BUILT_SOURCES = nd-flow-criteria.tab.hh
 
-AM_CPPFLAGS = $(CPPFLAGS) -D_GNU_SOURCE -I $(top_srcdir)/include \
+AM_CPPFLAGS = $(CPPFLAGS) -D_GNU_SOURCE \
+	-I $(top_srcdir)/include -I $(top_srcdir)/include/mpack \
 	-I $(top_srcdir)/libs/ndpi/src/include -I $(top_srcdir)/libs/inih/cpp \
 	$(LIBCURL_CFLAGS) $(ZLIB_CFLAGS) \
 	-D_ND_INTERNAL=1 \
@@ -31,8 +32,8 @@ lib_LTLIBRARIES = libnetifyd.la
 libnetifyd_la_SOURCES = nd-apps.cpp nd-base64.cpp nd-capture.cpp \
 	nd-category.cpp nd-config.cpp nd-detection.cpp nd-dhc.cpp nd-fhc.cpp \
 	nd-flow.cpp nd-flow-criteria.l nd-flow-criteria.tab.yy nd-flow-map.cpp \
-	nd-json.cpp nd-napi.cpp nd-ndpi.cpp nd-protos.cpp nd-risks.cpp nd-sha1.c \
-	nd-sink.cpp nd-socket.cpp nd-thread.cpp nd-util.cpp
+	nd-mpack.c nd-json.cpp nd-napi.cpp nd-ndpi.cpp nd-protos.cpp nd-risks.cpp \
+	nd-sha1.c nd-sink.cpp nd-socket.cpp nd-thread.cpp nd-util.cpp
 
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 libnetifyd_la_LDFLAGS = -version-info 2:1:0

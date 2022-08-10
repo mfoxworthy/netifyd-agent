@@ -1,12 +1,11 @@
 lo: [i4------] DHCP 192.168.0.1:68 --> 255.255.255.255:67 H: tl-sg116e
-lo: [i4------] Unknown.netify.telegram 149.154.167.91:443 <-- 192.168.1.6:58533
 lo: [i4------] DNS.netify.azure 192.168.1.1:53 <-- 192.168.1.6:60813 H: skypedataprdcolneu04.cloudapp.net
-lo: [i4------] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60533 H: teams.microsoft.com SSL C: teams.microsoft.com
+lo: [i4---d--] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60533 H: teams.microsoft.com SSL C: teams.microsoft.com
 lo: [i4---d--] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60532 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
 lo: [i4-u-d--] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60532 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
 lo: [i4------] HTTP/S.netify.microsoft-authentication 40.126.9.5:443 <-- 192.168.1.6:60534 H: login.microsoftonline.com SSL C: login.microsoftonline.com
 lo: [i4---d--] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60535 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
-lo: [i4------] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60536 H: teams.microsoft.com SSL C: teams.microsoft.com
+lo: [i4---d--] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60536 H: teams.microsoft.com SSL C: teams.microsoft.com
 lo: [i4---d--] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60537 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
 lo: [i4-u-d--] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60537 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
 lo: [i4------] DNS 192.168.1.1:53 <-- 192.168.1.6:64046 H: b._dns-sd._udp.ntop.org
@@ -95,5 +94,6 @@ lo: [i4------] STUN.netify.teams 52.114.252.21:3480 <-- 192.168.1.6:50036
 lo: [i4------] STUN.netify.teams 52.114.252.8:3479 <-- 192.168.1.6:50016
 lo: [i4---d--] HTTP/S.netify.azure 40.79.138.41:443 <-- 192.168.1.6:60568 H: gate.hockeyapp.net SSL C: gate.hockeyapp.net
 lo: [i4------] ICMP 93.71.110.205:0 --> 192.168.1.6:0
+lo: [i4--g--s] Telegram.netify.telegram 149.154.167.91:443 <-- 192.168.1.6:58533
 lo: [i4------] Unknown 151.11.50.139:2222 <-- 192.168.1.6:54750
 lo: [i4--gd--] STUN.netify.azure 52.114.77.136:3478 <-- 192.168.1.6:51681 H: c-flightproxy-euno-01-teams.cloudapp.net
