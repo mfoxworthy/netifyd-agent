@@ -15,6 +15,9 @@ export DESTDIR=debian/netifyd
 	dh $@
 
 
+override_dh_auto_test:
+	DEB_BUILD_OPTIONS=nocheck dh_auto_test
+
 override_dh_install:
 	dh_install
 
