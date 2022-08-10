@@ -1,9 +1,13 @@
-Makefile
-Makefile.in
 debian.changelog
 debian.conffiles
 debian.control
+debian.control-ci
 debian.init
 debian.postinst
 debian.rules
+debian.rules-ci
+Makefile
+Makefile.in
+netifyd-dev.install
 netifyd.dsc
+netifyd.install
