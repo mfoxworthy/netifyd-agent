@@ -13,7 +13,7 @@
   script:
     # Build environment
     - apt update
-    - env DEBIAN_FRONTEND=noninteractive apt install -y rsync debhelper autoconf automake bc build-essential libtool wget pkg-config git
+    - env DEBIAN_FRONTEND=noninteractive apt install -y rsync debhelper autoconf automake bc bison build-essential flex libtool wget pkg-config git
     #- env DEBIAN_FRONTEND=noninteractive apt install -y libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libtcmalloc-minimal4 libtool zlib1g-dev systemd $OS_EXTRA_PACKAGES
     - env DEBIAN_FRONTEND=noninteractive apt install -y libcurl4-openssl-dev libmnl-dev libncurses5-dev libnetfilter-conntrack-dev libpcap-dev libgoogle-perftools-dev libtool zlib1g-dev systemd $OS_EXTRA_PACKAGES
     # Build packages
