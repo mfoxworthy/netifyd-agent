@@ -38,7 +38,7 @@
     - mv -v ../*.dsc builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     - mv -v ../*.tar.gz builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify/
+    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
   artifacts:
     when: always
     paths:
@@ -78,7 +78,7 @@
     - cp -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
     - cp -v *.src.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify/
+    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
   artifacts:
     when: always
     paths:
@@ -108,6 +108,6 @@
     - mkdir -p builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
     - mv deploy/$OS_BASENAME/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
     - mv deploy/pfsense/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify-builds/
+    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify-builds/
   allow_failure: true
 
