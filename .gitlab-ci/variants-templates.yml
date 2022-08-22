@@ -10,4 +10,4 @@
     - mv builds/netify/$RPMOS_OS_SOURCE/$RPMOS_VERSION/devel/$RPMOS_ARCH builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
     - mv builds/netify/$RPMOS_OS_SOURCE/$RPMOS_VERSION/devel/source builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel
     - rm -rfv builds/netify/$RPMOS_OS_SOURCE/
-    - rsync -rtv builds/* master-mirror.c.netify-ai.internal::netify/
+    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
