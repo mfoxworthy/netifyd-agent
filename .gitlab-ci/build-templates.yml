@@ -10,6 +10,7 @@
     - env DEBIAN_FRONTEND=noninteractive apt install -y git
     - git submodule sync --recursive
     - git submodule update --init --recursive
+    - find . -name '\.git*' -print0 | xargs -0 rm -rf
   script:
     # Build environment
     - apt update
@@ -56,6 +57,7 @@
     - yum install -y git
     - git submodule sync --recursive
     - git submodule update --init --recursive
+    - find . -name '\.git*' -print0 | xargs -0 rm -rf
   script:
     # Build environment
     - yum -y install wget
@@ -94,6 +96,7 @@
     # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
     - git submodule sync --recursive
     - git submodule update --init --recursive
+    - find . -name '\.git*' -print0 | xargs -0 rm -rf
   script:
     # Build environment
     - ntpdate -d -u time.nist.gov
