@@ -3069,7 +3069,13 @@ int main(int argc, char *argv[])
         }
 
         if (sig == SIGHUP) {
+            nd_printf("Reloading configuration...\n");
+            if (! nd_apps->Load(nd_config.path_app_config))
+                nd_apps->LoadLegacy(nd_config.path_legacy_config);
+            nd_categories->Load();
+            nd_domains->Load();
             nd_plugin_event(ndPlugin::EVENT_RELOAD);
+            nd_printf("Configuration reloaded.\n");
             continue;
         }
 
