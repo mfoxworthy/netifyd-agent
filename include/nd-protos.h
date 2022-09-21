@@ -336,6 +336,7 @@ typedef enum {
     ND_PROTO_IP_PIM                 = 299,
     ND_PROTO_THREEMA                = 300,
     ND_PROTO_ALICLOUD               = 301,
+    ND_PROTO_SYSLOGS                = 302,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -519,6 +520,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_STEAM, "Steam" },
     { ND_PROTO_STUN, "STUN" },
     { ND_PROTO_SYSLOG, "SYSLOG" },
+    { ND_PROTO_SYSLOGS, "SYSLOG/S" },
     { ND_PROTO_TARGUS_GETDATA, "Targus/Dataspeed" },
     { ND_PROTO_TEAMSPEAK, "TeamSpeak" },
     { ND_PROTO_TEAMVIEWER, "TeamViewer" },
@@ -913,6 +915,7 @@ const nd_ndpi_portmap_t nd_ndpi_portmap = {
         { 990, ND_PROTO_FTPS_CONTROL },
         { 1883, ND_PROTO_MQTTS },
         { 5061, ND_PROTO_SIPS },
+        { 6514, ND_PROTO_SYSLOGS },
         { 6697, ND_PROTO_IRCS },
         { 8883, ND_PROTO_MQTTS },
     } },
