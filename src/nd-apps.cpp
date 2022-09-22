@@ -189,8 +189,10 @@ static ndRadixNetworkEntry<N> radix_substr(
 
     if (length == N)
         mask = 0;
-    else
-        mask = 1 << length;
+    else {
+        mask = 1;
+        mask <<= length;
+    }
 
     mask -= 1;
     mask <<= N - length - offset;

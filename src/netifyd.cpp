@@ -182,6 +182,7 @@ extern nd_netlink_device nd_netlink_devices;
 #define _ND_LO_DUMP_RISKS           15
 #define _ND_LO_DUMP_SORT_BY_TAG     16
 #define _ND_LO_EXPORT_APPS          17
+#define _ND_LO_LOOKUP_IP            18
 
 static int nd_config_set_option(int option)
 {
@@ -1800,6 +1801,38 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
         printf("%6u: %s\n", entry.second, entry.first.c_str());
 }
 
+int static nd_lookup_ip(const char *ip)
+{
+    if (nd_apps == NULL) {
+        nd_apps = new ndApplications();
+        if (! nd_apps->Load(nd_config.path_app_config))
+            nd_apps->LoadLegacy(nd_config.path_legacy_config);
+    }
+
+    nd_app_id_t id = 0;
+    struct sockaddr_in ip4;
+    struct sockaddr_in6 ip6;
+
+    if (inet_pton(AF_INET, ip, &ip4.sin_addr) == 1) {
+        id = nd_apps->Find(AF_INET,
+            static_cast<void *>(&ip4.sin_addr)
+        );
+    }
+    else if (inet_pton(AF_INET6, ip, &ip6.sin6_addr) == 1) {
+        id = nd_apps->Find(AF_INET6,
+            static_cast<void *>(&ip6.sin6_addr)
+        );
+    }
+    else {
+        fprintf(stderr, "WARNING: Not an IPv4 or IPv6 address: %s\n", ip);
+        return 1;
+    }
+
+    fprintf(stdout, "%u: %s\n", id, nd_apps->Lookup(id));
+
+    return 0;
+}
+
 int static nd_export_applications(void)
 {
     if (nd_apps == NULL) {
@@ -2329,6 +2362,8 @@ int main(int argc, char *argv[])
 
         { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
 
+        { "lookup-ip", 1, 0, _ND_LO_LOOKUP_IP },
+
         { NULL, 0, 0, 0 }
     };
 
@@ -2451,6 +2486,8 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Sorry, this feature was disabled (lean and mean).\n");
             exit(1);
 #endif
+        case _ND_LO_LOOKUP_IP:
+            exit(nd_lookup_ip(optarg));
         case '?':
             fprintf(stderr, "Try `--help' for more information.\n");
             return 1;
