@@ -769,6 +769,7 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
         js["type"] = "agent_status";
         nd_json_agent_status(js);
         nd_json_to_string(js, json_string);
+        json_string.append("\n");
         buffer->Push(json_string);
 
         nd_json_protocols(json_string);
