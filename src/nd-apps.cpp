@@ -431,7 +431,7 @@ bool ndApplications::Save(const string &filename)
 
     return true;
 #else
-    nd_printf("Sorry, this feature was disabled (lean and mean).\n");
+    nd_printf("Sorry, this feature was disabled (embedded).\n");
     return false;
 #endif // _ND_LEAN_AND_MEAN
 }
