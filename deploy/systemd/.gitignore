@@ -1,3 +1,4 @@
+env.sh
 exec-pre.sh
 Makefile.in
 netifyd.conf

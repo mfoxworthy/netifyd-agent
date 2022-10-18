@@ -3,8 +3,8 @@
 #
 # This is free software, licensed under the GNU General Public License v3.
 
-SYSTEMDFILES = exec-pre.sh netifyd.conf netifyd.service
-SYSTEMDFILES_IN = exec-pre.sh.in netifyd.conf.in netifyd.service.in
+SYSTEMDFILES = env.sh exec-pre.sh netifyd.conf netifyd.service
+SYSTEMDFILES_IN = env.sh.in exec-pre.sh.in netifyd.conf.in netifyd.service.in
 
 sharedatadir = $(datadir)/netifyd
 
@@ -16,11 +16,12 @@ endif
 
 BUILT_SOURCES = $(SYSTEMDFILES)
 CLEANFILES = $(SYSTEMDFILES)
-EXTRA_DIST = $(SYSTEMDFILES_IN) env.sh
+EXTRA_DIST = $(SYSTEMDFILES_IN)
 
 %: %.in
 	$(SED) \
 		-e 's|[@]datadir@|$(datadir)|g' \
+		-e 's|[@]libdir@|$(libdir)|g' \
 		-e 's|[@]PACKAGE_NAME@|$(PACKAGE_NAME)|g' \
 		-e 's|[@]PACKAGE_TARNAME@|$(PACKAGE_TARNAME)|g' \
 		-e 's|[@]sbindir@|$(sbindir)|g' \
