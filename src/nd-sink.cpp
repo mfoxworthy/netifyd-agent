@@ -277,8 +277,18 @@ void *ndSinkThread::Entry(void)
             uploads.pop();
 
             while (pending_size > nd_config.max_backlog) {
-                pending_size -= pending.front().second.size();
-                pending.pop_front();
+                size_t overflow = pending.front().second.size();
+                nd_printf("%s: Backlog buffer full (%lu > max_backlog: %lu).\n",
+                    tag.c_str(), pending_size, nd_config.max_backlog);
+
+                if (pending_size - overflow > 0) {
+                    pending_size -= overflow;
+                    pending.pop_front();
+
+                    nd_dprintf("%s: Ejected %lu bytes from backlog buffer.\n",
+                        tag.c_str(), overflow);
+                }
+                else break;
             }
         }
         while (uploads.size() > 0);
