@@ -116,7 +116,10 @@ void nd_os_detect(string &os);
 class ndLogDirectory
 {
 public:
-    ndLogDirectory(const string &path, const string &prefix, const string &suffix);
+    ndLogDirectory(
+        const string &path, const string &prefix, const string &suffix,
+        bool overwrite = false
+    );
     virtual ~ndLogDirectory();
 
     FILE *Open(void);
@@ -127,6 +130,8 @@ protected:
     string path;
     string prefix;
     string suffix;
+
+    bool overwrite;
 
     FILE *hf_cur;
     string filename;

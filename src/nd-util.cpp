@@ -1148,8 +1148,12 @@ void nd_os_detect(string &os)
         os = "unknown";
 }
 
-ndLogDirectory::ndLogDirectory(const string &path, const string &prefix, const string &suffix)
-    : path(path), prefix(prefix), suffix(suffix), hf_cur(NULL) {
+ndLogDirectory::ndLogDirectory(
+    const string &path, const string &prefix, const string &suffix,
+    bool overwrite)
+    : path(path), prefix(prefix), suffix(suffix), overwrite(overwrite),
+    hf_cur(NULL)
+{
     struct stat sb;
 
     if (stat(path.c_str(), &sb) == -1) {
@@ -1178,16 +1182,21 @@ FILE *ndLogDirectory::Open(void)
         return NULL;
     }
 
-    time_t now = time(NULL);
-    struct tm tm_now;
+    if (! overwrite) {
+        time_t now = time(NULL);
+        struct tm tm_now;
 
-    tzset();
-    localtime_r(&now, &tm_now);
+        tzset();
+        localtime_r(&now, &tm_now);
 
-    char stamp[_ND_LOG_FILE_STAMP_SIZE];
-    strftime(stamp, _ND_LOG_FILE_STAMP_SIZE, _ND_LOG_FILE_STAMP, &tm_now);
+        char stamp[_ND_LOG_FILE_STAMP_SIZE];
+        strftime(stamp, _ND_LOG_FILE_STAMP_SIZE, _ND_LOG_FILE_STAMP, &tm_now);
 
-    filename = prefix + stamp + suffix;
+        filename = prefix + stamp + suffix;
+    }
+    else
+        filename = prefix + suffix;
+
     string full_path = path + "/." + filename;
 
     if (! (hf_cur = fopen(full_path.c_str(), "w"))) {
@@ -1207,6 +1216,8 @@ void ndLogDirectory::Close(void)
 
         string src = path + "/." + filename;
         string dst = path + "/" + filename;
+
+        if (overwrite) unlink(dst.c_str());
 
         if (rename(src.c_str(), dst.c_str()) != 0) {
             nd_dprintf("Error renaming log file: %s -> %s: %s\n",
