@@ -1,6 +1,5 @@
 usr/include/ndpi/*
 usr/include/netifyd/*
-usr/lib/libndpi.a
 usr/lib/*/libnetifyd.a
 usr/lib/*/libnetifyd.la
 usr/lib/*/pkgconfig/*
