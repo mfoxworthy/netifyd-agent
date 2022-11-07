@@ -370,7 +370,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     }
 
     bool check_extra_packets = (
-        ndEFNF->check_extra_packets
+        ndEFNF->extra_packets_func != NULL
         && ndEF->detection_packets < nd_config.max_detection_pkts);
 
     if (! ndEF->flags.detection_init.load() && (
@@ -906,7 +906,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
 
             if (! ndEF->ssl.cert_fingerprint_found &&
-                ndEFNF->l4.tcp.tls.fingerprint_set) {
+                ndEFNFP.tls_quic.fingerprint_set) {
                 memcpy(ndEF->ssl.cert_fingerprint,
                     ndEFNFP.tls_quic.sha1_certificate_fingerprint,
                     ND_FLOW_TLS_HASH_LEN);
@@ -915,20 +915,20 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEF->flags.detection_updated = true;
             }
 
-            if (ndEFNFP.tls_quic.alpn) {
+            if (ndEFNFP.tls_quic.advertised_alpns) {
 
                 ProcessALPN(entry, true);
 
-                free(ndEFNFP.tls_quic.alpn);
-                ndEFNFP.tls_quic.alpn = NULL;
+                free(ndEFNFP.tls_quic.advertised_alpns);
+                ndEFNFP.tls_quic.advertised_alpns = NULL;
             }
 
-            if (ndEFNFP.tls_quic.alpn_server) {
+            if (ndEFNFP.tls_quic.negotiated_alpn) {
 
                 flow_update = ProcessALPN(entry, false);
 
-                free(ndEFNFP.tls_quic.alpn_server);
-                ndEFNFP.tls_quic.alpn_server = NULL;
+                free(ndEFNFP.tls_quic.negotiated_alpn);
+                ndEFNFP.tls_quic.negotiated_alpn = NULL;
             }
         break;
         case ND_PROTO_DNS:
@@ -1044,35 +1044,37 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
 {
     bool flow_update = false;
     const char *detected_alpn = (client) ?
-        ndEFNFP.tls_quic.alpn : ndEFNFP.tls_quic.alpn_server;
+        ndEFNFP.tls_quic.advertised_alpns : ndEFNFP.tls_quic.negotiated_alpn;
 //    nd_dprintf("%s: TLS %s ALPN: %s\n",
 //        tag.c_str(), (client) ? "client" : "server", detected_alpn);
 
-    stringstream ss(detected_alpn);
+    if (client) {
+        stringstream ss(detected_alpn);
 
-    while (ss.good()) {
-        string alpn;
-        getline(ss, alpn, ',');
+        while (ss.good()) {
+            string alpn;
+            getline(ss, alpn, ',');
 
-        if (client) {
             ndEF->tls_alpn.push_back(alpn);
-            continue;
         }
 
-        ndEF->tls_alpn_server.push_back(alpn);
+        flow_update = (ndEF->tls_alpn.size() > 0);
+    }
+    else {
+        ndEF->tls_alpn_server.push_back(detected_alpn);
 
         //nd_dprintf("%s: TLS ALPN: search for: %s\n", tag.c_str(),
-        //    alpn.c_str());
+        //    detected_alpn);
 
         for (unsigned i = 0; ; i++) {
             if (nd_alpn_proto_map[i].alpn[0] == '\0') break;
-            if (strncmp(alpn.c_str(),
+            if (strncmp(detected_alpn,
                 nd_alpn_proto_map[i].alpn, ND_TLS_ALPN_MAX)) continue;
             if (nd_alpn_proto_map[i].proto_id == ndEF->detected_protocol)
                 continue;
 
             nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
-                tag.c_str(), alpn.c_str(),
+                tag.c_str(), detected_alpn,
                 ndEF->detected_protocol_name,
                 nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
             );
