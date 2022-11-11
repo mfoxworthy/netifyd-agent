@@ -449,7 +449,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
         // Determine application based on master protocol metadata for
         // Protocol / Application "Twins"
-        switch (ndEF->master_protocol()) {
+        switch (ndEF->detected_protocol) {
 
         case ND_PROTO_SPOTIFY:
             SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
@@ -536,9 +536,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 
         // Additional protocol-specific processing...
-        nd_proto_id_t nd_proto = ndEF->master_protocol();
-
-        switch (nd_proto) {
+        switch (ndEF->master_protocol()) {
 
         case ND_PROTO_TLS:
         case ND_PROTO_QUIC:
