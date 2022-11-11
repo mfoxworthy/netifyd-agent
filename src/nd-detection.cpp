@@ -336,10 +336,12 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         );
 
         // XXX: Preserve app_protocol.
-        ndEF->detected_protocol = nd_ndpi_proto_find(
-            ndpi_rc.master_protocol,
-            ndEF
-        );
+        if (ndEF->flags.soft_dissector.load() == false) {
+            ndEF->detected_protocol = nd_ndpi_proto_find(
+                ndpi_rc.master_protocol,
+                ndEF
+            );
+        }
 
         if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
             ndEF->detected_protocol = nd_ndpi_proto_find(
