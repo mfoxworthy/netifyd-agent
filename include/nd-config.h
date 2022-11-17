@@ -54,7 +54,8 @@ enum nd_global_flags {
     ndGF_UPLOAD_ENABLED = 0x200000,
     ndGF_UPLOAD_NAT_FLOWS = 0x400000,
     ndGF_WAIT_FOR_CLIENT = 0x800000,
-    ndGF_SOFT_DISSECTORS = 0x1000000
+    ndGF_SOFT_DISSECTORS = 0x1000000,
+    ndGF_LOAD_DOMAINS = 0x2000000,
 };
 
 #define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
@@ -83,6 +84,7 @@ enum nd_global_flags {
 #define ND_UPLOAD_NAT_FLOWS (nd_config.flags & ndGF_UPLOAD_NAT_FLOWS)
 #define ND_WAIT_FOR_CLIENT (nd_config.flags & ndGF_WAIT_FOR_CLIENT)
 #define ND_SOFT_DISSECTORS (nd_config.flags & ndGF_SOFT_DISSECTORS)
+#define ND_LOAD_DOMAINS (nd_config.flags & ndGF_LOAD_DOMAINS)
 
 #define ND_GF_SET_FLAG(flag, value) \
 { \

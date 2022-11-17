@@ -448,7 +448,7 @@ static void nd_init(void)
     if (nd_domains == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_domains", ENOMEM);
 
-    nd_domains->Load();
+    if (ND_LOAD_DOMAINS) nd_domains->Load();
 
     nd_flow_buckets = new ndFlowMap();
     if (nd_flow_buckets == nullptr)

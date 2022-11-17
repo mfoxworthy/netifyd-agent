@@ -9,6 +9,7 @@
 capture_unknown_flows = <yes/no>
 enable_sink = <yes/no>
 json_save = <yes/no>
+load_domains = <yes/no>
 max_backlog_kb = <amount of payload data to buffer in kilobytes>
 max_capture_length = <packet capture snap length>
 max_detection_pkts = <number of packets to perform DPI on before taking a guess>

@@ -300,6 +300,9 @@ int ndGlobalConfig::Load(const string &filename)
     ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
         reader.GetBoolean("netifyd", "soft_dissectors", true));
 
+    ND_GF_SET_FLAG(ndGF_LOAD_DOMAINS,
+        reader.GetBoolean("netifyd", "load_domains", true));
+
     // Threading section
     this->ca_capture_base = (int16_t)reader.GetInteger(
         "threads", "capture_base", this->ca_capture_base);
