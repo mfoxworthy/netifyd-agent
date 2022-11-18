@@ -2461,9 +2461,9 @@ int main(int argc, char *argv[])
 #endif
         case _ND_LO_DUMP_CAT:
 #ifndef _ND_LEAN_AND_MEAN
-            if (strncasecmp("protocol", optarg, 8) == 0)
+            if (strncasecmp("application", optarg, 8) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_APP | dump_flags);
-            else if (strncasecmp("application", optarg, 11) == 0)
+            else if (strncasecmp("protocol", optarg, 11) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_PROTO | dump_flags);
             exit(0);
 #else
