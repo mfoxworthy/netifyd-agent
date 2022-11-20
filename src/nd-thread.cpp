@@ -53,6 +53,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-ndpi.h"
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-thread.h"

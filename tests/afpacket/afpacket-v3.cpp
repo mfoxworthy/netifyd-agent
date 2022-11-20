@@ -202,11 +202,10 @@ ndPacketRingBlock::ndPacketRingBlock(void *entry)
 size_t ndPacketRingBlock::ProcessPackets(ndPacketRing *ring)
 {
     struct tpacket3_hdr *entry;
-    size_t packets = (size_t)hdr.bdh->hdr.bh1.num_pkts;
-
-    ring->pkt_stats.packets += packets;
-
     entry = (struct tpacket3_hdr *)(hdr.raw + hdr.bdh->hdr.bh1.offset_to_first_pkt);
+    
+    size_t packets = (size_t)hdr.bdh->hdr.bh1.num_pkts;
+    ring->pkt_stats.packets += packets;
 
     for (size_t i = 0; i < packets; i++) {
 

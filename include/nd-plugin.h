@@ -17,7 +17,7 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20220205
+#define _ND_PLUGIN_VER  0x20221118
 
 #define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
 #define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
@@ -165,8 +165,8 @@ public:
     ndPluginStats(const string &tag);
     virtual ~ndPluginStats();
 
-    virtual void ProcessStats(const nd_packet_stats &pkt_totals) { }
-    virtual void ProcessStats(const string &iface, const nd_packet_stats *pkt_stats) { }
+    virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
+    virtual void ProcessStats(const string &iface, const ndPacketStats &pkt_stats) { }
     virtual void ProcessStats(const ndFlowMap *flows) { }
 
 protected:

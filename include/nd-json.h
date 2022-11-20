@@ -43,8 +43,7 @@ void nd_json_protocols(string &json_string);
 
 void nd_json_add_interfaces(json &parent);
 void nd_json_add_devices(json &parent);
-void nd_json_add_stats(json &parent,
-    nd_packet_stats *stats, struct pcap_stat *pcap);
+void nd_json_add_stats(json &parent, const ndPacketStats &stats);
 
 typedef vector<string> ndJsonDataChunks;
 typedef map<string, ndJsonDataChunks> ndJsonData;

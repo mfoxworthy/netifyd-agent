@@ -6,7 +6,7 @@ m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.68])
-AC_INIT([Netify Agent], [4.3.4],
+AC_INIT([Netify Agent], [4.3.5],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
     [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
@@ -47,12 +47,18 @@ AX_CXX_COMPILE_STDCXX_11([ext], [optional])
 AS_IF([test "$HAVE_CXX11" = "0"], [AX_CXX_COMPILE_STDCXX_0X])
 
 # Checks for libraries.
-AC_CHECK_LIB([pcap],
-    [pcap_open_live], [], [AC_MSG_ERROR([libpcap/pcap_open_live() not found.])])
 AC_CHECK_LIB([pthread],
     [pthread_create], [], [AC_MSG_ERROR([libpthread/pthread_create() not found.])])
 AC_CHECK_LIB([rt],
     [timer_create], [], [AC_MSG_ERROR([librt/timer_create() not found.])])
+
+AC_CHECK_LIB([pcap], [pcap_open_live])
+
+AS_IF([test "$ac_cv_lib_pcap_pcap_open_live" = "yes"], [
+    AC_DEFINE([_ND_USE_LIBPCAP], [1], [Define if libpcap is available.])
+    ND_DEFINES+=" -D_ND_USE_LIBPCAP=1"
+    AM_CONDITIONAL(USE_LIBPCAP, true)
+])
 
 case "${host_os}" in
     linux*)

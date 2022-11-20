@@ -69,6 +69,7 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-ndpi.h"
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-thread.h"
 #include "nd-util.h"

@@ -46,6 +46,7 @@ using namespace std;
 #include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-base64.h"
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
@@ -286,37 +287,34 @@ void nd_json_add_devices(json &parent)
     }
 }
 
-void nd_json_add_stats(json &parent,
-    nd_packet_stats *stats, struct pcap_stat *pcap)
+void nd_json_add_stats(json &parent, const ndPacketStats &stats)
 {
-    parent["raw"] = stats->pkt.raw;
-    parent["ethernet"] = stats->pkt.eth;
-    parent["mpls"] = stats->pkt.mpls;
-    parent["pppoe"] = stats->pkt.pppoe;
-    parent["vlan"] = stats->pkt.vlan;
-    parent["fragmented"] = stats->pkt.frags;
-    parent["discarded"] = stats->pkt.discard;
-    parent["discarded_bytes"] = stats->pkt.discard_bytes;
-    parent["largest_bytes"] = stats->pkt.maxlen;
-    parent["ip"] = stats->pkt.ip;
-    parent["tcp"] = stats->pkt.tcp;
-    parent["tcp_seq_error"] = stats->pkt.tcp_seq_error;
-    parent["tcp_resets"] = stats->pkt.tcp_resets;
-    parent["udp"] = stats->pkt.udp;
-    parent["icmp"] = stats->pkt.icmp;
-    parent["igmp"] = stats->pkt.igmp;
-    parent["ip_bytes"] = stats->pkt.ip_bytes;
-    parent["wire_bytes"] = stats->pkt.wire_bytes;
+    parent["raw"] = stats.pkt.raw;
+    parent["ethernet"] = stats.pkt.eth;
+    parent["mpls"] = stats.pkt.mpls;
+    parent["pppoe"] = stats.pkt.pppoe;
+    parent["vlan"] = stats.pkt.vlan;
+    parent["fragmented"] = stats.pkt.frags;
+    parent["discarded"] = stats.pkt.discard;
+    parent["discarded_bytes"] = stats.pkt.discard_bytes;
+    parent["largest_bytes"] = stats.pkt.maxlen;
+    parent["ip"] = stats.pkt.ip;
+    parent["tcp"] = stats.pkt.tcp;
+    parent["tcp_seq_error"] = stats.pkt.tcp_seq_error;
+    parent["tcp_resets"] = stats.pkt.tcp_resets;
+    parent["udp"] = stats.pkt.udp;
+    parent["icmp"] = stats.pkt.icmp;
+    parent["igmp"] = stats.pkt.igmp;
+    parent["ip_bytes"] = stats.pkt.ip_bytes;
+    parent["wire_bytes"] = stats.pkt.wire_bytes;
+    parent["queue_dropped"] = stats.pkt.queue_dropped;
+    parent["capture_dropped"] = stats.pkt.capture_dropped;
+    parent["capture_filtered"] = stats.pkt.capture_filtered;
 
-    parent["pcap_recv"] = pcap->ps_recv - stats->pcap_last.ps_recv;
-    parent["pcap_drop"] = pcap->ps_drop - stats->pcap_last.ps_drop;
-    parent["pcap_ifdrop"] = pcap->ps_ifdrop - stats->pcap_last.ps_ifdrop;
-
-    parent["queue_dropped"] = stats->pkt.queue_dropped;
-
-    stats->pcap_last.ps_recv = pcap->ps_recv;
-    stats->pcap_last.ps_drop = pcap->ps_drop;
-    stats->pcap_last.ps_ifdrop = pcap->ps_ifdrop;
+    // XXX: Deprecated
+    parent["pcap_recv"] = stats.pkt.raw;
+    parent["pcap_drop"] = stats.pkt.capture_dropped;
+    parent["pcap_ifdrop"] = 0;
 }
 
 void ndJsonStatus::Parse(const string &json_string)

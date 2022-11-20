@@ -154,6 +154,7 @@ using namespace std;
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
@@ -280,26 +281,17 @@ ndPacketQueue::ndPacketQueue(const string &tag) : pkt_queue_size(0)
 ndPacketQueue::~ndPacketQueue()
 {
     while (! pkt_queue.empty()) {
-        delete pkt_queue.front().first;
-        delete [] pkt_queue.front().second;
+        delete pkt_queue.front();
         pkt_queue.pop();
     }
 }
 
-size_t ndPacketQueue::push(struct pcap_pkthdr *pkt_header, const uint8_t *pkt_data)
+size_t ndPacketQueue::push(ndPacket *pkt)
 {
     size_t dropped = 0;
 
-    struct pcap_pkthdr *ph = new struct pcap_pkthdr;
-    if (ph == NULL) throw ndCaptureThreadException(strerror(ENOMEM));
-    memcpy(ph, pkt_header, sizeof(struct pcap_pkthdr));
-
-    uint8_t *pd = new uint8_t[pkt_header->caplen];
-    if (pd == NULL) throw ndCaptureThreadException(strerror(ENOMEM));
-    memcpy(pd, pkt_data, pkt_header->caplen);
-
-    pkt_queue.push(make_pair(ph, pd));
-    pkt_queue_size += (sizeof(struct pcap_pkthdr) + pkt_header->caplen);
+    pkt_queue.push(pkt);
+    pkt_queue_size += pkt->GetCaptureLength();
 
 #ifdef _ND_LOG_PACKET_QUEUE
     nd_dprintf("%s: packet queue push, new size: %lu\n",
@@ -321,13 +313,11 @@ size_t ndPacketQueue::push(struct pcap_pkthdr *pkt_header, const uint8_t *pkt_da
     return dropped;
 }
 
-bool ndPacketQueue::front(
-    struct pcap_pkthdr **pkt_header, const uint8_t **pkt_data)
+bool ndPacketQueue::front(ndPacket **pkt)
 {
     if (pkt_queue.empty()) return false;
 
-    *pkt_header = pkt_queue.front().first;
-    *pkt_data = pkt_queue.front().second;
+    *pkt = pkt_queue.front();
 #ifdef _ND_LOG_PACKET_QUEUE
     nd_dprintf("%s: packet queue front.\n", tag.c_str());
 #endif
@@ -338,13 +328,11 @@ void ndPacketQueue::pop(const string &oper)
 {
     if (pkt_queue.empty()) return;
 
-    struct pcap_pkthdr *ph = pkt_queue.front().first;
-    const uint8_t *pd = pkt_queue.front().second;
+    ndPacket *pkt = pkt_queue.front();
 
-    pkt_queue_size -= (sizeof(struct pcap_pkthdr) + ph->caplen);
+    pkt_queue_size -= pkt->GetCaptureLength();
 
-    delete ph;
-    delete [] pd;
+    delete pkt;
 
     pkt_queue.pop();
 
@@ -355,30 +343,22 @@ void ndPacketQueue::pop(const string &oper)
 }
 
 ndCaptureThread::ndCaptureThread(
+    ndCaptureSource cs_type,
     int16_t cpu,
     nd_interface::iterator iface,
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
-    nd_packet_stats *stats,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     : ndThread(iface->second, (long)cpu, true),
+    dl_type(0), cs_type(cs_type),
     iface(iface), thread_socket(thread_socket),
-    capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS),
-    pcap(NULL), pcap_fd(-1), pcap_datalink_type(0),
-    pkt_header(NULL), pkt_data(NULL),
-    tv_epoch(0), ts_pkt_first(0), ts_pkt_last(0),
-    stats(stats), dhc(dhc),
-    pkt_queue(iface->second),
+/*    capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS), */
+    ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
-    memset(stats, 0, sizeof(nd_packet_stats));
-
     nd_iface_name(iface->second, tag);
-    nd_capture_filename(iface->second, pcap_file);
-    if (pcap_file.size())
-        nd_dprintf("%s: capture file: %s\n", tag.c_str(), pcap_file.c_str());
 
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);
@@ -393,242 +373,9 @@ ndCaptureThread::ndCaptureThread(
         dev_mac[0], dev_mac[1], dev_mac[2],
         dev_mac[3], dev_mac[4], dev_mac[5]
     );
-
-    nd_dprintf("%s: capture thread created.\n", tag.c_str());
 }
 
-ndCaptureThread::~ndCaptureThread()
-{
-    Join();
-
-    if (pcap != NULL) pcap_close(pcap);
-
-    nd_dprintf("%s: capture thread destroyed.\n", tag.c_str());
-}
-
-void *ndCaptureThread::Entry(void)
-{
-    int rc;
-    struct ifreq ifr;
-    bool warnings = true;
-
-    while (! ShouldTerminate() || ! pkt_queue.empty()) {
-
-        if (ShouldTerminate() && pcap != NULL) {
-            pcap_close(pcap);
-            pcap = NULL;
-        }
-
-        if (! pkt_queue.empty() && pthread_mutex_trylock(&lock) == 0) {
-
-            pkt_queue.front(&pkt_header, &pkt_data);
-
-            try {
-                ProcessPacket();
-            }
-            catch (exception &e) {
-                pthread_mutex_unlock(&lock);
-                throw;
-            }
-
-            pthread_mutex_unlock(&lock);
-
-            pkt_queue.pop();
-        }
-
-        if (pcap != NULL) {
-            int max_fd = 0;
-            struct timeval tv;
-            fd_set fds_read;
-
-            FD_ZERO(&fds_read);
-            FD_SET(pcap_fd, &fds_read);
-
-            memset(&tv, 0, sizeof(struct timeval));
-
-            if (pkt_queue.empty()) tv.tv_sec = 1;
-
-            max_fd = max(fd_ipc[0], pcap_fd);
-            rc = select(max_fd + 1, &fds_read, NULL, NULL, &tv);
-
-            if (rc == 0) continue;
-            else if (rc == -1)
-                throw ndCaptureThreadException(strerror(errno));
-
-            if (! FD_ISSET(pcap_fd, &fds_read)) continue;
-
-            rc = 0;
-            while (ShouldTerminate() == false &&
-                (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
-
-                if (pthread_mutex_trylock(&lock) != 0)
-                    stats->pkt.queue_dropped += pkt_queue.push(pkt_header, pkt_data);
-                else {
-                    bool from_queue = false;
-
-                    if (! pkt_queue.empty()) {
-                        stats->pkt.queue_dropped += pkt_queue.push(pkt_header, pkt_data);
-                        from_queue = pkt_queue.front(&pkt_header, &pkt_data);
-                    }
-
-                    try {
-                        ProcessPacket();
-                    }
-                    catch (exception &e) {
-                        pthread_mutex_unlock(&lock);
-                        throw;
-                    }
-                    pthread_mutex_unlock(&lock);
-
-                    if (from_queue) pkt_queue.pop();
-                }
-            }
-
-            if (rc < 0) {
-                if (rc == -1) {
-                    nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
-                    if (pcap_file.size())
-                        Terminate();
-                    else
-                        sleep(1);
-                }
-                else if (rc == -2) {
-                    nd_dprintf(
-                        "%s: end of capture file: %s, flushing queued packets: %lu\n",
-                        tag.c_str(), pcap_file.c_str(), pkt_queue.size());
-
-                    Terminate();
-                }
-
-                pcap_close(pcap);
-                pcap = NULL;
-            }
-        }
-        else if (! ShouldTerminate()) {
-            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
-                ! (ifr.ifr_flags & IFF_UP)) {
-                if (warnings) {
-                    nd_printf("%s: WARNING: interface not available.\n",
-                        tag.c_str());
-                    warnings = false;
-                }
-                sleep(1);
-                continue;
-            }
-
-            warnings = true;
-
-            if ((pcap = OpenCapture()) == NULL) {
-                sleep(1);
-                continue;
-            }
-
-            pcap_datalink_type = pcap_datalink(pcap);
-
-            nd_dprintf("%s: capture started on CPU: %lu\n",
-                tag.c_str(), cpu >= 0 ? cpu : 0);
-        }
-    }
-
-    nd_dprintf(
-        "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
-
-    return NULL;
-}
-
-pcap_t *ndCaptureThread::OpenCapture(void)
-{
-    pcap_t *pcap_new = NULL;
-
-    memset(pcap_errbuf, 0, PCAP_ERRBUF_SIZE);
-
-    if (pcap_file.size()) {
-        if ((pcap_new = pcap_open_offline(pcap_file.c_str(), pcap_errbuf)) != NULL) {
-            tv_epoch = time(NULL);
-            nd_dprintf("%s: reading from capture file: %s: v%d.%d\n",
-                tag.c_str(), pcap_file.c_str(),
-                pcap_major_version(pcap_new), pcap_minor_version(pcap_new));
-        }
-    }
-    else {
-        pcap_new = pcap_open_live(
-            tag.c_str(),
-            nd_config.max_capture_length,
-            1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
-        );
-
-#if 0
-        if (pcap_new != NULL) {
-            bool adapter = false;
-            int *pcap_tstamp_types, count;
-            if ((count = pcap_list_tstamp_types(pcap_new, &pcap_tstamp_types)) > 0) {
-                for (int i = 0; i < count; i++) {
-                    nd_dprintf("%s: tstamp_type: %s\n", tag.c_str(),
-                        pcap_tstamp_type_val_to_name(pcap_tstamp_types[i]));
-                    if (pcap_tstamp_types[i] == PCAP_TSTAMP_ADAPTER)
-                        adapter = true;
-                }
-
-                pcap_free_tstamp_types(pcap_tstamp_types);
-
-                //if (adapter) {
-                //    if (pcap_set_tstamp_type(pcap_new, PCAP_TSTAMP_ADAPTER) != 0) {
-                //        nd_printf("%s: Failed to set timestamp type: %s\n", tag.c_str(),
-                //            pcap_geterr(pcap_new));
-                //    }
-                //}
-            }
-        }
-#endif
-    }
-
-    if (pcap_new == NULL)
-        nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
-    else {
-        if (pcap_file.empty()) {
-            if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
-                nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
-        }
-
-        if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
-            nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
-
-        nd_device_filter::const_iterator i = nd_config.device_filters.find(tag);
-
-        if (i != nd_config.device_filters.end()) {
-
-            if (pcap_compile(pcap_new, &pcap_filter,
-                i->second.c_str(), 1, PCAP_NETMASK_UNKNOWN) < 0) {
-                nd_printf("%s: pcap_compile: %s\n",
-                    tag.c_str(), pcap_geterr(pcap_new));
-                pcap_close(pcap_new);
-                return NULL;
-            }
-
-            if (pcap_setfilter(pcap_new, &pcap_filter) < 0) {
-                nd_printf("%s: pcap_setfilter: %s\n",
-                    tag.c_str(), pcap_geterr(pcap_new));
-                pcap_close(pcap_new);
-                return NULL;
-            }
-        }
-    }
-
-    return pcap_new;
-}
-
-// XXX: Not thread-safe!
-// XXX: Ensure the object is locked before calling.
-int ndCaptureThread::GetCaptureStats(struct pcap_stat &stats)
-{
-    memset(&stats, 0, sizeof(struct pcap_stat));
-
-    if (pcap_file.size() || pcap == NULL) return 1;
-
-    return pcap_stats(pcap, &stats);
-}
-
-void ndCaptureThread::ProcessPacket(void)
+void ndCaptureThread::ProcessPacket(const ndPacket *packet)
 {
     ndFlow *nf, flow(iface);
 
@@ -650,11 +397,11 @@ void ndCaptureThread::ProcessPacket(void)
     uint8_t vlan_packet = 0;
     int addr_cmp = 0;
 
-    uint64_t ts_pkt = ((uint64_t)pkt_header->ts.tv_sec) *
+    uint64_t ts_pkt = ((uint64_t)packet->tv_sec) *
             ND_DETECTION_TICKS +
-            pkt_header->ts.tv_usec /
+            packet->tv_usec /
             (1000000 / ND_DETECTION_TICKS);
-
+#if 0
     if (pcap_file.size()) {
         if (ts_pkt_first == 0)
             ts_pkt_first = ts_pkt;
@@ -674,26 +421,27 @@ void ndCaptureThread::ProcessPacket(void)
         }
     }
     else
+#endif
         if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
     ts_pkt_last = ts_pkt;
 
-    stats->pkt.raw++;
-    if (pkt_header->len > stats->pkt.maxlen)
-        stats->pkt.maxlen = pkt_header->len;
+    stats.pkt.raw++;
+    if (packet->length > stats.pkt.maxlen)
+        stats.pkt.maxlen = packet->length;
 
-    switch (pcap_datalink_type) {
+    switch (dl_type) {
     case DLT_NULL:
-        if (pkt_header->caplen < sizeof(uint32_t)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+        if (packet->caplen < sizeof(uint32_t)) {
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
 #endif
             return;
         }
 
-        switch (ntohl(*((uint32_t *)pkt_data))) {
+        switch (ntohl(*((uint32_t *)packet->data))) {
         case 2:
             type = ETHERTYPE_IP;
             break;
@@ -704,10 +452,10 @@ void ndCaptureThread::ProcessPacket(void)
             break;
         default:
 #ifdef _ND_LOG_PKT_DISCARD
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
         nd_dprintf("%s: discard: Unsupported BSD loopback encapsulation type: %lu\n",
-            tag.c_str(), ntohl(*((uint32_t *)pkt_data)));
+            tag.c_str(), ntohl(*((uint32_t *)packet->data)));
 #endif
             return;
         }
@@ -716,27 +464,27 @@ void ndCaptureThread::ProcessPacket(void)
         break;
 
     case DLT_EN10MB:
-        if (pkt_header->caplen < sizeof(struct ether_header)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+        if (packet->caplen < sizeof(struct ether_header)) {
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
 #endif
             return;
         }
 
-        hdr_eth = reinterpret_cast<const struct ether_header *>(pkt_data);
+        hdr_eth = reinterpret_cast<const struct ether_header *>(packet->data);
         type = ntohs(hdr_eth->ether_type);
         l2_len = sizeof(struct ether_header);
-        stats->pkt.eth++;
+        stats.pkt.eth++;
 
         // STP?
         if ((hdr_eth->ether_shost[0] == 0x01 && hdr_eth->ether_shost[1] == 0x80 &&
             hdr_eth->ether_shost[2] == 0xC2) ||
             (hdr_eth->ether_dhost[0] == 0x01 && hdr_eth->ether_dhost[1] == 0x80 &&
             hdr_eth->ether_dhost[2] == 0xC2)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: STP protocol.\n", tag.c_str());
 #endif
@@ -746,16 +494,16 @@ void ndCaptureThread::ProcessPacket(void)
         break;
 
     case DLT_LINUX_SLL:
-        if (pkt_header->caplen < sizeof(struct sll_header)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+        if (packet->caplen < sizeof(struct sll_header)) {
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Truncated packet.", tag.c_str());
 #endif
             return;
         }
 
-        hdr_sll = reinterpret_cast<const struct sll_header *>(pkt_data);
+        hdr_sll = reinterpret_cast<const struct sll_header *>(packet->data);
         type = hdr_sll->sll_protocol;
         l2_len = SLL_HDR_LEN;
         break;
@@ -768,18 +516,18 @@ void ndCaptureThread::ProcessPacket(void)
         break;
 
     default:
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: Unsupported datalink type: 0x%x\n",
-            tag.c_str(), (unsigned)pcap_datalink_type);
+            tag.c_str(), (unsigned)dl_type);
 #endif
         return;
     }
 
-    if (l2_len > pkt_header->caplen) {
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+    if (l2_len > packet->caplen) {
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: layer-2 length is beyond capture length.\n",
             tag.c_str());
@@ -788,9 +536,9 @@ void ndCaptureThread::ProcessPacket(void)
 
     while (true) {
         if (type == ETHERTYPE_VLAN) {
-            if (l2_len + 4 > pkt_header->caplen) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+            if (l2_len + 4 > packet->caplen) {
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: layer-2 + VLAN length is beyond capture length.\n",
                     tag.c_str());
@@ -800,23 +548,23 @@ void ndCaptureThread::ProcessPacket(void)
             // TODO: Replace with struct vlan_tag from <pcap/vlan.h>
             // See: https://en.wikipedia.org/wiki/IEEE_802.1Q
             vlan_packet = 1;
-            flow.vlan_id = ((pkt_data[l2_len] << 8) + pkt_data[l2_len + 1]) & 0xFFF;
-            type = (pkt_data[l2_len + 2] << 8) + pkt_data[l2_len + 3];
+            flow.vlan_id = ((packet->data[l2_len] << 8) + packet->data[l2_len + 1]) & 0xFFF;
+            type = (packet->data[l2_len + 2] << 8) + packet->data[l2_len + 3];
             l2_len += VLAN_TAG_LEN;
         }
         else if (type == ETHERTYPE_MPLS_UC || type == ETHERTYPE_MPLS_MC) {
-            stats->pkt.mpls++;
+            stats.pkt.mpls++;
             union mpls {
                 uint32_t u32;
                 struct nd_mpls_header_t mpls;
             } mpls;
-            mpls.u32 = ntohl(*((uint32_t *)&pkt_data[l2_len]));
+            mpls.u32 = ntohl(*((uint32_t *)&packet->data[l2_len]));
             type = ETHERTYPE_IP;
             l2_len += 4;
 
-            if (l2_len > pkt_header->caplen) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+            if (l2_len > packet->caplen) {
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: layer-2 + MPLS length is beyond capture length.\n",
                     tag.c_str());
@@ -826,24 +574,24 @@ void ndCaptureThread::ProcessPacket(void)
             while (! mpls.mpls.s) {
                 l2_len += 4;
 
-                if (l2_len > pkt_header->caplen) {
-                    stats->pkt.discard++;
-                    stats->pkt.discard_bytes += pkt_header->len;
+                if (l2_len > packet->caplen) {
+                    stats.pkt.discard++;
+                    stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                     nd_dprintf("%s: discard: layer-2 + MPLS length is beyond capture length.\n",
                         tag.c_str());
 #endif
                 }
-                mpls.u32 = ntohl(*((uint32_t *)&pkt_data[l2_len]));
+                mpls.u32 = ntohl(*((uint32_t *)&packet->data[l2_len]));
             }
         }
         else if (type == ETHERTYPE_PPPOE) {
-            stats->pkt.pppoe++;
+            stats.pkt.pppoe++;
             type = ETHERTYPE_IP;
 
-            if (l2_len + 6 > pkt_header->caplen) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+            if (l2_len + 6 > packet->caplen) {
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: layer-2 + PPP length is beyond capture length.\n",
                     tag.c_str());
@@ -851,11 +599,11 @@ void ndCaptureThread::ProcessPacket(void)
             }
 
             ppp_proto = (uint16_t)(
-                _ND_PPP_PROTOCOL(pkt_data + l2_len + 6)
+                _ND_PPP_PROTOCOL(packet->data + l2_len + 6)
             );
             if (ppp_proto != PPP_IP && ppp_proto != PPP_IPV6) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: unsupported PPP protocol: 0x%04hx\n",
                     tag.c_str(), ppp_proto);
@@ -865,9 +613,9 @@ void ndCaptureThread::ProcessPacket(void)
 
             l2_len += 8;
 
-            if (l2_len > pkt_header->caplen) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+            if (l2_len > packet->caplen) {
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: layer-2 + PPP length is beyond capture length.\n",
                     tag.c_str());
@@ -875,9 +623,9 @@ void ndCaptureThread::ProcessPacket(void)
             }
         }
         else if (type == ETHERTYPE_PPPOEDISC) {
-            stats->pkt.pppoe++;
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.pppoe++;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: PPPoE discovery protocol.\n", tag.c_str());
 #endif
@@ -887,19 +635,19 @@ void ndCaptureThread::ProcessPacket(void)
             break;
     }
 
-    stats->pkt.vlan += vlan_packet;
+    stats.pkt.vlan += vlan_packet;
 
 nd_process_ip:
-    if (l2_len + sizeof(struct ip) > pkt_header->caplen) {
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+    if (l2_len + sizeof(struct ip) > packet->caplen) {
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: layer-2 + IP length is beyond capture length.\n",
             tag.c_str());
 #endif
     }
 
-    hdr_ip = reinterpret_cast<const struct ip *>(&pkt_data[l2_len]);
+    hdr_ip = reinterpret_cast<const struct ip *>(&packet->data[l2_len]);
 
     flow.ip_version = hdr_ip->ip_v;
 
@@ -914,13 +662,13 @@ nd_process_ip:
         flow.upper_addr.ss_family = AF_INET;
         l3 = reinterpret_cast<const uint8_t *>(hdr_ip);
 
-        if (pkt_header->caplen >= l2_len)
+        if (packet->caplen >= l2_len)
             frag_off = ntohs(hdr_ip->ip_off);
 
-        if (pkt_header->caplen - l2_len < sizeof(struct ip)) {
+        if (packet->caplen - l2_len < sizeof(struct ip)) {
             // XXX: header too small
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: header too small\n", tag.c_str());
 #endif
@@ -929,9 +677,9 @@ nd_process_ip:
 
         if ((frag_off & 0x3FFF) != 0) {
             // XXX: fragmented packets are not supported
-            stats->pkt.frags++;
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.frags++;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: fragmented 0x3FFF\n", tag.c_str());
 #endif
@@ -940,21 +688,21 @@ nd_process_ip:
 
         if ((frag_off & 0x1FFF) != 0) {
             // XXX: fragmented packets are not supported
-            stats->pkt.frags++;
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.frags++;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: fragmented 0x1FFF\n", tag.c_str());
 #endif
             return;
         }
 
-        if (l3_len > (pkt_header->caplen - l2_len)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+        if (l3_len > (packet->caplen - l2_len)) {
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
-            nd_dprintf("%s: discard: l3_len[%hu] > (pkt_header->caplen[%hu] - l2_len[%hu])(%hu)\n",
-                tag.c_str(), l3_len, pkt_header->caplen, l2_len, pkt_header->caplen - l2_len);
+            nd_dprintf("%s: discard: l3_len[%hu] > (packet->caplen[%hu] - l2_len[%hu])(%hu)\n",
+                tag.c_str(), l3_len, packet->caplen, l2_len, packet->caplen - l2_len);
 #endif
             return;
         }
@@ -964,7 +712,7 @@ nd_process_ip:
         if (addr_cmp < 0) {
             flow.lower_addr4->sin_addr.s_addr = hdr_ip->ip_src.s_addr;
             flow.upper_addr4->sin_addr.s_addr = hdr_ip->ip_dst.s_addr;
-            if (pcap_datalink_type == DLT_EN10MB) {
+            if (dl_type == DLT_EN10MB) {
                 memcpy(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
                 memcpy(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
             }
@@ -972,7 +720,7 @@ nd_process_ip:
         else {
             flow.lower_addr4->sin_addr.s_addr = hdr_ip->ip_dst.s_addr;
             flow.upper_addr4->sin_addr.s_addr = hdr_ip->ip_src.s_addr;
-            if (pcap_datalink_type == DLT_EN10MB) {
+            if (dl_type == DLT_EN10MB) {
                 memcpy(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
                 memcpy(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
             }
@@ -984,7 +732,7 @@ nd_process_ip:
 
         if (type == 0) type = ETHERTYPE_IPV6;
 
-        hdr_ip6 = reinterpret_cast<const struct ip6_hdr *>(&pkt_data[l2_len]);
+        hdr_ip6 = reinterpret_cast<const struct ip6_hdr *>(&packet->data[l2_len]);
 
         l3 = reinterpret_cast<const uint8_t *>(hdr_ip6);
         l3_len = sizeof(struct ip6_hdr);
@@ -993,8 +741,8 @@ nd_process_ip:
         flow.ip_protocol = hdr_ip6->ip6_ctlun.ip6_un1.ip6_un1_nxt;
 
         if (ndpi_handle_ipv6_extension_headers(l3_len, &l4, &l4_len, &flow.ip_protocol)) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: Error walking IPv6 extensions.\n", tag.c_str());
 #endif
@@ -1018,7 +766,7 @@ nd_process_ip:
         if (addr_cmp < 0) {
             memcpy(&flow.lower_addr6->sin6_addr, &hdr_ip6->ip6_src, sizeof(struct in6_addr));
             memcpy(&flow.upper_addr6->sin6_addr, &hdr_ip6->ip6_dst, sizeof(struct in6_addr));
-            if (pcap_datalink_type == DLT_EN10MB) {
+            if (dl_type == DLT_EN10MB) {
                 memcpy(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
                 memcpy(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
             }
@@ -1026,7 +774,7 @@ nd_process_ip:
         else {
             memcpy(&flow.lower_addr6->sin6_addr, &hdr_ip6->ip6_dst, sizeof(struct in6_addr));
             memcpy(&flow.upper_addr6->sin6_addr, &hdr_ip6->ip6_src, sizeof(struct in6_addr));
-            if (pcap_datalink_type == DLT_EN10MB) {
+            if (dl_type == DLT_EN10MB) {
                 memcpy(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
                 memcpy(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
             }
@@ -1034,18 +782,18 @@ nd_process_ip:
     }
     else {
         // XXX: Warning: unsupported IP protocol version (IPv4/6 only)
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: invalid IP protocol version: %hhx\n",
-            tag.c_str(), pkt_data[l2_len]);
+            tag.c_str(), packet->data[l2_len]);
 #endif
         return;
     }
 
-    if (l2_len + l3_len + l4_len > pkt_header->caplen) {
-        stats->pkt.discard++;
-        stats->pkt.discard_bytes += pkt_header->len;
+    if (l2_len + l3_len + l4_len > packet->caplen) {
+        stats.pkt.discard++;
+        stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
         nd_dprintf("%s: discard: L2 + L3 + L4 length is beyond capture length.\n",
             tag.c_str());
@@ -1125,7 +873,7 @@ nd_process_ip:
 
                 if (hdr_gtpv1->type == _ND_GTP_G_PDU) {
 
-                    l2_len = (l4 - pkt_data) + sizeof(struct udphdr) + 8;
+                    l2_len = (l4 - packet->data) + sizeof(struct udphdr) + 8;
 
                     if (hdr_gtpv1->flags.ext_hdr) l2_len += 1;
                     if (hdr_gtpv1->flags.seq_num) l2_len += 4;
@@ -1157,11 +905,11 @@ nd_process_ip:
 #endif
     switch (flow.ip_protocol) {
     case IPPROTO_TCP:
-        stats->pkt.tcp++;
+        stats.pkt.tcp++;
 
         if (l4_len < 20) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: TCP header too small.\n",
                 tag.c_str());
@@ -1174,8 +922,8 @@ nd_process_ip:
             uint16_t hdr_size = hdr_tcp->th_off * 4;
 
             if (hdr_size < 20 || hdr_size > l4_len) {
-                stats->pkt.discard++;
-                stats->pkt.discard_bytes += pkt_header->len;
+                stats.pkt.discard++;
+                stats.pkt.discard_bytes += packet->length;
     #ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: unexpected TCP payload length.\n",
                     tag.c_str());
@@ -1209,11 +957,11 @@ nd_process_ip:
         break;
 
     case IPPROTO_UDP:
-        stats->pkt.udp++;
+        stats.pkt.udp++;
 
         if (l4_len < 8) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: UDP header too small.\n",
                 tag.c_str());
@@ -1243,8 +991,8 @@ nd_process_ip:
         }
 
         if (ntohs(hdr_udp->uh_ulen) != l4_len) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
 #ifdef _ND_LOG_PKT_DISCARD
             nd_dprintf("%s: discard: unexpected UDP data length.\n",
                 tag.c_str());
@@ -1259,11 +1007,11 @@ nd_process_ip:
 
     case IPPROTO_ICMP:
     case IPPROTO_ICMPV6:
-        stats->pkt.icmp++;
+        stats.pkt.icmp++;
         break;
 
     case IPPROTO_IGMP:
-        stats->pkt.igmp++;
+        stats.pkt.igmp++;
         break;
 
     default:
@@ -1308,9 +1056,9 @@ nd_process_ip:
     }
     else {
         if (nd_config.max_flows > 0 && nd_flow_count + 1 > nd_config.max_flows) {
-            stats->pkt.discard++;
-            stats->pkt.discard_bytes += pkt_header->len;
-            stats->flow.dropped++;
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
+            stats.flow.dropped++;
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
                 tag.c_str(), nd_config.max_flows);
@@ -1386,30 +1134,30 @@ nd_process_ip:
         }
     }
 
-    stats->pkt.wire_bytes += pkt_header->len + 24;
+    stats.pkt.wire_bytes += packet->length + 24;
 
-    stats->pkt.ip++;
-    stats->pkt.ip_bytes += pkt_header->len;
+    stats.pkt.ip++;
+    stats.pkt.ip_bytes += packet->length;
 
     if (nf->ip_version == 4) {
-        stats->pkt.ip4++;
-        stats->pkt.ip4_bytes += pkt_header->len;
+        stats.pkt.ip4++;
+        stats.pkt.ip4_bytes += packet->length;
     }
     else {
-        stats->pkt.ip6++;
-        stats->pkt.ip6_bytes += pkt_header->len;
+        stats.pkt.ip6++;
+        stats.pkt.ip6_bytes += packet->length;
     }
 
     nf->total_packets++;
-    nf->total_bytes += pkt_header->len;
+    nf->total_bytes += packet->length;
 
     if (addr_cmp < 0) {
         nf->lower_packets++;
-        nf->lower_bytes += pkt_header->len;
+        nf->lower_bytes += packet->length;
     }
     else {
         nf->upper_packets++;
-        nf->upper_bytes += pkt_header->len;
+        nf->upper_bytes += packet->length;
     }
 
     nf->ts_last_seen = ts_pkt;
@@ -1418,12 +1166,12 @@ nd_process_ip:
 
     if (nf->ip_protocol == IPPROTO_TCP) {
         if (hdr_tcp->th_seq <= nf->tcp_last_seq) {
-            stats->pkt.tcp_seq_error++;
+            stats.pkt.tcp_seq_error++;
             nf->tcp_last_seq = hdr_tcp->th_seq;
         }
 
         if (hdr_tcp->th_flags & TH_FIN) nf->flags.tcp_fin = true;
-        if (hdr_tcp->th_flags & TH_RST) stats->pkt.tcp_resets++;
+        if (hdr_tcp->th_flags & TH_RST) stats.pkt.tcp_resets++;
     }
 
     if (dhc != NULL && pkt != NULL && pkt_len > sizeof(struct nd_dns_header_t)) {
@@ -1432,7 +1180,7 @@ nd_process_ip:
         if (lport == 53 || uport == 53 || lport == 5355 || uport == 5355) {
 
             const char *host = NULL;
-            bool is_query = ProcessDNSPacket(&host, pkt, pkt_len);
+            bool is_query = ProcessDNSPacket(packet, &host);
 #if 0
             if (is_query) {
                 // Rehash M/DNS flows:
@@ -1506,7 +1254,7 @@ nd_process_ip:
                 nf,
                 (nf->ip_version == 4) ?
                     (uint8_t *)hdr_ip : (uint8_t *)hdr_ip6,
-                pkt_header->caplen - l2_len, addr_cmp
+                packet->caplen - l2_len, addr_cmp
             );
         }
         else {
@@ -1515,13 +1263,13 @@ nd_process_ip:
         }
     }
 
-    if (capture_unknown_flows) nf->push(pkt_header, pkt_data);
+//    if (capture_unknown_flows) nf->push(pkt_header, packet->data);
 }
 
-bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, uint32_t length)
+bool ndCaptureThread::ProcessDNSPacket(const ndPacket *packet, const char **host)
 {
     ns_rr rr;
-    int rc = ns_initparse(pkt, length, &ns_h);
+    int rc = ns_initparse(packet->data, packet->caplen, &ns_h);
 
     *host = NULL;
 
@@ -1529,7 +1277,7 @@ bool ndCaptureThread::ProcessDNSPacket(const char **host, const uint8_t *pkt, ui
 #ifdef _ND_LOG_DHC
         nd_dprintf(
             "%s: dns initparse error: %s, length: %hu\n",
-            tag.c_str(), strerror(errno), length);
+            tag.c_str(), strerror(errno), packet->caplen);
 #endif
         return false;
     }

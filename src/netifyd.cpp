@@ -94,6 +94,7 @@ using namespace std;
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
@@ -110,6 +111,9 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
+#ifdef _ND_USE_LIBPCAP
+#include "nd-capture-pcap.h"
+#endif
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
@@ -122,10 +126,9 @@ using namespace std;
 
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
-static nd_stats stats;
 static nd_capture_threads capture_threads;
 static nd_detection_threads detection_threads;
-static nd_packet_stats pkt_totals;
+static ndPacketStats pkt_totals;
 static ostringstream *nd_stats_os = NULL;
 static ndSinkThread *thread_sink = NULL;
 static ndSocketThread *thread_socket = NULL;
@@ -457,10 +460,6 @@ static void nd_init(void)
     for (nd_interface::iterator i = nd_interfaces.begin();
         i != nd_interfaces.end(); i++) {
 
-        stats[(*i).second] = new nd_packet_stats;
-        if (stats[(*i).second] == NULL)
-            throw ndSystemException(__PRETTY_FUNCTION__, "new nd_packet_stats", ENOMEM);
-
         if (! (*i).first) {
             // XXX: Only collect device MAC/addresses on LAN interfaces.
             nd_devices[(*i).second] = make_pair(
@@ -486,8 +485,6 @@ static void nd_init(void)
 static void nd_destroy(void)
 {
     for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
-
-        delete stats[(*i).second];
         if (nd_devices.find((*i).second) != nd_devices.end()) {
             if (nd_devices[(*i).second].first != NULL)
                 delete nd_devices[(*i).second].first;
@@ -496,7 +493,6 @@ static void nd_destroy(void)
         }
     }
 
-    stats.clear();
     nd_devices.clear();
 
     if (nd_flow_buckets) {
@@ -534,18 +530,23 @@ static int nd_start_capture_threads(void)
             if (! nd_ifaddrs_get_mac(nd_interface_addrs, (*i).second, mac))
                 memset(mac, 0, ETH_ALEN);
 
-            capture_threads[(*i).second] = new ndCaptureThread(
+            ndCapturePcap *pcap = new ndCapturePcap(
                 (nd_interfaces.size() > 1) ? cpu++ : -1,
                 i,
                 mac,
                 thread_socket,
                 detection_threads,
-                stats[(*i).second],
                 dns_hint_cache,
                 (i->first) ? 0 : ++private_addr
             );
 
-            capture_threads[(*i).second]->Create();
+            pcap->Create();
+
+            auto it = capture_threads.find((*i).second);
+            if (it == capture_threads.end())
+                capture_threads[(*i).second] = { pcap };
+            else
+                capture_threads[(*i).second].push_back(pcap);
 
             if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }
@@ -562,9 +563,11 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 {
     if (capture_threads.size() == 0) return;
 
-    for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
-        capture_threads[(*i).second]->Terminate();
-        delete capture_threads[(*i).second];
+    for (auto &it : capture_threads) {
+        for (auto &it_instance : it.second) {
+            it_instance->Terminate();
+            delete it_instance;
+        }
     }
 
     capture_threads.clear();
@@ -592,9 +595,10 @@ static size_t nd_reap_capture_threads(void)
 {
     size_t threads = capture_threads.size();
 
-    for (nd_capture_threads::iterator i = capture_threads.begin();
-        i != capture_threads.end(); i++) {
-        if (i->second->HasTerminated()) threads--;
+    for (auto &it : capture_threads) {
+        for (auto &it_instance : it.second) {
+            if (it_instance->HasTerminated()) threads--;
+        }
     }
 
     return threads;
@@ -1572,34 +1576,36 @@ static void nd_dump_stats(void)
 
     unordered_map<string, json> jflows;
 
-    for (nd_capture_threads::iterator i = capture_threads.begin();
-        i != capture_threads.end(); i++) {
+    for (auto &it : capture_threads) {
 
         json js, jf;
 
         string iface_name;
-        nd_iface_name(i->first, iface_name);
+        nd_iface_name(it.first, iface_name);
 
         jflows[iface_name] = vector<json>();
 
-        i->second->Lock();
+        ndPacketStats stats;
 
-        pkt_totals += *stats[i->first];
+        for (auto &it_instance : it.second) {
 
-        struct pcap_stat lpc_stat;
-        i->second->GetCaptureStats(lpc_stat);
+            it_instance->Lock();
 
-        nd_json_add_stats(js, stats[i->first], &lpc_stat);
+            it_instance->GetCaptureStats(stats);
+
+            it_instance->Unlock();
+
+            pkt_totals += stats;
+            nd_json_add_stats(js, stats);
+        }
 
         for (nd_plugins::iterator pi = plugin_stats.begin();
             pi != plugin_stats.end(); pi++) {
             ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
                 pi->second->GetPlugin()
             );
-            p->ProcessStats(iface_name, stats[i->first]);
+            p->ProcessStats(iface_name, stats);
         }
-
-        i->second->Unlock();
 
         jstatus["stats"][iface_name] = js;
     }
@@ -1614,14 +1620,6 @@ static void nd_dump_stats(void)
     }
 
     nd_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
-
-    for (nd_capture_threads::iterator i = capture_threads.begin();
-        i != capture_threads.end(); i++) {
-
-        i->second->Lock();
-        stats[i->first]->reset();
-        i->second->Unlock();
-    }
 
     jstatus["flow_count"] = nd_json_agent_stats.flows;
     jstatus["flow_count_prev"] = nd_json_agent_stats.flows_prev;
@@ -2760,8 +2758,6 @@ int main(int argc, char *argv[])
         fclose(hpid);
     }
 
-    memset(&pkt_totals, 0, sizeof(nd_packet_stats));
-
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_epoch) != 0) {
         nd_printf("Error getting epoch time: %s\n", strerror(errno));
         return 1;
@@ -3081,8 +3077,10 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_CONNECT) {
-            for (nd_capture_threads::const_iterator t = capture_threads.begin();
-                t != capture_threads.end(); t++) (*t).second->SendIPC(ND_SIG_CONNECT);
+            for (auto &it : capture_threads) {
+                for (auto &it_instance : it.second)
+                    it_instance->SendIPC(ND_SIG_CONNECT);
+            }
             continue;
         }
 

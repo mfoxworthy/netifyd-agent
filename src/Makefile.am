@@ -56,6 +56,10 @@ libnetifyd_la_SOURCES += nd-conntrack.cpp
 libnetifyd_la_LIBADD += $(LIBNETFILTER_CONNTRACK_LIBS) $(LIBMNL_LIBS)
 endif
 
+if USE_LIBPCAP
+libnetifyd_la_SOURCES += nd-capture-pcap.cpp
+endif
+
 sbin_PROGRAMS = netifyd
 netifyd_SOURCES = netifyd.cpp
 netifyd_LDADD = ./libnetifyd.la $(top_srcdir)/libs/inih/libini.la $(LIBCURL_LIBS) $(ZLIB_LIBS)

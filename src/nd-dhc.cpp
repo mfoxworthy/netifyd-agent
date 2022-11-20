@@ -56,6 +56,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-ndpi.h"
 #include "nd-sha1.h"

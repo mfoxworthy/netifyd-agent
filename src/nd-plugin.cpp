@@ -57,6 +57,7 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-thread.h"
+#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-apps.h"
