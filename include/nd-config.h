@@ -18,15 +18,21 @@
 #define _ND_CONFIG_H
 
 enum nd_dhc_save {
-    ndDHC_DISABLED = 0,
-    ndDHC_PERSISTENT = 1,
-    ndDHC_VOLATILE = 2
+    ndDHC_DISABLED,
+    ndDHC_PERSISTENT,
+    ndDHC_VOLATILE,
 };
 
 enum nd_fhc_save {
-    ndFHC_DISABLED = 0,
-    ndFHC_PERSISTENT = 1,
-    ndFHC_VOLATILE = 2
+    ndFHC_DISABLED,
+    ndFHC_PERSISTENT,
+    ndFHC_VOLATILE,
+};
+
+enum nd_capture_type {
+    ndCT_NONE,
+    ndCT_PCAP,
+    ndCT_TPV3,
 };
 
 enum nd_global_flags {
@@ -112,6 +118,7 @@ public:
     char *uuid_site;
     enum nd_dhc_save dhc_save;
     enum nd_fhc_save fhc_save;
+    enum nd_capture_type capture_type;
     FILE *h_flow;
     int16_t ca_capture_base;
     int16_t ca_conntrack;

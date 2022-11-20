@@ -112,7 +112,7 @@ ndCapturePcap::ndCapturePcap(
     pcap(NULL), pcap_fd(-1),
     pkt_header(NULL), pkt_data(NULL),
     tv_epoch(0), pkt_queue(iface->second),
-    ndCaptureThread(ndCaptureThread::CAPTURE_PCAP,
+    ndCaptureThread(ndCT_PCAP,
         (long)cpu, iface, dev_mac, thread_socket,
         threads_dpi, dhc, private_addr)
 {
@@ -201,11 +201,9 @@ void *ndCapturePcap::Entry(void)
                 if (pthread_mutex_trylock(&lock) != 0)
                     stats.pkt.queue_dropped += pkt_queue.push(pkt);
                 else {
-                    bool from_queue = false;
-
                     if (! pkt_queue.empty()) {
                         stats.pkt.queue_dropped += pkt_queue.push(pkt);
-                        from_queue = pkt_queue.front(&pkt);
+                        pkt_queue.front(&pkt);
                     }
 
                     try {
@@ -217,7 +215,7 @@ void *ndCapturePcap::Entry(void)
                     }
                     pthread_mutex_unlock(&lock);
 
-                    if (from_queue) pkt_queue.pop();
+                    pkt_queue.pop();
                 }
             }
 
@@ -259,13 +257,13 @@ void *ndCapturePcap::Entry(void)
 
             dl_type = pcap_datalink(pcap);
 
-            nd_dprintf("%s: capture started on CPU: %lu\n",
+            nd_dprintf("%s: PCAP capture started on CPU: %lu\n",
                 tag.c_str(), cpu >= 0 ? cpu : 0);
         }
     }
 
     nd_dprintf(
-        "%s: capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
+        "%s: PCAP capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
 
     return NULL;
 }

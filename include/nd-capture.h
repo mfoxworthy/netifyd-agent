@@ -108,14 +108,8 @@ protected:
 class ndCaptureThread : public ndThread
 {
 public:
-    enum ndCaptureSource {
-        CAPTURE_NONE,
-        CAPTURE_PCAP,
-        CAPTURE_TPV3,
-    };
-
     ndCaptureThread(
-        ndCaptureSource cs_type,
+        nd_capture_type cs_type,
         int16_t cpu,
         nd_interface::iterator iface,
         const uint8_t *dev_mac,
@@ -135,7 +129,7 @@ public:
 
 protected:
     int dl_type;
-    ndCaptureSource cs_type;
+    nd_capture_type cs_type;
 
     nd_interface::iterator iface;
     uint8_t dev_mac[ETH_ALEN];

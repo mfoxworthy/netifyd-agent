@@ -343,7 +343,7 @@ void ndPacketQueue::pop(const string &oper)
 }
 
 ndCaptureThread::ndCaptureThread(
-    ndCaptureSource cs_type,
+    nd_capture_type cs_type,
     int16_t cpu,
     nd_interface::iterator iface,
     const uint8_t *dev_mac,

@@ -114,6 +114,9 @@ using namespace std;
 #ifdef _ND_USE_LIBPCAP
 #include "nd-capture-pcap.h"
 #endif
+#ifdef _ND_USE_TPACKETV3
+#include "nd-capture-tpv3.h"
+#endif
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
@@ -530,23 +533,52 @@ static int nd_start_capture_threads(void)
             if (! nd_ifaddrs_get_mac(nd_interface_addrs, (*i).second, mac))
                 memset(mac, 0, ETH_ALEN);
 
-            ndCapturePcap *pcap = new ndCapturePcap(
-                (nd_interfaces.size() > 1) ? cpu++ : -1,
-                i,
-                mac,
-                thread_socket,
-                detection_threads,
-                dns_hint_cache,
-                (i->first) ? 0 : ++private_addr
-            );
+            ndCaptureThread *thread = nullptr;
 
-            pcap->Create();
+            switch (nd_config.capture_type) {
+            case ndCT_PCAP:
+            {
+                ndCapturePcap *pcap = new ndCapturePcap(
+                    (nd_interfaces.size() > 1) ? cpu++ : -1,
+                    i,
+                    mac,
+                    thread_socket,
+                    detection_threads,
+                    dns_hint_cache,
+                    (i->first) ? 0 : ++private_addr
+                );
+
+                pcap->Create();
+                thread = pcap;
+                break;
+            }
+
+            case ndCT_TPV3:
+            {
+                ndCaptureTPv3 *tpv3 = new ndCaptureTPv3(
+                    (nd_interfaces.size() > 1) ? cpu++ : -1,
+                    i,
+                    mac,
+                    thread_socket,
+                    detection_threads,
+                    dns_hint_cache,
+                    (i->first) ? 0 : ++private_addr
+                );
+
+                tpv3->Create();
+                thread = tpv3;
+                break;
+            }
+
+            default:
+                throw "capture type not set.";
+            }
 
             auto it = capture_threads.find((*i).second);
             if (it == capture_threads.end())
-                capture_threads[(*i).second] = { pcap };
+                capture_threads[(*i).second] = { thread };
             else
-                capture_threads[(*i).second].push_back(pcap);
+                capture_threads[(*i).second].push_back(thread);
 
             if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }

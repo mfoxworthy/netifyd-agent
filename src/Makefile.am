@@ -60,6 +60,10 @@ if USE_LIBPCAP
 libnetifyd_la_SOURCES += nd-capture-pcap.cpp
 endif
 
+if USE_TPACKETV3
+libnetifyd_la_SOURCES += nd-capture-tpv3.cpp
+endif
+
 sbin_PROGRAMS = netifyd
 netifyd_SOURCES = netifyd.cpp
 netifyd_LDADD = ./libnetifyd.la $(top_srcdir)/libs/inih/libini.la $(LIBCURL_LIBS) $(ZLIB_LIBS)

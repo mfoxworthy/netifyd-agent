@@ -64,6 +64,20 @@ case "${host_os}" in
     linux*)
         AC_CHECK_LIB([resolv],
             [ns_initparse], [], [AC_MSG_ERROR([libresolv/ns_initparse() not found.])])
+        AC_ARG_ENABLE([tpacketv3],
+            [AS_HELP_STRING([--enable-tpacketv3], [Enable TPACKETv3 capture support [default=yes]])],
+            [],
+            [enable_tpacketv3=yes])
+
+        AS_IF([test "x$enable_tpacketv3" = "xyes"], [
+            AC_CHECK_HEADERS([linux/if_packet.h], [], AC_MSG_ERROR([linux/if_packet.h header(s) not found.]))
+            AC_DEFINE([_ND_USE_TPACKETV3], [1],
+                [Define to enable TPACKETv3 capture support.])
+            ND_DEFINES+=" -D_ND_USE_TPACKETV3=1"
+            AM_CONDITIONAL(USE_TPACKETV3, true)
+        ], [
+            AM_CONDITIONAL(USE_TPACKETV3, false)
+        ])
         ;;
 esac
 

@@ -140,6 +140,7 @@ ndGlobalConfig::ndGlobalConfig() :
     uuid_site(NULL),
     dhc_save(ndDHC_PERSISTENT),
     fhc_save(ndFHC_PERSISTENT),
+    capture_type(ndCT_NONE),
     h_flow(stderr),
     ca_capture_base(0),
     ca_conntrack(-1),
@@ -317,6 +318,35 @@ int ndGlobalConfig::Load(const string &filename)
         "threads", "sink", this->ca_sink);
     this->ca_socket = (int16_t)reader.GetInteger(
         "threads", "socket", this->ca_socket);
+
+    // Capture type section
+    string capture_type = reader.Get(
+        "capture", "type", "auto"
+    );
+
+    if (capture_type == "auto") {
+#if defined(_ND_USE_LIBPCAP)
+        this->capture_type = ndCT_PCAP;
+#elif defined(_ND_USE_TPACKETV3)
+        this->capture_type = ndCT_TPV3;
+#else
+#error "No available capture types!"
+#endif
+    }
+#if defined(_ND_USE_LIBPCAP)
+    else if (capture_type == "pcap")
+        this->capture_type = ndCT_PCAP;
+#endif
+#if defined(_ND_USE_TPACKETV3)
+    else if (capture_type == "tpv3")
+        this->capture_type = ndCT_TPV3;
+#endif
+    else {
+        fprintf(stderr, "Invalid capture type: %s\n",
+            capture_type.c_str()
+        );
+        return -1;
+    }
 
     // Flow Hash Cache section
     ND_GF_SET_FLAG(ndGF_USE_FHC,
