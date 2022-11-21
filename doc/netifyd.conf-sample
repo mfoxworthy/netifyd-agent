@@ -34,6 +34,14 @@ uuid = <agent uuid>
 uuid_serial = <agent serial uuid>
 uuid_site = <site uuid>
 
+[capture]
+type = <pcap/tpv3>
+tpv3_fanout = <yes/no>
+tpv3_fanout_id = <fanout ID>
+tpv3_rb_block_size = <ring buffer block Size in bytes>
+tpv3_rb_frame_size = <ring buffer frame Size in bytes>
+tpv3_rb_blocks = <ring buffer block count>
+
 [flow_hash_cache]
 enable = <yes/no>
 save = <persistent/volatile/disabled>

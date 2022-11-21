@@ -67,7 +67,6 @@
 #define ND_TTL_IDLE_FLOW        30      // Purge idle flows older than this (30s)
 #define ND_TTL_IDLE_TCP_FLOW    300     // Purge idle TCP flows older than this (5m)
 #define ND_TTL_IDLE_DHC_ENTRY  (60 * 30)// Purge TTL for idle DNS cache entries.
-#define ND_TTL_PCAP_SELECT_USEC 500     // Minimum pcap select timeout in micros.
 #define ND_HASH_BUCKETS_FLOWS   1613    // Initial flows map bucket count.
 #define ND_HASH_BUCKETS_DNSARS  1613    // DNS cache address record hash buckets.
 
@@ -117,6 +116,11 @@
 
 #define ND_PCAP_SNAPLEN         65535   // Capture snap length
 #define ND_PCAP_READ_TIMEOUT    500     // Milliseconds
+
+#define ND_TPV3_RB_BLOCK_SIZE   (1 << 22) // Bytes
+#define ND_TPV3_RB_FRAME_SIZE   (1 << 11) // Bytes
+#define ND_TPV3_RB_BLOCKS       64
+#define ND_TPV3_READ_TIMEOUT    500     // Milliseconds
 
 #ifndef ND_URL_SINK
 #define ND_URL_SINK             "https://sink.netify.ai/provision/"

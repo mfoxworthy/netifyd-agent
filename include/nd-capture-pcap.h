@@ -47,7 +47,6 @@ protected:
     struct pcap_pkthdr *pkt_header;
     const uint8_t *pkt_data;
     time_t tv_epoch;
-    ndPacketQueue pkt_queue;
 
     pcap_t *OpenCapture(void);
 };

@@ -62,6 +62,7 @@ enum nd_global_flags {
     ndGF_WAIT_FOR_CLIENT = 0x800000,
     ndGF_SOFT_DISSECTORS = 0x1000000,
     ndGF_LOAD_DOMAINS = 0x2000000,
+    ndGF_TPV3_FANOUT = 0x4000000,
 };
 
 #define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
@@ -91,6 +92,7 @@ enum nd_global_flags {
 #define ND_WAIT_FOR_CLIENT (nd_config.flags & ndGF_WAIT_FOR_CLIENT)
 #define ND_SOFT_DISSECTORS (nd_config.flags & ndGF_SOFT_DISSECTORS)
 #define ND_LOAD_DOMAINS (nd_config.flags & ndGF_LOAD_DOMAINS)
+#define ND_TPV3_FANOUT (nd_config.flags & ndGF_TPV3_FANOUT)
 
 #define ND_GF_SET_FLAG(flag, value) \
 { \
@@ -119,6 +121,10 @@ public:
     enum nd_dhc_save dhc_save;
     enum nd_fhc_save fhc_save;
     enum nd_capture_type capture_type;
+    uint16_t tpv3_fanout_id;
+    unsigned tpv3_rb_block_size;
+    unsigned tpv3_rb_frame_size;
+    unsigned tpv3_rb_blocks;
     FILE *h_flow;
     int16_t ca_capture_base;
     int16_t ca_conntrack;

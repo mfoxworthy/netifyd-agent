@@ -29,12 +29,20 @@ public:
 class ndDetectionQueueEntry
 {
 public:
-    ndDetectionQueueEntry(ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp);
+    ndDetectionQueueEntry(ndFlow *flow, const ndPacket *packet,
+        int addr_cmp, const uint8_t *data, uint16_t length)
+    : packet(packet), flow(flow), addr_cmp(addr_cmp),
+    data(data), length(length) { }
 
+    virtual ~ndDetectionQueueEntry() {
+        if (packet != nullptr) delete packet;
+    }
+
+    const ndPacket *packet;
     ndFlow *flow;
-    uint8_t *pkt_data;
-    uint32_t pkt_length;
     int addr_cmp;
+    const uint8_t *data;
+    uint16_t length;
 };
 
 class ndDetectionThread : public ndThread
@@ -62,12 +70,14 @@ public:
     // XXX: Not thread-safe!  Lock before calling...
     virtual void Reload(void);
 
-    void QueuePacket(ndFlow *flow,
-        uint8_t *pkt_data = NULL, uint32_t pkt_length = 0, int addr_cmp = 0);
+    void QueuePacket(
+        ndFlow *flow, const ndPacket *packet = nullptr, int addr_cmp = 0,
+        const uint8_t *data = nullptr, uint16_t length = 0);
 
     struct ndpi_detection_module_struct *GetDetectionModule(void) {
         return ndpi;
     }
+
     virtual void *Entry(void);
 
 protected:

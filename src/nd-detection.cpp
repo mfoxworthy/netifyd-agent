@@ -117,17 +117,6 @@ extern ndDomains *nd_domains;
 #define ndEFNF  entry->flow->ndpi_flow
 #define ndEFNFP entry->flow->ndpi_flow->protos
 
-ndDetectionQueueEntry::ndDetectionQueueEntry(
-    ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp
-) : flow(flow), pkt_data(NULL), pkt_length(pkt_length), addr_cmp(addr_cmp)
-{
-    if (pkt_data != NULL && pkt_length > 0) {
-        this->pkt_data = new uint8_t[pkt_length];
-        if (this->pkt_data == NULL) throw ndDetectionThreadException(strerror(ENOMEM));
-        memcpy(this->pkt_data, pkt_data, pkt_length);
-    }
-}
-
 ndDetectionThread::ndDetectionThread(
     int16_t cpu,
     const string &tag,
@@ -207,7 +196,6 @@ ndDetectionThread::~ndDetectionThread()
 
         ndEF->queued--;
 
-        delete [] entry->pkt_data;
         delete entry;
     }
 
@@ -223,15 +211,16 @@ void ndDetectionThread::Reload(void)
     ndpi = nd_ndpi_init();
 }
 
-void ndDetectionThread::QueuePacket(ndFlow *flow, uint8_t *pkt_data, uint32_t pkt_length, int addr_cmp)
+void ndDetectionThread::QueuePacket(
+    ndFlow *flow, const ndPacket *packet, int addr_cmp,
+    const uint8_t *data, uint16_t length)
 {
-    int rc;
-
     ndDetectionQueueEntry *entry = new ndDetectionQueueEntry(
-        flow, pkt_data, pkt_length, addr_cmp
+        flow, packet, addr_cmp, data, length
     );
 
-    if (entry == NULL) throw ndDetectionThreadException(strerror(ENOMEM));
+    if (entry == NULL)
+        throw ndDetectionThreadException(strerror(ENOMEM));
 
     Lock();
 
@@ -239,6 +228,7 @@ void ndDetectionThread::QueuePacket(ndFlow *flow, uint8_t *pkt_data, uint32_t pk
 
     Unlock();
 
+    int rc;
     if ((rc = pthread_cond_broadcast(&pkt_queue_cond)) != 0)
         throw ndDetectionThreadException(strerror(rc));
 
@@ -303,7 +293,6 @@ void ndDetectionThread::ProcessPacketQueue(void)
 
             ndEF->queued--;
 
-            delete [] entry->pkt_data;
             delete entry;
         }
     } while (entry != NULL);
@@ -330,8 +319,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndpi_protocol ndpi_rc = ndpi_detection_process_packet(
             ndpi,
             ndEFNF,
-            (const uint8_t *)entry->pkt_data,
-            entry->pkt_length,
+            entry->data,
+            entry->length,
             ndEF->ts_last_seen,
             NULL
         );

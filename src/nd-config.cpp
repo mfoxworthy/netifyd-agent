@@ -141,6 +141,10 @@ ndGlobalConfig::ndGlobalConfig() :
     dhc_save(ndDHC_PERSISTENT),
     fhc_save(ndFHC_PERSISTENT),
     capture_type(ndCT_NONE),
+    tpv3_fanout_id(1),
+    tpv3_rb_block_size(ND_TPV3_RB_BLOCK_SIZE),
+    tpv3_rb_frame_size(ND_TPV3_RB_FRAME_SIZE),
+    tpv3_rb_blocks(ND_TPV3_RB_BLOCKS),
     h_flow(stderr),
     ca_capture_base(0),
     ca_conntrack(-1),
@@ -347,6 +351,21 @@ int ndGlobalConfig::Load(const string &filename)
         );
         return -1;
     }
+
+    ND_GF_SET_FLAG(ndGF_TPV3_FANOUT,
+        reader.GetBoolean("capture", "tpv3_fanout", false));
+
+    tpv3_fanout_id = (uint16_t)reader.GetInteger(
+        "capture", "tpv3_fanout_id", 1);
+
+    tpv3_rb_block_size = (uint16_t)reader.GetInteger(
+        "capture", "tpv3_rb_block_size", ND_TPV3_RB_BLOCK_SIZE);
+
+    tpv3_rb_frame_size = (uint16_t)reader.GetInteger(
+        "capture", "tpv3_rb_frame_size", ND_TPV3_RB_FRAME_SIZE);
+
+    tpv3_rb_blocks = (uint16_t)reader.GetInteger(
+        "capture", "tpv3_rb_blocks", ND_TPV3_RB_BLOCKS);
 
     // Flow Hash Cache section
     ND_GF_SET_FLAG(ndGF_USE_FHC,

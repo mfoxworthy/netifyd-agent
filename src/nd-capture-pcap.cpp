@@ -110,8 +110,7 @@ ndCapturePcap::ndCapturePcap(
     uint8_t private_addr)
     :
     pcap(NULL), pcap_fd(-1),
-    pkt_header(NULL), pkt_data(NULL),
-    tv_epoch(0), pkt_queue(iface->second),
+    pkt_header(NULL), pkt_data(NULL), tv_epoch(0),
     ndCaptureThread(ndCT_PCAP,
         (long)cpu, iface, dev_mac, thread_socket,
         threads_dpi, dhc, private_addr)
@@ -135,54 +134,34 @@ ndCapturePcap::~ndCapturePcap()
 void *ndCapturePcap::Entry(void)
 {
     int rc;
+    int sd_max = 0;
     struct ifreq ifr;
+    struct timeval tv;
+    fd_set fds_read;
     bool warnings = true;
     ndPacket *pkt;
     ndPacket::status_flags pkt_status = ndPacket::STATUS_OK;
 
-    while (! ShouldTerminate() || ! pkt_queue.empty()) {
-
-        if (ShouldTerminate() && pcap != NULL) {
-            pcap_close(pcap);
-            pcap = NULL;
-        }
-
-        if (! pkt_queue.empty() && pthread_mutex_trylock(&lock) == 0) {
-
-            pkt_queue.front(&pkt);
-
-            try {
-                ProcessPacket(pkt);
-            }
-            catch (exception &e) {
-                pthread_mutex_unlock(&lock);
-                throw;
-            }
-
-            pthread_mutex_unlock(&lock);
-
-            pkt_queue.pop();
-        }
+    while (! ShouldTerminate()) {
 
         if (pcap != NULL) {
-            int max_fd = 0;
-            struct timeval tv;
-            fd_set fds_read;
 
             FD_ZERO(&fds_read);
+//            FD_SET(fd_ipc[0], &fds_read);
             FD_SET(pcap_fd, &fds_read);
 
-            memset(&tv, 0, sizeof(struct timeval));
-
-            if (pkt_queue.empty()) tv.tv_sec = 1;
-
-            max_fd = max(fd_ipc[0], pcap_fd);
-            rc = select(max_fd + 1, &fds_read, NULL, NULL, &tv);
+            tv.tv_sec = 1; tv.tv_usec = 0;
+            rc = select(sd_max + 1, &fds_read, NULL, NULL, &tv);
 
             if (rc == 0) continue;
             else if (rc == -1)
                 throw ndCaptureThreadException(strerror(errno));
-
+#if 0
+            if (FD_ISSET(fd_ipc[0], &fds_read)) {
+                // TODO: Not used.
+                uint32_t ipc_id = RecvIPC();
+            }
+#endif
             if (! FD_ISSET(pcap_fd, &fds_read)) continue;
 
             rc = 0;
@@ -190,33 +169,29 @@ void *ndCapturePcap::Entry(void)
                 (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
 
                 uint8_t *pd = new uint8_t[pkt_header->caplen];
-                if (pd == nullptr) throw ndCaptureThreadException(strerror(ENOMEM));
+                if (pd == nullptr)
+                    throw ndCaptureThreadException(strerror(ENOMEM));
                 memcpy(pd, pkt_data, pkt_header->caplen);
 
-                pkt = new ndPacket(
-                    pkt_status, pkt_header->len, pkt_header->caplen, pd
+                pkt = new ndPacket(pkt_status,
+                    pkt_header->len, pkt_header->caplen,
+                    pd, pkt_header->ts
                 );
-                if (pkt == nullptr) throw ndCaptureThreadException(strerror(ENOMEM));
+                if (pkt == nullptr)
+                    throw ndCaptureThreadException(strerror(ENOMEM));
 
-                if (pthread_mutex_trylock(&lock) != 0)
-                    stats.pkt.queue_dropped += pkt_queue.push(pkt);
-                else {
-                    if (! pkt_queue.empty()) {
-                        stats.pkt.queue_dropped += pkt_queue.push(pkt);
-                        pkt_queue.front(&pkt);
-                    }
+                Lock();
 
-                    try {
-                        ProcessPacket(pkt);
-                    }
-                    catch (exception &e) {
-                        pthread_mutex_unlock(&lock);
-                        throw;
-                    }
-                    pthread_mutex_unlock(&lock);
-
-                    pkt_queue.pop();
+                try {
+                    if (ProcessPacket(pkt) != nullptr)
+                        delete pkt;
                 }
+                catch (...) {
+                    Unlock();
+                    throw;
+                }
+
+                Unlock();
             }
 
             if (rc < 0) {
@@ -229,8 +204,8 @@ void *ndCapturePcap::Entry(void)
                 }
                 else if (rc == -2) {
                     nd_dprintf(
-                        "%s: end of capture file: %s, flushing queued packets: %lu\n",
-                        tag.c_str(), pcap_file.c_str(), pkt_queue.size());
+                        "%s: end of capture file: %s\n",
+                        tag.c_str(), pcap_file.c_str());
 
                     Terminate();
                 }
@@ -256,6 +231,8 @@ void *ndCapturePcap::Entry(void)
             }
 
             dl_type = pcap_datalink(pcap);
+            sd_max = pcap_fd;
+//            sd_max = max(fd_ipc[0], pcap_fd);
 
             nd_dprintf("%s: PCAP capture started on CPU: %lu\n",
                 tag.c_str(), cpu >= 0 ? cpu : 0);

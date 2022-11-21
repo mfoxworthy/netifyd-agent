@@ -109,11 +109,6 @@ using namespace std;
 
 #define _ND_VLAN_OFFSET         (2 * ETH_ALEN)
 
-#define _ND_RING_BUFFER_SIZE    4
-#define _ND_RING_BLOCK_COUNT    64
-
-#define _ND_IF_SNAPLEN          2048 // XXX: Only used by bpf_filter
-
 extern ndGlobalConfig nd_config;
 
 class ndPacketRing;
@@ -152,8 +147,7 @@ typedef vector<ndPacketRingBlock *> ndPacketRingBlocks;
 class ndPacketRing
 {
 public:
-    ndPacketRing(const string &ifname, ndPacketStats *stats,
-        size_t ring_buffer_size = _ND_RING_BUFFER_SIZE);
+    ndPacketRing(const string &ifname, ndPacketStats *stats);
 
     virtual ~ndPacketRing();
 
@@ -181,7 +175,6 @@ protected:
 
     size_t tp_hdr_len;
     size_t tp_reserved;
-    size_t tp_snaplen;
     size_t tp_frame_size;
     size_t tp_ring_size;
 
@@ -227,10 +220,10 @@ size_t ndPacketRingBlock::ProcessPackets(ndPacketRing *ring,
     return packets;
 }
 
-ndPacketRing::ndPacketRing(const string &ifname,
-    ndPacketStats *stats, size_t ring_buffer_size)
+ndPacketRing::ndPacketRing(
+    const string &ifname, ndPacketStats *stats)
     : ifname(ifname), sd(-1), buffer(nullptr),
-    tp_hdr_len(0), tp_reserved(0), tp_snaplen(_ND_IF_SNAPLEN),
+    tp_hdr_len(0), tp_reserved(0),
     tp_frame_size(0), tp_ring_size(0),
     tp_req{0}, filter{0}, stats(stats)
 {
@@ -306,15 +299,18 @@ ndPacketRing::ndPacketRing(const string &ifname,
         }
     }
 #ifdef PACKET_FANOUT
-    so_uintval = (PACKET_FANOUT_HASH |
-        PACKET_FANOUT_FLAG_DEFRAG | PACKET_FANOUT_FLAG_ROLLOVER) << 16 | 1;
+    if (ND_TPV3_FANOUT) {
+        so_uintval = (PACKET_FANOUT_HASH |
+            PACKET_FANOUT_FLAG_DEFRAG | PACKET_FANOUT_FLAG_ROLLOVER) << 16 |
+            nd_config.tpv3_fanout_id;
 
-    nd_dprintf("%s: fanout options and flags: 0x%08x\n", ifname.c_str(), so_uintval);
+        nd_dprintf("%s: fanout options and flags: 0x%08x\n", ifname.c_str(), so_uintval);
 
-    if (setsockopt(sd, SOL_PACKET, PACKET_FANOUT,
-        (const void *)&so_uintval, sizeof(so_uintval)) < 0) {
-        nd_dprintf("%s: setsockopt(PACKET_FANOUT): %s\n", ifname.c_str(), strerror(errno));
-        throw ndCaptureThreadException("error enabling fanout");
+        if (setsockopt(sd, SOL_PACKET, PACKET_FANOUT,
+            (const void *)&so_uintval, sizeof(so_uintval)) < 0) {
+            nd_dprintf("%s: setsockopt(PACKET_FANOUT): %s\n", ifname.c_str(), strerror(errno));
+            throw ndCaptureThreadException("error enabling fanout");
+        }
     }
 #else
 #warning "PACKET_FANOUT not supported."
@@ -342,15 +338,13 @@ ndPacketRing::ndPacketRing(const string &ifname,
         throw ndCaptureThreadException("unexpected reserved VLAN TAG size");
     }
 
-    // TODO: Must be calculated according to requested ring size.
-    size_t block_size = 1 << 22,
-        frame_size = 1 << 11, block_count = _ND_RING_BLOCK_COUNT;
-
-    tp_req.tp_block_size = (unsigned)block_size;
-    tp_req.tp_frame_size = (unsigned)frame_size;
-    tp_req.tp_block_nr = (unsigned)block_count;
-    tp_req.tp_frame_nr = (unsigned)(block_size * block_count) / frame_size;
-    tp_req.tp_retire_blk_tov = 60; // TODO: Read about this.
+    tp_req.tp_block_size = nd_config.tpv3_rb_block_size;
+    tp_req.tp_frame_size = nd_config.tpv3_rb_frame_size;
+    tp_req.tp_block_nr = nd_config.tpv3_rb_blocks;
+    tp_req.tp_frame_nr =
+        (tp_req.tp_block_size * tp_req.tp_block_nr) /
+            tp_req.tp_frame_nr;
+    tp_req.tp_retire_blk_tov = ND_TPV3_READ_TIMEOUT;
     //tp_req.tp_feature_req_word = // TODO: Features?
 
     nd_dprintf("%s: block size: %u\n", ifname.c_str(), tp_req.tp_block_size);
@@ -374,7 +368,7 @@ ndPacketRing::ndPacketRing(const string &ifname,
         throw ndCaptureThreadException("error mapping RX ring");
     }
 
-    for (size_t b = 0; b < block_count; b++) {
+    for (unsigned b = 0; b < tp_req.tp_block_nr; b++) {
         ndPacketRingBlock *entry = new ndPacketRingBlock(
             (void *)(((size_t)buffer) + (b * tp_req.tp_block_size))
         );
@@ -398,16 +392,18 @@ ndPacketRing::~ndPacketRing()
 bool ndPacketRing::SetFilter(const string &expr)
 {
     if (pcap_compile_nopcap(
-        _ND_IF_SNAPLEN, DLT_EN10MB, &filter,
+        ND_PCAP_SNAPLEN, DLT_EN10MB, &filter,
         expr.c_str(), 1, PCAP_NETMASK_UNKNOWN) == -1) {
-        nd_dprintf("pcap_compile_nopcap: %s: failed.\n", expr.c_str());
+        nd_dprintf("pcap_compile_nopcap: %s: failed.\n",
+            expr.c_str());
         return false;
     }
 
     return true;
 }
 
-bool ndPacketRing::ApplyFilter(const uint8_t *pkt, size_t length, size_t snaplen) const
+bool ndPacketRing::ApplyFilter(const uint8_t *pkt,
+    size_t length, size_t snaplen) const
 {
     return (filter.bf_insns &&
         bpf_filter(filter.bf_insns, pkt, length, snaplen) == 0);
@@ -456,12 +452,9 @@ ndPacket *ndPacketRing::CopyPacket(void *entry,
     tp_len = hdr->tp_len;
     tp_mac = hdr->tp_mac;
     tp_snaplen = hdr->tp_snaplen;
-#if 0
-    // TODO: time
-    unsigned int tp_sec, tp_usec;
-    tp_sec = hdr->tp_sec;
-    tp_usec = hdr->tp_nsec / 1000;
-#endif
+
+    struct timeval tv = { hdr->tp_sec, hdr->tp_nsec / 1000 };
+
     status = ndPacket::STATUS_INIT;
 
     if (tp_len != tp_snaplen)
@@ -521,7 +514,8 @@ ndPacket *ndPacketRing::CopyPacket(void *entry,
 
     if (pkt_data) {
         memcpy(pkt_data, data, tp_snaplen);
-        pkt = new ndPacket(status, tp_len, tp_snaplen, pkt_data);
+        pkt = new ndPacket(status,
+            tp_len, tp_snaplen, pkt_data, tv);
     }
 
     if (pkt) status |= ndPacket::STATUS_OK;
@@ -577,6 +571,7 @@ void *ndCaptureTPv3::Entry(void)
         _ring->SetFilter(it_filter->second);
 
     int sd_max = _ring->GetDescriptor();
+//    int sd_max = max(fd_ipc[0], _ring->GetDescriptor());
 
     int rc = 0;
     struct timeval tv;
@@ -585,7 +580,7 @@ void *ndCaptureTPv3::Entry(void)
     size_t packets = 0, total_packets = 0;
 #endif
     vector<ndPacket *> pkt_queue;
-    pkt_queue.reserve(_ND_RING_BLOCK_COUNT);
+    pkt_queue.reserve(nd_config.tpv3_rb_blocks);
 
     while (! ShouldTerminate() && rc >= 0) {
 
@@ -594,6 +589,7 @@ void *ndCaptureTPv3::Entry(void)
         if (entry == nullptr) {
 
             FD_ZERO(&fds_read);
+//            FD_SET(fd_ipc[0], &fds_read);
             FD_SET(_ring->GetDescriptor(), &fds_read);
 
             tv.tv_sec = 1; tv.tv_usec = 0;
@@ -601,46 +597,37 @@ void *ndCaptureTPv3::Entry(void)
 
             if (rc == -1)
                 printf("select: %s\n", strerror(errno));
-
+#if 0
+            if (rc > 0 && FD_ISSET(fd_ipc[0], &fds_read)) {
+                // TODO: Not used.
+                uint32_t ipc_id = RecvIPC();
+            }
+#endif
             continue;
         }
 
         entry->ProcessPackets(_ring, pkt_queue);
-
-//        nd_dprintf("queued: %lu\n", pkt_queue.size());
-
         entry->Release();
 
         if (pkt_queue.size()) {
-            for (auto &pkt : pkt_queue) {
-                ProcessPacket(pkt);
-                delete pkt;
+
+            Lock();
+
+            try {
+                for (auto &pkt : pkt_queue) {
+                    if (ProcessPacket(pkt) != nullptr)
+                        delete pkt;
+                }
             }
+            catch (...) {
+                Unlock();
+                throw;
+            }
+
+            Unlock();
+
             pkt_queue.clear();
         }
-#if 0
-        packets += queued;
-
-        if (queued > max_queued)
-            max_queued = queued;
-
-        if (packets > 1000) {
-            total_packets += packets;
-            packets = 0;
-
-            ndPacketCaptureStats stats;
-            memset(&stats, 0, sizeof(ndPacketCaptureStats));
-
-            _ring->GetStats(stats);
-
-            if (stats.dropped) {
-                printf("packets: %lu / %lu\n", stats.packets, total_packets);
-                printf("dropped: %lu\n", stats.dropped);
-                printf("filtered: %lu\n", stats.filtered);
-                printf("queued / max: %lu / %lu\n", queued, max_queued);
-            }
-        }
-#endif
     }
 
     nd_dprintf("%s: TPv3 capture ended on CPU: %lu\n",

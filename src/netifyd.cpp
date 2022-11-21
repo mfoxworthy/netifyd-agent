@@ -3107,7 +3107,9 @@ int main(int argc, char *argv[])
             }
             continue;
         }
-
+#if 0
+        // TODO: Send all flows from this thread.  Capture threads
+        // no longer have their own flow maps.
         if (sig == ND_SIG_CONNECT) {
             for (auto &it : capture_threads) {
                 for (auto &it_instance : it.second)
@@ -3115,7 +3117,7 @@ int main(int argc, char *argv[])
             }
             continue;
         }
-
+#endif
         if (sig == ND_SIG_NAPI_UPDATE) {
             if (thread_napi == NULL) {
                 thread_napi = new ndNetifyApiThread();

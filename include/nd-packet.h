@@ -17,6 +17,55 @@
 #ifndef _ND_PACKET_H
 #define _ND_PACKET_H
 
+class ndPacket
+{
+public:
+    enum {
+        STATUS_INIT = 0,
+
+        STATUS_OK = 0x01,
+        STATUS_CORRUPTED = 0x02,
+        STATUS_FILTERED = 0x04,
+        STATUS_VLAN_TAG_RESTORED = 0x08,
+
+        STATUS_ENOMEM = 0x40,
+        STATUS_LOCKED = 0x80
+    };
+
+    typedef uint8_t status_flags;
+
+    ndPacket(
+        const status_flags &status,
+        const uint16_t &length, const uint16_t &caplen,
+        uint8_t *data, const struct timeval &tv)
+        : status(status), length(length), caplen(caplen),
+        data(data), tv_sec(tv.tv_sec), tv_usec(tv.tv_usec) { }
+
+    virtual ~ndPacket() {
+        if (data != nullptr) delete [] data;
+        status = STATUS_INIT;
+    }
+
+    inline status_flags GetStatus(void) { return status; }
+    inline uint16_t GetWireLength(void) { return length; }
+    inline uint16_t GetCaptureLength(void) { return caplen; }
+    inline const uint8_t *GetData(void) { return data; }
+    inline void GetTime(struct timeval &tv) {
+        tv.tv_sec = tv_sec;
+        tv.tv_usec = tv_usec;
+    }
+
+protected:
+    friend class ndCaptureThread;
+
+    status_flags status;
+    uint16_t length;
+    uint16_t caplen;
+    const uint8_t *data;
+    time_t tv_sec;
+    time_t tv_usec;
+};
+
 class ndPacketStats
 {
 public:
