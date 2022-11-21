@@ -102,7 +102,7 @@ extern ndGlobalConfig nd_config;
 
 ndCapturePcap::ndCapturePcap(
     int16_t cpu,
-    nd_interface::iterator iface,
+    const ndInterface &iface,
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
@@ -115,7 +115,7 @@ ndCapturePcap::ndCapturePcap(
         (long)cpu, iface, dev_mac, thread_socket,
         threads_dpi, dhc, private_addr)
 {
-    nd_capture_filename(iface->second, pcap_file);
+    nd_capture_filename(iface.ifname, pcap_file);
     if (pcap_file.size())
         nd_dprintf("%s: capture file: %s\n", tag.c_str(), pcap_file.c_str());
 

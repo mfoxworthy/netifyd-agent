@@ -59,6 +59,7 @@ using namespace std;
 #include "nd-netlink.h"
 
 extern ndGlobalConfig nd_config;
+extern nd_interface_map nd_interfaces;
 
 ndNetlink *netlink = NULL;
 nd_netlink_device nd_netlink_devices;
@@ -126,7 +127,7 @@ inline bool ndNetlinkNetworkAddr::operator!=(const ndNetlinkNetworkAddr &n) cons
 
     return (rc != 0);
 }
-ndNetlink::ndNetlink(const nd_interface &ifaces)
+ndNetlink::ndNetlink(void)
 #ifdef HAVE_LINUX_NETLINK_H
     : nd(-1), seq(0)
 #endif
@@ -176,8 +177,7 @@ ndNetlink::ndNetlink(const nd_interface &ifaces)
         throw ndNetlinkException(strerror(rc));
     }
 #endif
-    for (nd_interface::const_iterator i = ifaces.begin(); i != ifaces.end(); i++)
-        AddInterface((*i).second);
+    for (auto &i : nd_interfaces) AddInterface(i.second.ifname);
 
     // Add private networks for when all else fails...
     AddNetwork(AF_INET, _ND_NETLINK_PRIVATE, "127.0.0.0", 8);

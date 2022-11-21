@@ -164,7 +164,7 @@ extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
 extern atomic_uint nd_flow_count;
 extern nd_agent_stats nd_json_agent_stats;
-extern nd_interface nd_interfaces;
+extern nd_interface_map nd_interfaces;
 extern nd_interface_addr_map nd_interface_addrs;
 #ifdef _ND_USE_NETLINK
 extern ndNetlink *netlink;
@@ -460,24 +460,23 @@ static void nd_init(void)
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
-    for (nd_interface::iterator i = nd_interfaces.begin();
-        i != nd_interfaces.end(); i++) {
+    for (auto &i : nd_interfaces) {
 
-        if (! (*i).first) {
+        if (! i.second.internal) {
             // XXX: Only collect device MAC/addresses on LAN interfaces.
-            nd_devices[(*i).second] = make_pair(
+            nd_devices[i.second.ifname] = make_pair(
                 (mutex *)NULL, (nd_device_addrs *)NULL
             );
         }
         else {
             int rc;
 
-            nd_devices[(*i).second] = make_pair(
+            nd_devices[i.second.ifname] = make_pair(
                 new mutex, new nd_device_addrs
             );
-            if (nd_devices[(*i).second].first == NULL)
+            if (nd_devices[i.second.ifname].first == NULL)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new mutex", ENOMEM);
-            if (nd_devices[(*i).second].second == NULL)
+            if (nd_devices[i.second.ifname].second == NULL)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new nd_device_addrs", ENOMEM);
         }
     }
@@ -487,12 +486,12 @@ static void nd_init(void)
 
 static void nd_destroy(void)
 {
-    for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
-        if (nd_devices.find((*i).second) != nd_devices.end()) {
-            if (nd_devices[(*i).second].first != NULL)
-                delete nd_devices[(*i).second].first;
-            if (nd_devices[(*i).second].second != NULL)
-                delete nd_devices[(*i).second].second;
+    for (auto &i : nd_interfaces) {
+        if (nd_devices.find(i.second.ifname) != nd_devices.end()) {
+            if (nd_devices[i.second.ifname].first != NULL)
+                delete nd_devices[i.second.ifname].first;
+            if (nd_devices[i.second.ifname].second != NULL)
+                delete nd_devices[i.second.ifname].second;
         }
     }
 
@@ -527,10 +526,9 @@ static int nd_start_capture_threads(void)
         uint8_t private_addr = 0;
         uint8_t mac[ETH_ALEN];
 
-        for (nd_interface::iterator i = nd_interfaces.begin();
-            i != nd_interfaces.end(); i++) {
+        for (auto & i : nd_interfaces) {
 
-            if (! nd_ifaddrs_get_mac(nd_interface_addrs, (*i).second, mac))
+            if (! nd_ifaddrs_get_mac(nd_interface_addrs, i.second.ifname, mac))
                 memset(mac, 0, ETH_ALEN);
 
             ndCaptureThread *thread = nullptr;
@@ -540,12 +538,12 @@ static int nd_start_capture_threads(void)
             {
                 ndCapturePcap *pcap = new ndCapturePcap(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
-                    i,
+                    i.second,
                     mac,
                     thread_socket,
                     detection_threads,
                     dns_hint_cache,
-                    (i->first) ? 0 : ++private_addr
+                    (i.second.internal) ? 0 : ++private_addr
                 );
 
                 pcap->Create();
@@ -557,12 +555,12 @@ static int nd_start_capture_threads(void)
             {
                 ndCaptureTPv3 *tpv3 = new ndCaptureTPv3(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
-                    i,
+                    i.second,
                     mac,
                     thread_socket,
                     detection_threads,
                     dns_hint_cache,
-                    (i->first) ? 0 : ++private_addr
+                    (i.second.internal) ? 0 : ++private_addr
                 );
 
                 tpv3->Create();
@@ -574,11 +572,11 @@ static int nd_start_capture_threads(void)
                 throw "capture type not set.";
             }
 
-            auto it = capture_threads.find((*i).second);
+            auto it = capture_threads.find(i.second.ifname);
             if (it == capture_threads.end())
-                capture_threads[(*i).second] = { thread };
+                capture_threads[i.second.ifname] = { thread };
             else
-                capture_threads[(*i).second].push_back(thread);
+                capture_threads[i.second.ifname].push_back(thread);
 
             if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }
@@ -1096,7 +1094,7 @@ static void nd_process_flows(
                     i->second->json_encode(jf);
 
                     string iface_name;
-                    nd_iface_name(i->second->iface->second, iface_name);
+                    nd_iface_name(i->second->iface.ifname, iface_name);
 
                     jflows[iface_name].push_back(jf);
                 }
@@ -1109,8 +1107,8 @@ static void nd_process_flows(
                         json j, jf;
 
                         j["type"] = "flow";
-                        j["interface"] = i->second->iface->second;
-                        j["internal"] = i->second->iface->first;
+                        j["interface"] = i->second->iface.ifname;
+                        j["internal"] = i->second->iface.internal;
                         j["established"] = false;
 
                         i->second->json_encode(
@@ -1135,8 +1133,8 @@ static void nd_process_flows(
                             i->second->ip_protocol == IPPROTO_TCP &&
                             i->second->flags.tcp_fin.load()
                         ) ? "closed" : (nd_terminate) ? "terminated" : "expired";
-                        j["interface"] = i->second->iface->second;
-                        j["internal"] = i->second->iface->first;
+                        j["interface"] = i->second->iface.ifname;
+                        j["internal"] = i->second->iface.internal;
                         j["established"] = false;
 
                         i->second->json_encode(
@@ -1162,7 +1160,7 @@ static void nd_process_flows(
                 else {
                     if (blocked == 0) {
                         nd_dprintf("%s: flow purge blocked by %lu queued packets.\n",
-                            i->second->iface->second.c_str(), i->second->queued.load());
+                            i->second->iface.ifname.c_str(), i->second->queued.load());
                     }
                     blocked++;
                     i++;
@@ -1178,7 +1176,7 @@ static void nd_process_flows(
                         i->second->json_encode(jf);
 
                         string iface_name;
-                        nd_iface_name(i->second->iface->second, iface_name);
+                        nd_iface_name(i->second->iface.ifname, iface_name);
 
                         jflows[iface_name].push_back(jf);
 
@@ -1186,8 +1184,8 @@ static void nd_process_flows(
                             json j;
 
                             j["type"] = "flow_stats";
-                            j["interface"] = i->second->iface->second;
-                            j["internal"] = i->second->iface->first;
+                            j["interface"] = i->second->iface.ifname;
+                            j["internal"] = i->second->iface.internal;
                             j["established"] = false;
 
                             jf.clear();
@@ -2544,16 +2542,17 @@ int main(int argc, char *argv[])
             nd_config.flags |= ndGF_DEBUG_UPLOAD;
             break;
         case 'E':
-            for (nd_interface::iterator i = nd_interfaces.begin();
-                i != nd_interfaces.end(); i++) {
-                if (strcasecmp((*i).second.c_str(), optarg) == 0) {
-                    fprintf(stderr, "Duplicate interface specified: %s\n", optarg);
-                    exit(1);
-                }
-            }
+        {
+            nd_interface_map_entry entry = nd_interfaces.emplace(
+                make_pair(optarg, ndInterface(optarg, false))
+            );
+
+            if (! entry.second)
+                entry.first->second.instances++;
+
             last_device = optarg;
-            nd_interfaces.push_back(make_pair(false, optarg));
             break;
+        }
         case 'e':
             nd_config.flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
@@ -2576,15 +2575,17 @@ int main(int argc, char *argv[])
         case 'h':
             nd_usage();
         case 'I':
-            for (nd_interface::iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
-                if (strcasecmp((*i).second.c_str(), optarg) == 0) {
-                    fprintf(stderr, "Duplicate interface specified: %s\n", optarg);
-                    exit(1);
-                }
-            }
+        {
+            nd_interface_map_entry entry = nd_interfaces.emplace(
+                make_pair(optarg, ndInterface(optarg))
+            );
+
+            if (! entry.second)
+                entry.first->second.instances++;
+
             last_device = optarg;
-            nd_interfaces.push_back(make_pair(true, optarg));
             break;
+        }
         case 'i':
             nd_config.update_interval = atoi(optarg);
             break;
@@ -2892,7 +2893,7 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) {
         try {
-            netlink = new ndNetlink(nd_interfaces);
+            netlink = new ndNetlink();
 
             nd_netlink_device::const_iterator i;
             for (i = nd_netlink_devices.begin(); i != nd_netlink_devices.end(); i++)

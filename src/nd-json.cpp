@@ -56,7 +56,7 @@ extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern nd_device nd_devices;
 extern nd_interface_addr_map nd_interface_addrs;
-extern nd_interface nd_interfaces;
+extern nd_interface_map nd_interfaces;
 #ifdef _ND_USE_NETLINK
 extern nd_netlink_device nd_netlink_devices;
 #endif
@@ -177,13 +177,13 @@ void nd_json_add_interfaces(json &parent)
 {
     nd_ifaddrs_update(nd_interface_addrs);
 
-    for (nd_interface::const_iterator i = nd_interfaces.begin(); i != nd_interfaces.end(); i++) {
+    for (auto &i : nd_interfaces) {
         string iface_name;
-        nd_iface_name(i->second, iface_name);
+        nd_iface_name(i.second.ifname, iface_name);
 
         json jo;
 
-        jo["role"] = (i->first) ? "LAN" : "WAN";
+        jo["role"] = (i.second.internal) ? "LAN" : "WAN";
 
         vector<string> addrs;
         bool found_mac = false;

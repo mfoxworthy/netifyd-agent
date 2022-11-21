@@ -693,10 +693,10 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             throw ndDetectionThreadException(strerror(EINVAL));
         }
 #ifdef _ND_USE_NETLINK
-        nd_device_addrs *device_addrs = devices[ndEF->iface->second].second;
+        nd_device_addrs *device_addrs = devices[ndEF->iface.ifname].second;
         if (device_addrs != NULL) {
 
-            unique_lock<mutex> lock(*devices[ndEF->iface->second].first);
+            unique_lock<mutex> lock(*devices[ndEF->iface.ifname].first);
 
             for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
                 string ip;
@@ -751,7 +751,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         }
 #endif
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_USE_NETLINK)
-        if (! ndEF->iface->first && thread_conntrack != NULL) {
+        if (! ndEF->iface.internal && thread_conntrack != NULL) {
             if ((ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP &&
                 ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) ||
                 (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN &&
@@ -1010,8 +1010,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             json j;
 
             j["type"] = "flow";
-            j["interface"] = ndEF->iface->second;
-            j["internal"] = ndEF->iface->first;
+            j["interface"] = ndEF->iface.ifname;
+            j["internal"] = ndEF->iface.internal;
             j["established"] = false;
 
             json jf;

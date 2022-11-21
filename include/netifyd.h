@@ -186,10 +186,24 @@
 
 #include "nd-sha1.h"
 
+class ndInterface
+{
+public:
+    ndInterface(
+        const string &ifname,
+        bool internal = true, unsigned instances = 1
+    ) : ifname(ifname), internal(internal), instances(instances) { }
+
+    string ifname;
+    bool internal;
+    unsigned instances;
+};
+
 typedef unordered_map<string, vector<string> > nd_device_addrs;
 typedef map<string, pair<mutex *, nd_device_addrs *> > nd_device;
 typedef unordered_map<string, string> nd_device_ether;
-typedef vector<pair<bool, string> > nd_interface;
+typedef map<string, ndInterface> nd_interface_map;
+typedef pair<nd_interface_map::iterator, bool> nd_interface_map_entry;
 typedef vector<pair<string, string> > nd_device_addr;
 typedef map<string, string> nd_device_filter;
 typedef map<string, string> nd_netlink_device;

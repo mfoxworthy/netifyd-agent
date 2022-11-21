@@ -73,7 +73,7 @@ extern ndGlobalConfig nd_config;
 
 nd_device_ether nd_device_ethers;
 
-ndFlow::ndFlow(nd_interface::iterator iface)
+ndFlow::ndFlow(const ndInterface &iface)
     : iface(iface), dpi_thread_id(-1),
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
@@ -486,7 +486,7 @@ void ndFlow::print(void) const
     }
 
     string iface_name;
-    nd_iface_name(iface->second, iface_name);
+    nd_iface_name(iface.ifname, iface_name);
 
     string digest;
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
@@ -494,7 +494,7 @@ void ndFlow::print(void) const
     nd_flow_printf(
         "%s: [%c%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
         iface_name.c_str(),
-        (iface->first) ? 'i' : 'e',
+        (iface.internal) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
         flags.ip_nat.load() ? 'n' : '-',
         (flags.detection_updated.load()) ? 'u' : '-',
@@ -527,7 +527,7 @@ void ndFlow::print(void) const
     if (ND_DEBUG &&
         detected_protocol == ND_PROTO_TLS &&
         flags.detection_guessed.load() == false && ssl.version == 0x0000) {
-        nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface->second.c_str());
+        nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface.ifname.c_str());
     }
 #endif
 }

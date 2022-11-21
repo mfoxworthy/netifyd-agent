@@ -526,7 +526,7 @@ ndPacket *ndPacketRing::CopyPacket(void *entry,
 
 ndCaptureTPv3::ndCaptureTPv3(
     int16_t cpu,
-    nd_interface::iterator iface,
+    const ndInterface &iface,
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
@@ -557,7 +557,7 @@ void *ndCaptureTPv3::Entry(void)
 {
     fd_set fds_read;
 
-    ndPacketRing *_ring = new ndPacketRing(iface->second, &stats);
+    ndPacketRing *_ring = new ndPacketRing(iface.ifname, &stats);
 
     if (_ring == nullptr)
         throw runtime_error(strerror(ENOMEM));

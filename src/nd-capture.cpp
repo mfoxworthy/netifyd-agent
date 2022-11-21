@@ -200,7 +200,7 @@ atomic_uint nd_flow_count;
 
 nd_device nd_devices;
 nd_interface_addr_map nd_interface_addrs;
-nd_interface nd_interfaces;
+nd_interface_map nd_interfaces;
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -276,20 +276,20 @@ struct __attribute__((packed)) nd_dns_header_t {
 ndCaptureThread::ndCaptureThread(
     nd_capture_type cs_type,
     int16_t cpu,
-    nd_interface::iterator iface,
+    const ndInterface &iface,
     const uint8_t *dev_mac,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
-    : ndThread(iface->second, (long)cpu, /* IPC? */ false),
+    : ndThread(iface.ifname, (long)cpu, /* IPC? */ false),
     dl_type(0), cs_type(cs_type),
     iface(iface), thread_socket(thread_socket),
 /*    capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS), */
     ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
-    nd_iface_name(iface->second, tag);
+    nd_iface_name(iface.ifname, tag);
 
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);

@@ -24,7 +24,7 @@ class ndCapturePcap : public ndCaptureThread
 public:
     ndCapturePcap(
         int16_t cpu,
-        nd_interface::iterator iface,
+        const ndInterface &face,
         const uint8_t *dev_mac,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
