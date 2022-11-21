@@ -1181,7 +1181,7 @@ nd_process_ip:
         nd_detection_threads::const_iterator idpi = threads_dpi.find(nf->dpi_thread_id);
 
         if (idpi != threads_dpi.end()) {
-            idpi->second->QueuePacket(nf, packet, addr_cmp,
+            idpi->second->QueuePacket(nf, packet,
                 (nf->ip_version == 4) ?
                     (uint8_t *)hdr_ip : (uint8_t *)hdr_ip6,
                 packet->caplen - l2_len

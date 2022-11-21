@@ -212,11 +212,11 @@ void ndDetectionThread::Reload(void)
 }
 
 void ndDetectionThread::QueuePacket(
-    ndFlow *flow, const ndPacket *packet, int addr_cmp,
+    ndFlow *flow, const ndPacket *packet,
     const uint8_t *data, uint16_t length)
 {
     ndDetectionQueueEntry *entry = new ndDetectionQueueEntry(
-        flow, packet, addr_cmp, data, length
+        flow, packet, data, length
     );
 
     if (entry == NULL)
