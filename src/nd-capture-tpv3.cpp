@@ -343,7 +343,7 @@ ndPacketRing::ndPacketRing(
     tp_req.tp_block_nr = nd_config.tpv3_rb_blocks;
     tp_req.tp_frame_nr =
         (tp_req.tp_block_size * tp_req.tp_block_nr) /
-            tp_req.tp_frame_nr;
+            tp_req.tp_frame_size;
     tp_req.tp_retire_blk_tov = ND_TPV3_READ_TIMEOUT;
     //tp_req.tp_feature_req_word = // TODO: Features?
 
