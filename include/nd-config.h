@@ -121,7 +121,6 @@ public:
     enum nd_dhc_save dhc_save;
     enum nd_fhc_save fhc_save;
     enum nd_capture_type capture_type;
-    uint16_t tpv3_fanout_id;
     unsigned tpv3_rb_block_size;
     unsigned tpv3_rb_frame_size;
     unsigned tpv3_rb_blocks;

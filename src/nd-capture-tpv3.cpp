@@ -302,7 +302,7 @@ ndPacketRing::ndPacketRing(
     if (ND_TPV3_FANOUT) {
         so_uintval = (PACKET_FANOUT_HASH |
             PACKET_FANOUT_FLAG_DEFRAG | PACKET_FANOUT_FLAG_ROLLOVER) << 16 |
-            nd_config.tpv3_fanout_id;
+            (uint16_t)ifr.ifr_ifindex;
 
         nd_dprintf("%s: fanout options and flags: 0x%08x\n", ifname.c_str(), so_uintval);
 

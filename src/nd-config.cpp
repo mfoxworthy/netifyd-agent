@@ -141,7 +141,6 @@ ndGlobalConfig::ndGlobalConfig() :
     dhc_save(ndDHC_PERSISTENT),
     fhc_save(ndFHC_PERSISTENT),
     capture_type(ndCT_NONE),
-    tpv3_fanout_id(1),
     tpv3_rb_block_size(ND_TPV3_RB_BLOCK_SIZE),
     tpv3_rb_frame_size(ND_TPV3_RB_FRAME_SIZE),
     tpv3_rb_blocks(ND_TPV3_RB_BLOCKS),
@@ -354,9 +353,6 @@ int ndGlobalConfig::Load(const string &filename)
 
     ND_GF_SET_FLAG(ndGF_TPV3_FANOUT,
         reader.GetBoolean("capture", "tpv3_fanout", false));
-
-    tpv3_fanout_id = (uint16_t)reader.GetInteger(
-        "capture", "tpv3_fanout_id", 1);
 
     tpv3_rb_block_size = (unsigned)reader.GetInteger(
         "capture", "tpv3_rb_block_size", ND_TPV3_RB_BLOCK_SIZE);
