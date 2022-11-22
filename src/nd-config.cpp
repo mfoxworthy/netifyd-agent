@@ -358,12 +358,8 @@ int ndGlobalConfig::Load(const string &filename)
     tpv3_fanout_id = (uint16_t)reader.GetInteger(
         "capture", "tpv3_fanout_id", 1);
 
-    fprintf(stderr, "block size: %u\n", tpv3_rb_block_size);
-
     tpv3_rb_block_size = (unsigned)reader.GetInteger(
         "capture", "tpv3_rb_block_size", ND_TPV3_RB_BLOCK_SIZE);
-
-    fprintf(stderr, "block size: %u\n", tpv3_rb_block_size);
 
     tpv3_rb_frame_size = (unsigned)reader.GetInteger(
         "capture", "tpv3_rb_frame_size", ND_TPV3_RB_FRAME_SIZE);

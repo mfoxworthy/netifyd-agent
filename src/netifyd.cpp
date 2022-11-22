@@ -518,53 +518,69 @@ static int nd_start_capture_threads(void)
     if (capture_threads.size() > 0) return 1;
 
     try {
+        string netlink_dev;
+        uint8_t mac[ETH_ALEN];
+        uint8_t private_addr = 0;
+        vector<ndCaptureThread *> threads;
+
         int16_t cpu = (
                 nd_config.ca_capture_base > -1 &&
                 nd_config.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
-            ) ? nd_config.ca_capture_base : 0;
-        string netlink_dev;
-        uint8_t private_addr = 0;
-        uint8_t mac[ETH_ALEN];
+        ) ? nd_config.ca_capture_base : 0;
 
-        for (auto & i : nd_interfaces) {
+        for (auto & it : nd_interfaces) {
 
-            if (! nd_ifaddrs_get_mac(nd_interface_addrs, i.second.ifname, mac))
+            if (! nd_ifaddrs_get_mac(nd_interface_addrs, it.second.ifname, mac))
                 memset(mac, 0, ETH_ALEN);
-
-            ndCaptureThread *thread = nullptr;
 
             switch (nd_config.capture_type) {
             case ndCT_PCAP:
             {
-                ndCapturePcap *pcap = new ndCapturePcap(
+                ndCapturePcap *thread = new ndCapturePcap(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
-                    i.second,
+                    it.second,
                     mac,
                     thread_socket,
                     detection_threads,
                     dns_hint_cache,
-                    (i.second.internal) ? 0 : ++private_addr
+                    (it.second.internal) ? 0 : ++private_addr
                 );
 
-                pcap->Create();
-                thread = pcap;
+                thread->Create();
+                threads.push_back(thread);
                 break;
             }
 
             case ndCT_TPV3:
             {
-                ndCaptureTPv3 *tpv3 = new ndCaptureTPv3(
-                    (nd_interfaces.size() > 1) ? cpu++ : -1,
-                    i.second,
-                    mac,
-                    thread_socket,
-                    detection_threads,
-                    dns_hint_cache,
-                    (i.second.internal) ? 0 : ++private_addr
-                );
+                for (unsigned i = 0; i < it.second.instances; i++) {
 
-                tpv3->Create();
-                thread = tpv3;
+                    ndCaptureTPv3 *thread = new ndCaptureTPv3(
+                        (nd_interfaces.size() > 1) ? cpu++ : -1,
+                        it.second,
+                        mac,
+                        thread_socket,
+                        detection_threads,
+                        dns_hint_cache,
+                        (it.second.internal) ? 0 : ++private_addr
+                    );
+
+                    thread->Create();
+                    threads.push_back(thread);
+
+                    if (! ND_TPV3_FANOUT &&
+                        it.second.instances > 1) {
+                        nd_printf("WARNING: multiple interface"
+                            " instances specified, but TPv3"
+                            " \"fanout\" mode is disabled.\n"
+                        );
+                        nd_printf(
+                            "Skipping additional instances...\n"
+                        );
+                        break;
+                    }
+                }
+
                 break;
             }
 
@@ -572,11 +588,7 @@ static int nd_start_capture_threads(void)
                 throw "capture type not set.";
             }
 
-            auto it = capture_threads.find(i.second.ifname);
-            if (it == capture_threads.end())
-                capture_threads[i.second.ifname] = { thread };
-            else
-                capture_threads[i.second.ifname].push_back(thread);
+            capture_threads[it.second.ifname] = threads;
 
             if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }
@@ -1438,6 +1450,19 @@ static void nd_print_stats(void)
 
     nd_print_number(*nd_stats_os, pkt_totals.pkt.maxlen);
     nd_dprintf("%12s: %s\n", "Largest", (*nd_stats_os).str().c_str());
+
+    nd_print_number(*nd_stats_os, pkt_totals.pkt.capture_filtered, false);
+    nd_dprintf("%12s: %s ", "Filtered", (*nd_stats_os).str().c_str());
+
+    nd_print_number(*nd_stats_os, pkt_totals.pkt.capture_dropped, false);
+    nd_dprintf("%12s: %s", "Dropped", (*nd_stats_os).str().c_str());
+
+    double pkt_loss = (
+        ((double)pkt_totals.pkt.discard + (double)pkt_totals.pkt.capture_dropped) * 100)
+        / (double)pkt_totals.pkt.raw;
+
+    nd_print_percent(*nd_stats_os, pkt_loss);
+    nd_dprintf("%13s: %s\n", "Loss", (*nd_stats_os).str().c_str());
 
     nd_dprintf("\nCumulative Byte Totals:\n");
 
@@ -3128,7 +3153,7 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_NAPI_UPDATED) {
-            if (nd_domains != NULL)
+            if (nd_domains != NULL && ND_LOAD_DOMAINS)
                 nd_domains->Load();
 
             if (nd_categories != NULL)
@@ -3147,8 +3172,13 @@ int main(int argc, char *argv[])
             nd_printf("Reloading configuration...\n");
             if (! nd_apps->Load(nd_config.path_app_config))
                 nd_apps->LoadLegacy(nd_config.path_legacy_config);
-            nd_categories->Load();
-            nd_domains->Load();
+
+            if (nd_domains != NULL && ND_LOAD_DOMAINS)
+                nd_domains->Load();
+
+            if (nd_categories != NULL)
+                nd_categories->Load();
+
             nd_plugin_event(ndPlugin::EVENT_RELOAD);
             nd_printf("Configuration reloaded.\n");
             continue;

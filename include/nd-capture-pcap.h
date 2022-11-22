@@ -46,6 +46,7 @@ protected:
     int pcap_snaplen;
     struct pcap_pkthdr *pkt_header;
     const uint8_t *pkt_data;
+    struct pcap_stat pcs_last;
     time_t tv_epoch;
 
     pcap_t *OpenCapture(void);

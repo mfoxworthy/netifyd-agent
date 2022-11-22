@@ -259,7 +259,6 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
     float fvalue = value;
 
     os.str("");
-    //os << setiosflags(ios::fixed) << setw(14) << setprecision(3);
     os << setw(8) << setprecision(3);
 
     if (units_binary) {
@@ -304,6 +303,13 @@ void nd_print_number(ostringstream &os, uint64_t value, bool units_binary)
             os << fvalue << setw(4) << " ";
         }
     }
+}
+
+void nd_print_percent(ostringstream &os, const double &value)
+{
+    os.str("");
+    os << setw(8) << setprecision(3);
+    os << value << " " << "%";
 }
 
 void nd_ltrim(string &s, unsigned char c)

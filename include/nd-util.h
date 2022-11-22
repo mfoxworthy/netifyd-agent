@@ -45,6 +45,7 @@ void nd_print_address(const struct sockaddr_storage *addr);
 void nd_print_binary(uint32_t byte);
 
 void nd_print_number(ostringstream &os, uint64_t value, bool units_binary = true);
+void nd_print_percent(ostringstream &os, const double &value);
 
 void nd_ltrim(string &s, unsigned char c = 0);
 void nd_rtrim(string &s, unsigned char c = 0);

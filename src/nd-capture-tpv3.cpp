@@ -510,6 +510,7 @@ ndPacket *ndPacketRing::CopyPacket(void *entry,
     }
 
     ndPacket *pkt = nullptr;
+    // One-and-only packet copy...
     uint8_t *pkt_data = new uint8_t[tp_snaplen];
 
     if (pkt_data) {

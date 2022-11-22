@@ -110,7 +110,8 @@ ndCapturePcap::ndCapturePcap(
     uint8_t private_addr)
     :
     pcap(NULL), pcap_fd(-1),
-    pkt_header(NULL), pkt_data(NULL), tv_epoch(0),
+    pkt_header(NULL), pkt_data(NULL),
+    pcs_last{0}, tv_epoch(0),
     ndCaptureThread(ndCT_PCAP,
         (long)cpu, iface, dev_mac, thread_socket,
         threads_dpi, dhc, private_addr)
@@ -168,6 +169,7 @@ void *ndCapturePcap::Entry(void)
             while (ShouldTerminate() == false &&
                 (rc = pcap_next_ex(pcap, &pkt_header, &pkt_data)) > 0) {
 
+                // One-and-only packet copy...
                 uint8_t *pd = new uint8_t[pkt_header->caplen];
                 if (pd == nullptr)
                     throw ndCaptureThreadException(strerror(ENOMEM));
@@ -332,8 +334,18 @@ void ndCapturePcap::GetCaptureStats(ndPacketStats &stats)
         struct pcap_stat pcs;
         memset(&pcs, 0, sizeof(struct pcap_stat));
 
-        if (pcap_stats(pcap, &pcs) == 0)
-            this->stats.pkt.capture_dropped = pcs.ps_drop + pcs.ps_ifdrop;
+        if (pcap_stats(pcap, &pcs) == 0) {
+            uint64_t dropped = pcs.ps_drop + pcs.ps_ifdrop;
+
+            if (pcs_last.ps_drop <= pcs.ps_drop)
+                dropped -= pcs_last.ps_drop;
+            if (pcs_last.ps_ifdrop <= pcs.ps_ifdrop)
+                dropped -= pcs_last.ps_ifdrop;
+
+            this->stats.pkt.capture_dropped = dropped;
+
+            memcpy(&pcs_last, &pcs, sizeof(struct pcap_stat));
+        }
     }
 
     ndCaptureThread::GetCaptureStats(stats);
