@@ -102,7 +102,7 @@ ndFlow::ndFlow(const ndInterface &iface)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0), gtp{},
+    flags{}, tickets(0), gtp{},
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     lower_addr4 = (struct sockaddr_in *)&lower_addr;
@@ -142,7 +142,7 @@ ndFlow::ndFlow(const ndFlow &flow)
 #ifdef _ND_USE_NETLINK
     lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
 #endif
-    flags{}, queued(0), gtp(flow.gtp),
+    flags{}, tickets(0), gtp(flow.gtp),
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     memcpy(lower_mac, flow.lower_mac, ETH_ALEN);

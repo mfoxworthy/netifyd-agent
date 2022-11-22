@@ -308,6 +308,7 @@ ndCaptureThread::ndCaptureThread(
 
 const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
 {
+    ndFlowTicket ticket;
     ndFlow *nf, flow(iface);
 
     const struct ether_header *hdr_eth = NULL;
@@ -958,6 +959,7 @@ nd_process_ip:
 
     if (nf != NULL) {
         // Flow exists in map.
+        ticket.Take(nf, false);
 
         if (addr_cmp != nf->direction) {
 #if _ND_DISSECT_GTP
@@ -1006,6 +1008,8 @@ nd_process_ip:
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
+
+        ticket.Take(nf, false);
 
         nd_flow_count++;
 
@@ -1170,8 +1174,7 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.detection_expired.load() == false &&
-        nf->detection_packets <= nd_config.max_detection_pkts &&
-        nf->queued.load() <= nd_config.max_detection_pkts) {
+        nf->detection_packets <= nd_config.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

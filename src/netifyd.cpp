@@ -1150,7 +1150,7 @@ static void nd_process_flows(
                     }
                 }
 
-                if (i->second->queued.load() == 0) {
+                if (i->second->tickets.load() == 0) {
                     delete i->second;
                     i = fm->erase(i);
 
@@ -1159,8 +1159,8 @@ static void nd_process_flows(
                 }
                 else {
                     if (blocked == 0) {
-                        nd_dprintf("%s: flow purge blocked by %lu queued packets.\n",
-                            i->second->iface.ifname.c_str(), i->second->queued.load());
+                        nd_dprintf("%s: flow purge blocked by %lu tickets.\n",
+                            i->second->iface.ifname.c_str(), i->second->tickets.load());
                     }
                     blocked++;
                     i++;
@@ -1215,7 +1215,7 @@ static void nd_process_flows(
     }
 
     nd_dprintf(
-        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, queued: %lu, blocked: %lu\n",
+        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, tickets: %lu, blocked: %lu\n",
         purged, total, active, expiring, expired, total - active, blocked
     );
 }

@@ -248,7 +248,7 @@ public:
         atomic_bool soft_dissector;
     } flags;
 
-    atomic_uint queued;
+    atomic_uint tickets;
 
     union {
         struct {
@@ -354,6 +354,27 @@ typedef unordered_map<string, ndFlow *> nd_flow_map;
 typedef map<string, nd_flow_map *> nd_flows;
 typedef pair<string, ndFlow *> nd_flow_pair;
 typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
+
+class ndFlowTicket
+{
+public:
+    ndFlowTicket() : flow(nullptr) { }
+    ndFlowTicket(ndFlow *flow) : flow(flow) { flow->tickets++; }
+    virtual ~ndFlowTicket() { if (flow != nullptr) flow->tickets--; }
+
+    void Take(ndFlow *flow = nullptr, bool increment = true) {
+        if (flow != nullptr) {
+            if (increment) flow->tickets++;
+            if (this->flow != nullptr) this->flow->tickets--;
+            this->flow = flow;
+        }
+        else if(this->flow != nullptr)
+            if (increment) this->flow->tickets++;
+    }
+
+protected:
+    ndFlow *flow;
+};
 
 #endif // _ND_FLOW_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

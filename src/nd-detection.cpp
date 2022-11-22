@@ -191,10 +191,9 @@ ndDetectionThread::~ndDetectionThread()
     pthread_mutex_destroy(&pkt_queue_cond_mutex);
 
     while (pkt_queue.size()) {
+
         ndDetectionQueueEntry *entry = pkt_queue.front();
         pkt_queue.pop();
-
-        ndEF->queued--;
 
         delete entry;
     }
@@ -231,8 +230,6 @@ void ndDetectionThread::QueuePacket(
     int rc;
     if ((rc = pthread_cond_broadcast(&pkt_queue_cond)) != 0)
         throw ndDetectionThreadException(strerror(rc));
-
-    flow->queued++;
 }
 
 void *ndDetectionThread::Entry(void)
@@ -290,8 +287,6 @@ void ndDetectionThread::ProcessPacketQueue(void)
             if (! ndEF->flags.detection_complete.load() &&
                 ! ndEF->flags.detection_expired.load())
                 ProcessPacket(entry);
-
-            ndEF->queued--;
 
             delete entry;
         }

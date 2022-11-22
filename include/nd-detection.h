@@ -31,7 +31,7 @@ class ndDetectionQueueEntry
 public:
     ndDetectionQueueEntry(ndFlow *flow, const ndPacket *packet,
         const uint8_t *data, uint16_t length)
-    : packet(packet), flow(flow),
+    : packet(packet), flow(flow), ticket(flow),
     data(data), length(length) { }
 
     virtual ~ndDetectionQueueEntry() {
@@ -40,6 +40,7 @@ public:
 
     const ndPacket *packet;
     ndFlow *flow;
+    ndFlowTicket ticket;
     const uint8_t *data;
     uint16_t length;
 };

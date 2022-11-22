@@ -114,7 +114,10 @@ ndFlow *ndFlowMap::Lookup(const string &digest)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
     auto fi = bucket[b]->find(digest);
-    if (fi != bucket[b]->end()) f = fi->second;
+    if (fi != bucket[b]->end()) {
+        fi->second->tickets++;
+        f = fi->second;
+    }
 
     pthread_mutex_unlock(bucket_lock[b]);
 
@@ -132,7 +135,10 @@ ndFlow *ndFlowMap::Insert(const string &digest, ndFlow *flow)
     nd_flow_pair fp(digest, flow);
     nd_flow_insert fi = bucket[b]->insert(fp);
 
-    if (fi.second == false) f = fi.first->second;
+    if (fi.second == false)
+        f = fi.first->second;
+    else
+        fi.first->second->tickets++;
 
     pthread_mutex_unlock(bucket_lock[b]);
 
