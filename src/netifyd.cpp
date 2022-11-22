@@ -590,6 +590,8 @@ static int nd_start_capture_threads(void)
 
             capture_threads[it.second.ifname] = threads;
 
+            threads.clear();
+
             if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
         }
     }
