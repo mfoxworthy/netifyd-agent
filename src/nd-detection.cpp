@@ -284,9 +284,35 @@ void ndDetectionThread::ProcessPacketQueue(void)
         Unlock();
 
         if (entry != NULL) {
-            if (! ndEF->flags.detection_complete.load() &&
-                ! ndEF->flags.detection_expired.load())
+            if (ndEF->flags.detection_complete.load() == false &&
+                ndEF->flags.detection_expiring.load() == false &&
+                ndEF->detection_packets < nd_config.max_detection_pkts) {
+
+                ndEF->detection_packets++;
+
                 ProcessPacket(entry);
+            }
+
+            if (ndEF->detection_packets == nd_config.max_detection_pkts ||
+                (ndEF->flags.detection_expiring.load() &&
+                ndEF->flags.detection_expired.load() == false)) {
+
+                if (ndEF->flags.detection_complete.load() == false &&
+                    ndEF->flags.detection_guessed.load() == false) {
+
+                    SetGuessedProtocol(entry);
+
+                    ProcessFlow(entry);
+
+                    FlowUpdate(entry);
+                }
+
+                if (ndEF->flags.detection_expiring.load())
+                    ndEF->flags.detection_expired = true;
+            }
+
+            if (ndEF->flags.detection_complete.load())
+                ndEF->release();
 
             delete entry;
         }
@@ -298,6 +324,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     bool flow_update = false;
 
     if (ndEFNF == NULL) {
+        if (ndEF->detection_packets != 1)
+            nd_dprintf("WARNING: Flow ZOMBIE.\n");
+
         flows++;
 
         ndEFNF = (ndpi_flow_struct *)ndpi_malloc(sizeof(ndpi_flow_struct));
@@ -307,527 +336,71 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         memset(ndEFNF, 0, sizeof(ndpi_flow_struct));
     }
 
-    if (! ndEF->flags.detection_expiring.load()) {
+    ndpi_protocol ndpi_rc = ndpi_detection_process_packet(
+        ndpi,
+        ndEFNF,
+        entry->data,
+        entry->length,
+        ndEF->ts_last_seen,
+        NULL
+    );
 
-        ndEF->detection_packets++;
-
-        ndpi_protocol ndpi_rc = ndpi_detection_process_packet(
-            ndpi,
-            ndEFNF,
-            entry->data,
-            entry->length,
-            ndEF->ts_last_seen,
-            NULL
+    if (ndEF->detected_protocol == ND_PROTO_UNKNOWN &&
+        ndpi_rc.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
+        ndEF->detected_protocol = nd_ndpi_proto_find(
+            ndpi_rc.master_protocol,
+            ndEF
         );
-
-        // XXX: Preserve app_protocol.
-        if (ndEF->flags.soft_dissector.load() == false) {
-            ndEF->detected_protocol = nd_ndpi_proto_find(
-                ndpi_rc.master_protocol,
-                ndEF
-            );
-        }
-
-        if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
-            ndEF->detected_protocol = nd_ndpi_proto_find(
-                ndpi_rc.app_protocol,
-                ndEF
-            );
-        }
-
-        if (! ndEF->flags.risk_checked.load()) {
-            if (ndEFNF->risk_checked) {
-                if (ndEFNF->risk != NDPI_NO_RISK) {
-                    for (unsigned i = 0; i < NDPI_MAX_RISK; i++) {
-                        if (NDPI_ISSET_BIT(ndEFNF->risk, i) != 0) {
-                            ndEF->risks.push_back(nd_ndpi_risk_find(i));
-                        }
-                    }
-
-                    ndEF->ndpi_risk_score = ndpi_risk2score(
-                        ndEFNF->risk,
-                        &ndEF->ndpi_risk_score_client,
-                        &ndEF->ndpi_risk_score_server
-                    );
-                }
-
-                ndEF->flags.risk_checked = true;
-            }
-        }
     }
 
-    bool check_extra_packets = (
-        ndEFNF->extra_packets_func != NULL
-        && ndEF->detection_packets < nd_config.max_detection_pkts);
-
-    if (! ndEF->flags.detection_init.load() && (
-        ndEF->detected_protocol != ND_PROTO_UNKNOWN
-        || ndEF->detection_packets == nd_config.max_detection_pkts
-        || ndEF->flags.detection_expiring.load())) {
-
-        if (! ndEF->flags.detection_guessed.load()
-            && ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
-            uint8_t guessed = 0;
-            ndpi_protocol ndpi_rc = ndpi_detection_giveup(
-                ndpi,
-                ndEFNF,
-                1, &guessed
-            );
-            ndEF->flags.detection_guessed = guessed;
-
-            if (guessed) {
-                // XXX: Preserve app_protocol.
-                ndEF->detected_protocol = nd_ndpi_proto_find(
-                    ndpi_rc.master_protocol,
-                    ndEF
-                );
-
-                if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
-                    ndEF->detected_protocol = nd_ndpi_proto_find(
-                        ndpi_rc.app_protocol,
-                        ndEF
-                    );
-                }
-            }
-        }
-#ifdef _ND_USE_NETLINK
-        if (ND_USE_NETLINK) {
-            ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr);
-            ndEF->upper_type = netlink->ClassifyAddress(&ndEF->upper_addr);
-        }
-#endif
-        if (dhc != NULL) {
-            string hostname;
-#ifdef _ND_USE_NETLINK
-            if (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN)
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
-            else if (ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) {
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
-            }
-#endif
-            if (! ndEF->flags.dhc_hit.load()) {
-                if (ndEF->origin == ndFlow::ORIGIN_LOWER)
-                    ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
-                else if (ndEF->origin == ndFlow::ORIGIN_UPPER)
-                    ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
-            }
-
-            if (ndEF->flags.dhc_hit.load()) {
-                snprintf(
-                    ndEF->dns_host_name,
-                    sizeof(ndEF->dns_host_name) - 1,
-                    "%s", hostname.c_str()
-                );
-                if (ndEFNF->host_server_name[0] == '\0' ||
-                    nd_is_ipaddr((const char *)ndEFNF->host_server_name)) {
-                    snprintf(
-                        (char *)ndEFNF->host_server_name,
-                        sizeof(ndEFNF->host_server_name) - 1,
-                        "%s", hostname.c_str()
-                    );
-                }
-            }
-        }
-
-        CopyHostname(
-            ndEF->host_server_name, ndEFNF->host_server_name,
-            min((size_t)ND_FLOW_HOSTNAME, (size_t)sizeof(ndEFNF->host_server_name))
-        );
-
-        // Determine application based on master protocol metadata for
-        // Protocol / Application "Twins"
-        switch (ndEF->detected_protocol) {
-
-        case ND_PROTO_SPOTIFY:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
-            break;
-
-        case ND_PROTO_UBNTAC2:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
-            break;
-
-        case ND_PROTO_NEST_LOG_SINK:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.nest"));
-            break;
-
-        case ND_PROTO_STEAM:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.steam"));
-            break;
-
-        case ND_PROTO_TEAMVIEWER:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
-            break;
-
-        case ND_PROTO_APPLE_PUSH:
-            SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
-            break;
-
-        default:
-            break;
-        }
-
-        // Determine application by host_server_name if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            if (ndEF->host_server_name[0] != '\0')
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
-        }
-
-        // Determine application by dns_host_name if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            if (ndEF->dns_host_name[0] != '\0')
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
-        }
-
-        // Determine application by network CIDR if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            switch (ndEF->ip_version) {
-            case 4:
-                SetDetectedApplication(entry,
-                    nd_apps->Find(
-                        AF_INET,
-                        static_cast<void *>(
-                            &ndEF->lower_addr4->sin_addr
-                        )
-                    )
-                );
-                if (ndEF->detected_application) break;
-                SetDetectedApplication(entry,
-                    nd_apps->Find(
-                        AF_INET,
-                        static_cast<void *>(
-                            &ndEF->upper_addr4->sin_addr
-                        )
-                    )
-                );
-                break;
-            case 6:
-                SetDetectedApplication(entry,
-                    nd_apps->Find(
-                        AF_INET6,
-                        static_cast<void *>(
-                            &ndEF->lower_addr6->sin6_addr
-                        )
-                    )
-                );
-                if (ndEF->detected_application) break;
-                SetDetectedApplication(entry,
-                    nd_apps->Find(
-                        AF_INET6,
-                        static_cast<void *>(
-                            &ndEF->upper_addr6->sin6_addr
-                        )
-                    )
-                );
-                break;
-            }
-        }
-
-        // Additional protocol-specific processing...
-        switch (ndEF->master_protocol()) {
-
-        case ND_PROTO_TLS:
-        case ND_PROTO_QUIC:
-            ndEF->ssl.version =
-                ndEFNFP.tls_quic.ssl_version;
-            ndEF->ssl.cipher_suite =
-                ndEFNFP.tls_quic.server_cipher;
-
-            ndEF->ssl.client_sni = ndEF->host_server_name;
-
-            if (ndEF->ssl.server_cn[0] == '\0' &&
-                ndEFNFP.tls_quic.serverCN != NULL) {
-                CopyHostname(
-                    ndEF->ssl.server_cn,
-                    ndEFNFP.tls_quic.serverCN,
-                    ND_FLOW_TLS_CNLEN
-                );
-                free(ndEFNFP.tls_quic.serverCN);
-                ndEFNFP.tls_quic.serverCN = NULL;
-
-                // Detect application by server CN if still unknown.
-                if (ndEF->detected_application == ND_APP_UNKNOWN)
-                    SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
-            }
-
-            if (ndEF->ssl.issuer_dn == NULL &&
-                ndEFNFP.tls_quic.issuerDN != NULL) {
-                ndEF->ssl.issuer_dn = strdup(ndEFNFP.tls_quic.issuerDN);
-                free(ndEFNFP.tls_quic.issuerDN);
-                ndEFNFP.tls_quic.issuerDN = NULL;
-            }
-
-            if (ndEF->ssl.subject_dn == NULL &&
-                ndEFNFP.tls_quic.subjectDN != NULL) {
-                ndEF->ssl.subject_dn = strdup(ndEFNFP.tls_quic.subjectDN);
-                free(ndEFNFP.tls_quic.subjectDN);
-                ndEFNFP.tls_quic.subjectDN = NULL;
-            }
-
-            break;
-        case ND_PROTO_HTTP:
-            if (ndEFNF->http.user_agent != NULL) {
-                for (size_t i = 0;
-                    i < strlen((const char *)ndEFNF->http.user_agent); i++) {
-                    if (! isprint(ndEFNF->http.user_agent[i])) {
-                        // XXX: Sanitize user_agent of non-printable characters.
-                        ndEFNF->http.user_agent[i] = '\0';
-                        break;
-                    }
-                }
-
-                snprintf(
-                    ndEF->http.user_agent, ND_FLOW_UA_LEN,
-                    "%s", ndEFNF->http.user_agent
-                );
-            }
-
-            if (ndEFNF->http.url != NULL) {
-                snprintf(
-                    ndEF->http.url, ND_FLOW_URL_LEN,
-                    "%s", ndEFNF->http.url
-                );
-            }
-
-            break;
-        case ND_PROTO_DHCP:
-            snprintf(
-                ndEF->dhcp.fingerprint, ND_FLOW_DHCPFP_LEN,
-                "%s", ndEFNFP.dhcp.fingerprint
-            );
-            snprintf(
-                ndEF->dhcp.class_ident, ND_FLOW_DHCPCI_LEN,
-                "%s", ndEFNFP.dhcp.class_ident
-            );
-            break;
-        case ND_PROTO_SSH:
-            snprintf(ndEF->ssh.client_agent, ND_FLOW_SSH_UALEN,
-                "%s", ndEFNFP.ssh.client_signature);
-            snprintf(ndEF->ssh.server_agent, ND_FLOW_SSH_UALEN,
-                "%s", ndEFNFP.ssh.server_signature);
-            break;
-        case ND_PROTO_SSDP:
-            if (ndEFNF->http.user_agent != NULL &&
-                strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN) != 0) {
-                ndEF->ssdp.headers["user-agent"].assign(
-                    ndEFNF->http.user_agent,
-                    strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN)
-                );
-            }
-            break;
-        case ND_PROTO_BITTORRENT:
-#if 0
-            if (ndEFNFP.bittorrent.hash_valid) {
-                ndEF->bt.info_hash_valid = true;
-                memcpy(
-                    ndEF->bt.info_hash,
-                    ndEFNFP.bittorrent.hash,
-                    ND_FLOW_BTIHASH_LEN
-                );
-            }
-#endif
-            break;
-        default:
-            break;
-        }
-
-        if (fhc != NULL &&
-            ndEF->lower_port != 0 && ndEF->upper_port != 0) {
-
-            flow_digest.assign(
-                (const char *)ndEF->digest_lower, SHA1_DIGEST_LENGTH);
-
-            if (! fhc->pop(flow_digest, flow_digest_mdata)) {
-
-                ndEF->hash(tag, true);
-
-                flow_digest_mdata.assign(
-                    (const char *)ndEF->digest_mdata, SHA1_DIGEST_LENGTH
-                );
-
-                if (memcmp(ndEF->digest_lower, ndEF->digest_mdata,
-                    SHA1_DIGEST_LENGTH))
-                    fhc->push(flow_digest, flow_digest_mdata);
-            }
-            else {
-                if (memcmp(ndEF->digest_mdata, flow_digest_mdata.c_str(),
-                    SHA1_DIGEST_LENGTH)) {
-#ifdef _ND_LOG_FHC
-                    nd_dprintf("%s: Resurrected flow metadata hash from cache.\n",
-                        tag.c_str());
-#endif
-                    memcpy(ndEF->digest_mdata, flow_digest_mdata.c_str(),
-                        SHA1_DIGEST_LENGTH);
-                }
-            }
-        }
-        else ndEF->hash(tag, true);
-
-        struct sockaddr_in *laddr4 = ndEF->lower_addr4;
-        struct sockaddr_in6 *laddr6 = ndEF->lower_addr6;
-        struct sockaddr_in *uaddr4 = ndEF->upper_addr4;
-        struct sockaddr_in6 *uaddr6 = ndEF->upper_addr6;
-
-        switch (ndEF->ip_version) {
-        case 4:
-            inet_ntop(AF_INET, &laddr4->sin_addr.s_addr,
-                ndEF->lower_ip, INET_ADDRSTRLEN);
-            inet_ntop(AF_INET, &uaddr4->sin_addr.s_addr,
-                ndEF->upper_ip, INET_ADDRSTRLEN);
-            break;
-
-        case 6:
-            inet_ntop(AF_INET6, &laddr6->sin6_addr.s6_addr,
-                ndEF->lower_ip, INET6_ADDRSTRLEN);
-            inet_ntop(AF_INET6, &uaddr6->sin6_addr.s6_addr,
-                ndEF->upper_ip, INET6_ADDRSTRLEN);
-            break;
-
-        default:
-            nd_printf("%s: ERROR: Unknown IP version: %d\n",
-                tag.c_str(), ndEF->ip_version);
-            throw ndDetectionThreadException(strerror(EINVAL));
-        }
-#ifdef _ND_USE_NETLINK
-        nd_device_addrs *device_addrs = devices[ndEF->iface.ifname].second;
-        if (device_addrs != NULL) {
-
-            unique_lock<mutex> lock(*devices[ndEF->iface.ifname].first);
-
-            for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
-                string ip;
-                const uint8_t *umac = NULL;
-
-                if (t == ndFlow::TYPE_LOWER &&
-                    (ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP ||
-                     ndEF->lower_type == ndNETLINK_ATYPE_LOCALNET ||
-                     ndEF->lower_type == ndNETLINK_ATYPE_PRIVATE)) {
-
-                    umac = ndEF->lower_mac;
-                    ip = ndEF->lower_ip;
-                }
-                else if (t == ndFlow::TYPE_UPPER &&
-                    (ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP ||
-                     ndEF->upper_type == ndNETLINK_ATYPE_LOCALNET ||
-                     ndEF->upper_type == ndNETLINK_ATYPE_PRIVATE)) {
-
-                    umac = ndEF->upper_mac;
-                    ip = ndEF->upper_ip;
-                }
-                else continue;
-
-                // Filter out reserved MAC prefixes...
-                // ...IANA RFC7042, IPv4 uni/multicast:
-                if (! ((umac[0] == 0x00 || umac[0] == 0x01) &&
-                    umac[1] == 0x00 && umac[2] == 0x5e) &&
-                    // IPv6 multicast:
-                    ! (umac[0] == 0x33 && umac[1] == 0x33)) {
-
-                    string mac;
-                    mac.assign((const char *)umac, ETH_ALEN);
-
-                    nd_device_addrs::iterator i;
-                    if ((i = device_addrs->find(mac)) == device_addrs->end())
-                        (*device_addrs)[mac].push_back(ip);
-                    else {
-                        bool duplicate = false;
-                        vector<string>::iterator j;
-                        for (j = (*device_addrs)[mac].begin();
-                            j != (*device_addrs)[mac].end(); j++) {
-                            if (ip != (*j)) continue;
-                            duplicate = true;
-                            break;
-                        }
-
-                        if (! duplicate)
-                            (*device_addrs)[mac].push_back(ip);
-                    }
-                }
-            }
-        }
-#endif
-#if defined(_ND_USE_CONNTRACK) && defined(_ND_USE_NETLINK)
-        if (! ndEF->iface.internal && thread_conntrack != NULL) {
-            if ((ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP &&
-                ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) ||
-                (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN &&
-                ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP)) {
-
-                // Update flow with any collected information from the
-                // connection tracker (CT ID, mark, NAT'd).
-                thread_conntrack->UpdateFlow(ndEF);
-            }
-        }
-#endif
-        ndEF->detected_protocol_name = nd_proto_get_name(
-            ndEF->detected_protocol
+    if (ndEF->detected_protocol == ND_PROTO_UNKNOWN &&
+        ndpi_rc.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
+        ndEF->detected_protocol = nd_ndpi_proto_find(
+            ndpi_rc.app_protocol,
+            ndEF
         );
 
         if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
-            ndEF->category.protocol = nd_categories->Lookup(
-                ndCAT_TYPE_PROTO,
-                (unsigned)ndEF->detected_protocol
+            char proto_name[64];
+            ndpi_protocol2name(
+                ndpi, ndpi_rc, proto_name, sizeof(proto_name)
             );
-        }
-
-        if (ndEFNF->host_server_name[0] != '\0') {
-            ndEF->category.domain = nd_domains->Lookup(
-                ndEFNF->host_server_name
+#if 0
+            nd_dprintf(
+                "%s: Set detected protocol from application hint: %s\n",
+                tag.c_str(), proto_name
             );
+#endif
         }
+    }
 
-        ndEF->update_lower_maps();
+    bool check_extra_packets = (ndEFNF->extra_packets_func != NULL);
 
-        for (vector<uint8_t *>::const_iterator i =
-            nd_config.privacy_filter_mac.begin();
-            i != nd_config.privacy_filter_mac.end() &&
-                ndEF->privacy_mask !=
-                (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
-            if (! memcmp((*i), ndEF->lower_mac, ETH_ALEN))
-                ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-            if (! memcmp((*i), ndEF->upper_mac, ETH_ALEN))
-                ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
-        }
+    if (! ndEF->flags.risk_checked.load()) {
+        if (ndEFNF->risk_checked) {
+            if (ndEFNF->risk != NDPI_NO_RISK) {
+                for (unsigned i = 0; i < NDPI_MAX_RISK; i++) {
+                    if (NDPI_ISSET_BIT(ndEFNF->risk, i) != 0) {
+                        ndEF->risks.push_back(nd_ndpi_risk_find(i));
+                    }
+                }
 
-        for (vector<struct sockaddr *>::const_iterator i =
-            nd_config.privacy_filter_host.begin();
-            i != nd_config.privacy_filter_host.end() &&
-                ndEF->privacy_mask !=
-                (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
-
-            struct sockaddr_in *sa_in;
-            struct sockaddr_in6 *sa_in6;
-
-            switch ((*i)->sa_family) {
-            case AF_INET:
-                sa_in = reinterpret_cast<struct sockaddr_in *>((*i));
-                if (! memcmp(&ndEF->lower_addr4, &sa_in->sin_addr,
-                    sizeof(struct in_addr)))
-                    ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-                if (! memcmp(&ndEF->upper_addr4, &sa_in->sin_addr,
-                    sizeof(struct in_addr)))
-                    ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
-                break;
-            case AF_INET6:
-                sa_in6 = reinterpret_cast<struct sockaddr_in6 *>((*i));
-                if (! memcmp(&ndEF->lower_addr6, &sa_in6->sin6_addr,
-                    sizeof(struct in6_addr)))
-                    ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-                if (! memcmp(&ndEF->upper_addr6, &sa_in6->sin6_addr,
-                    sizeof(struct in6_addr)))
-                    ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
-                break;
+                ndEF->ndpi_risk_score = ndpi_risk2score(
+                    ndEFNF->risk,
+                    &ndEF->ndpi_risk_score_client,
+                    &ndEF->ndpi_risk_score_server
+                );
             }
 
-            // TODO: Update the text IP addresses that were set above...
+            ndEF->flags.risk_checked = true;
         }
+    }
 
+    if (ndEF->flags.detection_init.load() == false
+        && ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+
+        ProcessFlow(entry);
         flow_update = true;
-        ndEF->flags.detection_init = true;
-
-        if (ndEF->flags.detection_expiring.load()) {
-            ndEF->flags.detection_expired = true;
-            check_extra_packets = false;
-        }
     }
     else if (ndEF->flags.detection_init.load()) {
 
@@ -849,7 +422,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
-                CopyHostname(
+                SetHostname(
                     ndEF->ssl.server_cn,
                     ndEFNFP.tls_quic.serverCN,
                     ND_FLOW_TLS_CNLEN
@@ -930,99 +503,8 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     if (ndEF->flags.detection_init.load() && ! check_extra_packets)
         ndEF->flags.detection_complete = true;
 
-    if (flow_update) {
-
-        if (ndEF->category.application == ND_CAT_UNKNOWN &&
-            ndEF->detected_application != ND_APP_UNKNOWN) {
-            ndEF->category.application = nd_categories->Lookup(
-                ndCAT_TYPE_APP,
-                (unsigned)ndEF->detected_application
-            );
-        }
-
-        if (ndEF->category.protocol == ND_CAT_UNKNOWN &&
-            ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
-            ndEF->category.protocol = nd_categories->Lookup(
-                ndCAT_TYPE_PROTO,
-                (unsigned)ndEF->detected_protocol
-            );
-        }
-
-        if (ndEF->category.domain == ND_DOMAIN_UNKNOWN &&
-            ndEFNF->host_server_name[0] != '\0') {
-            ndEF->category.domain = nd_domains->Lookup(
-                ndEFNF->host_server_name
-            );
-        }
-
-        if (ND_SOFT_DISSECTORS) {
-
-            ndSoftDissector nsd;
-            if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
-
-                ndEF->flags.soft_dissector = true;
-
-                if (nsd.aid > -1) {
-                    if (nsd.aid == ND_APP_UNKNOWN) {
-                        ndEF->detected_application = 0;
-                        if (ndEF->detected_application_name != NULL) {
-                            free(ndEF->detected_application_name);
-                            ndEF->detected_application_name = NULL;
-                        }
-                        ndEF->category.application = ND_CAT_UNKNOWN;
-                    }
-                    else
-                        SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
-                }
-
-                if (nsd.pid > -1) {
-                    ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
-
-                    ndEF->category.protocol = nd_categories->Lookup(
-                        ndCAT_TYPE_PROTO,
-                        (unsigned)ndEF->detected_protocol
-                    );
-                    ndEF->detected_protocol_name = nd_proto_get_name(
-                        ndEF->detected_protocol
-                    );
-                }
-            }
-        }
-
-        if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
-            ndEF->print();
-
-        for (nd_plugins::iterator i = plugins->begin();
-            i != plugins->end(); i++) {
-            ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
-                i->second->GetPlugin()
-            );
-            p->ProcessFlow(ndEF);
-        }
-
-        if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
-            ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
-            json j;
-
-            j["type"] = "flow";
-            j["interface"] = ndEF->iface.ifname;
-            j["internal"] = ndEF->iface.internal;
-            j["established"] = false;
-
-            json jf;
-            ndEF->json_encode(jf, ndFlow::ENCODE_METADATA);
-            j["flow"] = jf;
-
-            string json_string;
-            nd_json_to_string(j, json_string, false);
-            json_string.append("\n");
-
-            thread_socket->QueueWrite(json_string);
-        }
-    }
-
-    if (ndEF->flags.detection_complete.load())
-        ndEF->release();
+    // Last updates, write to socket(s)...
+    if (flow_update) FlowUpdate(entry);
 }
 
 bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
@@ -1078,6 +560,465 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
     return flow_update;
 }
 
+void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
+{
+#ifdef _ND_USE_NETLINK
+    if (ND_USE_NETLINK) {
+        ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr);
+        ndEF->upper_type = netlink->ClassifyAddress(&ndEF->upper_addr);
+    }
+#endif
+    if (dhc != NULL) {
+        string hostname;
+#ifdef _ND_USE_NETLINK
+        if (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN)
+            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
+        else if (ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) {
+            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
+        }
+#endif
+        if (! ndEF->flags.dhc_hit.load()) {
+            if (ndEF->origin == ndFlow::ORIGIN_LOWER)
+                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
+            else if (ndEF->origin == ndFlow::ORIGIN_UPPER)
+                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
+        }
+
+        if (ndEF->flags.dhc_hit.load()) {
+            snprintf(
+                ndEF->dns_host_name,
+                sizeof(ndEF->dns_host_name) - 1,
+                "%s", hostname.c_str()
+            );
+            if (ndEFNF->host_server_name[0] == '\0' ||
+                nd_is_ipaddr((const char *)ndEFNF->host_server_name)) {
+                snprintf(
+                    (char *)ndEFNF->host_server_name,
+                    sizeof(ndEFNF->host_server_name) - 1,
+                    "%s", hostname.c_str()
+                );
+            }
+        }
+    }
+
+    SetHostname(
+        ndEF->host_server_name, ndEFNF->host_server_name,
+        min((size_t)ND_FLOW_HOSTNAME, (size_t)sizeof(ndEFNF->host_server_name))
+    );
+
+    // Determine application based on master protocol metadata for
+    // Protocol / Application "Twins"
+    switch (ndEF->detected_protocol) {
+
+    case ND_PROTO_SPOTIFY:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
+        break;
+
+    case ND_PROTO_UBNTAC2:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
+        break;
+
+    case ND_PROTO_NEST_LOG_SINK:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.nest"));
+        break;
+
+    case ND_PROTO_STEAM:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.steam"));
+        break;
+
+    case ND_PROTO_TEAMVIEWER:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
+        break;
+
+    case ND_PROTO_APPLE_PUSH:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
+        break;
+
+    default:
+        break;
+    }
+
+    // Determine application by host_server_name if still unknown.
+    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        if (ndEF->host_server_name[0] != '\0')
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
+    }
+
+    // Determine application by dns_host_name if still unknown.
+    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        if (ndEF->dns_host_name[0] != '\0')
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
+    }
+
+    // Determine application by network CIDR if still unknown.
+    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        switch (ndEF->ip_version) {
+        case 4:
+            SetDetectedApplication(entry,
+                nd_apps->Find(
+                    AF_INET,
+                    static_cast<void *>(
+                        &ndEF->lower_addr4->sin_addr
+                    )
+                )
+            );
+            if (ndEF->detected_application) break;
+            SetDetectedApplication(entry,
+                nd_apps->Find(
+                    AF_INET,
+                    static_cast<void *>(
+                        &ndEF->upper_addr4->sin_addr
+                    )
+                )
+            );
+            break;
+        case 6:
+            SetDetectedApplication(entry,
+                nd_apps->Find(
+                    AF_INET6,
+                    static_cast<void *>(
+                        &ndEF->lower_addr6->sin6_addr
+                    )
+                )
+            );
+            if (ndEF->detected_application) break;
+            SetDetectedApplication(entry,
+                nd_apps->Find(
+                    AF_INET6,
+                    static_cast<void *>(
+                        &ndEF->upper_addr6->sin6_addr
+                    )
+                )
+            );
+            break;
+        }
+    }
+
+    // Additional protocol-specific processing...
+    switch (ndEF->master_protocol()) {
+
+    case ND_PROTO_TLS:
+    case ND_PROTO_QUIC:
+        ndEF->ssl.version =
+            ndEFNFP.tls_quic.ssl_version;
+        ndEF->ssl.cipher_suite =
+            ndEFNFP.tls_quic.server_cipher;
+
+        ndEF->ssl.client_sni = ndEF->host_server_name;
+
+        if (ndEF->ssl.server_cn[0] == '\0' &&
+            ndEFNFP.tls_quic.serverCN != NULL) {
+            SetHostname(
+                ndEF->ssl.server_cn,
+                ndEFNFP.tls_quic.serverCN,
+                ND_FLOW_TLS_CNLEN
+            );
+            free(ndEFNFP.tls_quic.serverCN);
+            ndEFNFP.tls_quic.serverCN = NULL;
+
+            // Detect application by server CN if still unknown.
+            if (ndEF->detected_application == ND_APP_UNKNOWN)
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
+        }
+
+        if (ndEF->ssl.issuer_dn == NULL &&
+            ndEFNFP.tls_quic.issuerDN != NULL) {
+            ndEF->ssl.issuer_dn = strdup(ndEFNFP.tls_quic.issuerDN);
+            free(ndEFNFP.tls_quic.issuerDN);
+            ndEFNFP.tls_quic.issuerDN = NULL;
+        }
+
+        if (ndEF->ssl.subject_dn == NULL &&
+            ndEFNFP.tls_quic.subjectDN != NULL) {
+            ndEF->ssl.subject_dn = strdup(ndEFNFP.tls_quic.subjectDN);
+            free(ndEFNFP.tls_quic.subjectDN);
+            ndEFNFP.tls_quic.subjectDN = NULL;
+        }
+
+        break;
+    case ND_PROTO_HTTP:
+        if (ndEFNF->http.user_agent != NULL) {
+            for (size_t i = 0;
+                i < strlen((const char *)ndEFNF->http.user_agent); i++) {
+                if (! isprint(ndEFNF->http.user_agent[i])) {
+                    // XXX: Sanitize user_agent of non-printable characters.
+                    ndEFNF->http.user_agent[i] = '\0';
+                    break;
+                }
+            }
+
+            snprintf(
+                ndEF->http.user_agent, ND_FLOW_UA_LEN,
+                "%s", ndEFNF->http.user_agent
+            );
+        }
+
+        if (ndEFNF->http.url != NULL) {
+            snprintf(
+                ndEF->http.url, ND_FLOW_URL_LEN,
+                "%s", ndEFNF->http.url
+            );
+        }
+
+        break;
+    case ND_PROTO_DHCP:
+        snprintf(
+            ndEF->dhcp.fingerprint, ND_FLOW_DHCPFP_LEN,
+            "%s", ndEFNFP.dhcp.fingerprint
+        );
+        snprintf(
+            ndEF->dhcp.class_ident, ND_FLOW_DHCPCI_LEN,
+            "%s", ndEFNFP.dhcp.class_ident
+        );
+        break;
+    case ND_PROTO_SSH:
+        snprintf(ndEF->ssh.client_agent, ND_FLOW_SSH_UALEN,
+            "%s", ndEFNFP.ssh.client_signature);
+        snprintf(ndEF->ssh.server_agent, ND_FLOW_SSH_UALEN,
+            "%s", ndEFNFP.ssh.server_signature);
+        break;
+    case ND_PROTO_SSDP:
+        if (ndEFNF->http.user_agent != NULL &&
+            strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN) != 0) {
+            ndEF->ssdp.headers["user-agent"].assign(
+                ndEFNF->http.user_agent,
+                strnlen(ndEFNF->http.user_agent, ND_FLOW_UA_LEN)
+            );
+        }
+        break;
+    case ND_PROTO_BITTORRENT:
+#if 0
+        if (ndEFNFP.bittorrent.hash_valid) {
+            ndEF->bt.info_hash_valid = true;
+            memcpy(
+                ndEF->bt.info_hash,
+                ndEFNFP.bittorrent.hash,
+                ND_FLOW_BTIHASH_LEN
+            );
+        }
+#endif
+        break;
+    default:
+        break;
+    }
+
+    if (fhc != NULL &&
+        ndEF->lower_port != 0 && ndEF->upper_port != 0) {
+
+        flow_digest.assign(
+            (const char *)ndEF->digest_lower, SHA1_DIGEST_LENGTH);
+
+        if (! fhc->pop(flow_digest, flow_digest_mdata)) {
+
+            ndEF->hash(tag, true);
+
+            flow_digest_mdata.assign(
+                (const char *)ndEF->digest_mdata, SHA1_DIGEST_LENGTH
+            );
+
+            if (memcmp(ndEF->digest_lower, ndEF->digest_mdata,
+                SHA1_DIGEST_LENGTH))
+                fhc->push(flow_digest, flow_digest_mdata);
+        }
+        else {
+            if (memcmp(ndEF->digest_mdata, flow_digest_mdata.c_str(),
+                SHA1_DIGEST_LENGTH)) {
+#ifdef _ND_LOG_FHC
+                nd_dprintf("%s: Resurrected flow metadata hash from cache.\n",
+                    tag.c_str());
+#endif
+                memcpy(ndEF->digest_mdata, flow_digest_mdata.c_str(),
+                    SHA1_DIGEST_LENGTH);
+            }
+        }
+    }
+    else ndEF->hash(tag, true);
+
+    struct sockaddr_in *laddr4 = ndEF->lower_addr4;
+    struct sockaddr_in6 *laddr6 = ndEF->lower_addr6;
+    struct sockaddr_in *uaddr4 = ndEF->upper_addr4;
+    struct sockaddr_in6 *uaddr6 = ndEF->upper_addr6;
+
+    switch (ndEF->ip_version) {
+    case 4:
+        inet_ntop(AF_INET, &laddr4->sin_addr.s_addr,
+            ndEF->lower_ip, INET_ADDRSTRLEN);
+        inet_ntop(AF_INET, &uaddr4->sin_addr.s_addr,
+            ndEF->upper_ip, INET_ADDRSTRLEN);
+        break;
+
+    case 6:
+        inet_ntop(AF_INET6, &laddr6->sin6_addr.s6_addr,
+            ndEF->lower_ip, INET6_ADDRSTRLEN);
+        inet_ntop(AF_INET6, &uaddr6->sin6_addr.s6_addr,
+            ndEF->upper_ip, INET6_ADDRSTRLEN);
+        break;
+
+    default:
+        nd_printf("%s: ERROR: Unknown IP version: %d\n",
+            tag.c_str(), ndEF->ip_version);
+        throw ndDetectionThreadException(strerror(EINVAL));
+    }
+#ifdef _ND_USE_NETLINK
+    nd_device_addrs *device_addrs = devices[ndEF->iface.ifname].second;
+    if (device_addrs != NULL) {
+
+        unique_lock<mutex> lock(*devices[ndEF->iface.ifname].first);
+
+        for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
+            string ip;
+            const uint8_t *umac = NULL;
+
+            if (t == ndFlow::TYPE_LOWER &&
+                (ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP ||
+                 ndEF->lower_type == ndNETLINK_ATYPE_LOCALNET ||
+                 ndEF->lower_type == ndNETLINK_ATYPE_PRIVATE)) {
+
+                umac = ndEF->lower_mac;
+                ip = ndEF->lower_ip;
+            }
+            else if (t == ndFlow::TYPE_UPPER &&
+                (ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP ||
+                 ndEF->upper_type == ndNETLINK_ATYPE_LOCALNET ||
+                 ndEF->upper_type == ndNETLINK_ATYPE_PRIVATE)) {
+
+                umac = ndEF->upper_mac;
+                ip = ndEF->upper_ip;
+            }
+            else continue;
+
+            // Filter out reserved MAC prefixes...
+            // ...IANA RFC7042, IPv4 uni/multicast:
+            if (! ((umac[0] == 0x00 || umac[0] == 0x01) &&
+                umac[1] == 0x00 && umac[2] == 0x5e) &&
+                // IPv6 multicast:
+                ! (umac[0] == 0x33 && umac[1] == 0x33)) {
+
+                string mac;
+                mac.assign((const char *)umac, ETH_ALEN);
+
+                nd_device_addrs::iterator i;
+                if ((i = device_addrs->find(mac)) == device_addrs->end())
+                    (*device_addrs)[mac].push_back(ip);
+                else {
+                    bool duplicate = false;
+                    vector<string>::iterator j;
+                    for (j = (*device_addrs)[mac].begin();
+                        j != (*device_addrs)[mac].end(); j++) {
+                        if (ip != (*j)) continue;
+                        duplicate = true;
+                        break;
+                    }
+
+                    if (! duplicate)
+                        (*device_addrs)[mac].push_back(ip);
+                }
+            }
+        }
+    }
+#endif
+#if defined(_ND_USE_CONNTRACK) && defined(_ND_USE_NETLINK)
+    if (! ndEF->iface.internal && thread_conntrack != NULL) {
+        if ((ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP &&
+            ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) ||
+            (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN &&
+            ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP)) {
+
+            // Update flow with any collected information from the
+            // connection tracker (CT ID, mark, NAT'd).
+            thread_conntrack->UpdateFlow(ndEF);
+        }
+    }
+#endif
+    ndEF->detected_protocol_name = nd_proto_get_name(
+        ndEF->detected_protocol
+    );
+
+    if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+        ndEF->category.protocol = nd_categories->Lookup(
+            ndCAT_TYPE_PROTO,
+            (unsigned)ndEF->detected_protocol
+        );
+    }
+
+    if (ndEFNF->host_server_name[0] != '\0') {
+        ndEF->category.domain = nd_domains->Lookup(
+            ndEFNF->host_server_name
+        );
+    }
+
+    ndEF->update_lower_maps();
+
+    for (vector<uint8_t *>::const_iterator i =
+        nd_config.privacy_filter_mac.begin();
+        i != nd_config.privacy_filter_mac.end() &&
+            ndEF->privacy_mask !=
+            (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
+        if (! memcmp((*i), ndEF->lower_mac, ETH_ALEN))
+            ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
+        if (! memcmp((*i), ndEF->upper_mac, ETH_ALEN))
+            ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
+    }
+
+    for (vector<struct sockaddr *>::const_iterator i =
+        nd_config.privacy_filter_host.begin();
+        i != nd_config.privacy_filter_host.end() &&
+            ndEF->privacy_mask !=
+            (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
+
+        struct sockaddr_in *sa_in;
+        struct sockaddr_in6 *sa_in6;
+
+        switch ((*i)->sa_family) {
+        case AF_INET:
+            sa_in = reinterpret_cast<struct sockaddr_in *>((*i));
+            if (! memcmp(&ndEF->lower_addr4, &sa_in->sin_addr,
+                sizeof(struct in_addr)))
+                ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
+            if (! memcmp(&ndEF->upper_addr4, &sa_in->sin_addr,
+                sizeof(struct in_addr)))
+                ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
+            break;
+        case AF_INET6:
+            sa_in6 = reinterpret_cast<struct sockaddr_in6 *>((*i));
+            if (! memcmp(&ndEF->lower_addr6, &sa_in6->sin6_addr,
+                sizeof(struct in6_addr)))
+                ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
+            if (! memcmp(&ndEF->upper_addr6, &sa_in6->sin6_addr,
+                sizeof(struct in6_addr)))
+                ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
+            break;
+        }
+
+        // TODO: Update the text IP addresses that were set above...
+    }
+
+    ndEF->flags.detection_init = true;
+}
+
+void ndDetectionThread::SetHostname(char *dst, const char *src, size_t length)
+{
+    ssize_t i;
+
+    // Sanitize host server name; RFC 952 plus underscore for SSDP.
+    for (i = 0; i < (ssize_t)length; i++) {
+
+        if (isalnum(src[i]) || src[i] == '-' ||
+            src[i] == '_' || src[i] == '.')
+            dst[i] = tolower(src[i]);
+        else {
+            dst[i] = '\0';
+            break;
+        }
+    }
+
+    // Ensure dst is terminated.
+    dst[length - 1] = '\0';
+
+    // Right-trim dots.
+    for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
+}
+
 void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id)
 {
     if (app_id == ND_APP_UNKNOWN) return;
@@ -1101,27 +1042,124 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
     );
 }
 
-void ndDetectionThread::CopyHostname(char *dst, const char *src, size_t length)
+void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
 {
-    ssize_t i;
+    if (ndEF->category.application == ND_CAT_UNKNOWN &&
+        ndEF->detected_application != ND_APP_UNKNOWN) {
+        ndEF->category.application = nd_categories->Lookup(
+            ndCAT_TYPE_APP,
+            (unsigned)ndEF->detected_application
+        );
+    }
 
-    // Sanitize host server name; RFC 952 plus underscore for SSDP.
-    for (i = 0; i < (ssize_t)length; i++) {
+    if (ndEF->category.protocol == ND_CAT_UNKNOWN &&
+        ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
+        ndEF->category.protocol = nd_categories->Lookup(
+            ndCAT_TYPE_PROTO,
+            (unsigned)ndEF->detected_protocol
+        );
+    }
 
-        if (isalnum(src[i]) || src[i] == '-' ||
-            src[i] == '_' || src[i] == '.')
-            dst[i] = tolower(src[i]);
-        else {
-            dst[i] = '\0';
-            break;
+    if (ndEF->category.domain == ND_DOMAIN_UNKNOWN &&
+        ndEFNF->host_server_name[0] != '\0') {
+        ndEF->category.domain = nd_domains->Lookup(
+            ndEFNF->host_server_name
+        );
+    }
+
+    if (ND_SOFT_DISSECTORS) {
+
+        ndSoftDissector nsd;
+        if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
+
+            ndEF->flags.soft_dissector = true;
+            ndEF->flags.detection_complete = true;
+
+            if (nsd.aid > -1) {
+                if (nsd.aid == ND_APP_UNKNOWN) {
+                    ndEF->detected_application = 0;
+                    if (ndEF->detected_application_name != NULL) {
+                        free(ndEF->detected_application_name);
+                        ndEF->detected_application_name = NULL;
+                    }
+                    ndEF->category.application = ND_CAT_UNKNOWN;
+                }
+                else
+                    SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
+            }
+
+            if (nsd.pid > -1) {
+                ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
+
+                ndEF->category.protocol = nd_categories->Lookup(
+                    ndCAT_TYPE_PROTO,
+                    (unsigned)ndEF->detected_protocol
+                );
+                ndEF->detected_protocol_name = nd_proto_get_name(
+                    ndEF->detected_protocol
+                );
+            }
         }
     }
 
-    // Ensure dst is terminated.
-    dst[length - 1] = '\0';
+    if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
+        ndEF->print();
 
-    // Right-trim dots.
-    for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
+    for (nd_plugins::iterator i = plugins->begin();
+        i != plugins->end(); i++) {
+        ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
+            i->second->GetPlugin()
+        );
+        p->ProcessFlow(ndEF);
+    }
+
+    if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
+        ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
+        json j;
+
+        j["type"] = "flow";
+        j["interface"] = ndEF->iface.ifname;
+        j["internal"] = ndEF->iface.internal;
+        j["established"] = false;
+
+        json jf;
+        ndEF->json_encode(jf, ndFlow::ENCODE_METADATA);
+        j["flow"] = jf;
+
+        string json_string;
+        nd_json_to_string(j, json_string, false);
+        json_string.append("\n");
+
+        thread_socket->QueueWrite(json_string);
+    }
+}
+
+void ndDetectionThread::SetGuessedProtocol(ndDetectionQueueEntry *entry)
+{
+    uint8_t guessed = 0;
+    ndpi_protocol ndpi_rc = ndpi_detection_giveup(
+        ndpi,
+        ndEFNF,
+        1, &guessed
+    );
+
+    if (guessed) {
+        ndEF->detected_protocol = nd_ndpi_proto_find(
+            ndpi_rc.master_protocol,
+            ndEF
+        );
+
+        if (ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
+            ndEF->detected_protocol = nd_ndpi_proto_find(
+                ndpi_rc.app_protocol,
+                ndEF
+            );
+        }
+    }
+
+    ndEF->flags.detection_guessed = true;
+    //ndEF->flags.detection_guessed = guessed;
+    ndEF->flags.detection_complete = true;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
