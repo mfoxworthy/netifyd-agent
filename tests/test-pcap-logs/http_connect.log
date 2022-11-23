@@ -1,4 +1,4 @@
 lo: [i4------] HTTP/Connect 192.168.1.103:1714 --> 192.168.1.146:8080 H: apache.org
 lo: [i4------] DNS 192.168.1.2:53 <-- 192.168.1.146:47767 H: apache.org
-lo: [i4---d--] HTTP/S 151.101.2.132:443 <-- 192.168.1.146:35968 H: apache.org SSL C: apache.org
-lo: [i4-u-d--] HTTP/S 151.101.2.132:443 <-- 192.168.1.146:35968 H: apache.org SSL C: apache.org
+lo: [i4------] HTTP/S 151.101.2.132:443 <-- 192.168.1.146:35968 H: apache.org SSL C: apache.org
+lo: [i4-u----] HTTP/S 151.101.2.132:443 <-- 192.168.1.146:35968 H: apache.org SSL C: apache.org

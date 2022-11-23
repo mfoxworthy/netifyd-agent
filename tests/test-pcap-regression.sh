@@ -37,6 +37,8 @@ run_test() {
     CMD="${NETIFYD} -t -c $CONF --thread-detection-cores=1 -I lo,${BASE}-test.cap -A $NETWORK -T ${LOG}"
     if [ "x${WITH_VALGRIND}" == "xyes" ]; then
         CMD="valgrind --tool=memcheck --leak-check=full --track-origins=yes --log-file=/tmp/${NAME}.log ${CMD}"
+    else
+        ulimit -c unlimited
     fi
     echo $CMD
     $CMD || exit $?

@@ -1,8 +1,8 @@
-lo: [i6------] HTTP/S.netify.bluejeans 2620:116:800d:21:8c6e:cf2c:8d6:9fb5:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:41266
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::8fcc:d927:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57286
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::98c7:1593:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:42908
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::c000:4d28:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43420
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::c000:4d28:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43434
+lo: [i6------] HTTP/S.netify.quantcast 2620:116:800d:21:8c6e:cf2c:8d6:9fb5:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:41266
+lo: [i6------] HTTP/S 64:ff9b::8fcc:d927:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57286
+lo: [i6------] HTTP/S 64:ff9b::98c7:1593:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:42908
+lo: [i6------] HTTP/S 64:ff9b::c000:4d28:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43420
+lo: [i6------] HTTP/S 64:ff9b::c000:4d28:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43434
 lo: [i6------] HTTP/S.netify.yahoo 2606:2800:135:155a:23ba:b2a:25ff:122d:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58380 H: consent.cmp.oath.com SSL C: consent.cmp.oath.com
 lo: [i6-u----] HTTP/S.netify.yahoo 2606:2800:135:155a:23ba:b2a:25ff:122d:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58380 H: consent.cmp.oath.com SSL C: consent.cmp.oath.com
 lo: [i6------] HTTP/S.netify.yahoo 2606:2800:135:155a:23ba:b2a:25ff:122d:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58382 H: consent.cmp.oath.com SSL C: consent.cmp.oath.com
@@ -10,47 +10,47 @@ lo: [i6-u----] HTTP/S.netify.yahoo 2606:2800:135:155a:23ba:b2a:25ff:122d:443 <--
 lo: [i6------] HTTP/S.netify.comscore 64:ff9b::6006:749:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39152 H: sb.scorecardresearch.com SSL C: sb.scorecardresearch.com
 lo: [i6------] HTTP/S.netify.yahoo 2001:4998:14:800::1001:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:47118 H: cookiex.ngd.yahoo.com SSL C: cookiex.ngd.yahoo.com
 lo: [i6-u----] HTTP/S.netify.comscore 64:ff9b::6006:749:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39152 H: sb.scorecardresearch.com SSL C: sb.scorecardresearch.com
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::c000:4d03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56794
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::c000:4c03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:51874
+lo: [i6------] HTTP/S 64:ff9b::c000:4d03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56794
+lo: [i6------] HTTP/S 64:ff9b::c000:4c03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:51874
 lo: [i6-u----] HTTP/S.netify.yahoo 2001:4998:14:800::1001:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:47118 H: cookiex.ngd.yahoo.com SSL C: cookiex.ngd.yahoo.com
 lo: [i6------] HTTP/S.netify.tumblr 64:ff9b::c000:4d03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56842 H: 64.media.tumblr.com SSL C: 64.media.tumblr.com
 lo: [i6-u----] HTTP/S.netify.tumblr 64:ff9b::c000:4d03:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56842 H: 64.media.tumblr.com SSL C: 64.media.tumblr.com
 lo: [i6------] HTTP/S.netify.tumblr 64:ff9b::4a72:9a16:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43328 H: catasters.tumblr.com SSL C: catasters.tumblr.com
 lo: [i6-u----] HTTP/S.netify.tumblr 64:ff9b::4a72:9a16:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43328 H: catasters.tumblr.com SSL C: catasters.tumblr.com
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::9765:789d:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:48240
+lo: [i6------] HTTP/S 64:ff9b::9765:789d:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:48240
 lo: [i6------] HTTP/S.netify.google 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49548 H: apis.google.com SSL C: apis.google.com
 lo: [i6------] HTTP/S.netify.google 2a00:1450:4007:80b::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:38608 H: ajax.googleapis.com SSL C: ajax.googleapis.com
 lo: [i6-u----] HTTP/S.netify.google 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49548 H: apis.google.com SSL C: apis.google.com
 lo: [i6-u----] HTTP/S.netify.google 2a00:1450:4007:80b::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:38608 H: ajax.googleapis.com SSL C: ajax.googleapis.com
-lo: [i6------] HTTP/S.netify.apnic 2a00:1450:4007:817::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:55560
-lo: [i6------] HTTP/S.netify.hp 64:ff9b::68f4:2ac8:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56782
+lo: [i6------] HTTP/S.netify.google 2a00:1450:4007:817::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:55560
+lo: [i6------] HTTP/S 64:ff9b::68f4:2ac8:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56782
 lo: [i6------] HTTP/S.netify.comscore 64:ff9b::6006:749:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39164 H: sb.scorecardresearch.com SSL C: sb.scorecardresearch.com
 lo: [i6-u----] HTTP/S.netify.comscore 64:ff9b::6006:749:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:39164 H: sb.scorecardresearch.com SSL C: sb.scorecardresearch.com
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58618
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:815::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49546
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:811::2004:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49002
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::4a72:9a15:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:42674
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:806::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:55014
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:80a::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:45706
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58614
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56564
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:811::2004:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:48988
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::df9:21c6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43602
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56582
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:815::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49496
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:80a::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:40190
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56558
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::d83a:d582:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:50906
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56592
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:808::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58004
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:805::2002:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:50960
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:80b::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57788
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:805::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:44164
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56640
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56578
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:815::2002:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:35892
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:80b::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57770
-lo: [i6--g---] HTTP/S.netify.hp 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56594
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49462
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58616
-lo: [i6--g---] HTTP/S.netify.apnic 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49464
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58618
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:815::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49546
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:811::2004:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49002
+lo: [i6--g---] HTTP/S 64:ff9b::4a72:9a15:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:42674
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:806::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:55014
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:80a::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:45706
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58614
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56564
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:811::2004:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:48988
+lo: [i6--g---] HTTP/S 64:ff9b::df9:21c6:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:43602
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56582
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:815::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49496
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:80a::200a:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:40190
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56558
+lo: [i6--g---] HTTP/S 64:ff9b::d83a:d582:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:50906
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56592
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:808::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58004
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:805::2002:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:50960
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:80b::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57788
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:805::2003:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:44164
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56640
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56578
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:815::2002:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:35892
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:80b::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:57770
+lo: [i6--g---] HTTP/S 64:ff9b::9765:798c:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:56594
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49462
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:805::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:58616
+lo: [i6--g---] HTTP/S.netify.google 2a00:1450:4007:809::200e:443 <-- 2a01:cb01:2049:8b07:991d:ec85:28df:f629:49464
