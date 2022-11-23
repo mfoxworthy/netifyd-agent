@@ -1,2 +1,2 @@
 lo: [i6------] QUIC ::1:60459 --> ::1:4443 H: abcd SSL C: abcd
-lo: [i4--g---] QUIC.netify.google 142.250.181.227:443 <-- 192.168.2.100:51972
+lo: [i4------] QUIC.netify.google 142.250.181.227:443 <-- 192.168.2.100:51972 H: ssl.gstatic.com SSL C: ssl.gstatic.com

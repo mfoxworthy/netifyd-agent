@@ -1,3 +1,5 @@
-lo: [i4--g---] IMAP/S 167.99.215.164:993 <-- 192.168.1.8:50506
+lo: [i4------] IMAP/S 167.99.215.164:993 <-- 192.168.1.8:50506 H: mail.ntop.org SSL C: mail.ntop.org
+lo: [i4-u----] IMAP/S 167.99.215.164:993 <-- 192.168.1.8:50506 H: mail.ntop.org SSL C: mail.ntop.org
+lo: [i4-u----] IMAP/S 167.99.215.164:993 <-- 192.168.1.8:50506 H: mail.ntop.org SSL C: mail.ntop.org
 lo: [i4------] IMAP/S 10.10.10.1:993 <-- 192.168.0.1:51529 H: imap.asia.secureserver.net SSL C: imap.asia.secureserver.net
 lo: [i4-u----] IMAP/S 10.10.10.1:993 <-- 192.168.0.1:51529 H: imap.asia.secureserver.net SSL C: imap.asia.secureserver.net

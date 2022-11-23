@@ -1,1 +1,2 @@
-lo: [i4--g---] HTTP/S 151.101.66.49:443 <-- 192.168.1.160:54804
+lo: [i4------] HTTP/S.netify.abuse-ch 151.101.66.49:443 <-- 192.168.1.160:54804 H: feodotracker.abuse.ch SSL C: feodotracker.abuse.ch
+lo: [i4-u----] HTTP/S.netify.fastly 151.101.66.49:443 <-- 192.168.1.160:54804 H: feodotracker.abuse.ch SSL C: feodotracker.abuse.ch

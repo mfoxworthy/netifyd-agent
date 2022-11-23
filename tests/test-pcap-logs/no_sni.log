@@ -1,5 +1,6 @@
 lo: [i4------] HTTP/S 104.16.249.249:443 <-- 192.168.1.119:51331
-lo: [i4--g---] HTTP/S 104.16.249.249:443 <-- 192.168.1.119:51606
+lo: [i4------] HTTP/S.netify.cloudflare-dns 104.16.249.249:443 <-- 192.168.1.119:51606 H: mozilla.cloudflare-dns.com SSL C: mozilla.cloudflare-dns.com
+lo: [i4-u----] HTTP/S.netify.cloudflare-dns 104.16.249.249:443 <-- 192.168.1.119:51606 H: mozilla.cloudflare-dns.com SSL C: mozilla.cloudflare-dns.com
 lo: [i4------] HTTP/S 104.16.124.96:443 <-- 192.168.1.119:51612
 lo: [i4-u----] HTTP/S 104.16.124.96:443 <-- 192.168.1.119:51612
 lo: [i4------] HTTP/S 104.17.198.37:443 <-- 192.168.1.119:51635 H: 951c558a-5e07-47ca-a0c0-225da1b33163.is-cf.help.every1dns.net SSL C: 951c558a-5e07-47ca-a0c0-225da1b33163.is-cf.help.every1dns.net

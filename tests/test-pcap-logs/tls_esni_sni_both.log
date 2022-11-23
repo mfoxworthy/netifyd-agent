@@ -1,3 +1,4 @@
-lo: [i4--g---] HTTP/S 104.17.175.85:443 <-- 192.168.1.21:55500
+lo: [i4------] HTTP/S 104.17.175.85:443 <-- 192.168.1.21:55500 H: these-are-not-the-droids-youre-looking-for.com SSL C: these-are-not-the-droids-youre-looking-for.com
+lo: [i4-u----] HTTP/S 104.17.175.85:443 <-- 192.168.1.21:55500 H: these-are-not-the-droids-youre-looking-for.com SSL C: these-are-not-the-droids-youre-looking-for.com
 lo: [i4------] HTTP/S 104.17.175.85:443 <-- 192.168.1.21:55514 H: you-think-thats-normal-tls-traffic-youre-seeing.com SSL C: you-think-thats-normal-tls-traffic-youre-seeing.com
 lo: [i4-u----] HTTP/S 104.17.175.85:443 <-- 192.168.1.21:55514 H: you-think-thats-normal-tls-traffic-youre-seeing.com SSL C: you-think-thats-normal-tls-traffic-youre-seeing.com
