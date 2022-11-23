@@ -1,4 +1,4 @@
-lo: [i4--g---] IMAP/S.netify.apple 17.172.100.70:993 <-- 192.168.2.4:49199
+lo: [i4------] IMAP/S.netify.apple 17.172.100.70:993 <-- 192.168.2.4:49199
 lo: [i4------] HTTP/S 23.50.148.228:443 <-- 192.168.2.4:49172
 lo: [i4------] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.4:51897 H: query.ess.apple.com
 lo: [i4------] DNS.netify.whatsapp 192.168.2.1:53 <-- 192.168.2.4:52190 H: e13.whatsapp.net

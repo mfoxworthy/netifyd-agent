@@ -1,7 +1,6 @@
 lo: [i4------] HTTP/S.netify.google-ads 172.217.21.72:443 <-- 192.168.1.117:54854 H: www.googletagmanager.com SSL C: www.googletagmanager.com
 lo: [i4------] MDNS.netify.internal-network 192.168.1.117:5353 --> 224.0.0.251:5353 H: _spotify-connect._tcp.local
-lo: [i4------] TLS 167.99.215.164:4434 <-- 192.168.1.117:54863 H: dati.ntop.org SSL C: dati.ntop.org
-lo: [i4-u----] TLS 167.99.215.164:4434 <-- 192.168.1.117:54863 H: dati.ntop.org SSL C: dati.ntop.org
+lo: [i4--g---] Unknown 167.99.215.164:4434 <-- 192.168.1.117:54863
 lo: [i4------] IMAP/S 62.149.152.153:993 <-- 192.168.1.117:54341
 lo: [i4------] SSDP 192.168.1.117:57025 --> 239.255.255.250:1900 H: 239.255.255.250
 lo: [i4------] NETBIOS 192.168.1.117:137 --> 192.168.1.255:137 H: workgroup
@@ -43,8 +42,8 @@ lo: [i4------] DNS.netify.zoom 192.168.1.1:53 <-- 192.168.1.117:51185 H: zoomfrn
 lo: [i4------] HTTP/S.netify.zoom 109.94.160.99:443 <-- 192.168.1.117:54871 H: zoomfrn99mmr.zoom.us SSL C: zoomfrn99mmr.zoom.us
 lo: [i4-u----] HTTP/S.netify.zoom 109.94.160.99:443 <-- 192.168.1.117:54871 H: zoomfrn99mmr.zoom.us SSL C: zoomfrn99mmr.zoom.us
 lo: [i4-u----] HTTP/S.netify.zoom 109.94.160.99:443 <-- 192.168.1.117:54871 H: zoomfrn99mmr.zoom.us SSL C: zoomfrn99mmr.zoom.us
-lo: [i4------] ZOOM 109.94.160.99:8801 <-- 192.168.1.117:58327
-lo: [i4------] ZOOM 109.94.160.99:8801 <-- 192.168.1.117:60620
-lo: [i4------] ZOOM 109.94.160.99:8801 <-- 192.168.1.117:61731
+lo: [i4------] ZOOM.netify.zoom 109.94.160.99:8801 <-- 192.168.1.117:58327
+lo: [i4------] ZOOM.netify.zoom 109.94.160.99:8801 <-- 192.168.1.117:60620
+lo: [i4------] ZOOM.netify.zoom 109.94.160.99:8801 <-- 192.168.1.117:61731
 lo: [i4--g---] HTTP/S 13.225.84.182:443 <-- 192.168.1.117:54798
 lo: [i4--g---] HTTP 104.199.65.42:80 <-- 192.168.1.117:53867

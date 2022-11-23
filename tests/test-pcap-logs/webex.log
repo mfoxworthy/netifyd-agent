@@ -1,5 +1,4 @@
-lo: [i4------] HTTP/S.netify.webex 10.8.0.1:41346 --> 64.68.105.103:443 H: radcom.webex.com SSL C: radcom.webex.com
-lo: [i4-u----] HTTP/S.netify.webex 10.8.0.1:41346 --> 64.68.105.103:443 H: radcom.webex.com SSL C: radcom.webex.com
+lo: [i4--g---] HTTP/S.netify.webex 10.8.0.1:41346 --> 64.68.105.103:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:41348 --> 64.68.105.103:443 H: radcom.webex.com SSL C: radcom.webex.com
 lo: [i4-u----] HTTP/S.netify.webex 10.8.0.1:41348 --> 64.68.105.103:443 H: radcom.webex.com SSL C: radcom.webex.com
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:41350 --> 64.68.105.103:443 H: radcom.webex.com SSL C: radcom.webex.com

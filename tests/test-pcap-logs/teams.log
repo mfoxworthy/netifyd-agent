@@ -1,5 +1,4 @@
 lo: [i4------] DHCP 192.168.0.1:68 --> 255.255.255.255:67 H: tl-sg116e
-lo: [i4--g--s] Telegram.netify.telegram 149.154.167.91:443 <-- 192.168.1.6:58533
 lo: [i4------] DNS.netify.azure 192.168.1.1:53 <-- 192.168.1.6:60813 H: skypedataprdcolneu04.cloudapp.net
 lo: [i4------] HTTP/S.netify.teams 52.113.194.132:443 <-- 192.168.1.6:60533 H: teams.microsoft.com SSL C: teams.microsoft.com
 lo: [i4------] HTTP/S.netify.microsoft 52.114.77.33:443 <-- 192.168.1.6:60532 H: mobile.pipe.aria.microsoft.com SSL C: mobile.pipe.aria.microsoft.com
@@ -97,3 +96,4 @@ lo: [i4------] HTTP/S 40.79.138.41:443 <-- 192.168.1.6:60568 H: gate.hockeyapp.n
 lo: [i4------] ICMP 93.71.110.205:0 --> 192.168.1.6:0
 lo: [i4--g---] Unknown 151.11.50.139:2222 <-- 192.168.1.6:54750
 lo: [i4--g---] STUN.netify.teams 52.114.77.136:3478 <-- 192.168.1.6:51681
+lo: [i4--g--s] Telegram.netify.telegram 149.154.167.91:443 <-- 192.168.1.6:58533

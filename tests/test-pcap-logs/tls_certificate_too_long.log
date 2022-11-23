@@ -1,5 +1,4 @@
-lo: [i4--g---] Unknown 192.168.1.121:52721 <-- 192.168.1.139:55367
-lo: [i4--g---] HTTP/S 52.149.21.60:443 <-- 192.168.1.121:52746
+lo: [i4------] DNS.netify.reverse-dns 8.8.8.8:53 <-- 192.168.1.121:52251 H: 121.1.168.192.in-addr.arpa
 lo: [i4------] MDNS.netify.internal-network 192.168.1.139:5353 --> 224.0.0.251:5353 H: _companion-link._tcp.local
 lo: [i6------] MDNS.netify.internal-network fe80::1059:a858:f9e7:cf94:5353 --> ff02::fb:5353 H: _companion-link._tcp.local
 lo: [i4------] MDNS.netify.internal-network 192.168.1.121:5353 --> 192.168.1.139:5353 H: _companion-link._tcp.local
@@ -32,3 +31,5 @@ lo: [i4------] HTTP/S.netify.microsoft 40.113.10.47:443 <-- 192.168.1.121:53918 
 lo: [i4------] HTTP/S.netify.microsoft 40.113.10.47:443 <-- 192.168.1.121:53919 H: wdcp.microsoft.com SSL C: wdcp.microsoft.com
 lo: [i4------] NTP.netify.apple 17.253.54.251:123 <-- 192.168.1.121:56865
 lo: [i4------] HTTP/S 130.211.33.145:443 <-- 192.168.1.121:53432
+lo: [i4--g---] Unknown 192.168.1.121:52721 <-- 192.168.1.139:55367
+lo: [i4--g---] HTTP/S 52.149.21.60:443 <-- 192.168.1.121:52746

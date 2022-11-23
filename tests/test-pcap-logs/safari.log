@@ -1,4 +1,5 @@
-lo: [i4--g---] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55262
+lo: [i4------] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55262 H: www.iit.cnr.it SSL C: www.iit.cnr.it
+lo: [i4-u----] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55262 H: www.iit.cnr.it SSL C: www.iit.cnr.it
 lo: [i4------] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55267 H: www.iit.cnr.it SSL C: www.iit.cnr.it
 lo: [i4------] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55265 H: www.iit.cnr.it SSL C: www.iit.cnr.it
 lo: [i4------] HTTP/S 146.48.58.18:443 <-- 192.168.1.178:55268 H: www.iit.cnr.it SSL C: www.iit.cnr.it

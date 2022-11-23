@@ -304,7 +304,8 @@ void ndDetectionThread::ProcessPacketQueue(void)
                     ndEF->flags.detection_guessed.load() == false &&
                     ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
 
-                    ProcessPacket(entry);
+                    if (entry->packet != nullptr)
+                        ProcessPacket(entry);
 
                     if (ndEF->detected_protocol == ND_PROTO_UNKNOWN)
                         SetGuessedProtocol(entry);

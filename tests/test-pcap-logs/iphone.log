@@ -4,7 +4,6 @@ lo: [i4------] MDNS 192.168.2.1:5353 --> 224.0.0.251:5353 H: luca
 lo: [i6------] MDNS fe80::c42c:3ff:fe60:6a64:5353 --> ff02::fb:5353 H: luca
 lo: [i4------] MDNS 169.254.225.216:5353 --> 224.0.0.251:5353 H: luca
 lo: [i4------] Spotify.netify.spotify 192.168.2.1:57621 --> 192.168.2.255:57621
-lo: [i4--g---] TODO 192.168.2.1:5351 --> 224.0.0.1:5350
 lo: [i4------] SSDP 169.254.225.216:60538 --> 239.255.255.250:1900 H: 239.255.255.250
 lo: [i4------] SSDP 192.168.2.1:51411 --> 239.255.255.250:1900 H: 239.255.255.250
 lo: [i4------] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-iphone
@@ -64,3 +63,4 @@ lo: [i4-u----] HTTP/S.netify.apple-itunes 92.123.77.26:443 <-- 192.168.2.17:5058
 lo: [i4------] DNS.netify.apple-itunes 192.168.2.1:53 <-- 192.168.2.17:63677 H: sync.itunes.apple.com
 lo: [i4------] HTTP/S.netify.apple-itunes 95.101.24.53:443 <-- 192.168.2.17:50588 H: sync.itunes.apple.com SSL C: sync.itunes.apple.com
 lo: [i4-u----] HTTP/S.netify.apple-itunes 95.101.24.53:443 <-- 192.168.2.17:50588 H: sync.itunes.apple.com SSL C: sync.itunes.apple.com
+lo: [i4--g---] TODO 192.168.2.1:5351 --> 224.0.0.1:5350

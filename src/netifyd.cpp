@@ -1075,12 +1075,11 @@ static void nd_process_flows(
             if (i->second->flags.detection_expired.load() == false &&
                 i->second->flags.detection_expiring.load() == false) {
 
-                uint32_t last_seen = i->second->ts_last_seen / 1000;
                 uint32_t ttl = (
                     i->second->ip_protocol != IPPROTO_TCP
                 ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
 
-                if (last_seen + ttl < now ||
+                if ((i->second->ts_last_seen / 1000) + ttl < now ||
                     (i->second->ip_protocol == IPPROTO_TCP &&
                         i->second->flags.tcp_fin.load())) {
                     i->second->flags.detection_expiring = true;
@@ -1182,6 +1181,7 @@ static void nd_process_flows(
                         nd_dprintf("%s: flow purge blocked by %lu tickets.\n",
                             i->second->iface.ifname.c_str(), i->second->tickets.load());
                     }
+
                     blocked++;
                 }
             }
@@ -1234,7 +1234,8 @@ static void nd_process_flows(
     }
 
     nd_dprintf(
-        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, tickets: %lu, blocked: %lu\n",
+        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
+        "tickets: %lu, blocked: %lu\n",
         purged, total, active, expiring, expired, total - active, blocked
     );
 }

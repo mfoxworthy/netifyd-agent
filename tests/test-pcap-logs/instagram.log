@@ -1,6 +1,5 @@
 lo: [i4------] HTTP/S.netify.meta-cdn 31.13.93.52:443 <-- 192.168.0.103:33936
-lo: [i4------] HTTP/S.netify.instagram 173.252.107.4:443 <-- 192.168.0.103:56382 H: telegraph-ash.instagram.com SSL C: telegraph-ash.instagram.com
-lo: [i4-u----] HTTP/S.netify.instagram 173.252.107.4:443 <-- 192.168.0.103:56382 H: telegraph-ash.instagram.com SSL C: telegraph-ash.instagram.com
+lo: [i4--g---] HTTP/S.netify.meta-cdn 173.252.107.4:443 <-- 192.168.0.103:56382
 lo: [i4------] HTTP.netify.instagram 46.33.70.160:80 <-- 192.168.0.103:38816 H: photos-h.ak.instagram.com
 lo: [i4------] HTTP.netify.instagram 82.85.26.162:80 <-- 192.168.0.103:57936 H: photos-g.ak.instagram.com
 lo: [i4------] HTTP.netify.instagram 82.85.26.186:80 <-- 192.168.0.103:44379 H: photos-e.ak.instagram.com
