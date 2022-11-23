@@ -2957,6 +2957,10 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Always send an update on start-up.
+    // XXX: BEFORE capture threads have started.
+    nd_dump_stats();
+
     if (thread_socket == NULL || ! ND_WAIT_FOR_CLIENT) {
         if (nd_start_capture_threads() < 0)
             return 1;
@@ -2979,8 +2983,6 @@ int main(int argc, char *argv[])
     if (nd_plugin_start_stats() < 0)
         return 1;
 #endif
-    // XXX: Always send an update on start-up...
-    nd_dump_stats();
 
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) netlink->Refresh();
