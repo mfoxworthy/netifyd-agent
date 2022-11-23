@@ -284,9 +284,12 @@ void ndDetectionThread::ProcessPacketQueue(void)
         Unlock();
 
         if (entry != NULL) {
-            if (ndEF->flags.detection_complete.load() == false &&
-                ndEF->flags.detection_expiring.load() == false &&
-                ndEF->detection_packets < nd_config.max_detection_pkts) {
+            if (ndEF->detection_packets == 0 || (
+                ndEF->flags.detection_complete.load() == false &&
+                (ndEF->flags.detection_expiring.load() == false ||
+                ndEF->tickets.load() > 1) &&
+                ndEF->detection_packets < nd_config.max_detection_pkts
+            )) {
 
                 ndEF->detection_packets++;
 
@@ -298,9 +301,13 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ndEF->flags.detection_expired.load() == false)) {
 
                 if (ndEF->flags.detection_complete.load() == false &&
-                    ndEF->flags.detection_guessed.load() == false) {
+                    ndEF->flags.detection_guessed.load() == false &&
+                    ndEF->detected_protocol == ND_PROTO_UNKNOWN) {
 
-                    SetGuessedProtocol(entry);
+                    ProcessPacket(entry);
+
+                    if (ndEF->detected_protocol == ND_PROTO_UNKNOWN)
+                        SetGuessedProtocol(entry);
 
                     ProcessFlow(entry);
 
@@ -632,6 +639,10 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
     case ND_PROTO_APPLE_PUSH:
         SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
+        break;
+
+    case ND_PROTO_ZOOM:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.zoom"));
         break;
 
     default:

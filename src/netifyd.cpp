@@ -1087,8 +1087,14 @@ static void nd_process_flows(
                 }
 
                 if (i->second->flags.detection_complete.load() == false) {
+
                     expiring++;
-                    detection_threads[i->second->dpi_thread_id]->QueuePacket(i->second);
+
+                    auto it = detection_threads.find(i->second->dpi_thread_id);
+                    if (it != detection_threads.end())
+                        it->second->QueuePacket(i->second);
+                    else
+                        i->second->flags.detection_expired = true;
                 }
                 else if (i->second->flags.detection_expiring.load())
                     i->second->flags.detection_expired = true;
