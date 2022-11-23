@@ -618,7 +618,6 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 
     if (! expire_flows) return;
 
-    size_t expiring = 0;
     size_t buckets = nd_flow_buckets->GetBuckets();
 
     for (size_t b = 0; b < buckets; b++) {
@@ -626,9 +625,6 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
             if (it->second->flags.detection_expiring.load() == false) {
-
-                expiring++;
-
                 it->second->flags.detection_expiring = true;
                 detection_threads[it->second->dpi_thread_id]->QueuePacket(it->second);
             }
