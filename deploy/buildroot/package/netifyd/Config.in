@@ -13,7 +13,7 @@ config BR2_PACKAGE_NETIFYD
 	  See the following website for more information:
 	  http://www.netify.ai/
 
-comment "netifyd depends on a toolchain with C++11 enabled"
+comment "The Netify Agent is a C++11 application, please enable C++ under Toolchain"
 	depends on !BR2_INSTALL_LIBSTDCPP
 
 if BR2_PACKAGE_NETIFYD
