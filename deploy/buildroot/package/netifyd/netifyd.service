@@ -1,0 +1,11 @@
+[Unit]
+Description=Netify Agent DPI daemon
+After=syslog.target network.target auditd.service
+
+[Service]
+#ExecStartPre=
+ExecStart=/usr/sbin/netifyd $NETIFYD_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# netifyd        Starts netifyd.
+#
+
+umask 077
+
+start() {
+	printf "Starting netifyd: "
+	/usr/sbin/netifyd
+	touch /var/lock/netifyd
+	echo "OK"
+}
+
+stop() {
+	printf "Stopping netifyd: "
+	killall netifyd
+	rm -f /var/lock/netifyd
+	echo "OK"
+}
+
+reload() {
+	killall -HUP netifyd
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  reload)
+	reload
+	;;
+  restart)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|reload|restart}"
+	exit 1
+esac
+
+exit $?
+

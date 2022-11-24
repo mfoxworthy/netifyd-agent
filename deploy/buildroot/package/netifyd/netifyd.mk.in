@@ -1,0 +1,40 @@
+################################################################################
+#
+# netifyd
+#
+################################################################################
+
+NETIFYD_VERSION = @PACKAGE_VERSION@
+NETIFYD_SOURCE = https://gitlab.com/netify.ai/public/netify-agent/-/archive/v$(NETIFYD_VERSION)/netify-agent-$(NETIFYD_VERSION).tar.gz
+NETIFYD_SITE = http://www.netify.ai
+NETIFYD_LICENSE = LGPL-3, BSD-3-Clause, Google
+NETIFYD_LICENSE_FILES = LICENCE
+NETIFYD_CPE_ID_VENDOR = netify
+NETIFYD_CPE_ID_PRODUCT = netify
+NETIFYD_DEPENDENCIES = host-pkgconf zlib
+
+NETIFYD_CONF_OPTS = \
+	--enable-lean-and-mean \
+	--disable-watchdogs \
+	--disable-ndpi-debug \
+	--disable-libtcmalloc \
+	--disable-jemalloc \
+	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--with-tpacketv3,--without-tpacketv3) \
+	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK),--with-conntrack,--without-conntrack) \
+	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA),--with-conntrack-mdata,--without-conntrack-mdata) \
+	$(if $(BR2_PACKAGE_NETIFYD_INOTIFY),--with-inotify,--without-inotify) \
+	$(if $(BR2_PACKAGE_NETIFYD_NETLINK),--with-netlink,--without-netlink) \
+	$(if $(BR2_PACKAGE_NETIFYD_PLUGINS),--with-plugins,--without-plugins) \
+
+define NETIFYD_INSTALL_INIT_SYSTEMD
+	$(INSTALL) -D -m 644 package/netifyd/netifyd.service \
+		$(TARGET_DIR)/usr/lib/systemd/system/netifyd.service
+	$(NETIFYD_INSTALL_SYSTEMD_SYSUSERS)
+endef
+
+define NETIFYD_INSTALL_INIT_SYSV
+	$(INSTALL) -D -m 755 package/netifyd/S50netifyd \
+		$(TARGET_DIR)/etc/init.d/S50netifyd
+endef
+
+$(eval $(autotools-package))

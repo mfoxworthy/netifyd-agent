@@ -1,0 +1,62 @@
+config BR2_PACKAGE_NETIFYD
+	bool "netifyd"
+	depends on BR2_USE_MMU
+	depends on BR2_INSTALL_LIBSTDCPP
+	select BR2_PACKAGE_LIBCURL
+	select BR2_PACKAGE_LIBPCAP
+	select BR2_PACKAGE_ZLIB
+	help
+	  The Netify Agent is a deep-packet inspection server.
+
+	  The Agent is built on top of nDPI (formerly OpenDPI).
+
+	  See the following website for more information:
+	  http://www.netify.ai/
+
+comment "netifyd depends on a toolchain with C++11 enabled"
+	depends on !BR2_INSTALL_LIBSTDCPP
+
+if BR2_PACKAGE_NETIFYD
+
+config BR2_PACKAGE_NETIFYD_TPACKETV3
+	bool "TPACKETv3 support"
+	default y
+	help
+	  Enable TPACKETv3 capture support.
+
+config BR2_PACKAGE_NETIFYD_CONNTRACK
+	bool "conntrack support"
+	default y
+	select BR2_PACKAGE_LIBNETFILTER_CONNTRACK
+	help
+	  Enable connection tracking support for NAT detection.
+
+if BR2_PACKAGE_NETIFYD_CONNTRACK
+
+config BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA
+	bool "extract conntrack metadata"
+	default n
+	help
+	  Enable connection tracking support for NAT detection.
+
+endif
+
+config BR2_PACKAGE_NETIFYD_INOTIFY
+	bool "inotify support"
+	default n
+	help
+	  Enable INOTIFY "file-watch" support (rarely used).
+
+config BR2_PACKAGE_NETIFYD_NETLINK
+	bool "netlink support"
+	default y
+	help
+	  Enable dynamic interface configuration messaging via Netlink.
+
+config BR2_PACKAGE_NETIFYD_PLUGINS
+	bool "plugins support"
+	default y
+	help
+	  Enable support for Netify Agent Plugins.
+
+endif
