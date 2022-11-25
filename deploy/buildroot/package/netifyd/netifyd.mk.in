@@ -14,6 +14,7 @@ NETIFYD_LICENSE_FILES = LICENCE
 NETIFYD_CPE_ID_VENDOR = netify
 NETIFYD_CPE_ID_PRODUCT = netify
 NETIFYD_DEPENDENCIES = host-pkgconf host-automake host-autoconf host-libtool zlib
+NETIFYD_INSTALL_STAGING = YES
 
 NETIFYD_CONF_OPTS = \
 	--enable-lean-and-mean \

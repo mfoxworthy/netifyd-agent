@@ -1,1 +1,2 @@
 source "$BR2_EXTERNAL_netifyd_PATH/package/netifyd/Config.in"
+source "$BR2_EXTERNAL_netifyd_PATH/package/netify-flow-actions/Config.in"
