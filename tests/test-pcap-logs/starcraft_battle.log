@@ -38,7 +38,7 @@ lo: [i4------] HTTP.netify.blizzard 2.228.46.112:80 <-- 192.168.1.100:3531 H: bn
 lo: [i4------] HTTP.netify.blizzard 2.228.46.112:80 <-- 192.168.1.100:3532 H: bnetcmsus-a.akamaihd.net
 lo: [i4------] HTTP.netify.blizzard 2.228.46.112:80 <-- 192.168.1.100:3533 H: bnetcmsus-a.akamaihd.net
 lo: [i4--g---] HTTP/S.netify.amazon-advertising 192.168.1.100:3486 --> 199.38.164.156:443
-lo: [i4--g---] Unknown.netify.google 173.194.40.22:443 <-- 192.168.1.100:53568
+lo: [i4--g---] QUIC.netify.google 173.194.40.22:443 <-- 192.168.1.100:53568
 lo: [i4--g---] Starcraft 192.168.1.100:6113 --> 213.248.127.166:1119
 lo: [i4--g---] Starcraft 80.239.208.193:1119 <-- 192.168.1.100:3427
 lo: [i4--g---] Starcraft.netify.activision-blizzard 5.42.180.154:1119 <-- 192.168.1.100:53146
