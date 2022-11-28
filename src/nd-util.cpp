@@ -1309,35 +1309,30 @@ bool nd_scan_dotd(const string &path, vector<string> &files)
         return false;
     }
 
-    long dname_max = pathconf(path.c_str(), _PC_NAME_MAX);
-    if (dname_max == -1) dname_max = 255;
-    size_t entry_size = offsetof(struct dirent, d_name) + dname_max + 1;
+    files.clear();
 
-    struct dirent *dentry = reinterpret_cast<struct dirent *>(
-        new uint8_t[entry_size]
-    );
-    unique_ptr<struct dirent, void(*)(struct dirent *p)> entry(
-        dentry, [](struct dirent *p) {
-        delete [] (uint8_t *)p;
-    });
-
-    int rc;
     struct dirent *result = NULL;
-    while (! (rc = readdir_r(dh, dentry, &result))) {
-        if (result == NULL) break;
+    while ((result = readdir(dh)) != NULL) {
         if (
+#ifdef _DIRENT_HAVE_D_RECLEN
+            result->d_reclen > 0 &&
+#endif
+#ifndef _DIRENT_HAVE_D_TYPE
+#warning "struct dirent doesn't have a type!"
+#else
             (
                 result->d_type != DT_LNK &&
                 result->d_type != DT_REG &&
                 result->d_type != DT_UNKNOWN
             )
+#endif
             || ! isdigit(result->d_name[0])) continue;
         files.push_back(result->d_name);
     }
 
     closedir(dh);
 
-    return (rc == 0);
+    return (files.size () > 0);
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
