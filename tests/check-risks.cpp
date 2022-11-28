@@ -56,14 +56,18 @@ class ndPluginLoader;
 #include <nd-json.h>
 #include <nd-util.h>
 #include <nd-thread.h>
+#ifdef _ND_USE_NETLINK
 #include <nd-netlink.h>
+#endif
 #include <nd-apps.h>
 #include <nd-protos.h>
 #include <nd-risks.h>
 #include <nd-category.h>
 #include <nd-flow.h>
 class ndFlowMap;
+#ifdef _ND_USE_PLUGINS
 #include <nd-plugin.h>
+#endif
 #include <nd-flow-map.h>
 
 extern ndApplications *nd_apps;

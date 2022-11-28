@@ -535,13 +535,20 @@ void ndFlow::print(void) const
 void ndFlow::update_lower_maps(void)
 {
     if (lower_map == LOWER_UNKNOWN)
+#ifdef _ND_USE_NETLINK
         get_lower_map(lower_type, upper_type, lower_map, other_type);
-
+#else
+        get_lower_map(lower_map, other_type);
+#endif
     switch (tunnel_type) {
     case TUNNEL_GTP:
         if (gtp.lower_map == LOWER_UNKNOWN) {
             get_lower_map(
+#ifdef _ND_USE_NETLINK
                 gtp.lower_type, gtp.upper_type, gtp.lower_map, gtp.other_type
+#else
+                gtp.lower_map, gtp.other_type
+#endif
             );
         }
     break;
@@ -555,6 +562,7 @@ void ndFlow::get_lower_map(
 #endif
     uint8_t &lm, uint8_t &ot)
 {
+#ifdef _ND_USE_NETLINK
     if (lt == ndNETLINK_ATYPE_ERROR ||
         ut == ndNETLINK_ATYPE_ERROR) {
         ot = OTHER_ERROR;
@@ -632,6 +640,10 @@ void ndFlow::get_lower_map(
         lm = LOWER_LOCAL;
         ot = OTHER_REMOTE;
     }
+#else
+    lm = LOWER_UNKNOWN;
+    ot = OTHER_UNSUPPORTED;
+#endif
 }
 
 void ndFlow::json_encode(json &j, uint8_t encode_includes)
@@ -718,7 +730,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["ip_version"] = (unsigned)ip_version;
         j["ip_protocol"] = (unsigned)ip_protocol;
         j["vlan_id"] = (unsigned)vlan_id;
-#ifndef _ND_LEAN_AND_MEAN
+#if defined(_ND_USE_NETLINK) && ! defined(_ND_LEAN_AND_MEAN)
         // 10.110.80.1: address is: PRIVATE
         // 67.204.229.236: address is: LOCALIP
         if (ND_DEBUG && _other_type == "unknown") {

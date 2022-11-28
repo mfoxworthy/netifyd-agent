@@ -101,7 +101,9 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-dhc.h"
 #include "nd-signal.h"
+#ifdef _ND_USE_PLUGINS
 #include "nd-plugin.h"
+#endif
 #include "nd-detection.h"
 #include "nd-tls-alpn.h"
 
@@ -135,7 +137,9 @@ ndDetectionThread::ndDetectionThread(
     ndFlowHashCache *fhc,
     uint8_t private_addr)
     : ndThread(tag, (long)cpu, true),
+#ifdef _ND_USE_NETLINK
     netlink(netlink),
+#endif
     thread_socket(thread_socket),
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(thread_conntrack),
@@ -1117,6 +1121,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
     if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
         ndEF->print();
 
+#ifdef _ND_USE_PLUGINS
     for (nd_plugins::iterator i = plugins->begin();
         i != plugins->end(); i++) {
         ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
@@ -1124,7 +1129,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         );
         p->ProcessFlow(ndEF);
     }
-
+#endif
     if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
         ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
         json j;

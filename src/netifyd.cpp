@@ -1657,7 +1657,7 @@ static void nd_dump_stats(void)
             pkt_totals += stats;
             nd_json_add_stats(js, stats);
         }
-
+#ifdef _ND_USE_PLUGINS
         for (nd_plugins::iterator pi = plugin_stats.begin();
             pi != plugin_stats.end(); pi++) {
             ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
@@ -1665,10 +1665,10 @@ static void nd_dump_stats(void)
             );
             p->ProcessStats(iface_name, stats);
         }
-
+#endif
         jstatus["stats"][iface_name] = js;
     }
-
+#ifdef _ND_USE_PLUGINS
     for (nd_plugins::iterator pi = plugin_stats.begin();
         pi != plugin_stats.end(); pi++) {
         ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
@@ -1677,7 +1677,7 @@ static void nd_dump_stats(void)
         p->ProcessStats(pkt_totals);
         p->ProcessStats(nd_flow_buckets);
     }
-
+#endif
     nd_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
 
     jstatus["flow_count"] = nd_json_agent_stats.flows;
@@ -3087,8 +3087,8 @@ int main(int argc, char *argv[])
             inotify->RefreshWatches();
 #endif
             nd_dump_stats();
-            nd_plugin_event(ndPlugin::EVENT_STATUS_UPDATE);
 #ifdef _ND_USE_PLUGINS
+            nd_plugin_event(ndPlugin::EVENT_STATUS_UPDATE);
             nd_plugin_reap_tasks();
 #endif
             if (dns_hint_cache)
@@ -3168,8 +3168,9 @@ int main(int argc, char *argv[])
             if (thread_napi != NULL) {
                 delete thread_napi;
                 thread_napi = NULL;
-
+#ifdef _ND_USE_PLUGINS
                 nd_plugin_event(ndPlugin::EVENT_CATEGORIES_UPDATE);
+#endif
             }
             continue;
         }
@@ -3184,8 +3185,9 @@ int main(int argc, char *argv[])
 
             if (nd_categories != NULL)
                 nd_categories->Load();
-
+#ifdef _ND_USE_PLUGINS
             nd_plugin_event(ndPlugin::EVENT_RELOAD);
+#endif
             nd_printf("Configuration reloaded.\n");
             continue;
         }

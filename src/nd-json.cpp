@@ -212,12 +212,13 @@ void nd_json_add_interfaces(json &parent)
                     addrs.push_back(ip);
                 }
             }
-
+#ifdef _ND_USE_NETLINK
             auto nld_it = nd_netlink_devices.find(iface_lookup);
             if (nld_it == nd_netlink_devices.end()) break;
 
             iface_lookup = nld_it->second;
             iface_it = nd_interface_addrs.find(iface_lookup);
+#endif
         }
 
         if (! found_mac)
