@@ -288,11 +288,11 @@ void ndDetectionThread::ProcessPacketQueue(void)
         Unlock();
 
         if (entry != NULL) {
-            if (ndEF->detection_packets == 0 || (
+            if (ndEF->detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
                 (ndEF->flags.detection_expiring.load() == false ||
-                ndEF->tickets.load() > 1) &&
-                ndEF->detection_packets < nd_config.max_detection_pkts
+                    ndEF->tickets.load() > 1) &&
+                ndEF->detection_packets.load() < nd_config.max_detection_pkts
             )) {
 
                 ndEF->detection_packets++;
@@ -300,9 +300,9 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ProcessPacket(entry);
             }
 
-            if (ndEF->detection_packets == nd_config.max_detection_pkts ||
+            if (ndEF->detection_packets.load() == nd_config.max_detection_pkts ||
                 (ndEF->flags.detection_expiring.load() &&
-                ndEF->flags.detection_expired.load() == false)) {
+                    ndEF->flags.detection_expired.load() == false)) {
 
                 if (ndEF->flags.detection_complete.load() == false &&
                     ndEF->flags.detection_guessed.load() == false &&
@@ -336,7 +336,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     bool flow_update = false;
 
     if (ndEFNF == NULL) {
-        if (ndEF->detection_packets != 1)
+        if (ndEF->detection_packets.load() != 1)
             nd_dprintf("WARNING: Flow ZOMBIE.\n");
 
         flows++;

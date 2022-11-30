@@ -73,6 +73,8 @@
 #define ND_MAX_FHC_ENTRIES      10000   // Maximum number of flow hash cache entries.
 #define ND_FHC_PURGE_DIVISOR    10      // Divisor of FHC_ENTRIES to delete on purge.
 
+#define ND_FLOW_MAP_BUCKETS     128     // Default number of flow map buckets.
+
 #define ND_MAX_PKT_QUEUE_KB     8192    // Maximum packet queue size in kB
 #define ND_PKTQ_FLUSH_DIVISOR   10      // Divisor of PKT_QUEUE_KB packets to flush.
 
@@ -114,13 +116,13 @@
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 
+#define ND_CAPTURE_READ_TIMEOUT 500     // Milliseconds
+
 #define ND_PCAP_SNAPLEN         65535   // Capture snap length
-#define ND_PCAP_READ_TIMEOUT    500     // Milliseconds
 
 #define ND_TPV3_RB_BLOCK_SIZE   (1 << 22) // Bytes
 #define ND_TPV3_RB_FRAME_SIZE   (1 << 11) // Bytes
 #define ND_TPV3_RB_BLOCKS       64
-#define ND_TPV3_READ_TIMEOUT    500     // Milliseconds
 
 #ifndef ND_URL_SINK
 #define ND_URL_SINK             "https://sink.netify.ai/provision/"

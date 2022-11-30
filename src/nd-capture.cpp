@@ -955,7 +955,7 @@ nd_process_ip:
     flow.hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);
 
-    nf = nd_flow_buckets->Lookup(flow_digest);
+    nf = nd_flow_buckets->Lookup(flow_digest, true);
 
     if (nf != NULL) {
         // Flow exists in map.
@@ -996,6 +996,7 @@ nd_process_ip:
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
                 tag.c_str(), nd_config.max_flows);
 #endif
+            nd_flow_buckets->Release(flow_digest);
             return packet;
         }
 
@@ -1004,7 +1005,8 @@ nd_process_ip:
 
         nf->direction = addr_cmp;
 
-        if (nd_flow_buckets->Insert(flow_digest, nf) != NULL) {
+        if (nd_flow_buckets->InsertUnlocked(flow_digest, nf) != NULL) {
+            nd_flow_buckets->Release(flow_digest);
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
@@ -1069,6 +1071,8 @@ nd_process_ip:
         }
     }
 
+    nd_flow_buckets->Release(flow_digest);
+
     stats.pkt.wire_bytes += packet->length + 24;
 
     stats.pkt.ip++;
@@ -1105,7 +1109,10 @@ nd_process_ip:
             nf->tcp_last_seq = hdr_tcp->th_seq;
         }
 
-        if (hdr_tcp->th_flags & TH_FIN) nf->flags.tcp_fin = true;
+        if (hdr_tcp->th_flags & TH_FIN)
+            nf->flags.tcp_fin = true;
+        if (hdr_tcp->th_flags & TH_ACK && nf->flags.tcp_fin)
+            nf->flags.tcp_fin_ack++;
         if (hdr_tcp->th_flags & TH_RST) stats.pkt.tcp_resets++;
     }
 
@@ -1174,7 +1181,7 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.detection_expired.load() == false &&
-        nf->detection_packets <= nd_config.max_detection_pkts) {
+        nf->detection_packets.load() <= nd_config.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

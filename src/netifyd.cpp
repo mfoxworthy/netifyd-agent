@@ -456,7 +456,7 @@ static void nd_init(void)
 
     if (ND_LOAD_DOMAINS) nd_domains->Load();
 
-    nd_flow_buckets = new ndFlowMap();
+    nd_flow_buckets = new ndFlowMap(nd_config.fm_buckets);
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
@@ -530,12 +530,25 @@ static int nd_start_capture_threads(void)
 
         for (auto & it : nd_interfaces) {
 
-            if (! nd_ifaddrs_get_mac(nd_interface_addrs, it.second.ifname, mac))
+            if (! nd_ifaddrs_get_mac(
+                nd_interface_addrs, it.second.ifname, mac))
                 memset(mac, 0, ETH_ALEN);
 
             switch (nd_config.capture_type) {
             case ndCT_PCAP:
             {
+                if (threads.size() && it.second.instances > 1) {
+                    nd_printf("WARNING: multiple interface"
+                        " instances specified in PCAP"
+                        " mode.\n"
+                    );
+                    nd_printf(
+                        "Skipping additional instances...\n"
+                    );
+
+                    break;
+                }
+
                 ndCapturePcap *thread = new ndCapturePcap(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
                     it.second,
@@ -568,7 +581,7 @@ static int nd_start_capture_threads(void)
                     thread->Create();
                     threads.push_back(thread);
 
-                    if (! ND_TPV3_FANOUT &&
+                    if (! nd_config.tpv3_fanout_mode &&
                         it.second.instances > 1) {
                         nd_printf("WARNING: multiple interface"
                             " instances specified, but TPv3"
@@ -587,6 +600,8 @@ static int nd_start_capture_threads(void)
             default:
                 throw "capture type not set.";
             }
+
+            if (! threads.size()) continue;
 
             capture_threads[it.second.ifname] = threads;
 
@@ -1053,7 +1068,9 @@ static void nd_process_flows(
 {
     uint32_t now = time(NULL);
     size_t purged = 0, expiring = 0, expired = 0, active = 0, total = 0, blocked = 0;
-
+#ifdef _ND_PROCESS_FLOW_DEBUG
+    size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
+#endif
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
     //nd_flow_buckets->DumpBucketStats();
@@ -1068,31 +1085,42 @@ static void nd_process_flows(
         nd_json_agent_stats.flows += fm->size();
 
         while (i != fm->end()) {
-            if (i->second->flags.detection_expired.load() == false &&
-                i->second->flags.detection_expiring.load() == false) {
+#ifdef _ND_PROCESS_FLOW_DEBUG
+            if (i->second->ip_protocol == IPPROTO_TCP) tcp++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load()) tcp_fin++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() == 1) tcp_fin_ack_1++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
+            if (i->second->tickets.load() > 0) tickets++;
+#endif
+            if (i->second->flags.detection_expired.load() == false) {
 
-                uint32_t ttl = (
-                    i->second->ip_protocol != IPPROTO_TCP
-                ) ? nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow;
+                uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
+                    nd_config.ttl_idle_flow : (
+                        (i->second->flags.tcp_fin_ack.load() >= 2) ?
+                            nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow
+                    )
+                );
 
-                if ((i->second->ts_last_seen / 1000) + ttl < now ||
-                    (i->second->ip_protocol == IPPROTO_TCP &&
-                        i->second->flags.tcp_fin.load())) {
-                    i->second->flags.detection_expiring = true;
-                }
+                if ((i->second->ts_last_seen / 1000) + ttl < now) {
 
-                if (i->second->flags.detection_complete.load() == false) {
-
-                    expiring++;
-
-                    auto it = detection_threads.find(i->second->dpi_thread_id);
-                    if (it != detection_threads.end())
-                        it->second->QueuePacket(i->second);
-                    else
+                    if (i->second->flags.detection_complete.load() == true)
                         i->second->flags.detection_expired = true;
+                    else if (i->second->flags.detection_expiring.load() == false) {
+
+                        expiring++;
+
+                        i->second->flags.detection_expiring = true;
+
+                        auto it = detection_threads.find(i->second->dpi_thread_id);
+                        if (it != detection_threads.end())
+                            it->second->QueuePacket(i->second);
+                        else
+                            i->second->flags.detection_expired = true;
+                    }
                 }
-                else if (i->second->flags.detection_expiring.load())
-                    i->second->flags.detection_expired = true;
             }
 
             if (i->second->flags.detection_expired.load() == true) {
@@ -1231,9 +1259,14 @@ static void nd_process_flows(
 
     nd_dprintf(
         "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
-        "tickets: %lu, blocked: %lu\n",
+        "idle: %lu, blocked: %lu\n",
         purged, total, active, expiring, expired, total - active, blocked
     );
+#ifdef _ND_PROCESS_FLOW_DEBUG
+    nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu, tickets: %lu\n",
+        tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2, tickets
+    );
+#endif
 }
 
 static void nd_json_add_file(
@@ -1653,10 +1686,11 @@ static void nd_dump_stats(void)
             it_instance->GetCaptureStats(stats);
 
             it_instance->Unlock();
-
-            pkt_totals += stats;
-            nd_json_add_stats(js, stats);
         }
+
+        pkt_totals += stats;
+        nd_json_add_stats(js, stats);
+
 #ifdef _ND_USE_PLUGINS
         for (nd_plugins::iterator pi = plugin_stats.begin();
             pi != plugin_stats.end(); pi++) {

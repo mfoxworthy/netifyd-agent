@@ -17,8 +17,6 @@
 #ifndef _ND_FLOW_MAP_H
 #define _ND_FLOW_MAP_H
 
-#define _ND_FM_BUCKETS  100
-
 typedef unordered_map<string, ndFlow *> nd_flow_map;
 typedef vector<nd_flow_map *> nd_flow_bucket;
 typedef vector<pthread_mutex_t *> nd_flow_bucket_lock;
@@ -28,16 +26,24 @@ typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
 class ndFlowMap
 {
 public:
-    ndFlowMap(size_t buckets = _ND_FM_BUCKETS);
+    ndFlowMap(size_t buckets = ND_FLOW_MAP_BUCKETS);
     virtual ~ndFlowMap();
 
-    ndFlow *Lookup(const string &digest);
-    ndFlow *Insert(const string &digest, ndFlow *flow);
+    ndFlow *Lookup(const string &digest, bool acquire_lock = false);
+    ndFlow *Insert(const string &digest, ndFlow *flow, bool unlocked = false);
+    inline ndFlow *InsertUnlocked(const string &digest, ndFlow *flow) {
+        Insert(digest, flow, true);
+    }
+
     bool Delete(const string &digest);
 
     nd_flow_map *Acquire(size_t b);
     const nd_flow_map *AcquireConst(size_t b) const;
+
     void Release(size_t b) const;
+    inline void Release(const string &digest) const {
+        Release(HashToBucket(digest));
+    }
 
 #ifndef _ND_LEAN_AND_MEAN
     void DumpBucketStats(void);
@@ -46,7 +52,11 @@ public:
     inline size_t GetBuckets(void) const { return buckets; }
 
 protected:
-    inline unsigned HashToBucket(const string &digest);
+    unsigned HashToBucket(const string &digest) const {
+        const char *p = digest.c_str();
+        const uint64_t *b = (const uint64_t *)&p[0];
+        return (*b % buckets);
+    }
 
     size_t buckets;
     nd_flow_bucket bucket;

@@ -963,7 +963,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j[_upper_packets] = upper_packets;
         j["total_packets"] = total_packets;
         j["total_bytes"] = total_bytes;
-        j["detection_packets"] = detection_packets;
+        j["detection_packets"] = detection_packets.load();
     }
 }
 

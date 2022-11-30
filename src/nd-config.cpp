@@ -141,6 +141,9 @@ ndGlobalConfig::ndGlobalConfig() :
     dhc_save(ndDHC_PERSISTENT),
     fhc_save(ndFHC_PERSISTENT),
     capture_type(ndCT_NONE),
+    capture_read_timeout(ND_CAPTURE_READ_TIMEOUT),
+    tpv3_fanout_mode(ndFOM_DISABLED),
+    tpv3_fanout_flags(ndFOF_NONE),
     tpv3_rb_block_size(ND_TPV3_RB_BLOCK_SIZE),
     tpv3_rb_frame_size(ND_TPV3_RB_FRAME_SIZE),
     tpv3_rb_blocks(ND_TPV3_RB_BLOCKS),
@@ -158,6 +161,7 @@ ndGlobalConfig::ndGlobalConfig() :
     digest_app_config{0},
     digest_legacy_config{0},
     fhc_purge_divisor(ND_FHC_PURGE_DIVISOR),
+    fm_buckets(ND_FLOW_MAP_BUCKETS),
     max_detection_pkts(ND_MAX_DETECTION_PKTS),
     max_fhc(ND_MAX_FHC_ENTRIES),
     max_flows(0),
@@ -272,7 +276,8 @@ int ndGlobalConfig::Load(const string &filename)
     if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
         ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
             reader.GetBoolean("netifyd", "ssl_verify", true));
-    } else if (netifyd_section.find("ssl_verify_peer") != netifyd_section.end()) {
+    }
+    else if (netifyd_section.find("ssl_verify_peer") != netifyd_section.end()) {
         ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
             reader.GetBoolean("netifyd", "ssl_verify_peer", true));
     }
@@ -307,6 +312,9 @@ int ndGlobalConfig::Load(const string &filename)
 
     ND_GF_SET_FLAG(ndGF_LOAD_DOMAINS,
         reader.GetBoolean("netifyd", "load_domains", true));
+
+    this->fm_buckets = (unsigned)reader.GetInteger(
+        "netifyd", "flow_map_buckets", ND_FLOW_MAP_BUCKETS);
 
     // Threading section
     this->ca_capture_base = (int16_t)reader.GetInteger(
@@ -351,8 +359,51 @@ int ndGlobalConfig::Load(const string &filename)
         return -1;
     }
 
-    ND_GF_SET_FLAG(ndGF_TPV3_FANOUT,
-        reader.GetBoolean("capture", "tpv3_fanout", false));
+    this->capture_read_timeout = (unsigned)reader.GetInteger(
+        "capture", "read_timeout", ND_CAPTURE_READ_TIMEOUT);
+
+    string tpv3_fanout_mode = reader.Get(
+        "capture", "tpv3_fanout_mode", "disabled"
+    );
+
+    if (tpv3_fanout_mode == "hash")
+        this->tpv3_fanout_mode = ndFOM_HASH;
+    else if (tpv3_fanout_mode == "lb" ||
+            tpv3_fanout_mode == "load_balanced")
+        this->tpv3_fanout_mode = ndFOM_LOAD_BALANCED;
+    else if (tpv3_fanout_mode == "cpu")
+        this->tpv3_fanout_mode = ndFOM_CPU;
+    else if (tpv3_fanout_mode == "rollover")
+        this->tpv3_fanout_mode = ndFOM_ROLLOVER;
+    else if (tpv3_fanout_mode == "random")
+        this->tpv3_fanout_mode = ndFOM_RANDOM;
+    else
+        this->tpv3_fanout_mode = ndFOM_DISABLED;
+
+    string tpv3_fanout_flags = reader.Get(
+        "capture", "tpv3_fanout_flags", "none"
+    );
+
+    if (tpv3_fanout_flags != "none") {
+        stringstream ss(tpv3_fanout_flags);
+
+        while (ss.good()) {
+            string flag;
+            getline(ss, flag, '|');
+
+            nd_trim(flag, ' ');
+
+            if (flag == "defrag")
+                this->tpv3_fanout_flags |= ndFOF_DEFRAG;
+            else if (flag == "rollover")
+                this->tpv3_fanout_flags |= ndFOF_ROLLOVER;
+            else {
+                fprintf(stderr, "Invalid fanout flag: %s\n",
+                    flag.c_str()
+                );
+            }
+        }
+    }
 
     tpv3_rb_block_size = (unsigned)reader.GetInteger(
         "capture", "tpv3_rb_block_size", ND_TPV3_RB_BLOCK_SIZE);

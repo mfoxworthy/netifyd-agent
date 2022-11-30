@@ -265,7 +265,7 @@ pcap_t *ndCapturePcap::OpenCapture(void)
         pcap_new = pcap_open_live(
             tag.c_str(),
             nd_config.max_capture_length,
-            1, ND_PCAP_READ_TIMEOUT, pcap_errbuf
+            1, nd_config.capture_read_timeout, pcap_errbuf
         );
 
 #if 0

@@ -89,9 +89,10 @@ void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
     }
     else {
         if (lookup.size() == cache_size) {
-//#if _ND_DEBUG_FHC
-            nd_dprintf("Purging old flow hash cache entries.\n");
-//#endif
+#if _ND_DEBUG_FHC
+            nd_dprintf("Purging flow hash cache entries, size: %lu\n",
+                lookup.size());
+#endif
             for (size_t n = 0; n < cache_size / nd_config.fhc_purge_divisor; n++) {
                 pair<string, string> j = index.back();
 

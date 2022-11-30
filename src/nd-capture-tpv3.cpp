@@ -158,8 +158,7 @@ public:
 
     ndPacketRingBlock *Next(void);
 
-    ndPacket *CopyPacket(void *entry,
-        ndPacket::status_flags &status);
+    ndPacket *CopyPacket(const void *entry, ndPacket::status_flags &status);
 
     bool GetStats(void);
 
@@ -209,7 +208,7 @@ size_t ndPacketRingBlock::ProcessPackets(ndPacketRing *ring,
 
         if (! (status & ndPacket::STATUS_OK)) {
             ring->stats->pkt.discard++;
-            // TODO: ring->stats->pkt.discard_bytes +=
+            ring->stats->pkt.discard_bytes += entry->tp_snaplen;
         }
 
         if (pkt != nullptr) pkt_queue.push_back(pkt);
@@ -299,12 +298,78 @@ ndPacketRing::ndPacketRing(
         }
     }
 #ifdef PACKET_FANOUT
-    if (ND_TPV3_FANOUT) {
-        so_uintval = (PACKET_FANOUT_HASH |
-            PACKET_FANOUT_FLAG_DEFRAG | PACKET_FANOUT_FLAG_ROLLOVER) << 16 |
-            (uint16_t)ifr.ifr_ifindex;
+    if (nd_config.tpv3_fanout_mode != ndFOM_DISABLED) {
 
-        nd_dprintf("%s: fanout options and flags: 0x%08x\n", ifname.c_str(), so_uintval);
+        switch (nd_config.tpv3_fanout_mode) {
+        case ndFOM_HASH:
+#ifdef PACKET_FANOUT_HASH
+            so_uintval = PACKET_FANOUT_HASH;
+#else
+            nd_dprintf("%s: PACKET_FANOUT_HASH not supported.\n",
+                ifname.c_str()
+            );
+#endif
+            break;
+        case ndFOM_LOAD_BALANCED:
+#ifdef PACKET_FANOUT_LB
+            so_uintval = PACKET_FANOUT_LB;
+#else
+            nd_dprintf("%s: PACKET_FANOUT_LB not supported.\n",
+                ifname.c_str()
+            );
+#endif
+            break;
+        case ndFOM_CPU:
+#ifdef PACKET_FANOUT_CPU
+            so_uintval = PACKET_FANOUT_CPU;
+#else
+            nd_dprintf("%s: PACKET_FANOUT_CPU not supported.\n",
+                ifname.c_str()
+            );
+#endif
+            break;
+        case ndFOM_ROLLOVER:
+#ifdef PACKET_FANOUT_ROLLOVER
+            so_uintval = PACKET_FANOUT_ROLLOVER;
+#else
+            nd_dprintf("%s: PACKET_FANOUT_ROLLOVER not supported.\n",
+                ifname.c_str()
+            );
+#endif
+            break;
+        case ndFOM_QUEUE_MAP:
+#ifdef PACKET_FANOUT_QM
+            so_uintval = PACKET_FANOUT_QM;
+#else
+            nd_dprintf("%s: PACKET_FANOUT_QM not supported.\n",
+                ifname.c_str()
+            );
+#endif
+            break;
+        default:
+            throw ndCaptureThreadException("invalid fanout mode");
+        }
+#ifdef PACKET_FANOUT_FLAG_DEFRAG
+        if (nd_config.tpv3_fanout_flags & ndFOF_DEFRAG)
+            so_uintval |= PACKET_FANOUT_FLAG_DEFRAG;
+#else
+        nd_dprintf("%s: PACKET_FANOUT_FLAG_DEFRAG not supported.\n",
+            ifname.c_str()
+        );
+#endif
+#ifdef PACKET_FANOUT_FLAG_ROLLOVER
+        if (nd_config.tpv3_fanout_flags & ndFOF_ROLLOVER)
+            so_uintval |= PACKET_FANOUT_FLAG_ROLLOVER;
+#else
+        nd_dprintf("%s: PACKET_FANOUT_FLAG_ROLLOVER not supported.\n",
+            ifname.c_str()
+        );
+#endif
+        so_uintval <<= 16;
+        so_uintval |= (uint16_t)ifr.ifr_ifindex;
+
+        nd_dprintf("%s: fanout mode and flags: 0x%08x\n",
+            ifname.c_str(), so_uintval);
 
         if (setsockopt(sd, SOL_PACKET, PACKET_FANOUT,
             (const void *)&so_uintval, sizeof(so_uintval)) < 0) {
@@ -344,7 +409,7 @@ ndPacketRing::ndPacketRing(
     tp_req.tp_frame_nr =
         (tp_req.tp_block_size * tp_req.tp_block_nr) /
             tp_req.tp_frame_size;
-    tp_req.tp_retire_blk_tov = ND_TPV3_READ_TIMEOUT;
+    tp_req.tp_retire_blk_tov = nd_config.capture_read_timeout;
     //tp_req.tp_feature_req_word = // TODO: Features?
 
     nd_dprintf("%s: block size: %u\n", ifname.c_str(), tp_req.tp_block_size);
@@ -424,7 +489,12 @@ bool ndPacketRing::GetStats(void)
     }
 
     stats->pkt.capture_dropped = tp_stats.tp_drops;
-    // TODO: tp_freeze_q_cnt?
+
+    if (tp_stats.tp_freeze_q_cnt > 0) {
+        nd_dprintf("%s: queue freeze count: %u\n",
+            ifname.c_str(), tp_stats.tp_freeze_q_cnt
+        );
+    }
 
     return true;
 }
@@ -443,10 +513,10 @@ ndPacketRingBlock *ndPacketRing::Next(void)
     return block;
 }
 
-ndPacket *ndPacketRing::CopyPacket(void *entry,
+ndPacket *ndPacketRing::CopyPacket(const void *entry,
     ndPacket::status_flags &status)
 {
-    struct tpacket3_hdr *hdr = (struct tpacket3_hdr *)entry;
+    const struct tpacket3_hdr *hdr = (const struct tpacket3_hdr *)entry;
 
     unsigned int tp_len, tp_mac, tp_snaplen;
     tp_len = hdr->tp_len;
@@ -639,6 +709,9 @@ void *ndCaptureTPv3::Entry(void)
 
 void ndCaptureTPv3::GetCaptureStats(ndPacketStats &stats)
 {
+    ndPacketRing *_ring = static_cast<ndPacketRing *>(ring);
+    if (_ring != nullptr) _ring->GetStats();
+
     ndCaptureThread::GetCaptureStats(stats);
 }
 

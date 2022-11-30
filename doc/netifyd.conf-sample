@@ -8,6 +8,7 @@
 [netifyd]
 capture_unknown_flows = <yes/no>
 enable_sink = <yes/no>
+flow_map_buckets = <buckets>
 json_save = <yes/no>
 load_domains = <yes/no>
 max_backlog_kb = <amount of payload data to buffer in kilobytes>
@@ -36,7 +37,9 @@ uuid_site = <site uuid>
 
 [capture]
 type = <pcap/tpv3>
-tpv3_fanout = <yes/no>
+read_timeout = <timeout in milliseconds>
+tpv3_fanout_mode = <fanout mode>
+tpv3_fanout_flags = <fanout flags>
 tpv3_rb_block_size = <ring buffer block Size in bytes>
 tpv3_rb_frame_size = <ring buffer frame Size in bytes>
 tpv3_rb_blocks = <ring buffer block count>

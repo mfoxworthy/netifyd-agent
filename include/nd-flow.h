@@ -123,7 +123,7 @@ public:
     uint32_t upper_packets;
     uint32_t total_packets;
 
-    uint8_t detection_packets;
+    atomic_uchar detection_packets;
 
     nd_proto_id_t detected_protocol;
     nd_app_id_t detected_application;
@@ -237,6 +237,7 @@ public:
     struct {
         atomic_bool ip_nat;
         atomic_bool tcp_fin;
+        atomic_uchar tcp_fin_ack;
         atomic_bool dhc_hit;
         atomic_bool detection_init;
         atomic_bool detection_complete;
