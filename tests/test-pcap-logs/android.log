@@ -76,6 +76,6 @@ lo: [i4------] HTTP/S.netify.android 172.217.22.10:443 <-- 192.168.2.16:44374 H:
 lo: [i4------] HTTP/S.netify.google 172.217.20.74:443 <-- 192.168.2.16:52514 H: semanticlocation-pa.googleapis.com SSL C: semanticlocation-pa.googleapis.com
 lo: [i4------] DNS.netify.google 192.168.2.1:53 <-- 192.168.2.16:56312 H: proxy.googlezip.net
 lo: [i4-u----] HTTP/S.netify.android 172.217.22.10:443 <-- 192.168.2.16:44374 H: android.googleapis.com SSL C: android.googleapis.com
-lo: [i4--g--s] XMPP.netify.google-chat 192.168.2.16:49510 --> 216.239.38.120:5228
 lo: [i4--g---] HTTP/S.netify.google 172.217.20.76:443 <-- 192.168.2.16:43652
+lo: [i4--g--s] XMPP.netify.google-chat 192.168.2.16:49510 --> 216.239.38.120:5228
 lo: [i4--g---] HTTP.netify.google 173.194.79.114:80 <-- 192.168.2.16:36850

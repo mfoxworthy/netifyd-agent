@@ -16,5 +16,5 @@ lo: [i4------] DNS.netify.google-play 8.8.8.8:53 <-- 192.168.180.2:11793 H: play
 lo: [i4------] HTTP/S.netify.google 64.233.166.95:443 <-- 192.168.180.2:47803
 lo: [i4------] DNS.netify.orange-cinema-series 8.8.8.8:53 <-- 192.168.180.2:24245 H: www.ocs.fr
 lo: [i4------] HTTP.netify.orange-cinema-series 178.248.208.210:80 <-- 192.168.180.2:42590 H: www.ocs.fr
-lo: [i4--g---] Unknown 137.135.131.52:5122 <-- 192.168.180.2:46166
 lo: [i4--g--s] XMPP.netify.google-chat 64.233.184.188:5228 <-- 192.168.180.2:47699
+lo: [i4--g---] Unknown 137.135.131.52:5122 <-- 192.168.180.2:46166
