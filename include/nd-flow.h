@@ -359,26 +359,14 @@ typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
 class ndFlowTicket
 {
 public:
-    ndFlowTicket() : flow(nullptr) { }
-    ndFlowTicket(volatile ndFlow *flow) : flow(flow) {
-        flow->tickets++;
-    }
-    virtual ~ndFlowTicket() {
-        if (flow != nullptr) flow->tickets--;
-    }
+    ndFlowTicket(ndFlow *flow = nullptr);
 
-    void Take(volatile ndFlow *flow = nullptr, bool increment = true) {
-        if (flow != nullptr) {
-            if (increment) flow->tickets++;
-            if (this->flow != nullptr) this->flow->tickets--;
-            this->flow = flow;
-        }
-        else if(this->flow != nullptr)
-            if (increment) this->flow->tickets++;
-    }
+    virtual ~ndFlowTicket();
+
+    void Take(ndFlow *flow = nullptr, bool increment = true);
 
 protected:
-    volatile ndFlow *flow;
+    ndFlow *flow;
 };
 
 #endif // _ND_FLOW_H

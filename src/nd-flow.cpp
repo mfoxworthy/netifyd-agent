@@ -967,4 +967,26 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
     }
 }
 
+ndFlowTicket::ndFlowTicket(ndFlow *flow)
+    : flow(flow)
+{
+    if (flow != nullptr) flow->tickets++;
+}
+
+ndFlowTicket::~ndFlowTicket()
+{
+    if (flow != nullptr) flow->tickets--;
+}
+
+void ndFlowTicket::Take(ndFlow *flow, bool increment)
+{
+    if (flow != nullptr) {
+        if (increment) flow->tickets++;
+        if (this->flow != nullptr) this->flow->tickets--;
+        this->flow = flow;
+    }
+    else if(this->flow != nullptr && increment)
+        this->flow->tickets++;
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
