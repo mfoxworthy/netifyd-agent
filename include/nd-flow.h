@@ -359,15 +359,11 @@ typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
 class ndFlowTicket
 {
 public:
-    ndFlowTicket() : flow(nullptr) {
-        fprintf(stderr, "%p: %s: %p\n", this, __PRETTY_FUNCTION__, flow);
-    }
+    ndFlowTicket() : flow(nullptr) { }
     ndFlowTicket(ndFlow *flow) : flow(flow) {
-        fprintf(stderr, "%p: %s: %p\n", this, __PRETTY_FUNCTION__, flow);
         flow->tickets++;
     }
     virtual ~ndFlowTicket() {
-        fprintf(stderr, "%p: %s: %p\n", this, __PRETTY_FUNCTION__, flow);
         if (flow != nullptr) flow->tickets--;
     }
 
