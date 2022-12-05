@@ -108,7 +108,7 @@ export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$(pwd)/libs/gperftools
 %endif
 
 ./autogen.sh
-%{configure} %{?_with_conntrack} %{?_with_inotify} %{?_with_netlink}
+%{configure} %{?_with_conntrack} %{?_with_inotify} %{?_with_netlink} --disable-libtcmalloc
 
 # Build
 %build
