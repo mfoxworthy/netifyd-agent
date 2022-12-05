@@ -95,11 +95,16 @@ ndFlowMap::ndFlowMap(size_t buckets)
 ndFlowMap::~ndFlowMap()
 {
     for (size_t i = 0; i < buckets; i++) {
-        int rc = pthread_mutex_lock(bucket_lock[i]);
-        for (auto it = bucket[i]->begin(); it != bucket[i]->end(); it++) delete it->second;
+        pthread_mutex_lock(bucket_lock[i]);
+
+        for (auto it = bucket[i]->begin(); it != bucket[i]->end(); it++)
+            delete it->second;
+
         delete bucket[i];
+
         pthread_mutex_unlock(bucket_lock[i]);
         pthread_mutex_destroy(bucket_lock[i]);
+
         delete bucket_lock[i];
     }
 
@@ -172,7 +177,7 @@ bool ndFlowMap::Delete(const string &digest)
 
 nd_flow_map *ndFlowMap::Acquire(size_t b)
 {
-    if (b > buckets) return NULL;
+    if (b >= buckets) return NULL;
 
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
@@ -183,7 +188,7 @@ nd_flow_map *ndFlowMap::Acquire(size_t b)
 
 const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
 {
-    if (b > buckets) return NULL;
+    if (b >= buckets) return NULL;
 
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
@@ -194,7 +199,7 @@ const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
 
 void ndFlowMap::Release(size_t b) const
 {
-    if (b > buckets) return;
+    if (b >= buckets) return;
 
     int rc = pthread_mutex_unlock(bucket_lock[b]);
     if (rc != 0)

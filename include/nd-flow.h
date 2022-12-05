@@ -360,14 +360,14 @@ class ndFlowTicket
 {
 public:
     ndFlowTicket() : flow(nullptr) { }
-    ndFlowTicket(ndFlow *flow) : flow(flow) {
+    ndFlowTicket(volatile ndFlow *flow) : flow(flow) {
         flow->tickets++;
     }
     virtual ~ndFlowTicket() {
         if (flow != nullptr) flow->tickets--;
     }
 
-    void Take(ndFlow *flow = nullptr, bool increment = true) {
+    void Take(volatile ndFlow *flow = nullptr, bool increment = true) {
         if (flow != nullptr) {
             if (increment) flow->tickets++;
             if (this->flow != nullptr) this->flow->tickets--;
@@ -378,7 +378,7 @@ public:
     }
 
 protected:
-    ndFlow *flow;
+    volatile ndFlow *flow;
 };
 
 #endif // _ND_FLOW_H
