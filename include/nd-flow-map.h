@@ -41,10 +41,13 @@ public:
     const nd_flow_map *AcquireConst(size_t b) const;
 
     void Release(size_t b) const;
+#if 0
     inline void Release(const string &digest) const {
         Release(HashToBucket(digest));
     }
-
+#else
+    void Release(const string &digest) const;
+#endif
 #ifndef _ND_LEAN_AND_MEAN
     void DumpBucketStats(void);
 #endif

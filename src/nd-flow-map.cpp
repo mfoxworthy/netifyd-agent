@@ -177,7 +177,8 @@ bool ndFlowMap::Delete(const string &digest)
 
 nd_flow_map *ndFlowMap::Acquire(size_t b)
 {
-    if (b >= buckets) return NULL;
+    if (b >= buckets)
+        throw ndSystemException(__PRETTY_FUNCTION__, "bucket", EINVAL);
 
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
@@ -188,7 +189,8 @@ nd_flow_map *ndFlowMap::Acquire(size_t b)
 
 const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
 {
-    if (b >= buckets) return NULL;
+    if (b >= buckets)
+        throw ndSystemException(__PRETTY_FUNCTION__, "bucket", EINVAL);
 
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
@@ -199,11 +201,17 @@ const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
 
 void ndFlowMap::Release(size_t b) const
 {
-    if (b >= buckets) return;
+    if (b >= buckets)
+        throw ndSystemException(__PRETTY_FUNCTION__, "bucket", EINVAL);
 
     int rc = pthread_mutex_unlock(bucket_lock[b]);
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
+}
+
+void ndFlowMap::Release(const string &digest) const
+{
+    Release(HashToBucket(digest));
 }
 
 #ifndef _ND_LEAN_AND_MEAN
