@@ -75,14 +75,11 @@ extern ndApplications *nd_apps;
 int main(int argc, char *argv[])
 {
     int rc = 0;
-    char proto_name[64];
 
     cout << "Testing Netify Agent Risks..." << endl;
 
     ndpi_global_init();
-    ndpi_detection_module_struct *ndpi = nd_ndpi_init();
 
-    ndpi_protocol_id_t ndpi_protos;
     cout << endl << "nDPI risks count: " <<
         NDPI_MAX_RISK << endl;
     cout << "Netify Agent risks count: " <<

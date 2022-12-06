@@ -63,8 +63,6 @@ extern ndGlobalConfig nd_config;
 
 static ndpi_init_prefs nd_ndpi_prefs = ndpi_no_prefs;
 static NDPI_PROTOCOL_BITMASK ndpi_protos;
-static pthread_mutex_t *ndpi_init_lock = NULL;
-static struct ndpi_detection_module_struct *ndpi_parent = NULL;
 
 void ndpi_global_init(void)
 {

@@ -120,8 +120,6 @@ ndFlow *ndFlowMap::Lookup(const string &digest, bool acquire_lock)
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
-    nd_dprintf("%s: bucket[%03lu]: locked\n", __PRETTY_FUNCTION__, b);
-
     auto fi = bucket[b]->find(digest);
     if (fi != bucket[b]->end()) {
         fi->second->tickets++;
@@ -129,8 +127,8 @@ ndFlow *ndFlowMap::Lookup(const string &digest, bool acquire_lock)
     }
 
     if (! acquire_lock) {
-        if (pthread_mutex_unlock(bucket_lock[b]) == 0)
-            nd_dprintf("%s: bucket[%03lu]: UNlocked\n", __PRETTY_FUNCTION__, b);
+        if ((rc = pthread_mutex_unlock(bucket_lock[b])) != 0)
+            throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
     }
 
     return f;
@@ -138,13 +136,13 @@ ndFlow *ndFlowMap::Lookup(const string &digest, bool acquire_lock)
 
 ndFlow *ndFlowMap::Insert(const string &digest, ndFlow *flow, bool unlocked)
 {
+    int rc;
     ndFlow *f = NULL;
     size_t b = HashToBucket(digest);
+
     if (! unlocked) {
-        int rc = pthread_mutex_lock(bucket_lock[b]);
-        if (rc != 0)
+        if ((rc = pthread_mutex_lock(bucket_lock[b])) != 0)
             throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
-        nd_dprintf("%s: bucket[%03lu]: locked\n", __PRETTY_FUNCTION__, b);
     }
 
     nd_flow_pair fp(digest, flow);
@@ -156,8 +154,8 @@ ndFlow *ndFlowMap::Insert(const string &digest, ndFlow *flow, bool unlocked)
         fi.first->second->tickets++;
 
     if (! unlocked) {
-        if (pthread_mutex_unlock(bucket_lock[b]) == 0)
-            nd_dprintf("%s: bucket[%03lu]: UNlocked\n", __PRETTY_FUNCTION__, b);
+        if ((rc = pthread_mutex_unlock(bucket_lock[b])) != 0)
+            throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
     }
 
     return f;
@@ -170,7 +168,6 @@ bool ndFlowMap::Delete(const string &digest)
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
-    nd_dprintf("%s: bucket[%03lu]: locked\n", __PRETTY_FUNCTION__, b);
 
     auto fi = bucket[b]->find(digest);
     if (fi != bucket[b]->end()) {
@@ -178,8 +175,8 @@ bool ndFlowMap::Delete(const string &digest)
         bucket[b]->erase(fi);
     }
 
-    if (pthread_mutex_unlock(bucket_lock[b]) == 0)
-        nd_dprintf("%s: bucket[%03lu]: UNlocked\n", __PRETTY_FUNCTION__, b);
+    if ((rc = pthread_mutex_unlock(bucket_lock[b])) != 0)
+        throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
 
     return deleted;
 }
@@ -193,8 +190,6 @@ nd_flow_map *ndFlowMap::Acquire(size_t b)
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
-    nd_dprintf("%s: bucket[%03lu]: locked\n", __PRETTY_FUNCTION__, b);
-
     return bucket[b];
 }
 
@@ -207,8 +202,6 @@ const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
-    nd_dprintf("%s: bucket[%03lu]: locked\n", __PRETTY_FUNCTION__, b);
-
     return (const nd_flow_map *)bucket[b];
 }
 
@@ -220,8 +213,6 @@ void ndFlowMap::Release(size_t b) const
     int rc = pthread_mutex_unlock(bucket_lock[b]);
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
-
-    nd_dprintf("%s: bucket[%03lu]: UNlocked\n", __PRETTY_FUNCTION__, b);
 }
 
 void ndFlowMap::Release(const string &digest) const

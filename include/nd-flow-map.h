@@ -32,7 +32,7 @@ public:
     ndFlow *Lookup(const string &digest, bool acquire_lock = false);
     ndFlow *Insert(const string &digest, ndFlow *flow, bool unlocked = false);
     inline ndFlow *InsertUnlocked(const string &digest, ndFlow *flow) {
-        Insert(digest, flow, true);
+        return Insert(digest, flow, true);
     }
 
     bool Delete(const string &digest);

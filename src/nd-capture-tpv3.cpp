@@ -604,10 +604,10 @@ ndCaptureTPv3::ndCaptureTPv3(
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     :
-    ring(nullptr),
     ndCaptureThread(ndCT_TPV3,
         (long)cpu, iface, dev_mac, thread_socket,
-        threads_dpi, dhc, private_addr)
+        threads_dpi, dhc, private_addr),
+    ring(nullptr)
 {
     dl_type = DLT_EN10MB;
 

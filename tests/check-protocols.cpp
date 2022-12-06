@@ -82,7 +82,6 @@ int main(int argc, char *argv[])
     ndpi_global_init();
     ndpi_detection_module_struct *ndpi = nd_ndpi_init();
 
-    ndpi_protocol_id_t ndpi_protos;
     cout << endl << "nDPI protocol count: " <<
         NDPI_LAST_IMPLEMENTED_PROTOCOL << endl;
     cout << "Netify Agent protocol count: " <<

@@ -311,8 +311,6 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
     ndFlowTicket ticket;
     ndFlow *nf, flow(iface);
 
-    nd_flow_buckets->DumpBucketStats();
-
     const struct ether_header *hdr_eth = NULL;
     const struct sll_header *hdr_sll = NULL;
     const struct ip *hdr_ip = NULL;
@@ -356,7 +354,7 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
     }
     else
 #endif
-        if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
+    if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
     ts_pkt_last = ts_pkt;
 
@@ -599,7 +597,7 @@ nd_process_ip:
         if (packet->caplen >= l2_len)
             frag_off = ntohs(hdr_ip->ip_off);
 
-        if (packet->caplen - l2_len < sizeof(struct ip)) {
+        if ((unsigned)(packet->caplen - l2_len) < sizeof(struct ip)) {
             // XXX: header too small
             stats.pkt.discard++;
             stats.pkt.discard_bytes += packet->length;

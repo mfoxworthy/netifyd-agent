@@ -165,8 +165,8 @@ static int ndNetifyApiThread_progress(void *user,
 }
 
 ndNetifyApiThread::ndNetifyApiThread()
-    : ch(NULL), headers_tx(NULL),
-    ndThread("nap-api-update")
+    : ndThread("nap-api-update"),
+    ch(NULL), headers_tx(NULL)
 {
     if ((ch = curl_easy_init()) == NULL)
         throw ndThreadException("curl_easy_init");

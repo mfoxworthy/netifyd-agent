@@ -1315,7 +1315,7 @@ bool nd_scan_dotd(const string &path, vector<string> &files)
     while ((result = readdir(dh)) != NULL) {
         if (
 #ifdef _DIRENT_HAVE_D_RECLEN
-            result->d_reclen > 0 &&
+            result->d_reclen == 0 ||
 #endif
 #ifndef _DIRENT_HAVE_D_TYPE
 #warning "struct dirent doesn't have a type!"
