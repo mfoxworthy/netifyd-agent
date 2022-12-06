@@ -234,12 +234,13 @@ void ndFlowMap::DumpBucketStats(void)
 {
     for (size_t i = 0; i < buckets; i++) {
         int rc = pthread_mutex_trylock(bucket_lock[i]);
-        if (rc != EBUSY)
-            throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
+        if (rc != 0 && rc != EBUSY)
+            throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_trylock", rc);
 
         if (rc == 0) {
             nd_dprintf("ndFlowMap: %4u: %u flow(s).\n", i, bucket[i]->size());
-            pthread_mutex_unlock(bucket_lock[i]);
+            if ((rc = pthread_mutex_unlock(bucket_lock[i])) != 0)
+                throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
         }
         else
             nd_dprintf("ndFlowMap: %4u: locked.\n", i);
