@@ -195,6 +195,7 @@ ndNetlink::ndNetlink(void)
 
     // Add broadcast addresses
     AddInterface(_ND_NETLINK_BROADCAST);
+    // IPv4 "limited broadcast": 255.255.255.255
     AddAddress(AF_INET, _ND_NETLINK_BROADCAST, "169.254.255.255");
     AddAddress(AF_INET, _ND_NETLINK_BROADCAST, "255.255.255.255");
 }
