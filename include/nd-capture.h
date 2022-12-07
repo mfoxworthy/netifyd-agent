@@ -74,7 +74,7 @@ protected:
 
     const ndPacket *ProcessPacket(const ndPacket *packet);
 
-    bool ProcessDNSPacket(const ndPacket *packet, const char **host);
+    bool ProcessDNSPacket(const uint8_t *pkt, uint16_t pkt_len, const char **host);
 };
 
 typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;

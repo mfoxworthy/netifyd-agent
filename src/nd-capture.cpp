@@ -1116,66 +1116,40 @@ nd_process_ip:
         if (hdr_tcp->th_flags & TH_RST) stats.pkt.tcp_resets++;
     }
 
-    if (dhc != NULL && pkt != NULL && pkt_len > sizeof(struct nd_dns_header_t)) {
-        uint16_t lport = ntohs(nf->lower_port), uport = ntohs(nf->upper_port);
+    if (dhc != NULL && pkt != NULL
+        && pkt_len > sizeof(struct nd_dns_header_t)
+        && packet->caplen == packet->length) {
 
-        if (lport == 53 || uport == 53 || lport == 5355 || uport == 5355) {
+        uint16_t lport = ntohs(nf->lower_port),
+            uport = ntohs(nf->upper_port);
+
+        // DNS or LLMNR?
+        if (lport == 53 || uport == 53
+            || lport == 5355 || uport == 5355) {
 
             const char *host = NULL;
-            bool is_query = ProcessDNSPacket(packet, &host);
-#if 0
-            if (is_query) {
-                // Rehash M/DNS flows:
-                // This is done to uniquely track queries that originate from
-                // the same local port.  Some devices re-use their local port
-                // which would cause additional queries to not be processed.
-                // Rehashing using the host_server_name as an additional key
-                // guarantees that we see all DNS queries/responses.
+            bool is_query = ProcessDNSPacket(pkt, pkt_len, &host);
 
-//                if (ndpi_proto == NDPI_PROTOCOL_DNS) {
-                    nf->hash(tag, false,
-                        (const uint8_t *)host,
-                        strnlen(host, ND_MAX_HOSTNAME));
-//                }
-//                else {
-//                    nf->hash(tag, false,
-//                        (const uint8_t *)nf->mdns.answer,
-//                        strnlen(nf->mdns.answer, ND_FLOW_MDNS_ANSLEN));
-//                }
-
-                if (memcmp(nf->digest_mdata, nf->digest_lower, SHA1_DIGEST_LENGTH)) {
-                    flows->erase(fi.first);
-
-                    memcpy(nf->digest_mdata, nf->digest_lower,
-                        SHA1_DIGEST_LENGTH);
-                    flow_digest.assign((const char *)nf->digest_lower,
-                        SHA1_DIGEST_LENGTH);
-
-                    fi = flows->insert(nd_flow_pair(flow_digest, nf));
-
-                if (! fi.second) {
-                    // Flow exists...  update stats and return.
-                    *fi.first->second += *nf;
-
-                    nd_dprintf("%s: delete rehashed DNS flow: %lu packets, detection complete: %s\n",
-                        tag.c_str(), nf->total_packets, (nf->flags.detection_complete.load()) ? "yes" : "no");
-                    delete nf;
-
-                    return packet;
-                }
-            }
-#else
             if (is_query && nf->flags.detection_complete.load()) {
                 nf->flags.dhc_hit = false;
+                nf->flags.detection_init = false;
                 nf->flags.detection_complete = false;
+                nf->flags.detection_expiring = false;
+                nf->flags.detection_expired = false;
+                nf->flags.detection_guessed = false;
+                nf->flags.detection_updated = false;
+                nf->flags.risk_checked = false;
+                nf->flags.soft_dissector = false;
                 nf->lower_bytes = flow.lower_bytes;
                 nf->upper_bytes = flow.upper_bytes;
                 nf->lower_packets = flow.lower_packets;
                 nf->upper_packets = flow.upper_packets;
                 nf->total_packets = flow.total_packets;
                 nf->detection_packets = 0;
-            }
+#ifdef _ND_LOG_DHC
+                nd_dprintf("%s: Reset DNS flow.\n", tag.c_str());
 #endif
+            }
         }
     }
 
@@ -1211,10 +1185,10 @@ nd_process_ip:
     return packet;
 }
 
-bool ndCaptureThread::ProcessDNSPacket(const ndPacket *packet, const char **host)
+bool ndCaptureThread::ProcessDNSPacket(const uint8_t *pkt, uint16_t pkt_len, const char **host)
 {
     ns_rr rr;
-    int rc = ns_initparse(packet->data, packet->caplen, &ns_h);
+    int rc = ns_initparse(pkt, pkt_len, &ns_h);
 
     *host = NULL;
 
@@ -1222,7 +1196,7 @@ bool ndCaptureThread::ProcessDNSPacket(const ndPacket *packet, const char **host
 #ifdef _ND_LOG_DHC
         nd_dprintf(
             "%s: dns initparse error: %s, length: %hu\n",
-            tag.c_str(), strerror(errno), packet->caplen);
+            tag.c_str(), strerror(errno), pkt_len);
 #endif
         return false;
     }
