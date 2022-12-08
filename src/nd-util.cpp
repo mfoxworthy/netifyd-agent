@@ -1335,19 +1335,33 @@ bool nd_scan_dotd(const string &path, vector<string> &files)
     return (files.size () > 0);
 }
 
-void nd_set_hostname(char *dst, const char *src, size_t length)
+void nd_set_hostname(char *dst,
+    const char *src, size_t length, bool strict)
 {
     ssize_t i;
 
     // Sanitize host server name; RFC 952 plus underscore for SSDP.
-    for (i = 0; i < (ssize_t)length; i++) {
+    if (strict) {
+        for (i = 0; i < (ssize_t)length; i++) {
 
-        if (isalnum(src[i]) || src[i] == '-' ||
-            src[i] == '_' || src[i] == '.')
-            dst[i] = tolower(src[i]);
-        else {
-            dst[i] = '\0';
-            break;
+            if (isalnum(src[i]) || src[i] == '-' ||
+                src[i] == '_' || src[i] == '.')
+                dst[i] = tolower(src[i]);
+            else {
+                dst[i] = '\0';
+                break;
+            }
+        }
+    }
+    else {
+        for (i = 0; i < (ssize_t)length; i++) {
+            if (isalnum(src[i]) || ispunct(src[i]) ||
+                src[i] == ' ' || src[i] == '\0') {
+                dst[i] = src[i];
+                if (src[i] == '\0') break;
+            }
+            else
+                dst[i] = '_';
         }
     }
 

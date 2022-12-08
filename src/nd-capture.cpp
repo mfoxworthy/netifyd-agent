@@ -1314,7 +1314,8 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
             if (flow->mdns.domain_name[0] != '\0') {
                 nd_set_hostname(
                     flow->mdns.domain_name,
-                    flow->mdns.domain_name, ND_FLOW_HOSTNAME
+                    flow->mdns.domain_name, ND_FLOW_HOSTNAME,
+                    false
                 );
             }
 #ifdef _ND_LOG_DHC
