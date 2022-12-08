@@ -434,7 +434,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 
             if (ndEF->ssl.server_cn[0] == '\0' &&
                 ndEFNFP.tls_quic.serverCN != NULL) {
-                SetHostname(
+                nd_set_hostname(
                     ndEF->ssl.server_cn,
                     ndEFNFP.tls_quic.serverCN,
                     ND_FLOW_TLS_CNLEN
@@ -502,15 +502,29 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             }
         break;
         case ND_PROTO_DNS:
-        case ND_PROTO_MDNS:
-        case ND_PROTO_LLMNR:
             //nd_dprintf("DNS flow updated.\n");
+            break;
+        case ND_PROTO_MDNS:
+            if (ndEF->has_mdns_domain_name()) {
+                flow_update = true;
+                ndEF->flags.detection_updated = true;
+            }
+            //nd_dprintf("mDNS flow updated: %s, %s, %s\n",
+            //    ndEF->host_server_name, ndEFNF->host_server_name, ndEF->mdns.domain_name);
+            break;
+        case ND_PROTO_LLMNR:
+            //nd_dprintf("LLMNR flow updated.\n");
             break;
         default:
             break;
         }
     }
-
+#if 0
+    if (ndEF->detected_protocol == ND_PROTO_MDNS) {
+        nd_dprintf("mDNS flow updated: packets: %lu, check extra packets: %s.\n",
+            ndEF->detection_packets.load(), (check_extra_packets) ? "yes" : "no");
+    }
+#endif
     // Flow detection complete.
     if (ndEF->flags.detection_init.load() && ! check_extra_packets)
         ndEF->flags.detection_complete = true;
@@ -613,7 +627,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         }
     }
 
-    SetHostname(
+    nd_set_hostname(
         ndEF->host_server_name, ndEFNF->host_server_name,
         min((size_t)ND_FLOW_HOSTNAME, (size_t)sizeof(ndEFNF->host_server_name))
     );
@@ -724,7 +738,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
         if (ndEF->ssl.server_cn[0] == '\0' &&
             ndEFNFP.tls_quic.serverCN != NULL) {
-            SetHostname(
+            nd_set_hostname(
                 ndEF->ssl.server_cn,
                 ndEFNFP.tls_quic.serverCN,
                 ND_FLOW_TLS_CNLEN
@@ -1010,29 +1024,6 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
     ndEF->flags.detection_init = true;
-}
-
-void ndDetectionThread::SetHostname(char *dst, const char *src, size_t length)
-{
-    ssize_t i;
-
-    // Sanitize host server name; RFC 952 plus underscore for SSDP.
-    for (i = 0; i < (ssize_t)length; i++) {
-
-        if (isalnum(src[i]) || src[i] == '-' ||
-            src[i] == '_' || src[i] == '.')
-            dst[i] = tolower(src[i]);
-        else {
-            dst[i] = '\0';
-            break;
-        }
-    }
-
-    // Ensure dst is terminated.
-    dst[length - 1] = '\0';
-
-    // Right-trim dots.
-    for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
 }
 
 void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id)

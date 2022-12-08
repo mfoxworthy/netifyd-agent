@@ -2761,7 +2761,6 @@ int main(int argc, char *argv[])
 
     if (nd_config.h_flow != stderr) {
         // Test mode enabled, disable/set certain config parameters
-        ND_GF_SET_FLAG(ndGF_USE_DHC, true);
         ND_GF_SET_FLAG(ndGF_USE_FHC, true);
         ND_GF_SET_FLAG(ndGF_USE_SINK, false);
         ND_GF_SET_FLAG(ndGF_EXPORT_JSON, false);

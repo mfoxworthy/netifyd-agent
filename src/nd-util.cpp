@@ -1335,4 +1335,27 @@ bool nd_scan_dotd(const string &path, vector<string> &files)
     return (files.size () > 0);
 }
 
+void nd_set_hostname(char *dst, const char *src, size_t length)
+{
+    ssize_t i;
+
+    // Sanitize host server name; RFC 952 plus underscore for SSDP.
+    for (i = 0; i < (ssize_t)length; i++) {
+
+        if (isalnum(src[i]) || src[i] == '-' ||
+            src[i] == '_' || src[i] == '.')
+            dst[i] = tolower(src[i]);
+        else {
+            dst[i] = '\0';
+            break;
+        }
+    }
+
+    // Ensure dst is terminated.
+    dst[length - 1] = '\0';
+
+    // Right-trim dots.
+    for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

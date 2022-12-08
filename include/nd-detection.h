@@ -115,9 +115,7 @@ protected:
     bool ProcessALPN(ndDetectionQueueEntry *entry, bool client = true);
     void ProcessFlow(ndDetectionQueueEntry *entry);
 
-    void SetHostname(char *dst, const char *src, size_t length);
     void SetDetectedApplication(ndDetectionQueueEntry *entry, nd_app_id_t app_id);
-
     void SetGuessedProtocol(ndDetectionQueueEntry *entry);
 
     void FlowUpdate(ndDetectionQueueEntry *entry);

@@ -185,6 +185,9 @@ public:
             char variant[ND_FLOW_EXTRA_INFO];
         } mining;
 #endif
+        struct {
+            char domain_name[ND_FLOW_HOSTNAME];
+        } mdns;
     };
 
     vector<string> tls_alpn, tls_alpn_server;
@@ -311,6 +314,8 @@ public:
 #if 0
     bool has_mining_variant(void) const;
 #endif
+    bool has_mdns_domain_name(void) const;
+
     void print(void) const;
 
     void update_lower_maps(void);

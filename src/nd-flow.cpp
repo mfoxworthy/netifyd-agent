@@ -464,6 +464,14 @@ bool ndFlow::has_mining_variant(void) const
     );
 }
 #endif
+bool ndFlow::has_mdns_domain_name(void) const
+{
+    return (
+        detected_protocol == ND_PROTO_MDNS &&
+        mdns.domain_name[0] != '\0'
+    );
+}
+
 void ndFlow::print(void) const
 {
     const char *lower_name = lower_ip, *upper_name = upper_ip;
@@ -893,6 +901,9 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         if (has_mining_variant())
             j["mining"]["variant"] = mining.variant;
 #endif
+        if (has_mdns_domain_name())
+            j["mdns"]["answer"] = mdns.domain_name;
+
         j["first_seen_at"] = ts_first_seen;
         j["first_update_at"] = ts_first_update;
 
