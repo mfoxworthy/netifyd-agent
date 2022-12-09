@@ -70,6 +70,8 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 
+ndAddrType *nd_addr_info = NULL;
+
 ndAddr::ndAddr(const string &addr)
     : addr{0}, prefix(0)
 {
@@ -78,12 +80,12 @@ ndAddr::ndAddr(const string &addr)
     size_t p;
     if ((p = addr.find_first_of("/")) != string::npos) {
         char *ep = NULL;
-        prefix = (unsigned)strtoul(
+        prefix = (uint8_t)strtoul(
             addr.substr(p + 1).c_str(), &ep, 10
         );
 
         if (*ep != '\0') {
-            nd_dprintf("Invalid IP address prefix value: %s\n",
+            nd_dprintf("Invalid IP address prefix length: %s\n",
                 addr.substr(p + 1).c_str()
             );
             return;
@@ -96,7 +98,7 @@ ndAddr::ndAddr(const string &addr)
         _addr.c_str(), &this->addr.in.sin_addr) == 1) {
 
         if (prefix > 32) {
-            nd_dprintf("Invalid IP address prefix value: %u\n",
+            nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
             return;
@@ -110,7 +112,7 @@ ndAddr::ndAddr(const string &addr)
         _addr.c_str(), &this->addr.in6.sin6_addr) == 1) {
 
         if (prefix > 128) {
-            nd_dprintf("Invalid IP address prefix value: %u\n",
+            nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
             return;
@@ -162,7 +164,7 @@ ndAddr::ndAddr(
     switch (ss_addr->ss_family) {
     case AF_INET:
         if (prefix > 32) {
-            nd_dprintf("Invalid IP address prefix value: %u\n",
+            nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
             return;
@@ -172,7 +174,7 @@ ndAddr::ndAddr(
 
     case AF_INET6:
         if (prefix > 128) {
-            nd_dprintf("Invalid IP address prefix value: %u\n",
+            nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
             return;
@@ -180,6 +182,8 @@ ndAddr::ndAddr(
         memcpy(&addr.in6, ss_addr, sizeof(struct sockaddr_in6));
         break;
     }
+
+    if (prefix) this->prefix = prefix;
 }
 
 ndAddr::ndAddr(
@@ -187,13 +191,14 @@ ndAddr::ndAddr(
     : addr{0}, prefix(0)
 {
     if (prefix > 32) {
-        nd_dprintf("Invalid IP address prefix value: %u\n",
+        nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
         return;
     }
 
     memcpy(&addr.in, ss_in, sizeof(struct sockaddr_in));
+    if (prefix) this->prefix = prefix;
 }
 
 ndAddr::ndAddr(
@@ -201,20 +206,20 @@ ndAddr::ndAddr(
     : addr{0}, prefix(0)
 {
     if (prefix > 128) {
-        nd_dprintf("Invalid IP address prefix value: %u\n",
+        nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
         return;
     }
 
     memcpy(&addr.in6, ss_in6, sizeof(struct sockaddr_in6));
+    if (prefix) this->prefix = prefix;
 }
 
-const string ndAddr::GetString(bool cache)
+bool ndAddr::MakeString(string &result) const
 {
-    if (cache && cached_addr.size()) return cached_addr;
+    if (! IsValid()) return false;
 
-    ostringstream os;
     char sa[INET6_ADDRSTRLEN + 4] = { 0 };
 
     switch (addr.ss.ss_family) {
@@ -236,37 +241,38 @@ const string ndAddr::GetString(bool cache)
                 }
             }
 
-            os << sa;
+            result = sa;
 
-            break;
+            return true;
         }
         break;
+
     case AF_INET:
         inet_ntop(AF_INET,
             (const void *)&addr.in.sin_addr.s_addr,
             sa, INET_ADDRSTRLEN
         );
 
-        os << sa;
-        if (prefix > 0) os << "/" << prefix;
+        result = sa;
+        if (prefix > 0)
+            result.append("/" + to_string((size_t)prefix));
 
-        break;
+        return true;
+
     case AF_INET6:
         inet_ntop(AF_INET6,
             (const void *)&addr.in6.sin6_addr.s6_addr,
             sa, INET6_ADDRSTRLEN
         );
 
-        os << sa;
-        if (prefix > 0) os << "/" << (unsigned)prefix;
+        result = sa;
+        if (prefix > 0)
+            result.append("/" + to_string((size_t)prefix));
 
-        break;
+        return true;
     }
 
-    if (cache)
-        cached_addr = os.str();
-
-    return os.str();
+    return false;
 }
 
 bool ndAddr::CreateHardwareAddress(
@@ -286,6 +292,212 @@ bool ndAddr::CreateHardwareAddress(
     }
 
     return false;
+}
+
+ndAddrType::ndAddrType()
+{
+    // Add private networks
+    AddAddress(ndAddr::RESERVED, "127.0.0.0/8");
+    AddAddress(ndAddr::RESERVED, "10.0.0.0/8");
+    AddAddress(ndAddr::RESERVED, "100.64.0.0/10");
+    AddAddress(ndAddr::RESERVED, "172.16.0.0/12");
+    AddAddress(ndAddr::RESERVED, "192.168.0.0/16");
+
+    AddAddress(ndAddr::RESERVED, "fc00::/7");
+    AddAddress(ndAddr::RESERVED, "fd00::/8");
+    AddAddress(ndAddr::RESERVED, "fe80::/10");
+
+    // Add multicast networks
+    AddAddress(ndAddr::MULTICAST, "224.0.0.0/4");
+
+    AddAddress(ndAddr::MULTICAST, "ff00::/8");
+
+    // Add broadcast addresses
+    AddAddress(ndAddr::BROADCAST, "169.254.255.255");
+}
+
+bool ndAddrType::AddAddress(
+    ndAddr::Type type, const ndAddr &addr, const char *ifname)
+{
+    if (! addr.IsValid()) {
+        nd_printf("Invalid reserved address: %s\n",
+            addr.GetString().c_str());
+        return false;
+    }
+
+    unique_lock<mutex> ul(lock);
+
+    try {
+        if (addr.IsEthernet()) {
+            string mac;
+            if (addr.GetString(mac)) {
+                auto it = ether_reserved.find(mac);
+                if (it != ether_reserved.end()) {
+                    nd_dprintf("Reserved MAC address exists: %s\n",
+                        mac.c_str()
+                    );
+                    return false;
+                }
+                ether_reserved[mac] = type;
+                return true;
+            }
+        }
+        else if (addr.IsIPv4() && ifname == nullptr) {
+            ndRadixNetworkEntry<32> entry;
+            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+                ipv4_reserved[entry] = type;
+                return true;
+            }
+        }
+        else if (addr.IsIPv6() && ifname == nullptr) {
+            ndRadixNetworkEntry<128> entry;
+            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+                ipv6_reserved[entry] = type;
+                return true;
+            }
+        }
+        else if (addr.IsIPv4() && ifname != nullptr) {
+            ndRadixNetworkEntry<32> entry;
+            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+                ipv4_iface[ifname][entry] = type;
+                return true;
+            }
+        }
+        else if (addr.IsIPv6() && ifname != nullptr) {
+            ndRadixNetworkEntry<128> entry;
+            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+                ipv6_iface[ifname][entry] = type;
+                return true;
+            }
+        }
+    }
+    catch (runtime_error &e) {
+        nd_dprintf("Error adding reserved address: %s: %s\n",
+            addr.GetString().c_str(), e.what());
+    }
+
+    return false;
+}
+
+void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
+{
+    if (addr.IsValid())
+        type = ndAddr::OTHER;
+    else {
+        type = ndAddr::ERROR;
+        return;
+    }
+
+    if (addr.IsEthernet()) {
+        for (uint8_t i = 0x01; i <= 0x0f; i += 0x02) {
+            if ((i & addr.addr.ll.sll_addr[0]) != i)
+                continue;
+            type = ndAddr::MULTICAST;
+            return;
+        }
+
+        uint8_t sll_addr[sizeof(addr.addr.ll.sll_addr)];
+
+        memset(sll_addr, 0xff, addr.addr.ll.sll_halen);
+        if (memcmp(addr.addr.ll.sll_addr, sll_addr,
+            addr.addr.ll.sll_halen) == 0) {
+            type = ndAddr::BROADCAST;
+            return;
+        }
+
+        memset(sll_addr, 0, addr.addr.ll.sll_halen);
+        if (memcmp(addr.addr.ll.sll_addr, sll_addr,
+            addr.addr.ll.sll_halen) == 0) {
+            type = ndAddr::NONE;
+            return;
+        }
+
+        if (ether_reserved.size()) {
+            unique_lock<mutex> ul(lock);
+
+            auto it = ether_reserved.find(addr.GetString());
+            if (it != ether_reserved.end()) {
+                type = it->second;
+                return;
+            }
+        }
+    }
+    else if (addr.IsIPv4()) {
+        if (addr.addr.in.sin_addr.s_addr == 0) {
+            type = ndAddr::NONE;
+            return;
+        }
+
+        if (addr.addr.in.sin_addr.s_addr == 0xffffffff) {
+            type = ndAddr::BROADCAST;
+            return;
+        }
+
+        for (auto &iface : ipv4_iface) {
+            ndRadixNetworkEntry<32> entry;
+            if (ndRadixNetworkEntry<32>::CreateQuery(entry, addr)) {
+
+                unique_lock<mutex> ul(lock);
+
+                nd_rn4_atype::iterator it;
+                if ((it = iface.second.longest_match(entry))
+                    != iface.second.end()) {
+                    type = it->second;
+                    return;
+                }
+            }
+        }
+
+        ndRadixNetworkEntry<32> entry;
+        if (ndRadixNetworkEntry<32>::CreateQuery(entry, addr)) {
+
+            unique_lock<mutex> ul(lock);
+
+            nd_rn4_atype::iterator it;
+            if ((it = ipv4_reserved.longest_match(entry))
+                != ipv4_reserved.end()) {
+                type = it->second;
+                return;
+            }
+        }
+    }
+    else if (addr.IsIPv6()) {
+        if (addr.addr.in6.sin6_addr.s6_addr32[0] == 0
+            && addr.addr.in6.sin6_addr.s6_addr32[1] == 0
+            && addr.addr.in6.sin6_addr.s6_addr32[2] == 0
+            && addr.addr.in6.sin6_addr.s6_addr32[3]) {
+            type = ndAddr::NONE;
+            return;
+        }
+
+        for (auto &iface : ipv6_iface) {
+            ndRadixNetworkEntry<128> entry;
+            if (ndRadixNetworkEntry<128>::CreateQuery(entry, addr)) {
+
+                unique_lock<mutex> ul(lock);
+
+                nd_rn6_atype::iterator it;
+                if ((it = iface.second.longest_match(entry))
+                    != iface.second.end()) {
+                    type = it->second;
+                    return;
+                }
+            }
+        }
+
+        ndRadixNetworkEntry<128> entry;
+        if (ndRadixNetworkEntry<128>::CreateQuery(entry, addr)) {
+
+            unique_lock<mutex> ul(lock);
+
+            nd_rn6_atype::iterator it;
+            if ((it = ipv6_reserved.longest_match(entry))
+                != ipv6_reserved.end()) {
+                type = it->second;
+                return;
+            }
+        }
+    }
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

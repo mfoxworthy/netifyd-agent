@@ -91,8 +91,8 @@ using namespace std;
 
 ndApplications *nd_apps = NULL;
 
-typedef radix_tree<ndRadixNetworkEntry<32>, nd_app_id_t> nd_rn4_t;
-typedef radix_tree<ndRadixNetworkEntry<128>, nd_app_id_t> nd_rn6_t;
+typedef radix_tree<ndRadixNetworkEntry<32>, nd_app_id_t> nd_rn4_app;
+typedef radix_tree<ndRadixNetworkEntry<128>, nd_app_id_t> nd_rn6_app;
 
 ndApplications::ndApplications()
     : app_networks4(NULL), app_networks6(NULL)
@@ -273,18 +273,18 @@ bool ndApplications::Save(const string &filename)
         ofs << "app:" << it.first << ":" << it.second->tag << endl;
     for (auto &it : domains)
         ofs << "dom:" << it.second << ":" << it.first << endl;
-    nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+    nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
     for (auto &it : (*rn4)) {
         string ip;
-        if (it.first.GetString(AF_INET, ip)) {
+        if (it.first.GetString(ip)) {
             ofs << "net:" << it.second << ":" << ip << endl;
             nc++;
         }
     }
-    nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+    nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
     for (auto &it : (*rn6)) {
         string ip;
-        if (it.first.GetString(AF_INET6, ip)) {
+        if (it.first.GetString(ip)) {
             ofs << "net:" << it.second << ":" << ip << endl;
             nc++;
         }
@@ -365,8 +365,8 @@ nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
         entry.prefix_len = 32;
         entry.addr = ntohl(dst_addr->s_addr);
 
-        nd_rn4_t::iterator it;
-        nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+        nd_rn4_app::iterator it;
+        nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
         if ((it = rn4->longest_match(entry)) != rn4->end())
             return it->second;
     }
@@ -378,8 +378,8 @@ nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
             if (i != 3) entry.addr <<= 32;
         }
 
-        nd_rn6_t::iterator it;
-        nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+        nd_rn6_app::iterator it;
+        nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
         if ((it = rn6->longest_match(entry)) != rn6->end())
             return it->second;
     }
@@ -433,20 +433,20 @@ bool ndApplications::Lookup(nd_app_id_t id, ndApplication &app)
 void ndApplications::Reset(bool free_only)
 {
     if (app_networks4 != nullptr) {
-        nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
+        nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
         delete rn4;
         app_networks4 = NULL;
     }
 
     if (app_networks6 != nullptr) {
-        nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
+        nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
         delete rn6;
         app_networks6 = NULL;
     }
 
     if (! free_only) {
-        nd_rn4_t *rn4 = new nd_rn4_t;
-        nd_rn6_t *rn6 = new nd_rn6_t;
+        nd_rn4_app *rn4 = new nd_rn4_app;
+        nd_rn6_app *rn6 = new nd_rn6_app;
 
         if (rn4 == nullptr || rn6 == nullptr) {
             throw ndSystemException(
@@ -538,80 +538,34 @@ bool ndApplications::AddDomainTransform(const string &search, const string &repl
 bool ndApplications::AddNetwork(
     nd_app_id_t id, const string &network
 ) {
-    struct in_addr nw_addr;
-    struct in6_addr nw6_addr;
-    sa_family_t af = AF_UNSPEC;
-    size_t shift, prefix_max = 0, prefix_len = 0;
+    ndAddr addr(network);
 
-    string addr;
-    size_t p = string::npos;
-    if ((p = network.find_first_of("/")) != string::npos) {
-        addr = network.substr(0, p);
-        prefix_len = (size_t)strtoul(
-            network.substr(p + 1).c_str(), NULL, 0
-        );
-    }
-
-    if (inet_pton(AF_INET, addr.c_str(), &nw_addr)) {
-        af = AF_INET;
-        prefix_max = 32;
-    }
-    else if (inet_pton(AF_INET6, addr.c_str(), &nw6_addr)) {
-        af = AF_INET6;
-        prefix_max = 128;
-    }
-    else {
-        nd_printf("Invalid IPv4/6 network address: %s\n", addr.c_str());
+    if (! addr.IsValid() || ! addr.IsIP()) {
+        nd_printf("Invalid IPv4/6 network address: %s\n", network.c_str());
         return false;
-    }
-
-    if (prefix_len > prefix_max) {
-        nd_printf("Invalid prefix length: > %u\n", prefix_max);
-        return false;
-    }
-
-    bitset<32> mask32;
-    bitset<128> mask128;
-
-    shift = prefix_max - prefix_len;
-    if (shift < prefix_max) {
-        if (prefix_max == 32) {
-            mask32.set();
-            for (size_t i = 0; i < shift; i++) mask32.flip(i);
-        }
-        else {
-            mask128.set();
-            for (size_t i = 0; i < shift; i++) mask128.flip(i);
-        }
     }
 
     try {
-        if (af == AF_INET) {
+        if (addr.addr.ss.ss_family == AF_INET) {
             ndRadixNetworkEntry<32> entry;
-            entry.prefix_len = prefix_len;
-            entry.addr = ntohl(nw_addr.s_addr);
-            entry.addr &= mask32;
-
-            nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
-            (*rn4)[entry] = id;
-            return true;
+            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+                nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
+                (*rn4)[entry] = id;
+                return true;
+            }
         }
         else {
             ndRadixNetworkEntry<128> entry;
-            entry.prefix_len = prefix_len;
-            for (auto i = 0; i < 4; i++) {
-                entry.addr |= ntohl(nw6_addr.s6_addr32[i]);
-                if (i != 3) entry.addr <<= 32;
+            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+                nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
+                (*rn6)[entry] = id;
+                return true;
             }
-            entry.addr &= mask128;
-
-            nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
-            (*rn6)[entry] = id;
-            return true;
         }
     }
     catch (runtime_error &e) {
-        nd_dprintf("Error adding network: %s: %s\n", network.c_str(), e.what());
+        nd_dprintf("Error adding network: %s: %s\n",
+            network.c_str(), e.what());
     }
 
     return false;

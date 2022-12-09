@@ -86,6 +86,8 @@ using json = nlohmann::json;
 
 #include "INIReader.h"
 
+#include <radix/radix_tree.hpp>
+
 using namespace std;
 
 #include "netifyd.h"
@@ -168,6 +170,7 @@ extern ndFlowMap *nd_flow_buckets;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
+extern ndAddrType *nd_addr_info;
 extern atomic_uint nd_flow_count;
 extern nd_agent_stats nd_json_agent_stats;
 extern nd_interface_map nd_interfaces;
@@ -3017,6 +3020,40 @@ int main(int argc, char *argv[])
         return 1;
     }
 #endif
+    nd_addr_info = new ndAddrType();
+#if 1
+    nd_addr_info->AddAddress(ndAddr::LOCAL, "192.168.242.0/24", "eth1");
+
+    ndAddr::Type type;
+    static vector<string> ips = {
+        "0.0.0.0",
+        "255.255.255.255",
+        "192.168.1.0",
+        "192.168.242.0",
+    };
+
+    for (auto &ip : ips) {
+        nd_addr_info->Classify(type, ip);
+        nd_dprintf("%s: type: %u\n", ip.c_str(), type);
+    }
+
+    static vector<string> macs = {
+        "00:00:00:00:00:00",
+        "01:00:5e:00:00:01",
+        "04:f7:e4:95:10:cc",
+        "33:33:00:00:00:01",
+        "33:33:00:00:00:fb",
+        "ff:ff:ff:ff:ff:ff",
+        "ZZ:zz:ZZ:zz:ZZ:zz",
+    };
+
+    for (auto &mac : macs) {
+        nd_addr_info->Classify(type, mac);
+        nd_dprintf("%s: type: %u\n", mac.c_str(), type);
+    }
+
+    return 0;
+#endif
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) {
         try {
@@ -3216,7 +3253,7 @@ int main(int argc, char *argv[])
                 inotify->ProcessEvent();
 #endif
 
-#if defined(_ND_USE_NETLINK) && defined(HAVE_LINUX_NETLINK_H)
+#ifdef _ND_USE_NETLINK
             if (ND_USE_NETLINK &&
                 netlink->GetDescriptor() == si.si_fd) {
 #ifndef _ND_LEAN_AND_MEAN
@@ -3347,6 +3384,11 @@ int main(int argc, char *argv[])
         flow_hash_cache->save();
         delete flow_hash_cache;
     }
+
+#ifdef _ND_USE_NETLINK
+    delete netlink;
+#endif
+    delete nd_addr_info;
 
     nd_ifaddrs_free(nd_interface_addrs);
 

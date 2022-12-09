@@ -189,21 +189,13 @@ AC_ARG_ENABLE([netlink],
 
 AS_IF([test "x$enable_netlink" = "xyes"], [
 case "${host_os}" in
-    freebsd*)
-        AC_DEFINE([_ND_USE_NETLINK], [1],
-            [Define to enable Netlink emulation support.])
-        AM_CONDITIONAL(USE_NETLINK, true)
-        ;;
-    *)
+    linux*)
         AC_DEFINE([_ND_USE_NETLINK], [1],
             [Define to enable Netlink socket support.])
         AM_CONDITIONAL(USE_NETLINK, true)
-        AC_CHECK_HEADERS([linux/netlink.h], [], AC_MSG_ERROR([netlink header(s) not found.]))
+        ND_DEFINES+=" -D_ND_USE_NETLINK=1"
         ;;
 esac
-ND_DEFINES+=" -D_ND_USE_NETLINK=1"
-], [
-    AM_CONDITIONAL(USE_NETLINK, false)
 ])
 
 AC_ARG_ENABLE([plugins],

@@ -20,23 +20,23 @@
 class ndAddr
 {
 public:
-    enum ndAddrType
+    enum Type
     {
-        UNKNOWN,
-
-        LOCALIP,
-        LOCALNET,
-        PRIVATE,
+        NONE,
+        LOCAL,
+        RESERVED,
         MULTICAST,
         BROADCAST,
+        OTHER,
 
-        ERROR,
+        ERROR = 0x7f,
     };
 
     ndAddr(uint8_t prefix = 0) : addr{0}, prefix(prefix) { };
 
     ndAddr(const string &addr);
-    ndAddr(const uint8_t *hw_addr, size_t length)
+
+    ndAddr(const uint8_t *hw_addr, size_t length = ETH_ALEN)
         : addr{0}, prefix(0) {
         CreateHardwareAddress(hw_addr, length);
     }
@@ -88,9 +88,36 @@ public:
         );
     }
 
-    const string GetString(bool cache = true);
-    inline void GetString(string &addr, bool cache = true) {
-        addr = GetString(cache);
+    bool MakeString(string &result) const;
+
+    inline bool MakeCachedString(void) {
+        string cached;
+        if (MakeString(cached)) {
+            cached_addr = cached;
+            return true;
+        }
+        return false;
+    }
+    inline bool MakeCachedString(string &result) {
+        if (MakeCachedString()) {
+            result = cached_addr;
+            return true;
+        }
+        return false;
+    }
+
+    const string GetString(void) const {
+        if (cached_addr.size()) return cached_addr;
+        string result;
+        if (MakeString(result)) return result;
+        return string("<UNSPEC>");
+    }
+    inline bool GetString(string &addr) const {
+        if (IsValid()) {
+            addr = GetString();
+            return true;
+        }
+        return false;
     }
 
     inline bool operator==(const ndAddr &a) const {
@@ -149,6 +176,104 @@ public:
 
     ndRadixNetworkEntry() : prefix_len(0) { }
 
+    static bool Create(
+        ndRadixNetworkEntry<N> &entry, const ndAddr &addr) {
+
+        if (! addr.IsValid()) {
+            nd_dprintf("Invalid radix address.");
+            return false;
+        }
+
+        entry.prefix_len = (size_t)(
+            (addr.prefix == 0) ? N : addr.prefix
+        );
+
+        if (entry.prefix_len > N) {
+            nd_dprintf("Invalid radix address prefix length.\n");
+            return false;
+        }
+
+        bitset<N> mask;
+
+        size_t shift = N - entry.prefix_len;
+        if (shift < N) {
+            mask.set();
+            for (size_t i = 0; i < shift; i++) mask.flip(i);
+        }
+
+        switch (N) {
+        case 32: // AF_INET
+            entry.addr = ntohl(addr.addr.in.sin_addr.s_addr);
+            entry.addr &= mask;
+            return true;
+
+        case 128: // AF_INET6
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[0]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[1]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[2]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[3]
+            );
+            entry.addr &= mask;
+            return true;
+        }
+
+        nd_dprintf("Unsupported address size: %lu.\n", N);
+        return false;
+    }
+
+    static void Create(
+        ndRadixNetworkEntry<N> &entry, const string &addr) {
+        Create(ndAddr(addr));
+    }
+
+    static bool CreateQuery(
+        ndRadixNetworkEntry<N> &entry, const ndAddr &addr) {
+
+        if (! addr.IsValid()) {
+            nd_dprintf("Invalid radix address.");
+            return false;
+        }
+
+        entry.prefix_len = N;
+
+        switch (N) {
+        case 32: // AF_INET
+            entry.addr = ntohl(addr.addr.in.sin_addr.s_addr);
+            return true;
+
+        case 128: // AF_INET6
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[0]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[1]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[2]
+            );
+            entry.addr <<= 32;
+            entry.addr |= ntohl(
+                addr.addr.in6.sin6_addr.s6_addr32[3]
+            );
+            return true;
+        }
+
+        nd_dprintf("Unsupported address size: %lu.\n", N);
+        return false;
+    }
+
     bool operator[] (int n) const {
         return addr[(N - 1) - n];
     }
@@ -164,25 +289,24 @@ public:
             return addr < rhs.addr;
     }
 
-    bool GetString(sa_family_t af, string &ip) const {
+    bool GetString(string &ip) const {
         ndAddr a((uint8_t)prefix_len);
-        switch (af) {
-        case AF_INET:
+        switch (N) {
+        case 32: // AF_INET
             a.addr.in.sin_addr.s_addr = htonl(addr.to_ulong());
             break;
-        case AF_INET6:
+        case 128: // AF_INET6
             for (auto i = 0; i < 4; i++) {
-                bitset<32> b;
-                for (auto j = 0; j < 32; j++)
-                    b[j] = addr[i * 32 + j];
+                bitset<N> b;
+                for (auto j = 0; j < N; j++)
+                    b[j] = addr[i * N + j];
                 a.addr.in6.sin6_addr.s6_addr32[3 - i] = htonl(b.to_ulong());
             }
             break;
         default:
             return false;
         }
-        a.GetString(ip, false);
-        return true;
+        return a.GetString(ip);
     }
 };
 
@@ -266,6 +390,40 @@ ndRadixNetworkEntry<N> radix_join(
     const ndRadixNetworkEntry<N> &x,
     const ndRadixNetworkEntry<N> &y
 );
+
+typedef radix_tree<ndRadixNetworkEntry<32>, ndAddr::Type> nd_rn4_atype;
+typedef radix_tree<ndRadixNetworkEntry<128>, ndAddr::Type> nd_rn6_atype;
+
+class ndAddrType
+{
+public:
+    ndAddrType();
+
+    bool AddAddress(ndAddr::Type type,
+        const ndAddr &addr, const char *ifname = nullptr);
+    inline bool AddAddress(ndAddr::Type type,
+        const string &addr, const char *ifname = nullptr) {
+        return AddAddress(type, ndAddr(addr), ifname);
+    }
+
+    void Classify(
+        ndAddr::Type &type, const ndAddr &addr);
+    inline void Classify(
+        ndAddr::Type &type, const string &addr) {
+        Classify(type, ndAddr(addr));
+    }
+
+protected:
+    mutex lock;
+
+    unordered_map<string, ndAddr::Type> ether_reserved;
+
+    nd_rn4_atype ipv4_reserved;
+    nd_rn6_atype ipv6_reserved;
+
+    unordered_map<string, nd_rn4_atype> ipv4_iface;
+    unordered_map<string, nd_rn6_atype> ipv6_iface;
+};
 
 #endif // _ND_ADDR_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

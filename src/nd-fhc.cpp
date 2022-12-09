@@ -211,7 +211,8 @@ void ndFlowHashCache::load(void)
         fclose(hf);
     }
 
-    nd_dprintf("Loaded %lu flow hash cache entries.\n", index.size());
+    if (index.size())
+        nd_dprintf("Loaded %lu flow hash cache entries.\n", index.size());
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
