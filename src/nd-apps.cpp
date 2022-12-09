@@ -53,6 +53,10 @@
 #define __FAVOR_BSD 1
 #include <netinet/ip.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <curl/curl.h>
@@ -73,6 +77,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-thread.h"
 #include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
@@ -85,145 +90,6 @@ using namespace std;
 //#define _ND_APPS_DEBUG    1
 
 ndApplications *nd_apps = NULL;
-
-template<size_t N>
-bool operator<(const bitset<N> &x, const bitset<N> &y)
-{
-    for (int i = N-1; i >= 0; i--) {
-        if (x[i] ^ y[i]) return y[i];
-    }
-
-    return false;
-}
-
-template<size_t N>
-bitset<N> &operator-=(bitset<N> &x, const size_t y)
-{
-    bool borrow = false;
-    bitset<N> const _y(y);
-
-    for (size_t i = 0; i < N; i++) {
-        if (borrow) {
-            if (x[i]) {
-                x[i] = _y[i];
-                borrow = _y[i];
-            }
-            else {
-                x[i] = ! _y[i];
-                borrow = true;
-            }
-        }
-        else {
-            if (x[i]) {
-                x[i] = ! _y[i];
-                borrow = false;
-            }
-            else {
-                x[i] = _y[i];
-                borrow = _y[i];
-            }
-        }
-    }
-
-    return x;
-}
-
-template <size_t N>
-class ndRadixNetworkEntry {
-public:
-    bitset<N> addr;
-    size_t prefix_len;
-
-    ndRadixNetworkEntry() : prefix_len(0) { }
-
-    bool operator[] (int n) const {
-        return addr[(N - 1) - n];
-    }
-
-    bool operator== (const ndRadixNetworkEntry &rhs) const {
-        return prefix_len == rhs.prefix_len && addr == rhs.addr;
-    }
-
-    bool operator< (const ndRadixNetworkEntry &rhs) const {
-        if (addr == rhs.addr)
-            return prefix_len < rhs.prefix_len;
-        else
-            return addr < rhs.addr;
-    }
-#ifndef _ND_LEAN_AND_MEAN
-    bool to_ipstring(sa_family_t af, string &ip) const {
-        struct in_addr nw_addr;
-        struct in6_addr nw6_addr;
-        switch (af) {
-        case AF_INET:
-            nw_addr.s_addr = htonl(addr.to_ulong());
-            if (! nd_ip_to_string(
-                AF_INET, (const void *)&nw_addr, ip))
-                return false;
-            break;
-        case AF_INET6:
-            for (auto i = 0; i < 4; i++) {
-                bitset<32> b;
-                for (auto j = 0; j < 32; j++)
-                    b[j] = addr[i * 32 + j];
-                nw6_addr.s6_addr32[3 - i] = htonl(b.to_ulong());
-            }
-            if (! nd_ip_to_string(
-                AF_INET6, (const void *)&nw6_addr, ip))
-                return false;
-            break;
-        default:
-            return false;
-        }
-
-        ip.append(string("/") + to_string(prefix_len));
-        return true;
-    }
-#endif
-};
-
-template <size_t N>
-static ndRadixNetworkEntry<N> radix_substr(
-    const ndRadixNetworkEntry<N> &entry, int offset, int length
-) {
-    bitset<N> mask;
-
-    if (length == N)
-        mask = 0;
-    else {
-        mask = 1;
-        mask <<= length;
-    }
-
-    mask -= 1;
-    mask <<= N - length - offset;
-
-    ndRadixNetworkEntry<N> result;
-    result.addr = (entry.addr & mask) << offset;
-    result.prefix_len = length;
-
-    return result;
-}
-
-template <size_t N>
-static ndRadixNetworkEntry<N> radix_join(
-    const ndRadixNetworkEntry<N> &x,
-    const ndRadixNetworkEntry<N> &y
-) {
-    ndRadixNetworkEntry<N> result;
-
-    result.addr = x.addr;
-    result.addr |= y.addr >> x.prefix_len;
-    result.prefix_len = x.prefix_len + y.prefix_len;
-
-    return result;
-}
-
-template <size_t N>
-static int radix_length(const ndRadixNetworkEntry<N> &entry)
-{
-    return (int)entry.prefix_len;
-}
 
 typedef radix_tree<ndRadixNetworkEntry<32>, nd_app_id_t> nd_rn4_t;
 typedef radix_tree<ndRadixNetworkEntry<128>, nd_app_id_t> nd_rn6_t;
@@ -410,7 +276,7 @@ bool ndApplications::Save(const string &filename)
     nd_rn4_t *rn4 = static_cast<nd_rn4_t *>(app_networks4);
     for (auto &it : (*rn4)) {
         string ip;
-        if (it.first.to_ipstring(AF_INET, ip)) {
+        if (it.first.GetString(AF_INET, ip)) {
             ofs << "net:" << it.second << ":" << ip << endl;
             nc++;
         }
@@ -418,7 +284,7 @@ bool ndApplications::Save(const string &filename)
     nd_rn6_t *rn6 = static_cast<nd_rn6_t *>(app_networks6);
     for (auto &it : (*rn6)) {
         string ip;
-        if (it.first.to_ipstring(AF_INET6, ip)) {
+        if (it.first.GetString(AF_INET6, ip)) {
             ofs << "net:" << it.second << ":" << ip << endl;
             nc++;
         }

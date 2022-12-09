@@ -486,7 +486,7 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
         }
         else if (type == ETHERTYPE_MPLS_UC || type == ETHERTYPE_MPLS_MC) {
             stats.pkt.mpls++;
-            union mpls {
+            union {
                 uint32_t u32;
                 struct nd_mpls_header_t mpls;
             } mpls;

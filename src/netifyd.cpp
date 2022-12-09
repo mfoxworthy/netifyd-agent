@@ -56,6 +56,10 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
 #undef __FAVOR_BSD
@@ -126,6 +130,8 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-signal.h"
 #include "nd-napi.h"
+
+#include "nd-addr.h"
 
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
@@ -2741,6 +2747,69 @@ int main(int argc, char *argv[])
             nd_usage(1);
         }
     }
+
+#if 0
+    uint8_t mac[ETH_ALEN] = {
+        0xde, 0xad, 0xbe, 0xef, 0xff, 0x0
+    };
+
+    ndAddr hw_addr(mac, ETH_ALEN);
+    nd_dprintf("sizeof(ndAddr): %lu\n",
+        sizeof(hw_addr.addr) + sizeof(hw_addr.prefix)
+    );
+
+    nd_dprintf("HW addr: %s\n",
+        (hw_addr.IsValid() && hw_addr.IsEthernet()) ?
+            hw_addr.GetString().c_str() : "<INVALID>"
+    );
+
+    string mac_str = "00:11:22:aa:bb:ZY";
+    ndAddr hw_addr_str(mac_str);
+
+    nd_dprintf("HW addr (str): %s\n",
+        (hw_addr_str.IsValid() && hw_addr_str.IsEthernet()) ?
+            hw_addr_str.GetString().c_str() : "<INVALID>"
+    );
+
+    ndAddr ip_addr("192.168.242.1");
+    nd_dprintf("IP addr: %s, valid prefix? %s\n",
+        (ip_addr.IsValid() && ip_addr.IsIP()) ?
+            ip_addr.GetString().c_str() : "<INVALID>",
+        (ip_addr.HasValidPrefix()) ? "yes" : "no"
+    );
+
+    ndAddr ip6_addr("fdb0:856:14a2:2764:5054:ff:fe29:420/64");
+    nd_dprintf("IPv6 addr: %s, valid prefix? %s\n",
+        (ip6_addr.IsValid() && ip6_addr.IsIP()) ?
+            ip6_addr.GetString().c_str() : "<INVALID>",
+        (ip6_addr.HasValidPrefix()) ? "yes" : "no"
+    );
+
+    ndAddr copy_addr;
+    copy_addr = ip_addr;
+    nd_dprintf("IP addr (copied): %s, valid prefix? %s\n",
+        (copy_addr.IsValid() && copy_addr.IsIP()) ?
+            copy_addr.GetString().c_str() : "<INVALID>",
+        (copy_addr.HasValidPrefix()) ? "yes" : "no"
+    );
+
+    nd_dprintf("IP addr: %s == IP addr (copied): %s: %s\n",
+        ip_addr.GetString().c_str(), copy_addr.GetString().c_str(),
+        (ip_addr == copy_addr) ? "yes" : "no"
+    );
+
+    nd_dprintf("IP addr: %s == IPv6 addr: %s: %s\n",
+        ip_addr.GetString().c_str(), ip6_addr.GetString().c_str(),
+        (ip_addr == ip6_addr) ? "yes" : "no"
+    );
+
+    nd_dprintf("IPv6 addr: %s == IPv6 addr: %s: %s\n",
+        ip6_addr.GetString().c_str(), ip6_addr.GetString().c_str(),
+        (ip6_addr == ip6_addr) ? "yes" : "no"
+    );
+
+    return 1;
+#endif
 
     if (nd_config.path_export_json == NULL)
         nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
