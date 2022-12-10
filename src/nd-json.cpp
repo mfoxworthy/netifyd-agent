@@ -269,14 +269,6 @@ void nd_json_add_devices(json &parent)
     for (nd_device_addrs::const_iterator i = device_addrs.begin();
         i != device_addrs.end(); i++) {
 
-        uint8_t mac_src[ETH_ALEN];
-        memcpy(mac_src, i->first.c_str(), ETH_ALEN);
-        char mac_dst[ND_STR_ETHALEN + 1];
-
-        sprintf(mac_dst, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            mac_src[0], mac_src[1], mac_src[2],
-            mac_src[3], mac_src[4], mac_src[5]);
-
         json ja;
 
         for (vector<string>::const_iterator j = i->second.begin();
@@ -284,7 +276,7 @@ void nd_json_add_devices(json &parent)
             ja.push_back((*j));
         }
 
-        parent[mac_dst] = ja;
+        parent[i->first] = ja;
     }
 }
 
