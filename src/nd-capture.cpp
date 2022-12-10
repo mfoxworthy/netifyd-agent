@@ -35,6 +35,7 @@
 #include <regex>
 #include <algorithm>
 #include <mutex>
+#include <bitset>
 
 #ifdef HAVE_ENDIAN_H
 #include <endian.h>
@@ -61,6 +62,7 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#include <linux/if_packet.h>
 #include <net/ethernet.h>
 #if HAVE_NET_PPP_DEFS_H
 #include <net/ppp_defs.h>
@@ -136,6 +138,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include <radix/radix_tree.hpp>
+
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #endif
@@ -160,6 +164,8 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
@@ -168,7 +174,6 @@ using namespace std;
 #include "nd-conntrack.h"
 #endif
 #include "nd-socket.h"
-#include "nd-util.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-signal.h"
@@ -590,8 +595,6 @@ nd_process_ip:
         l3_len = ((uint16_t)hdr_ip->ip_hl * 4);
         l4_len = ntohs(hdr_ip->ip_len) - l3_len;
         flow.ip_protocol = hdr_ip->ip_p;
-        flow.lower_addr.ss_family = AF_INET;
-        flow.upper_addr.ss_family = AF_INET;
         l3 = reinterpret_cast<const uint8_t *>(hdr_ip);
 
         if (packet->caplen >= l2_len)
@@ -642,19 +645,19 @@ nd_process_ip:
         addr_cmp = memcmp(&hdr_ip->ip_src, &hdr_ip->ip_dst, 4);
 
         if (addr_cmp < 0) {
-            flow.lower_addr4->sin_addr.s_addr = hdr_ip->ip_src.s_addr;
-            flow.upper_addr4->sin_addr.s_addr = hdr_ip->ip_dst.s_addr;
+            ndAddr::Create(flow.lower_addr, &hdr_ip->ip_src);
+            ndAddr::Create(flow.upper_addr, &hdr_ip->ip_dst);
             if (dl_type == DLT_EN10MB) {
-                memcpy(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
-                memcpy(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
+                ndAddr::Create(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
+                ndAddr::Create(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
             }
         }
         else {
-            flow.lower_addr4->sin_addr.s_addr = hdr_ip->ip_dst.s_addr;
-            flow.upper_addr4->sin_addr.s_addr = hdr_ip->ip_src.s_addr;
+            ndAddr::Create(flow.lower_addr, &hdr_ip->ip_dst);
+            ndAddr::Create(flow.upper_addr, &hdr_ip->ip_src);
             if (dl_type == DLT_EN10MB) {
-                memcpy(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
-                memcpy(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
+                ndAddr::Create(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
+                ndAddr::Create(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
             }
         }
 
@@ -681,9 +684,6 @@ nd_process_ip:
             return packet;
         }
 
-        flow.lower_addr.ss_family = AF_INET6;
-        flow.upper_addr.ss_family = AF_INET6;
-
         int i = 0;
         if (memcmp(&hdr_ip6->ip6_src, &hdr_ip6->ip6_dst, sizeof(struct in6_addr))) {
             do {
@@ -696,19 +696,19 @@ nd_process_ip:
         }
 
         if (addr_cmp < 0) {
-            memcpy(&flow.lower_addr6->sin6_addr, &hdr_ip6->ip6_src, sizeof(struct in6_addr));
-            memcpy(&flow.upper_addr6->sin6_addr, &hdr_ip6->ip6_dst, sizeof(struct in6_addr));
+            ndAddr::Create(flow.lower_addr, &hdr_ip6->ip6_src);
+            ndAddr::Create(flow.upper_addr, &hdr_ip6->ip6_dst);
             if (dl_type == DLT_EN10MB) {
-                memcpy(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
-                memcpy(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
+                ndAddr::Create(flow.lower_mac, hdr_eth->ether_shost, ETH_ALEN);
+                ndAddr::Create(flow.upper_mac, hdr_eth->ether_dhost, ETH_ALEN);
             }
         }
         else {
-            memcpy(&flow.lower_addr6->sin6_addr, &hdr_ip6->ip6_dst, sizeof(struct in6_addr));
-            memcpy(&flow.upper_addr6->sin6_addr, &hdr_ip6->ip6_src, sizeof(struct in6_addr));
+            ndAddr::Create(flow.lower_addr, &hdr_ip6->ip6_dst);
+            ndAddr::Create(flow.upper_addr, &hdr_ip6->ip6_src);
             if (dl_type == DLT_EN10MB) {
-                memcpy(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
-                memcpy(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
+                ndAddr::Create(flow.lower_mac, hdr_eth->ether_dhost, ETH_ALEN);
+                ndAddr::Create(flow.upper_mac, hdr_eth->ether_shost, ETH_ALEN);
             }
         }
     }
@@ -722,6 +722,9 @@ nd_process_ip:
 #endif
         return packet;
     }
+
+    flow.lower_mac.MakeCachedString();
+    flow.upper_mac.MakeCachedString();
 
     if (l2_len + l3_len + l4_len > packet->caplen) {
         stats.pkt.discard++;
@@ -755,10 +758,10 @@ nd_process_ip:
                     memcpy(&flow.gtp.upper_addr,
                         &flow.upper_addr, sizeof(struct sockaddr_storage));
 
-                    struct sockaddr_in *laddr4 = flow.lower_addr4;
-                    struct sockaddr_in6 *laddr6 = flow.lower_addr6;
-                    struct sockaddr_in *uaddr4 = flow.upper_addr4;
-                    struct sockaddr_in6 *uaddr6 = flow.upper_addr6;
+                    struct sockaddr_in *laddr4 = &flow.lower_addr.addr.in;
+                    struct sockaddr_in6 *laddr6 = &flow.lower_addr.addr.in6;
+                    struct sockaddr_in *uaddr4 = &flow.upper_addr.addr.in;
+                    struct sockaddr_in6 *uaddr6 = &flow.upper_addr.addr.in6;
 
                     flow.gtp.ip_version = flow.ip_version;
 
@@ -864,21 +867,21 @@ nd_process_ip:
             }
 
             if (addr_cmp < 0) {
-                flow.lower_port = hdr_tcp->th_sport;
-                flow.upper_port = hdr_tcp->th_dport;
+                flow.lower_addr.SetPort(hdr_tcp->th_sport);
+                flow.upper_addr.SetPort(hdr_tcp->th_dport);
             }
             else if (addr_cmp > 0) {
-                flow.lower_port = hdr_tcp->th_dport;
-                flow.upper_port = hdr_tcp->th_sport;
+                flow.lower_addr.SetPort(hdr_tcp->th_dport);
+                flow.upper_addr.SetPort(hdr_tcp->th_sport);
             }
             else {
                 if (hdr_tcp->th_sport < hdr_tcp->th_dport) {
-                    flow.lower_port = hdr_tcp->th_sport;
-                    flow.upper_port = hdr_tcp->th_dport;
+                    flow.lower_addr.SetPort(hdr_tcp->th_sport);
+                    flow.upper_addr.SetPort(hdr_tcp->th_dport);
                 }
                 else {
-                    flow.lower_port = hdr_tcp->th_dport;
-                    flow.upper_port = hdr_tcp->th_sport;
+                    flow.lower_addr.SetPort(hdr_tcp->th_dport);
+                    flow.upper_addr.SetPort(hdr_tcp->th_sport);
                 }
             }
 
@@ -904,21 +907,21 @@ nd_process_ip:
         hdr_udp = reinterpret_cast<const struct udphdr *>(l4);
 
         if (addr_cmp < 0) {
-            flow.lower_port = hdr_udp->uh_sport;
-            flow.upper_port = hdr_udp->uh_dport;
+            flow.lower_addr.SetPort(hdr_udp->uh_sport);
+            flow.upper_addr.SetPort(hdr_udp->uh_dport);
         }
         else if (addr_cmp > 0) {
-            flow.lower_port = hdr_udp->uh_dport;
-            flow.upper_port = hdr_udp->uh_sport;
+            flow.lower_addr.SetPort(hdr_udp->uh_dport);
+            flow.upper_addr.SetPort(hdr_udp->uh_sport);
         }
         else {
             if (hdr_udp->uh_sport < hdr_udp->uh_dport) {
-                flow.lower_port = hdr_udp->uh_sport;
-                flow.upper_port = hdr_udp->uh_dport;
+                flow.lower_addr.SetPort(hdr_udp->uh_sport);
+                flow.upper_addr.SetPort(hdr_udp->uh_dport);
             }
             else {
-                flow.lower_port = hdr_udp->uh_dport;
-                flow.upper_port = hdr_udp->uh_sport;
+                flow.lower_addr.SetPort(hdr_udp->uh_dport);
+                flow.upper_addr.SetPort(hdr_udp->uh_sport);
             }
         }
 
@@ -951,6 +954,9 @@ nd_process_ip:
         //nd_dprintf("%s: non TCP/UDP protocol: %d\n", tag.c_str(), flow.ip_protocol);
         break;
     }
+
+    flow.lower_addr.MakeCachedString(ndAddr::mfNONE);
+    flow.upper_addr.MakeCachedString(ndAddr::mfNONE);
 
     flow.hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);
@@ -1032,9 +1038,9 @@ nd_process_ip:
         case IPPROTO_SCTP:
         case IPPROTO_UDP:
         case IPPROTO_UDPLITE:
-            if (ntohs(nf->lower_port) < ntohs(nf->upper_port))
+            if (nf->lower_addr.GetPort() < nf->upper_addr.GetPort())
                 nf->origin = ndFlow::ORIGIN_UPPER;
-            else if (ntohs(nf->lower_port) > ntohs(nf->upper_port))
+            else if (nf->lower_addr.GetPort() > nf->upper_addr.GetPort())
                 nf->origin = ndFlow::ORIGIN_LOWER;
             break;
         }
@@ -1120,8 +1126,8 @@ nd_process_ip:
         && pkt_len > sizeof(struct nd_dns_header_t)
         && packet->caplen == packet->length) {
 
-        uint16_t lport = ntohs(nf->lower_port),
-            uport = ntohs(nf->upper_port);
+        uint16_t lport = nf->lower_addr.GetPort(),
+            uport = nf->upper_addr.GetPort();
         uint16_t proto = ND_PROTO_UNKNOWN;
 
         // DNS, MDNS, or LLMNR?

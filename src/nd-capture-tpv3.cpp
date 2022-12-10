@@ -35,6 +35,7 @@
 #include <regex>
 #include <algorithm>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -60,6 +61,8 @@
 
 #include <arpa/inet.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
 #include <linux/if_packet.h>
 
 #ifdef _ND_USE_CONNTRACK
@@ -76,6 +79,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include <radix/radix_tree.hpp>
+
 using namespace std;
 
 #include "netifyd.h"
@@ -87,6 +92,8 @@ using namespace std;
 #endif
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -99,7 +106,6 @@ using namespace std;
 #include "nd-conntrack.h"
 #endif
 #include "nd-socket.h"
-#include "nd-util.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-signal.h"

@@ -35,6 +35,7 @@
 #include <atomic>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -48,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -69,6 +71,10 @@
 #define UNIX_PATH_MAX 104
 #endif
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #ifdef _ND_USE_CONNTRACK
@@ -77,6 +83,8 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -89,6 +97,8 @@ using namespace std;
 #endif
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -98,7 +108,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-util.h"
 #include "nd-signal.h"
 #include "nd-socket.h"
 

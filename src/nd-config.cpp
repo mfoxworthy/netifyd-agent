@@ -33,6 +33,7 @@
 #include <atomic>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -55,6 +56,9 @@
 
 #include <netdb.h>
 #include <netinet/in.h>
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
@@ -67,6 +71,8 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
@@ -96,6 +102,8 @@ using namespace std;
 #endif
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -117,7 +125,6 @@ using namespace std;
 #ifdef _ND_USE_PLUGINS
 #include "nd-plugin.h"
 #endif
-#include "nd-util.h"
 #include "nd-signal.h"
 #include "nd-napi.h"
 

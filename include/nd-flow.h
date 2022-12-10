@@ -90,23 +90,11 @@ public:
 
     uint8_t other_type;
 
-    uint8_t lower_mac[ETH_ALEN];
-    uint8_t upper_mac[ETH_ALEN];
+    ndAddr lower_mac;
+    ndAddr upper_mac;
 
-    struct sockaddr_storage lower_addr;
-    struct sockaddr_storage upper_addr;
-
-    struct sockaddr_in *lower_addr4;
-    struct sockaddr_in6 *lower_addr6;
-
-    struct sockaddr_in *upper_addr4;
-    struct sockaddr_in6 *upper_addr6;
-
-    char lower_ip[INET6_ADDRSTRLEN];
-    char upper_ip[INET6_ADDRSTRLEN];
-
-    uint16_t lower_port;
-    uint16_t upper_port;
+    ndAddr lower_addr;
+    ndAddr upper_addr;
 
     enum {
         TUNNEL_NONE = 0x00,
@@ -337,11 +325,7 @@ public:
     void json_encode(json &j, uint8_t encode_includes = ENCODE_ALL);
 
     inline bool operator==(const ndFlow &f) const {
-        if (lower_port != f.lower_port || upper_port != f.upper_port) return false;
-        if (memcmp(&lower_addr, &f.lower_addr, sizeof(struct sockaddr_storage)) == 0 &&
-            memcmp(&upper_addr, &f.upper_addr, sizeof(struct sockaddr_storage)) == 0)
-            return true;
-        return false;
+        return (lower_addr == f.lower_addr && upper_addr == f.upper_addr);
     }
 
     inline ndFlow& operator+=(const ndFlow &f)

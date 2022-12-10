@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <csignal>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,12 +54,18 @@
 #define __FAVOR_BSD 1
 #include <netinet/ip.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <curl/curl.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -72,6 +79,7 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-thread.h"
 #include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -85,8 +93,8 @@ const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
     auto it_pm = nd_ndpi_portmap.find(id);
     if (it_pm != nd_ndpi_portmap.end()) {
         for (auto &it_entry : it_pm->second) {
-            if (ntohs(flow->lower_port) != it_entry.first &&
-                ntohs(flow->upper_port) != it_entry.first)
+            if (flow->lower_addr.GetPort() != it_entry.first &&
+                flow->upper_addr.GetPort() != it_entry.first)
                 continue;
             return it_entry.second;
         }

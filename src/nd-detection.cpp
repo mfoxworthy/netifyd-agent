@@ -35,6 +35,7 @@
 #include <regex>
 #include <algorithm>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,6 +48,10 @@
 #undef __FAVOR_BSD
 
 #include <arpa/inet.h>
+
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
 
 #include <unistd.h>
 #include <pthread.h>
@@ -70,6 +75,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include <radix/radix_tree.hpp>
+
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>
 #endif
@@ -85,6 +92,8 @@ using namespace std;
 #endif
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -97,7 +106,6 @@ using namespace std;
 #include "nd-conntrack.h"
 #endif
 #include "nd-socket.h"
-#include "nd-util.h"
 #include "nd-fhc.h"
 #include "nd-dhc.h"
 #include "nd-signal.h"
@@ -590,24 +598,24 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 {
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) {
-        ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr);
-        ndEF->upper_type = netlink->ClassifyAddress(&ndEF->upper_addr);
+        ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr.addr.ss);
+        ndEF->upper_type = netlink->ClassifyAddress(&ndEF->upper_addr.addr.ss);
     }
 #endif
     if (dhc != NULL) {
         string hostname;
 #ifdef _ND_USE_NETLINK
         if (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN)
-            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
+            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr.addr.ss, hostname);
         else if (ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) {
-            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
+            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr.addr.ss, hostname);
         }
 #endif
         if (! ndEF->flags.dhc_hit.load()) {
             if (ndEF->origin == ndFlow::ORIGIN_LOWER)
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr, hostname);
+                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr.addr.ss, hostname);
             else if (ndEF->origin == ndFlow::ORIGIN_UPPER)
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr, hostname);
+                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr.addr.ss, hostname);
         }
 
         if (ndEF->flags.dhc_hit.load()) {
@@ -688,7 +696,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                 nd_apps->Find(
                     AF_INET,
                     static_cast<void *>(
-                        &ndEF->lower_addr4->sin_addr
+                        &ndEF->lower_addr.addr.in.sin_addr
                     )
                 )
             );
@@ -697,7 +705,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                 nd_apps->Find(
                     AF_INET,
                     static_cast<void *>(
-                        &ndEF->upper_addr4->sin_addr
+                        &ndEF->upper_addr.addr.in.sin_addr
                     )
                 )
             );
@@ -707,7 +715,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                 nd_apps->Find(
                     AF_INET6,
                     static_cast<void *>(
-                        &ndEF->lower_addr6->sin6_addr
+                        &ndEF->lower_addr.addr.in6.sin6_addr
                     )
                 )
             );
@@ -716,7 +724,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                 nd_apps->Find(
                     AF_INET6,
                     static_cast<void *>(
-                        &ndEF->upper_addr6->sin6_addr
+                        &ndEF->upper_addr.addr.in6.sin6_addr
                     )
                 )
             );
@@ -833,7 +841,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
     if (fhc != NULL &&
-        ndEF->lower_port != 0 && ndEF->upper_port != 0) {
+        ndEF->lower_addr.GetPort(false) != 0 && ndEF->upper_addr.GetPort(false) != 0) {
 
         flow_digest.assign(
             (const char *)ndEF->digest_lower, SHA1_DIGEST_LENGTH);
@@ -864,31 +872,6 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
     else ndEF->hash(tag, true);
 
-    struct sockaddr_in *laddr4 = ndEF->lower_addr4;
-    struct sockaddr_in6 *laddr6 = ndEF->lower_addr6;
-    struct sockaddr_in *uaddr4 = ndEF->upper_addr4;
-    struct sockaddr_in6 *uaddr6 = ndEF->upper_addr6;
-
-    switch (ndEF->ip_version) {
-    case 4:
-        inet_ntop(AF_INET, &laddr4->sin_addr.s_addr,
-            ndEF->lower_ip, INET_ADDRSTRLEN);
-        inet_ntop(AF_INET, &uaddr4->sin_addr.s_addr,
-            ndEF->upper_ip, INET_ADDRSTRLEN);
-        break;
-
-    case 6:
-        inet_ntop(AF_INET6, &laddr6->sin6_addr.s6_addr,
-            ndEF->lower_ip, INET6_ADDRSTRLEN);
-        inet_ntop(AF_INET6, &uaddr6->sin6_addr.s6_addr,
-            ndEF->upper_ip, INET6_ADDRSTRLEN);
-        break;
-
-    default:
-        nd_printf("%s: ERROR: Unknown IP version: %d\n",
-            tag.c_str(), ndEF->ip_version);
-        throw ndDetectionThreadException(strerror(EINVAL));
-    }
 #ifdef _ND_USE_NETLINK
     nd_device_addrs *device_addrs = devices[ndEF->iface.ifname].second;
     if (device_addrs != NULL) {
@@ -904,16 +887,16 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                  ndEF->lower_type == ndNETLINK_ATYPE_LOCALNET ||
                  ndEF->lower_type == ndNETLINK_ATYPE_PRIVATE)) {
 
-                umac = ndEF->lower_mac;
-                ip = ndEF->lower_ip;
+                umac = ndEF->lower_mac.addr.ll.sll_addr;
+                ip = ndEF->lower_addr.GetString();
             }
             else if (t == ndFlow::TYPE_UPPER &&
                 (ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP ||
                  ndEF->upper_type == ndNETLINK_ATYPE_LOCALNET ||
                  ndEF->upper_type == ndNETLINK_ATYPE_PRIVATE)) {
 
-                umac = ndEF->upper_mac;
-                ip = ndEF->upper_ip;
+                umac = ndEF->upper_mac.addr.ll.sll_addr;
+                ip = ndEF->upper_addr.GetString();
             }
             else continue;
 
@@ -984,9 +967,9 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         i != nd_config.privacy_filter_mac.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
-        if (! memcmp((*i), ndEF->lower_mac, ETH_ALEN))
+        if (! memcmp((*i), ndEF->lower_mac.addr.ll.sll_addr, ETH_ALEN))
             ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-        if (! memcmp((*i), ndEF->upper_mac, ETH_ALEN))
+        if (! memcmp((*i), ndEF->upper_mac.addr.ll.sll_addr, ETH_ALEN))
             ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
     }
 
@@ -1002,19 +985,19 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         switch ((*i)->sa_family) {
         case AF_INET:
             sa_in = reinterpret_cast<struct sockaddr_in *>((*i));
-            if (! memcmp(&ndEF->lower_addr4, &sa_in->sin_addr,
+            if (! memcmp(&ndEF->lower_addr.addr.in.sin_addr, &sa_in->sin_addr,
                 sizeof(struct in_addr)))
                 ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-            if (! memcmp(&ndEF->upper_addr4, &sa_in->sin_addr,
+            if (! memcmp(&ndEF->upper_addr.addr.in.sin_addr, &sa_in->sin_addr,
                 sizeof(struct in_addr)))
                 ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
             break;
         case AF_INET6:
             sa_in6 = reinterpret_cast<struct sockaddr_in6 *>((*i));
-            if (! memcmp(&ndEF->lower_addr6, &sa_in6->sin6_addr,
+            if (! memcmp(&ndEF->lower_addr.addr.in6.sin6_addr, &sa_in6->sin6_addr,
                 sizeof(struct in6_addr)))
                 ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
-            if (! memcmp(&ndEF->upper_addr6, &sa_in6->sin6_addr,
+            if (! memcmp(&ndEF->upper_addr.addr.in6.sin6_addr, &sa_in6->sin6_addr,
                 sizeof(struct in6_addr)))
                 ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
             break;

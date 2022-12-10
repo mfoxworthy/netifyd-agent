@@ -72,15 +72,14 @@ extern ndGlobalConfig nd_config;
 
 ndAddrType *nd_addr_info = NULL;
 
-ndAddr::ndAddr(const string &addr)
-    : addr{0}, prefix(0)
+bool ndAddr::Create(ndAddr &a, const string &addr)
 {
     string _addr(addr);
 
     size_t p;
     if ((p = addr.find_first_of("/")) != string::npos) {
         char *ep = NULL;
-        prefix = (uint8_t)strtoul(
+        a.prefix = (uint8_t)strtoul(
             addr.substr(p + 1).c_str(), &ep, 10
         );
 
@@ -88,38 +87,38 @@ ndAddr::ndAddr(const string &addr)
             nd_dprintf("Invalid IP address prefix length: %s\n",
                 addr.substr(p + 1).c_str()
             );
-            return;
+            return false;
         }
 
         _addr.erase(p);
     }
 
     if (inet_pton(AF_INET,
-        _addr.c_str(), &this->addr.in.sin_addr) == 1) {
+        _addr.c_str(), &a.addr.in.sin_addr) == 1) {
 
-        if (prefix > 32) {
+        if (a.prefix > 32) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
-                prefix
+                a.prefix
             );
-            return;
+            return false;
         }
 
-        this->addr.ss.ss_family = AF_INET;
-        return;
+        a.addr.ss.ss_family = AF_INET;
+        return true;
     }
 
     if (inet_pton(AF_INET6,
-        _addr.c_str(), &this->addr.in6.sin6_addr) == 1) {
+        _addr.c_str(), &a.addr.in6.sin6_addr) == 1) {
 
-        if (prefix > 128) {
+        if (a.prefix > 128) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
-                prefix
+                a.prefix
             );
-            return;
+            return false;
         }
 
-        this->addr.ss.ss_family = AF_INET6;
-        return;
+        a.addr.ss.ss_family = AF_INET6;
+        return true;
     }
 
     switch (addr.size()) {
@@ -145,21 +144,43 @@ ndAddr::ndAddr(const string &addr)
                         octet
                     );
 
-                    return;
+                    return false;
                 }
             }
             while (++octet < ETH_ALEN);
 
             if (octet == ETH_ALEN)
-                CreateHardwareAddress(hw_addr, ETH_ALEN);
+                return Create(a, hw_addr, ETH_ALEN);
         }
+    default:
         break;
     }
+
+    return false;
 }
 
-ndAddr::ndAddr(
+bool ndAddr::Create(ndAddr &a,
+    const uint8_t *hw_addr, size_t length)
+{
+    switch (length) {
+    case ETH_ALEN:
+        a.addr.ss.ss_family = AF_PACKET;
+        a.addr.ll.sll_hatype = ARPHRD_ETHER;
+        a.addr.ll.sll_halen = ETH_ALEN;
+        memcpy(a.addr.ll.sll_addr, hw_addr, ETH_ALEN);
+
+        return true;
+
+    default:
+        nd_dprintf("Invalid hardware address size: %lu\n", length);
+        return false;
+    }
+
+    return false;
+}
+
+bool ndAddr::Create(ndAddr &a,
     const struct sockaddr_storage *ss_addr, uint8_t prefix)
-    : addr{0}, prefix(0)
 {
     switch (ss_addr->ss_family) {
     case AF_INET:
@@ -167,9 +188,13 @@ ndAddr::ndAddr(
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
-            return;
+            return false;
         }
-        memcpy(&addr.in, ss_addr, sizeof(struct sockaddr_in));
+
+        if (prefix) a.prefix = prefix;
+        else a.prefix = 32;
+
+        memcpy(&a.addr.in, ss_addr, sizeof(struct sockaddr_in));
         break;
 
     case AF_INET6:
@@ -177,46 +202,142 @@ ndAddr::ndAddr(
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
-            return;
+            return false;
         }
-        memcpy(&addr.in6, ss_addr, sizeof(struct sockaddr_in6));
+
+        if (prefix) a.prefix = prefix;
+        else a.prefix = 128;
+
+        memcpy(&a.addr.in6, ss_addr, sizeof(struct sockaddr_in6));
         break;
+
+    default:
+        nd_dprintf("Unsupported address family: %hu\n",
+            ss_addr->ss_family
+        );
+        return false;
     }
 
-    if (prefix) this->prefix = prefix;
+    return true;
 }
 
-ndAddr::ndAddr(
+bool ndAddr::Create(ndAddr &a,
     const struct sockaddr_in *ss_in, uint8_t prefix)
-    : addr{0}, prefix(0)
+{
+    if (ss_in->sin_family != AF_INET) {
+        nd_dprintf("Unsupported address family: %hu\n",
+            ss_in->sin_family
+        );
+        return false;
+    }
+
+    if (prefix > 32) {
+        nd_dprintf("Invalid IP address prefix length: %hhu\n",
+            prefix
+        );
+        return false;
+    }
+
+    memcpy(&a.addr.in, ss_in, sizeof(struct sockaddr_in));
+
+    if (prefix) a.prefix = prefix;
+    else a.prefix = 32;
+
+    return true;
+}
+
+bool ndAddr::Create(ndAddr &a,
+    const struct sockaddr_in6 *ss_in6, uint8_t prefix)
+{
+    if (ss_in6->sin6_family != AF_INET6) {
+        nd_dprintf("Unsupported address family: %hu\n",
+            ss_in6->sin6_family
+        );
+        return false;
+    }
+
+    if (prefix > 128) {
+        nd_dprintf("Invalid IP address prefix length: %hhu\n",
+            prefix
+        );
+        return false;
+    }
+
+    memcpy(&a.addr.in6, ss_in6, sizeof(struct sockaddr_in6));
+
+    if (prefix) a.prefix = prefix;
+    else a.prefix = 128;
+
+    return true;
+}
+
+bool ndAddr::Create(ndAddr &a,
+    const struct in_addr *in_addr, uint8_t prefix)
 {
     if (prefix > 32) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
-        return;
+        return false;
     }
 
-    memcpy(&addr.in, ss_in, sizeof(struct sockaddr_in));
-    if (prefix) this->prefix = prefix;
+    a.addr.in.sin_family = AF_INET;
+    a.addr.in.sin_port = 0;
+    a.addr.in.sin_addr.s_addr = in_addr->s_addr;
+
+    if (prefix) a.prefix = prefix;
+    else a.prefix = 32;
+
+    return true;
 }
 
-ndAddr::ndAddr(
-    const struct sockaddr_in6 *ss_in6, uint8_t prefix)
-    : addr{0}, prefix(0)
+bool ndAddr::Create(ndAddr &a,
+    const struct in6_addr *in6_addr, uint8_t prefix)
 {
     if (prefix > 128) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
-        return;
+        return false;
     }
 
-    memcpy(&addr.in6, ss_in6, sizeof(struct sockaddr_in6));
-    if (prefix) this->prefix = prefix;
+    a.addr.in6.sin6_family = AF_INET6;
+    a.addr.in6.sin6_port = 0;
+    memcpy(&a.addr.in6.sin6_addr, in6_addr, sizeof(struct in6_addr));
+
+    if (prefix) a.prefix = prefix;
+    else a.prefix = 128;
+
+    return true;
 }
 
-bool ndAddr::MakeString(string &result) const
+uint16_t ndAddr::GetPort(bool byte_swap) const
+{
+    if (! IsValid()) return 0;
+    if (IsIPv4())
+        return ntohs(addr.in.sin_port);
+    if (IsIPv4())
+        return ntohs(addr.in6.sin6_port);
+
+    return 0;
+}
+
+bool ndAddr::SetPort(uint16_t port)
+{
+    if (! IsValid()) return false;
+    if (IsIPv4()) {
+        addr.in.sin_port = port;
+        return true;
+    }
+    if (IsIPv6()) {
+        addr.in6.sin6_port = port;
+        return true;
+    }
+
+    return false;
+}
+
+bool ndAddr::MakeString(string &result, uint8_t flags) const
 {
     if (! IsValid()) return false;
 
@@ -254,7 +375,13 @@ bool ndAddr::MakeString(string &result) const
         );
 
         result = sa;
-        if (prefix > 0)
+
+        if ((flags & mfPORT) && addr.in.sin_port != 0) {
+            result.append(":" + to_string(
+                ntohs(addr.in.sin_port))
+            );
+        }
+        if ((flags & mfPREFIX) && prefix > 0)
             result.append("/" + to_string((size_t)prefix));
 
         return true;
@@ -266,7 +393,13 @@ bool ndAddr::MakeString(string &result) const
         );
 
         result = sa;
-        if (prefix > 0)
+
+        if ((flags & mfPORT) && addr.in6.sin6_port != 0) {
+            result.append(":" + to_string(
+                ntohs(addr.in6.sin6_port))
+            );
+        }
+        if ((flags & mfPREFIX) && prefix > 0)
             result.append("/" + to_string((size_t)prefix));
 
         return true;
@@ -275,45 +408,26 @@ bool ndAddr::MakeString(string &result) const
     return false;
 }
 
-bool ndAddr::CreateHardwareAddress(
-    const uint8_t *hw_addr, size_t length)
-{
-    switch (length) {
-    case ETH_ALEN:
-        addr.ss.ss_family = AF_PACKET;
-        addr.ll.sll_hatype = ARPHRD_ETHER;
-        addr.ll.sll_halen = ETH_ALEN;
-        memcpy(addr.ll.sll_addr, hw_addr, ETH_ALEN);
-        return true;
-
-    default:
-        nd_dprintf("Invalid hardware address size: %lu\n", length);
-        break;
-    }
-
-    return false;
-}
-
 ndAddrType::ndAddrType()
 {
     // Add private networks
-    AddAddress(ndAddr::RESERVED, "127.0.0.0/8");
-    AddAddress(ndAddr::RESERVED, "10.0.0.0/8");
-    AddAddress(ndAddr::RESERVED, "100.64.0.0/10");
-    AddAddress(ndAddr::RESERVED, "172.16.0.0/12");
-    AddAddress(ndAddr::RESERVED, "192.168.0.0/16");
+    AddAddress(ndAddr::atRESERVED, "127.0.0.0/8");
+    AddAddress(ndAddr::atRESERVED, "10.0.0.0/8");
+    AddAddress(ndAddr::atRESERVED, "100.64.0.0/10");
+    AddAddress(ndAddr::atRESERVED, "172.16.0.0/12");
+    AddAddress(ndAddr::atRESERVED, "192.168.0.0/16");
 
-    AddAddress(ndAddr::RESERVED, "fc00::/7");
-    AddAddress(ndAddr::RESERVED, "fd00::/8");
-    AddAddress(ndAddr::RESERVED, "fe80::/10");
+    AddAddress(ndAddr::atRESERVED, "fc00::/7");
+    AddAddress(ndAddr::atRESERVED, "fd00::/8");
+    AddAddress(ndAddr::atRESERVED, "fe80::/10");
 
     // Add multicast networks
-    AddAddress(ndAddr::MULTICAST, "224.0.0.0/4");
+    AddAddress(ndAddr::atMULTICAST, "224.0.0.0/4");
 
-    AddAddress(ndAddr::MULTICAST, "ff00::/8");
+    AddAddress(ndAddr::atMULTICAST, "ff00::/8");
 
     // Add broadcast addresses
-    AddAddress(ndAddr::BROADCAST, "169.254.255.255");
+    AddAddress(ndAddr::atBROADCAST, "169.254.255.255");
 }
 
 bool ndAddrType::AddAddress(
@@ -382,9 +496,9 @@ bool ndAddrType::AddAddress(
 void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
 {
     if (addr.IsValid())
-        type = ndAddr::OTHER;
+        type = ndAddr::atOTHER;
     else {
-        type = ndAddr::ERROR;
+        type = ndAddr::atERROR;
         return;
     }
 
@@ -392,7 +506,7 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
         for (uint8_t i = 0x01; i <= 0x0f; i += 0x02) {
             if ((i & addr.addr.ll.sll_addr[0]) != i)
                 continue;
-            type = ndAddr::MULTICAST;
+            type = ndAddr::atMULTICAST;
             return;
         }
 
@@ -401,14 +515,14 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
         memset(sll_addr, 0xff, addr.addr.ll.sll_halen);
         if (memcmp(addr.addr.ll.sll_addr, sll_addr,
             addr.addr.ll.sll_halen) == 0) {
-            type = ndAddr::BROADCAST;
+            type = ndAddr::atBROADCAST;
             return;
         }
 
         memset(sll_addr, 0, addr.addr.ll.sll_halen);
         if (memcmp(addr.addr.ll.sll_addr, sll_addr,
             addr.addr.ll.sll_halen) == 0) {
-            type = ndAddr::NONE;
+            type = ndAddr::atNONE;
             return;
         }
 
@@ -424,12 +538,12 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
     }
     else if (addr.IsIPv4()) {
         if (addr.addr.in.sin_addr.s_addr == 0) {
-            type = ndAddr::NONE;
+            type = ndAddr::atNONE;
             return;
         }
 
         if (addr.addr.in.sin_addr.s_addr == 0xffffffff) {
-            type = ndAddr::BROADCAST;
+            type = ndAddr::atBROADCAST;
             return;
         }
 
@@ -466,7 +580,7 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             && addr.addr.in6.sin6_addr.s6_addr32[1] == 0
             && addr.addr.in6.sin6_addr.s6_addr32[2] == 0
             && addr.addr.in6.sin6_addr.s6_addr32[3]) {
-            type = ndAddr::NONE;
+            type = ndAddr::atNONE;
             return;
         }
 

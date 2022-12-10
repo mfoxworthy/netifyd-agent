@@ -20,6 +20,7 @@
 #include <regex>
 #include <mutex>
 #include <algorithm>
+#include <bitset>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -37,6 +38,10 @@
 #include <netinet/tcp.h>
 #undef __FAVOR_BSD
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <libmnl/libmnl.h>
@@ -45,6 +50,8 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -59,6 +66,7 @@ class ndPluginLoader;
 #ifdef _ND_USE_NETLINK
 #include <nd-netlink.h>
 #endif
+#include <nd-addr.h>
 #include <nd-apps.h>
 #include <nd-protos.h>
 #include <nd-risks.h>

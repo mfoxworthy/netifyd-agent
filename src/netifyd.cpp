@@ -106,6 +106,8 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
@@ -129,11 +131,8 @@ using namespace std;
 #ifdef _ND_USE_PLUGINS
 #include "nd-plugin.h"
 #endif
-#include "nd-util.h"
 #include "nd-signal.h"
 #include "nd-napi.h"
-
-#include "nd-addr.h"
 
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
@@ -3021,7 +3020,7 @@ int main(int argc, char *argv[])
     }
 #endif
     nd_addr_info = new ndAddrType();
-#if 1
+#if 0
     nd_addr_info->AddAddress(ndAddr::LOCAL, "192.168.242.0/24", "eth1");
 
     ndAddr::Type type;

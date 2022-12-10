@@ -35,6 +35,7 @@
 #include <sstream>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -48,10 +49,16 @@
 
 #include <arpa/inet.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -64,6 +71,7 @@ using namespace std;
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
@@ -1416,20 +1424,14 @@ bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
 
     switch (flow->lower_map) {
     case ndFlow::LOWER_LOCAL:
-        sprintf(local_mac,
-            "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            flow->lower_mac[0], flow->lower_mac[1], flow->lower_mac[2],
-            flow->lower_mac[3], flow->lower_mac[4], flow->lower_mac[5]);
-        sprintf(other_mac,
-            "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            flow->upper_mac[0], flow->upper_mac[1], flow->upper_mac[2],
-            flow->upper_mac[3], flow->upper_mac[4], flow->upper_mac[5]);
+        local_mac = flow->lower_mac.GetString().c_str();
+        other_mac = flow->upper_mac.GetString().c_str();
 
-        local_ip = flow->lower_ip;
-        other_ip = flow->upper_ip;
+        local_ip = flow->lower_addr.GetString().c_str();
+        other_ip = flow->upper_addr.GetString().c_str();
 
-        local_port = ntohs(flow->lower_port);
-        other_port = ntohs(flow->upper_port);
+        local_port = flow->lower_addr.GetPort();
+        other_port = flow->upper_addr.GetPort();
 
         switch (flow->origin) {
         case ndFlow::ORIGIN_LOWER:
@@ -1443,20 +1445,14 @@ bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
         }
         break;
     case ndFlow::LOWER_OTHER:
-        sprintf(local_mac,
-            "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            flow->upper_mac[0], flow->upper_mac[1], flow->upper_mac[2],
-            flow->upper_mac[3], flow->upper_mac[4], flow->upper_mac[5]);
-        sprintf(other_mac,
-            "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            flow->lower_mac[0], flow->lower_mac[1], flow->lower_mac[2],
-            flow->lower_mac[3], flow->lower_mac[4], flow->lower_mac[5]);
+        local_mac = flow->upper_mac.GetString().c_str();
+        other_mac = flow->lower_mac.GetString().c_str();
 
-        local_ip = flow->upper_ip;
-        other_ip = flow->lower_ip;
+        local_ip = flow->upper_addr.GetString().c_str();
+        other_ip = flow->lower_addr.GetString().c_str();
 
-        local_port = ntohs(flow->upper_port);
-        other_port = ntohs(flow->lower_port);
+        local_port = flow->upper_addr.GetPort();
+        other_port = flow->lower_addr.GetPort();
 
         switch (flow->origin) {
         case ndFlow::ORIGIN_LOWER:

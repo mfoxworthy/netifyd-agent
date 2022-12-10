@@ -63,8 +63,8 @@ public:
     );
 
     const ndFlow *flow;
-    char local_mac[ND_STR_ETHALEN + 1];
-    char other_mac[ND_STR_ETHALEN + 1];
+    const char *local_mac;
+    const char *other_mac;
     const char *local_ip;
     const char *other_ip;
     uint16_t local_port;

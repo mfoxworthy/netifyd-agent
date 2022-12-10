@@ -30,6 +30,7 @@
 #include <sstream>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,10 +44,16 @@
 
 #include <arpa/inet.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -60,6 +67,7 @@ using namespace std;
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
@@ -78,10 +86,6 @@ ndFlow::ndFlow(const ndInterface &iface)
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
-    lower_mac{}, upper_mac{}, lower_addr{}, upper_addr{},
-    lower_addr4(NULL), lower_addr6(NULL), upper_addr4(NULL), upper_addr6(NULL),
-    lower_ip{}, upper_ip{},
-    lower_port(0), upper_port(0),
     tunnel_type(TUNNEL_NONE),
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
@@ -105,11 +109,6 @@ ndFlow::ndFlow(const ndInterface &iface)
     flags{}, tickets(0), gtp{},
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
-    lower_addr4 = (struct sockaddr_in *)&lower_addr;
-    lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
-    upper_addr4 = (struct sockaddr_in *)&upper_addr;
-    upper_addr6 = (struct sockaddr_in6 *)&upper_addr;
-
     gtp.version = 0xFF;
 }
 
@@ -120,9 +119,8 @@ ndFlow::ndFlow(const ndFlow &flow)
     ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update),
     ts_last_seen(flow.ts_last_seen),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
+    lower_mac(flow.lower_mac), upper_mac(flow.upper_mac),
     lower_addr(flow.lower_addr), upper_addr(flow.upper_addr),
-    lower_ip{}, upper_ip{},
-    lower_port(flow.lower_port), upper_port(flow.upper_port),
     tunnel_type(flow.tunnel_type),
     lower_bytes(0), upper_bytes(0), total_bytes(0),
     lower_packets(0), upper_packets(0), total_packets(0),
@@ -145,16 +143,8 @@ ndFlow::ndFlow(const ndFlow &flow)
     flags{}, tickets(0), gtp(flow.gtp),
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
-    memcpy(lower_mac, flow.lower_mac, ETH_ALEN);
-    memcpy(upper_mac, flow.upper_mac, ETH_ALEN);
-
     memcpy(digest_lower, flow.digest_lower, SHA1_DIGEST_LENGTH);
     memset(digest_mdata, 0, SHA1_DIGEST_LENGTH);
-
-    lower_addr4 = (struct sockaddr_in *)&lower_addr;
-    lower_addr6 = (struct sockaddr_in6 *)&lower_addr;
-    upper_addr4 = (struct sockaddr_in *)&upper_addr;
-    upper_addr6 = (struct sockaddr_in6 *)&upper_addr;
 }
 
 ndFlow::~ndFlow()
@@ -189,41 +179,34 @@ void ndFlow::hash(const string &device,
     sha1_write(&ctx, (const char *)&ip_protocol, sizeof(ip_protocol));
     sha1_write(&ctx, (const char *)&vlan_id, sizeof(vlan_id));
 
-//    sha1_write(&ctx, (const char *)&lower_mac, ETH_ALEN);
-//    sha1_write(&ctx, (const char *)&upper_mac, ETH_ALEN);
-
     switch (ip_version) {
     case 4:
         sha1_write(&ctx,
-            (const char *)&lower_addr4->sin_addr, sizeof(struct in_addr));
+            (const char *)&lower_addr.addr.in.sin_addr, sizeof(struct in_addr));
         sha1_write(&ctx,
-            (const char *)&upper_addr4->sin_addr, sizeof(struct in_addr));
+            (const char *)&upper_addr.addr.in.sin_addr, sizeof(struct in_addr));
 
-        if (lower_addr4->sin_addr.s_addr == 0 &&
-            upper_addr4->sin_addr.s_addr == 0xffffffff) {
+        if (lower_addr.addr.in.sin_addr.s_addr == 0 &&
+            upper_addr.addr.in.sin_addr.s_addr == 0xffffffff) {
             // XXX: Hash in lower MAC for ethernet broadcasts (DHCPv4).
-            sha1_write(&ctx, (const char *)&lower_mac, ETH_ALEN);
+            sha1_write(&ctx, (const char *)&lower_mac.addr.ll.sll_addr, ETH_ALEN);
         }
 
         break;
     case 6:
         sha1_write(&ctx,
-            (const char *)&lower_addr6->sin6_addr, sizeof(struct in6_addr));
+            (const char *)&lower_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
         sha1_write(&ctx,
-            (const char *)&upper_addr6->sin6_addr, sizeof(struct in6_addr));
+            (const char *)&upper_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
         break;
     default:
         break;
     }
 
-    sha1_write(&ctx, (const char *)&lower_port, sizeof(lower_port));
-    sha1_write(&ctx, (const char *)&upper_port, sizeof(upper_port));
-
-//    nd_dprintf("hash: %s, %hhu, %hhu, %hu, [%hhx%hhx%hhx%hhx%hhx%hhx], [%hhx%hhx%hhx%hhx%hhx%hhx], %hhu, %hhu\n",
-//        device.c_str(), ip_version, ip_protocol, vlan_id,
-//        lower_mac[0], lower_mac[1], lower_mac[2], lower_mac[3], lower_mac[4], lower_mac[5],
-//        upper_mac[0], upper_mac[1], upper_mac[2], upper_mac[3], upper_mac[4], upper_mac[5],
-//        lower_port, upper_port);
+    uint16_t port = lower_addr.GetPort(false);
+    sha1_write(&ctx, (const char *)&port, sizeof(port));
+    port = upper_addr.GetPort(false);
+    sha1_write(&ctx, (const char *)&port, sizeof(port));
 
     if (hash_mdata) {
         sha1_write(&ctx,
@@ -474,19 +457,20 @@ bool ndFlow::has_mdns_domain_name(void) const
 
 void ndFlow::print(void) const
 {
-    const char *lower_name = lower_ip, *upper_name = upper_ip;
+    const char *lower_name = lower_addr.GetString().c_str(),
+        *upper_name = upper_addr.GetString().c_str();
 
     if (ND_DEBUG_WITH_ETHERS) {
         string key;
         nd_device_ether::const_iterator i;
 
-        key.assign((const char *)lower_mac, ETH_ALEN);
+        key.assign((const char *)lower_mac.addr.ll.sll_addr, ETH_ALEN);
 
         i = nd_device_ethers.find(key);
         if (i != nd_device_ethers.end())
             lower_name = i->second.c_str();
 
-        key.assign((const char *)upper_mac, ETH_ALEN);
+        key.assign((const char *)upper_mac.addr.ll.sll_addr, ETH_ALEN);
 
         i = nd_device_ethers.find(key);
         if (i != nd_device_ethers.end())
@@ -516,11 +500,11 @@ void ndFlow::print(void) const
         detected_protocol_name,
         (detected_application_name != NULL) ? "." : "",
         (detected_application_name != NULL) ? detected_application_name : "",
-        lower_name, ntohs(lower_port),
+        lower_name, lower_addr.GetPort(),
         (origin == ORIGIN_LOWER || origin == ORIGIN_UNKNOWN) ? '-' : '<',
         (origin == ORIGIN_UNKNOWN) ? '?' : '-',
         (origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ? '-' : '>',
-        upper_name, ntohs(upper_port),
+        upper_name, upper_addr.GetPort(),
         (dns_host_name[0] != '\0' || host_server_name[0] != '\0') ? " H: " : "",
         (host_server_name[0] != '\0') ? host_server_name : (
             (dns_host_name[0] != '\0') ? dns_host_name : ""
@@ -656,7 +640,6 @@ void ndFlow::get_lower_map(
 
 void ndFlow::json_encode(json &j, uint8_t encode_includes)
 {
-    char mac_addr[ND_STR_ETHALEN + 1];
     string _other_type = "unknown";
     string _lower_mac = "local_mac", _upper_mac = "other_mac";
     string _lower_ip = "local_ip", _upper_ip = "other_ip";
@@ -739,6 +722,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["ip_protocol"] = (unsigned)ip_protocol;
         j["vlan_id"] = (unsigned)vlan_id;
 #if defined(_ND_USE_NETLINK) && ! defined(_ND_LEAN_AND_MEAN)
+#if 0
         // 10.110.80.1: address is: PRIVATE
         // 67.204.229.236: address is: LOCALIP
         if (ND_DEBUG && _other_type == "unknown") {
@@ -746,6 +730,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
             ndNetlink::PrintType(upper_ip, upper_type);
             //exit(1);
         }
+#endif
 #endif
         j["other_type"] = _other_type;
 
@@ -762,27 +747,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         }
 
         // 00-52-14 to 00-52-FF: Unassigned (small allocations)
-        if (privacy_mask & PRIVATE_LOWER)
-            snprintf(mac_addr, sizeof(mac_addr), "00:52:14:00:00:00");
-        else {
-            snprintf(mac_addr, sizeof(mac_addr),
-                "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-                lower_mac[0], lower_mac[1], lower_mac[2],
-                lower_mac[3], lower_mac[4], lower_mac[5]
-            );
-        }
-        j[_lower_mac] = mac_addr;
-
-        if (privacy_mask & PRIVATE_UPPER)
-            snprintf(mac_addr, sizeof(mac_addr), "00:52:FF:00:00:00");
-        else {
-            snprintf(mac_addr, sizeof(mac_addr),
-                "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-                upper_mac[0], upper_mac[1], upper_mac[2],
-                upper_mac[3], upper_mac[4], upper_mac[5]
-            );
-        }
-        j[_upper_mac] = mac_addr;
+        j[_lower_mac] = (privacy_mask & PRIVATE_LOWER) ?
+            "00:52:14:00:00:00" : lower_mac.GetString();
+        j[_upper_mac] = (privacy_mask & PRIVATE_UPPER) ?
+            "00:52:ff:00:00:00" : upper_mac.GetString();
 
         if (privacy_mask & PRIVATE_LOWER) {
             if (ip_version == 4)
@@ -791,7 +759,7 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 j[_lower_ip] = ND_PRIVATE_IPV6 "fd";
         }
         else
-            j[_lower_ip] = lower_ip;
+            j[_lower_ip] = lower_addr.GetString();
 
         if (privacy_mask & PRIVATE_UPPER) {
             if (ip_version == 4)
@@ -800,10 +768,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
                 j[_upper_ip] = ND_PRIVATE_IPV6 "fe";
         }
         else
-            j[_upper_ip] = upper_ip;
+            j[_upper_ip] = upper_addr.GetString();
 
-        j[_lower_port] = (unsigned)ntohs(lower_port);
-        j[_upper_port] = (unsigned)ntohs(upper_port);
+        j[_lower_port] = (unsigned)lower_addr.GetPort();
+        j[_upper_port] = (unsigned)upper_addr.GetPort();
 
         j["detected_protocol"] = (unsigned)detected_protocol;
         j["detected_protocol_name"] =

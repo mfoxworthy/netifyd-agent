@@ -29,6 +29,7 @@
 #include <atomic>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/stat.h>
 #include <sys/select.h>
@@ -42,7 +43,6 @@
 #include <string.h>
 #include <time.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
 #ifdef _ND_USE_NETLINK
 #include <linux/netlink.h>
 #endif
@@ -51,6 +51,11 @@
 #include <netinet/tcp.h>
 #undef __FAVOR_BSD
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <libmnl/libmnl.h>
@@ -58,6 +63,8 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -69,13 +76,14 @@ using namespace std;
 #endif
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-thread.h"
-#include "nd-util.h"
 
 // Enable Conntrack debug logging
 //#define _ND_DEBUG_CONNTRACK     1
@@ -523,10 +531,10 @@ void ndConntrackThread::PrintFlow(ndFlow *flow, string &text)
         family, flow->ip_protocol);
 
     os << buffer;
-    os << ", lower_ip: " << flow->lower_ip;
-    os << ", upper_ip: " << flow->upper_ip;
-    os << ", lower_port: " << ntohs(flow->lower_port);
-    os << ", upper_port: " << ntohs(flow->upper_port);
+    os << ", lower_ip: " << flow->lower_addr.GetString();
+    os << ", upper_ip: " << flow->upper_addr.GetString();
+    os << ", lower_port: " << flow->lower_addr.GetPort();
+    os << ", upper_port: " << flow->upper_addr.GetPort();
 
     text = os.str();
 }
@@ -556,22 +564,24 @@ void ndConntrackThread::UpdateFlow(ndFlow *flow)
     switch (family) {
     case AF_INET:
         sha1_write(&ctx,
-            (const char *)&flow->lower_addr4->sin_addr, sizeof(struct in_addr));
+            (const char *)&flow->lower_addr.addr.in.sin_addr, sizeof(struct in_addr));
         sha1_write(&ctx,
-            (const char *)&flow->upper_addr4->sin_addr, sizeof(struct in_addr));
+            (const char *)&flow->upper_addr.addr.in.sin_addr, sizeof(struct in_addr));
         break;
     case AF_INET6:
         sha1_write(&ctx,
-            (const char *)&flow->lower_addr6->sin6_addr, sizeof(struct in6_addr));
+            (const char *)&flow->lower_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
         sha1_write(&ctx,
-            (const char *)&flow->upper_addr6->sin6_addr, sizeof(struct in6_addr));
+            (const char *)&flow->upper_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
         break;
     }
 
+    uint16_t port = flow->lower_addr.GetPort(false);
     sha1_write(&ctx,
-        (const char *)&flow->lower_port, sizeof(uint16_t));
+        (const char *)&port, sizeof(uint16_t));
+    port = flow->upper_addr.GetPort(false);
     sha1_write(&ctx,
-        (const char *)&flow->upper_port, sizeof(uint16_t));
+        (const char *)&port, sizeof(uint16_t));
 
     digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
 
