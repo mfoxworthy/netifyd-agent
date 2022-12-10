@@ -463,6 +463,13 @@ public:
         return AddAddress(type, ndAddr(addr), ifname);
     }
 
+    bool RemoveAddress(
+        const ndAddr &addr, const char *ifname = nullptr);
+    inline bool RemoveAddress(
+        const string &addr, const char *ifname = nullptr) {
+        return RemoveAddress(ndAddr(addr), ifname);
+    }
+
     void Classify(
         ndAddr::Type &type, const ndAddr &addr);
     inline void Classify(

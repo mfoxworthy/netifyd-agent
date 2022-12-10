@@ -434,7 +434,7 @@ bool ndAddrType::AddAddress(
     ndAddr::Type type, const ndAddr &addr, const char *ifname)
 {
     if (! addr.IsValid()) {
-        nd_printf("Invalid reserved address: %s\n",
+        nd_printf("Invalid address: %s\n",
             addr.GetString().c_str());
         return false;
     }
@@ -486,7 +486,69 @@ bool ndAddrType::AddAddress(
         }
     }
     catch (runtime_error &e) {
-        nd_dprintf("Error adding reserved address: %s: %s\n",
+        nd_dprintf("Error adding address: %s: %s\n",
+            addr.GetString().c_str(), e.what());
+    }
+
+    return false;
+}
+
+bool ndAddrType::RemoveAddress(
+    const ndAddr &addr, const char *ifname)
+{
+    if (! addr.IsValid()) {
+        nd_printf("Invalid address: %s\n",
+            addr.GetString().c_str());
+        return false;
+    }
+
+    unique_lock<mutex> ul(lock);
+
+    try {
+        if (addr.IsEthernet()) {
+            string mac;
+            if (addr.GetString(mac)) {
+                auto it = ether_reserved.find(mac);
+                if (it != ether_reserved.end()) {
+                    ether_reserved.erase(it);
+                    return true;
+                }
+                return false;
+            }
+        }
+        else if (addr.IsIPv4() && ifname == nullptr) {
+            ndRadixNetworkEntry<32> entry;
+            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+                return ipv4_reserved.erase(entry);
+            }
+        }
+        else if (addr.IsIPv6() && ifname == nullptr) {
+            ndRadixNetworkEntry<128> entry;
+            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+                return ipv6_reserved.erase(entry);
+            }
+        }
+        else if (addr.IsIPv4() && ifname != nullptr) {
+            ndRadixNetworkEntry<32> entry;
+            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+                auto it = ipv4_iface.find(ifname);
+                if (it != ipv4_iface.end())
+                    return it->second.erase(entry);
+                return false;
+            }
+        }
+        else if (addr.IsIPv6() && ifname != nullptr) {
+            ndRadixNetworkEntry<128> entry;
+            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+                auto it = ipv6_iface.find(ifname);
+                if (it != ipv6_iface.end())
+                    return it->second.erase(entry);
+                return false;
+            }
+        }
+    }
+    catch (runtime_error &e) {
+        nd_dprintf("Error removing address: %s: %s\n",
             addr.GetString().c_str(), e.what());
     }
 
