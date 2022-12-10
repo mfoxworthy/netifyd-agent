@@ -923,10 +923,10 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
 
             j["gtp"]["version"] = gtp.version;
             j["gtp"]["ip_version"] = gtp.ip_version;
-            j["gtp"][_lower_ip] = gtp.lower_ip;
-            j["gtp"][_upper_ip] = gtp.upper_ip;
-            j["gtp"][_lower_port] = (unsigned)htons(gtp.lower_port);
-            j["gtp"][_upper_port] = (unsigned)htons(gtp.upper_port);
+            j["gtp"][_lower_ip] = gtp.lower_addr.GetString();
+            j["gtp"][_upper_ip] = gtp.upper_addr.GetString();
+            j["gtp"][_lower_port] = (unsigned)gtp.lower_addr.GetPort();
+            j["gtp"][_upper_port] = (unsigned)gtp.upper_addr.GetPort();
             j["gtp"][_lower_teid] = htonl(gtp.lower_teid);
             j["gtp"][_upper_teid] = htonl(gtp.upper_teid);
             j["gtp"]["other_type"] = _other_type;

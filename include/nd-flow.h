@@ -252,12 +252,8 @@ public:
             ndNetlinkAddressType lower_type;
             ndNetlinkAddressType upper_type;
 #endif
-            struct sockaddr_storage lower_addr;
-            struct sockaddr_storage upper_addr;
-            char lower_ip[INET6_ADDRSTRLEN];
-            char upper_ip[INET6_ADDRSTRLEN];
-            uint16_t lower_port;
-            uint16_t upper_port;
+            ndAddr lower_addr;
+            ndAddr upper_addr;
             uint8_t lower_map;
             uint8_t other_type;
         } gtp;

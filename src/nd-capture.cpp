@@ -753,57 +753,9 @@ nd_process_ip:
                     flow.tunnel_type = ndFlow::TUNNEL_GTP;
 
                     flow.gtp.version = hdr_gtpv1->flags.version;
-                    memcpy(&flow.gtp.lower_addr,
-                        &flow.lower_addr, sizeof(struct sockaddr_storage));
-                    memcpy(&flow.gtp.upper_addr,
-                        &flow.upper_addr, sizeof(struct sockaddr_storage));
-
-                    struct sockaddr_in *laddr4 = &flow.lower_addr.addr.in;
-                    struct sockaddr_in6 *laddr6 = &flow.lower_addr.addr.in6;
-                    struct sockaddr_in *uaddr4 = &flow.upper_addr.addr.in;
-                    struct sockaddr_in6 *uaddr6 = &flow.upper_addr.addr.in6;
-
                     flow.gtp.ip_version = flow.ip_version;
-
-                    switch (flow.ip_version) {
-                    case 4:
-                        inet_ntop(AF_INET, &laddr4->sin_addr.s_addr,
-                            flow.gtp.lower_ip, INET_ADDRSTRLEN);
-                        inet_ntop(AF_INET, &uaddr4->sin_addr.s_addr,
-                            flow.gtp.upper_ip, INET_ADDRSTRLEN);
-                        break;
-
-                    case 6:
-                        inet_ntop(AF_INET6, &laddr6->sin6_addr.s6_addr,
-                            flow.gtp.lower_ip, INET6_ADDRSTRLEN);
-                        inet_ntop(AF_INET6, &uaddr6->sin6_addr.s6_addr,
-                            flow.gtp.upper_ip, INET6_ADDRSTRLEN);
-                        break;
-
-                    default:
-                        nd_printf("%s: ERROR: Unknown GTP IP version: %d\n",
-                            tag.c_str(), flow.ip_version);
-                        throw ndCaptureThreadException(strerror(EINVAL));
-                    }
-
-                    if (addr_cmp < 0) {
-                        flow.gtp.lower_port = hdr_udp->uh_sport;
-                        flow.gtp.upper_port = hdr_udp->uh_dport;
-                    }
-                    else if (addr_cmp > 0) {
-                        flow.gtp.lower_port = hdr_udp->uh_dport;
-                        flow.gtp.upper_port = hdr_udp->uh_sport;
-                    }
-                    else {
-                        if (hdr_udp->uh_sport < hdr_udp->uh_dport) {
-                            flow.gtp.lower_port = hdr_udp->uh_sport;
-                            flow.gtp.upper_port = hdr_udp->uh_dport;
-                        }
-                        else {
-                            flow.gtp.lower_port = hdr_udp->uh_dport;
-                            flow.gtp.upper_port = hdr_udp->uh_sport;
-                        }
-                    }
+                    flow.gtp.lower_addr = flow.lower_addr;
+                    flow.gtp.upper_addr = flow.upper_addr;
                 }
 
                 if (hdr_gtpv1->type == _ND_GTP_G_PDU) {
