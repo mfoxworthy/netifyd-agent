@@ -97,13 +97,13 @@ using namespace std;
 #ifdef _ND_USE_INOTIFY
 #include "nd-inotify.h"
 #endif
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"

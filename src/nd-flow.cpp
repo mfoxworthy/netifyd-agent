@@ -61,13 +61,13 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
@@ -103,9 +103,7 @@ ndFlow::ndFlow(const ndInterface &iface)
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
-#ifdef _ND_USE_NETLINK
-    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
-#endif
+    lower_type(ndAddr::atNONE), upper_type(ndAddr::atNONE),
     flags{}, tickets(0), gtp{},
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
@@ -137,9 +135,7 @@ ndFlow::ndFlow(const ndFlow &flow)
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
-#ifdef _ND_USE_NETLINK
-    lower_type(ndNETLINK_ATYPE_UNKNOWN), upper_type(ndNETLINK_ATYPE_UNKNOWN),
-#endif
+    lower_type(ndAddr::atNONE), upper_type(ndAddr::atNONE),
     flags{}, tickets(0), gtp(flow.gtp),
     risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
@@ -548,51 +544,48 @@ void ndFlow::update_lower_maps(void)
 }
 
 void ndFlow::get_lower_map(
-#ifdef _ND_USE_NETLINK
-    ndNetlinkAddressType lt,
-    ndNetlinkAddressType ut,
-#endif
+    ndAddr::Type lt,
+    ndAddr::Type ut,
     uint8_t &lm, uint8_t &ot)
 {
-#ifdef _ND_USE_NETLINK
-    if (lt == ndNETLINK_ATYPE_ERROR ||
-        ut == ndNETLINK_ATYPE_ERROR) {
+    if (lt == ndAddr::atERROR ||
+        ut == ndAddr::atERROR) {
         ot = OTHER_ERROR;
         return;
     }
-    else if (lt == ndNETLINK_ATYPE_LOCALIP &&
-        ut == ndNETLINK_ATYPE_LOCALNET) {
+    else if (lt == ndAddr::atLOCAL &&
+        ut == ndAddr::atLOCALNET) {
         lm = LOWER_OTHER;
         ot = OTHER_LOCAL;
     }
-    else if (lt == ndNETLINK_ATYPE_LOCALNET &&
-        ut == ndNETLINK_ATYPE_LOCALIP) {
+    else if (lt == ndAddr::atLOCALNET &&
+        ut == ndAddr::atLOCAL) {
         lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
-    else if (lt == ndNETLINK_ATYPE_MULTICAST) {
+    else if (lt == ndAddr::atMULTICAST) {
         lm = LOWER_OTHER;
         ot = OTHER_MULTICAST;
     }
-    else if (ut == ndNETLINK_ATYPE_MULTICAST) {
+    else if (ut == ndAddr::atMULTICAST) {
         lm = LOWER_LOCAL;
         ot = OTHER_MULTICAST;
     }
-    else if (lt == ndNETLINK_ATYPE_BROADCAST) {
+    else if (lt == ndAddr::atBROADCAST) {
         lm = LOWER_OTHER;
         ot = OTHER_BROADCAST;
     }
-    else if (ut == ndNETLINK_ATYPE_BROADCAST) {
+    else if (ut == ndAddr::atBROADCAST) {
         lm = LOWER_LOCAL;
         ot = OTHER_BROADCAST;
     }
-    else if (lt == ndNETLINK_ATYPE_PRIVATE &&
-        ut == ndNETLINK_ATYPE_LOCALNET) {
+    else if (lt == ndAddr::atRESERVED &&
+        ut == ndAddr::atLOCALNET) {
         lm = LOWER_OTHER;
         ot = OTHER_LOCAL;
     }
-    else if (lt == ndNETLINK_ATYPE_LOCALNET &&
-        ut == ndNETLINK_ATYPE_PRIVATE) {
+    else if (lt == ndAddr::atLOCALNET &&
+        ut == ndAddr::atRESERVED) {
         lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
@@ -604,38 +597,34 @@ void ndFlow::get_lower_map(
     // deployment (gateway/port mirror modes).
 #endif
     else if (ip_version != 6 &&
-        lt == ndNETLINK_ATYPE_PRIVATE &&
-        ut == ndNETLINK_ATYPE_PRIVATE) {
+        lt == ndAddr::atRESERVED &&
+        ut == ndAddr::atRESERVED) {
         lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
-    else if (lt == ndNETLINK_ATYPE_PRIVATE &&
-        ut == ndNETLINK_ATYPE_LOCALIP) {
+    else if (lt == ndAddr::atRESERVED &&
+        ut == ndAddr::atLOCAL) {
         lm = LOWER_OTHER;
         ot = OTHER_REMOTE;
     }
-    else if (lt == ndNETLINK_ATYPE_LOCALIP &&
-        ut == ndNETLINK_ATYPE_PRIVATE) {
+    else if (lt == ndAddr::atLOCAL &&
+        ut == ndAddr::atRESERVED) {
         lm = LOWER_LOCAL;
         ot = OTHER_REMOTE;
     }
-    else if (lt == ndNETLINK_ATYPE_LOCALNET &&
-        ut == ndNETLINK_ATYPE_LOCALNET) {
+    else if (lt == ndAddr::atLOCALNET &&
+        ut == ndAddr::atLOCALNET) {
         lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
-    else if (lt == ndNETLINK_ATYPE_UNKNOWN) {
+    else if (lt == ndAddr::atOTHER) {
         lm = LOWER_OTHER;
         ot = OTHER_REMOTE;
     }
-    else if (ut == ndNETLINK_ATYPE_UNKNOWN) {
+    else if (ut == ndAddr::atOTHER) {
         lm = LOWER_LOCAL;
         ot = OTHER_REMOTE;
     }
-#else
-    lm = LOWER_UNKNOWN;
-    ot = OTHER_UNSUPPORTED;
-#endif
 }
 
 void ndFlow::json_encode(json &j, uint8_t encode_includes)
@@ -721,17 +710,6 @@ void ndFlow::json_encode(json &j, uint8_t encode_includes)
         j["ip_version"] = (unsigned)ip_version;
         j["ip_protocol"] = (unsigned)ip_protocol;
         j["vlan_id"] = (unsigned)vlan_id;
-#if defined(_ND_USE_NETLINK) && ! defined(_ND_LEAN_AND_MEAN)
-#if 0
-        // 10.110.80.1: address is: PRIVATE
-        // 67.204.229.236: address is: LOCALIP
-        if (ND_DEBUG && _other_type == "unknown") {
-            ndNetlink::PrintType(lower_ip, lower_type);
-            ndNetlink::PrintType(upper_ip, upper_type);
-            //exit(1);
-        }
-#endif
-#endif
         j["other_type"] = _other_type;
 
         switch (origin) {

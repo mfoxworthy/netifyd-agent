@@ -70,7 +70,7 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 
-ndAddrType *nd_addr_info = NULL;
+ndAddrType *nd_addrtype = NULL;
 
 bool ndAddr::Create(ndAddr &a, const string &addr)
 {
@@ -438,7 +438,11 @@ bool ndAddrType::AddAddress(
             addr.GetString().c_str());
         return false;
     }
-
+#if 0
+    nd_dprintf("%s: %d: %s: %s\n", __PRETTY_FUNCTION__, type,
+        (ifname) ? ifname : "(global)", addr.GetString().c_str()
+    );
+#endif
     unique_lock<mutex> ul(lock);
 
     try {
@@ -456,28 +460,35 @@ bool ndAddrType::AddAddress(
                 return true;
             }
         }
-        else if (addr.IsIPv4() && ifname == nullptr) {
+
+        if (type == ndAddr::atLOCAL && addr.IsNetwork())
+            type = ndAddr::atLOCALNET;
+
+        if (addr.IsIPv4() && ifname == nullptr) {
             ndRadixNetworkEntry<32> entry;
             if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
                 ipv4_reserved[entry] = type;
                 return true;
             }
         }
-        else if (addr.IsIPv6() && ifname == nullptr) {
+
+        if (addr.IsIPv6() && ifname == nullptr) {
             ndRadixNetworkEntry<128> entry;
             if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
                 ipv6_reserved[entry] = type;
                 return true;
             }
         }
-        else if (addr.IsIPv4() && ifname != nullptr) {
+
+        if (addr.IsIPv4() && ifname != nullptr) {
             ndRadixNetworkEntry<32> entry;
             if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
                 ipv4_iface[ifname][entry] = type;
                 return true;
             }
         }
-        else if (addr.IsIPv6() && ifname != nullptr) {
+
+        if (addr.IsIPv6() && ifname != nullptr) {
             ndRadixNetworkEntry<128> entry;
             if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
                 ipv6_iface[ifname][entry] = type;
@@ -501,7 +512,11 @@ bool ndAddrType::RemoveAddress(
             addr.GetString().c_str());
         return false;
     }
-
+#if 0
+    nd_dprintf("%s: %s: %s\n", __PRETTY_FUNCTION__,
+        (ifname) ? ifname : "(global)", addr.GetString().c_str()
+    );
+#endif
     unique_lock<mutex> ul(lock);
 
     try {
@@ -516,19 +531,22 @@ bool ndAddrType::RemoveAddress(
                 return false;
             }
         }
-        else if (addr.IsIPv4() && ifname == nullptr) {
+
+        if (addr.IsIPv4() && ifname == nullptr) {
             ndRadixNetworkEntry<32> entry;
             if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
                 return ipv4_reserved.erase(entry);
             }
         }
-        else if (addr.IsIPv6() && ifname == nullptr) {
+
+        if (addr.IsIPv6() && ifname == nullptr) {
             ndRadixNetworkEntry<128> entry;
             if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
                 return ipv6_reserved.erase(entry);
             }
         }
-        else if (addr.IsIPv4() && ifname != nullptr) {
+
+        if (addr.IsIPv4() && ifname != nullptr) {
             ndRadixNetworkEntry<32> entry;
             if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
                 auto it = ipv4_iface.find(ifname);
@@ -537,7 +555,8 @@ bool ndAddrType::RemoveAddress(
                 return false;
             }
         }
-        else if (addr.IsIPv6() && ifname != nullptr) {
+
+        if (addr.IsIPv6() && ifname != nullptr) {
             ndRadixNetworkEntry<128> entry;
             if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
                 auto it = ipv6_iface.find(ifname);

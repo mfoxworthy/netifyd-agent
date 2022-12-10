@@ -24,6 +24,7 @@ public:
     {
         atNONE,
         atLOCAL,
+        atLOCALNET,
         atRESERVED,
         atMULTICAST,
         atBROADCAST,
@@ -113,6 +114,12 @@ public:
             (addr.ss.ss_family == AF_INET && prefix <= 32)
             || (addr.ss.ss_family == AF_INET6 && prefix <= 128)
         ));
+    }
+    inline bool IsNetwork(void) const {
+        if (! HasValidPrefix()) return false;
+        if (addr.ss.ss_family == AF_INET && prefix != 32)
+            return true;
+        return (addr.ss.ss_family == AF_INET6 && prefix != 128);
     }
     inline bool IsEthernet(void) const {
         return (addr.ss.ss_family == AF_PACKET

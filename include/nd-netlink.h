@@ -19,64 +19,11 @@
 
 #define ND_NETLINK_BUFSIZ       4096
 
-#define _ND_NETLINK_PRIVATE     "__nd_private__"
-#define _ND_NETLINK_MULTICAST   "__nd_multicast__"
-#define _ND_NETLINK_BROADCAST   "__nd_broadcast__"
-
-#define ND_NETLINK_DEVALLOC(m) { \
-    m = new pthread_mutex_t; \
-    if (m == NULL) throw ndNetlinkException(strerror(ENOMEM)); \
-    int rc = pthread_mutex_init(m, NULL); \
-    if (rc != 0) throw ndNetlinkException(strerror(rc)); }
-
-#define ND_NETLINK_NETALLOC(e, a) { \
-    e = new ndNetlinkNetworkAddr(a); \
-    if (e == NULL) throw ndNetlinkException(strerror(ENOMEM)); }
-
-#define ND_NETLINK_ADDRALLOC(e, a) { \
-    e = new struct sockaddr_storage(a); \
-    if (e == NULL) throw ndNetlinkException(strerror(ENOMEM)); }
-
 class ndNetlinkException : public runtime_error
 {
 public:
     explicit ndNetlinkException(const string &what_arg)
         : runtime_error(what_arg) { }
-};
-
-class ndNetlinkNetworkAddr
-{
-public:
-    ndNetlinkNetworkAddr() :
-        length(0) { memset(&address, 0, sizeof(struct sockaddr_storage)); }
-    ndNetlinkNetworkAddr(const struct sockaddr_storage *addr, uint8_t length = 0) :
-        length(length) { memcpy(&address, addr, sizeof(struct sockaddr_storage)); }
-
-    uint8_t length;
-    union {
-        struct sockaddr_storage address;
-        struct sockaddr_storage network;
-    };
-
-    inline bool operator==(const ndNetlinkNetworkAddr &n) const;
-    inline bool operator!=(const ndNetlinkNetworkAddr &n) const;
-};
-
-typedef map<string, pthread_mutex_t *> ndNetlinkInterfaces;
-typedef map<string, vector<ndNetlinkNetworkAddr *> > ndNetlinkNetworks;
-typedef map<string, vector<struct sockaddr_storage *> > ndNetlinkAddresses;
-
-enum ndNetlinkAddressType
-{
-    ndNETLINK_ATYPE_UNKNOWN,
-
-    ndNETLINK_ATYPE_LOCALIP,
-    ndNETLINK_ATYPE_LOCALNET,
-    ndNETLINK_ATYPE_PRIVATE,
-    ndNETLINK_ATYPE_MULTICAST,
-    ndNETLINK_ATYPE_BROADCAST,
-
-    ndNETLINK_ATYPE_ERROR,
 };
 
 class ndNetlink
@@ -89,55 +36,19 @@ public:
     void Refresh(void);
     bool ProcessEvent(void);
 
-    ndNetlinkAddressType ClassifyAddress(
-        const struct sockaddr_storage *addr);
-    ndNetlinkAddressType ClassifyAddress(
-        const string &iface, const struct sockaddr_storage *addr);
-
-    bool AddNetwork(sa_family_t family,
-        const string &type, const string &saddr, uint8_t length);
-
-    bool AddInterface(const string &iface);
-
-    bool AddAddress(sa_family_t family, const string &type, const string &saddr);
-
-#ifndef _ND_LEAN_AND_MEAN
-    void Dump(void);
-    static void PrintType(const string &prefix, const ndNetlinkAddressType &type);
-#endif
-
 protected:
-    bool InNetwork(
-        sa_family_t family, uint8_t length,
-        const struct sockaddr_storage *addr_host,
-        const struct sockaddr_storage *addr_net);
+    bool CopyAddress(sa_family_t family,
+        ndAddr &dst, void *src, uint8_t prefix = 0
+    );
 
-    bool CopyNetlinkAddress(
-        sa_family_t family, struct sockaddr_storage &dst, void *src);
+    bool AddRemoveNetwork(struct nlmsghdr *nlh, bool add = true);
 
-    bool ParseMessage(struct rtmsg *rtm, size_t offset,
-        string &iface, ndNetlinkNetworkAddr &addr);
-    bool ParseMessage(struct ifaddrmsg *addrm, size_t offset,
-        string &iface, struct sockaddr_storage &addr);
-
-    bool AddNetwork(struct nlmsghdr *nlh);
-    bool RemoveNetwork(struct nlmsghdr *nlh);
-
-    bool AddAddress(struct nlmsghdr *nlh);
-    bool RemoveAddress(struct nlmsghdr *nlh);
-
-    bool AddAddress(const string &type, const struct sockaddr_storage &addr);
-
-    void PrintAddress(const struct sockaddr_storage *addr);
+    bool AddRemoveAddress(struct nlmsghdr *nlh, bool add = true);
 
     int nd;
     unsigned seq;
     struct sockaddr_nl sa;
     uint8_t buffer[ND_NETLINK_BUFSIZ];
-
-    ndNetlinkInterfaces ifaces;
-    ndNetlinkNetworks networks;
-    ndNetlinkAddresses addresses;
 };
 
 #endif // _ND_NETLINK_H

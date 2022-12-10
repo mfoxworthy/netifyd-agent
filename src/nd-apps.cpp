@@ -69,15 +69,15 @@ using json = nlohmann::json;
 using namespace std;
 
 #include "netifyd.h"
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
 #include "nd-ndpi.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-thread.h"
 #include "nd-util.h"
 #include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"

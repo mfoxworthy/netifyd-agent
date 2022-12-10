@@ -94,20 +94,20 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
+#include "nd-packet.h"
+#include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #ifdef _ND_USE_INOTIFY
 #include "nd-inotify.h"
 #endif
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
-#include "nd-packet.h"
-#include "nd-json.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
-#include "nd-util.h"
-#include "nd-addr.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
@@ -169,7 +169,7 @@ extern ndFlowMap *nd_flow_buckets;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
-extern ndAddrType *nd_addr_info;
+extern ndAddrType *nd_addrtype;
 extern atomic_uint nd_flow_count;
 extern nd_agent_stats nd_json_agent_stats;
 extern nd_interface_map nd_interfaces;
@@ -488,10 +488,23 @@ static void nd_init(void)
     }
 
     nd_ifaddrs_update(nd_interface_addrs);
+
+#ifdef _ND_USE_NETLINK
+    if (ND_USE_NETLINK) {
+        netlink = new ndNetlink();
+        if (netlink == NULL)
+            throw ndSystemException(__PRETTY_FUNCTION__, "new netlink", ENOMEM);
+    }
+#endif
 }
 
 static void nd_destroy(void)
 {
+#ifdef _ND_USE_NETLINK
+    if (ND_USE_NETLINK && netlink != NULL)
+        delete netlink;
+#endif
+
     for (auto &i : nd_interfaces) {
         if (nd_devices.find(i.second.ifname) != nd_devices.end()) {
             if (nd_devices[i.second.ifname].first != NULL)
@@ -2225,124 +2238,6 @@ static void nd_status(void)
     }
 }
 
-#ifdef _ND_USE_NETLINK
-static void nd_add_device_addresses(nd_device_addr &device_addresses)
-{
-    char *token = NULL;
-    struct sockaddr_in network_ip4;
-    struct sockaddr_in bcast_ip4;
-    struct sockaddr_in6 network_ip6;
-    int bit, word, words;
-    uint32_t b, word_net[4] = { 0, 0, 0, 0 }, word_bcast[1] = { 0 };
-    char netaddr[INET6_ADDRSTRLEN], bcastaddr[INET6_ADDRSTRLEN];
-
-    for (nd_device_addr::const_iterator i = device_addresses.begin();
-        i != device_addresses.end(); i++) {
-
-        sa_family_t family = AF_UNSPEC;
-
-        token = (char *)realloc(token, (*i).second.size() + 1);
-        strncpy(token, (*i).second.c_str(), (*i).second.size() + 1);
-
-        const char *address = strtok(token, "/");
-        if (address == NULL) {
-            fprintf(stderr, "WARNING: Invalid address, use CIDR notation: %s\n",
-                (*i).second.c_str());
-            continue;
-        }
-
-        if (inet_pton(AF_INET, address, &network_ip4.sin_addr) == 1) {
-            words = 1;
-            word_net[0] = ntohl(network_ip4.sin_addr.s_addr);
-            word_bcast[0] = ntohl(network_ip4.sin_addr.s_addr);
-            family = AF_INET;
-        }
-        else if (inet_pton(AF_INET6, address, &network_ip6.sin6_addr) == 1) {
-            words = 4;
-            word_net[0] = ntohl(network_ip6.sin6_addr.s6_addr32[0]);
-            word_net[1] = ntohl(network_ip6.sin6_addr.s6_addr32[1]);
-            word_net[2] = ntohl(network_ip6.sin6_addr.s6_addr32[2]);
-            word_net[3] = ntohl(network_ip6.sin6_addr.s6_addr32[3]);
-            family = AF_INET6;
-        }
-        else {
-            fprintf(stderr, "WARNING: Not an IPv4 or IPv6 address: %s\n", address);
-            continue;
-        }
-
-        const char *length = strtok(NULL, "/");
-        if (length == NULL) {
-            fprintf(stderr, "WARNING: Invalid address, use CIDR notation: %s\n",
-                (*i).second.c_str());
-            continue;
-        }
-
-        uint8_t _length = (uint8_t)atoi(length);
-        if (_length == 0 || (
-            (family == AF_INET && _length > 32) ||
-            (family == AF_INET6 && _length > 128))) {
-            fprintf(stderr, "WARNING: Invalid network length: %hhu\n", _length);
-            continue;
-        }
-
-        nd_dprintf("%s: %s: address: %s, length: %hu\n",
-            __PRETTY_FUNCTION__, (*i).first.c_str(), address, _length);
-
-        bit = (int)_length;
-
-        for (word = 0; word < words; word++) {
-            for (b = 0x80000000; b > 0; b >>= 1, bit--) {
-                if (bit < 1) word_net[word] &= ~b;
-            }
-        }
-
-        switch (family) {
-        case AF_INET:
-            network_ip4.sin_addr.s_addr = htonl(word_net[0]);
-            inet_ntop(AF_INET,
-                &network_ip4.sin_addr, netaddr, INET_ADDRSTRLEN);
-
-            bit = (int)_length;
-
-            for (word = 0; word < words; word++) {
-                for (b = 0x80000000; b > 0; b >>= 1, bit--) {
-                    if (bit < 1) word_bcast[word] |= b;
-                }
-            }
-
-            bcast_ip4.sin_addr.s_addr = htonl(word_bcast[0]);
-            inet_ntop(AF_INET,
-                &bcast_ip4.sin_addr, bcastaddr, INET_ADDRSTRLEN);
-
-            if (! netlink->AddAddress(family, _ND_NETLINK_BROADCAST, bcastaddr))
-                fprintf(stderr, "WARNING: Error adding device address: %s\n", bcastaddr);
-
-            break;
-
-        case AF_INET6:
-            network_ip6.sin6_addr.s6_addr32[0] = htonl(word_net[0]);
-            network_ip6.sin6_addr.s6_addr32[1] = htonl(word_net[1]);
-            network_ip6.sin6_addr.s6_addr32[2] = htonl(word_net[2]);
-            network_ip6.sin6_addr.s6_addr32[3] = htonl(word_net[3]);
-            inet_ntop(AF_INET6,
-                &network_ip6.sin6_addr, netaddr, INET6_ADDRSTRLEN);
-            break;
-        }
-
-        if (! netlink->AddNetwork(family, (*i).first, netaddr, _length)) {
-            fprintf(stderr, "WARNING: Error adding device network: %s\n",
-                (*i).second.c_str());
-        }
-
-        if (! netlink->AddAddress(family, (*i).first, address)) {
-            fprintf(stderr, "WARNING: Error adding device address: %s\n", address);
-        }
-    }
-
-    if (token != NULL) free(token);
-}
-#endif // _ND_USE_NETLINK
-
 static int nd_check_agent_uuid(void)
 {
     if (nd_config.uuid == NULL ||
@@ -2750,69 +2645,6 @@ int main(int argc, char *argv[])
         }
     }
 
-#if 0
-    uint8_t mac[ETH_ALEN] = {
-        0xde, 0xad, 0xbe, 0xef, 0xff, 0x0
-    };
-
-    ndAddr hw_addr(mac, ETH_ALEN);
-    nd_dprintf("sizeof(ndAddr): %lu\n",
-        sizeof(hw_addr.addr) + sizeof(hw_addr.prefix)
-    );
-
-    nd_dprintf("HW addr: %s\n",
-        (hw_addr.IsValid() && hw_addr.IsEthernet()) ?
-            hw_addr.GetString().c_str() : "<INVALID>"
-    );
-
-    string mac_str = "00:11:22:aa:bb:ZY";
-    ndAddr hw_addr_str(mac_str);
-
-    nd_dprintf("HW addr (str): %s\n",
-        (hw_addr_str.IsValid() && hw_addr_str.IsEthernet()) ?
-            hw_addr_str.GetString().c_str() : "<INVALID>"
-    );
-
-    ndAddr ip_addr("192.168.242.1");
-    nd_dprintf("IP addr: %s, valid prefix? %s\n",
-        (ip_addr.IsValid() && ip_addr.IsIP()) ?
-            ip_addr.GetString().c_str() : "<INVALID>",
-        (ip_addr.HasValidPrefix()) ? "yes" : "no"
-    );
-
-    ndAddr ip6_addr("fdb0:856:14a2:2764:5054:ff:fe29:420/64");
-    nd_dprintf("IPv6 addr: %s, valid prefix? %s\n",
-        (ip6_addr.IsValid() && ip6_addr.IsIP()) ?
-            ip6_addr.GetString().c_str() : "<INVALID>",
-        (ip6_addr.HasValidPrefix()) ? "yes" : "no"
-    );
-
-    ndAddr copy_addr;
-    copy_addr = ip_addr;
-    nd_dprintf("IP addr (copied): %s, valid prefix? %s\n",
-        (copy_addr.IsValid() && copy_addr.IsIP()) ?
-            copy_addr.GetString().c_str() : "<INVALID>",
-        (copy_addr.HasValidPrefix()) ? "yes" : "no"
-    );
-
-    nd_dprintf("IP addr: %s == IP addr (copied): %s: %s\n",
-        ip_addr.GetString().c_str(), copy_addr.GetString().c_str(),
-        (ip_addr == copy_addr) ? "yes" : "no"
-    );
-
-    nd_dprintf("IP addr: %s == IPv6 addr: %s: %s\n",
-        ip_addr.GetString().c_str(), ip6_addr.GetString().c_str(),
-        (ip_addr == ip6_addr) ? "yes" : "no"
-    );
-
-    nd_dprintf("IPv6 addr: %s == IPv6 addr: %s: %s\n",
-        ip6_addr.GetString().c_str(), ip6_addr.GetString().c_str(),
-        (ip6_addr == ip6_addr) ? "yes" : "no"
-    );
-
-    return 1;
-#endif
-
     if (nd_config.path_export_json == NULL)
         nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
 
@@ -3019,57 +2851,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 #endif
-    nd_addr_info = new ndAddrType();
-#if 0
-    nd_addr_info->AddAddress(ndAddr::LOCAL, "192.168.242.0/24", "eth1");
+    nd_addrtype = new ndAddrType();
 
-    ndAddr::Type type;
-    static vector<string> ips = {
-        "0.0.0.0",
-        "255.255.255.255",
-        "192.168.1.0",
-        "192.168.242.0",
-    };
-
-    for (auto &ip : ips) {
-        nd_addr_info->Classify(type, ip);
-        nd_dprintf("%s: type: %u\n", ip.c_str(), type);
+    for (auto it : device_addresses) {
+        nd_addrtype->AddAddress(
+            ndAddr::atLOCAL, it.second, it.first.c_str()
+        );
     }
 
-    static vector<string> macs = {
-        "00:00:00:00:00:00",
-        "01:00:5e:00:00:01",
-        "04:f7:e4:95:10:cc",
-        "33:33:00:00:00:01",
-        "33:33:00:00:00:fb",
-        "ff:ff:ff:ff:ff:ff",
-        "ZZ:zz:ZZ:zz:ZZ:zz",
-    };
-
-    for (auto &mac : macs) {
-        nd_addr_info->Classify(type, mac);
-        nd_dprintf("%s: type: %u\n", mac.c_str(), type);
-    }
-
-    return 0;
-#endif
-#ifdef _ND_USE_NETLINK
-    if (ND_USE_NETLINK) {
-        try {
-            netlink = new ndNetlink();
-
-            nd_netlink_device::const_iterator i;
-            for (i = nd_netlink_devices.begin(); i != nd_netlink_devices.end(); i++)
-                netlink->AddInterface(i->second);
-        }
-        catch (exception &e) {
-            nd_printf("Error creating netlink watch: %s\n", e.what());
-            return 1;
-        }
-
-        nd_add_device_addresses(device_addresses);
-    }
-#endif
     nd_init();
     ndpi_global_init();
 
@@ -3255,12 +3044,7 @@ int main(int argc, char *argv[])
 #ifdef _ND_USE_NETLINK
             if (ND_USE_NETLINK &&
                 netlink->GetDescriptor() == si.si_fd) {
-#ifndef _ND_LEAN_AND_MEAN
-                if (netlink->ProcessEvent())
-                    if (ND_DEBUG) netlink->Dump();
-#else
                 netlink->ProcessEvent();
-#endif
             }
 #endif
             continue;
@@ -3384,10 +3168,7 @@ int main(int argc, char *argv[])
         delete flow_hash_cache;
     }
 
-#ifdef _ND_USE_NETLINK
-    delete netlink;
-#endif
-    delete nd_addr_info;
+    delete nd_addrtype;
 
     nd_ifaddrs_free(nd_interface_addrs);
 

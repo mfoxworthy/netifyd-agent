@@ -155,9 +155,6 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-apps.h"
@@ -166,6 +163,9 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-util.h"
 #include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"

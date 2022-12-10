@@ -27,6 +27,7 @@
 #include <sstream>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,17 +37,27 @@
 
 #include <arpa/inet.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-packet.h"
+#include "nd-json.h"
 #include "nd-ndpi.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif

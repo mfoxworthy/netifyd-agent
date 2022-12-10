@@ -63,10 +63,10 @@ class ndPluginLoader;
 #include <nd-json.h>
 #include <nd-util.h>
 #include <nd-thread.h>
+#include <nd-addr.h>
 #ifdef _ND_USE_NETLINK
 #include <nd-netlink.h>
 #endif
-#include <nd-addr.h>
 #include <nd-apps.h>
 #include <nd-protos.h>
 #include <nd-risks.h>

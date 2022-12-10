@@ -87,13 +87,13 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
-#ifdef _ND_USE_NETLINK
-#include "nd-netlink.h"
-#endif
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
@@ -122,7 +122,7 @@ extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
-extern ndAddrType *nd_addr_info;
+extern ndAddrType *nd_addrtype;
 
 #define ndEF    entry->flow
 #define ndEFNF  entry->flow->ndpi_flow
@@ -597,26 +597,18 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
 
 void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 {
-#ifdef _ND_USE_NETLINK
-    if (ND_USE_NETLINK) {
-        ndEF->lower_type = netlink->ClassifyAddress(&ndEF->lower_addr.addr.ss);
-        ndEF->upper_type = netlink->ClassifyAddress(&ndEF->upper_addr.addr.ss);
-    }
-#endif
+    nd_addrtype->Classify(ndEF->lower_type, ndEF->lower_addr);
+    nd_addrtype->Classify(ndEF->upper_type, ndEF->upper_addr);
+
     if (dhc != NULL) {
         string hostname;
-#ifdef _ND_USE_NETLINK
-        if (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN)
+
+        if (ndEF->lower_type == ndAddr::atOTHER)
             ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr.addr.ss, hostname);
-        else if (ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) {
+
+        if (! ndEF->flags.dhc_hit.load() &&
+            ndEF->upper_type == ndAddr::atOTHER) {
             ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr.addr.ss, hostname);
-        }
-#endif
-        if (! ndEF->flags.dhc_hit.load()) {
-            if (ndEF->origin == ndFlow::ORIGIN_LOWER)
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr.addr.ss, hostname);
-            else if (ndEF->origin == ndFlow::ORIGIN_UPPER)
-                ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr.addr.ss, hostname);
         }
 
         if (ndEF->flags.dhc_hit.load()) {
@@ -881,22 +873,22 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
             ndAddr::Type type;
             const char *ip, *mac;
 
-            if (t == ndFlow::TYPE_LOWER &&
-                (ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP ||
-                 ndEF->lower_type == ndNETLINK_ATYPE_LOCALNET ||
-                 ndEF->lower_type == ndNETLINK_ATYPE_PRIVATE)) {
+            if (t == ndFlow::TYPE_LOWER && (
+                ndEF->lower_type == ndAddr::atLOCAL ||
+                ndEF->lower_type == ndAddr::atLOCALNET ||
+                ndEF->lower_type == ndAddr::atRESERVED)) {
 
-                nd_addr_info->Classify(type, ndEF->lower_mac);
+                nd_addrtype->Classify(type, ndEF->lower_mac);
 
                 mac = ndEF->lower_mac.GetString().c_str();
                 ip = ndEF->lower_addr.GetString().c_str();
             }
-            else if (t == ndFlow::TYPE_UPPER &&
-                (ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP ||
-                 ndEF->upper_type == ndNETLINK_ATYPE_LOCALNET ||
-                 ndEF->upper_type == ndNETLINK_ATYPE_PRIVATE)) {
+            else if (t == ndFlow::TYPE_UPPER && (
+                ndEF->upper_type == ndAddr::atLOCAL ||
+                ndEF->upper_type == ndAddr::atLOCALNET ||
+                ndEF->upper_type == ndAddr::atRESERVED)) {
 
-                nd_addr_info->Classify(type, ndEF->upper_mac);
+                nd_addrtype->Classify(type, ndEF->upper_mac);
 
                 mac = ndEF->upper_mac.GetString().c_str();
                 ip = ndEF->upper_addr.GetString().c_str();
@@ -929,12 +921,12 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         }
     }
 #endif
-#if defined(_ND_USE_CONNTRACK) && defined(_ND_USE_NETLINK)
+#ifdef _ND_USE_CONNTRACK
     if (! ndEF->iface.internal && thread_conntrack != NULL) {
-        if ((ndEF->lower_type == ndNETLINK_ATYPE_LOCALIP &&
-            ndEF->upper_type == ndNETLINK_ATYPE_UNKNOWN) ||
-            (ndEF->lower_type == ndNETLINK_ATYPE_UNKNOWN &&
-            ndEF->upper_type == ndNETLINK_ATYPE_LOCALIP)) {
+        if ((ndEF->lower_type == ndAddr::atLOCAL &&
+            ndEF->upper_type == ndAddr::atOTHER ) ||
+            (ndEF->lower_type == ndAddr::atOTHER &&
+            ndEF->upper_type == ndAddr::atLOCAL)) {
 
             // Update flow with any collected information from the
             // connection tracker (CT ID, mark, NAT'd).

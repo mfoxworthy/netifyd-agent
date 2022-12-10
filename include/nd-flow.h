@@ -221,10 +221,9 @@ public:
     uint32_t ct_id;
     uint32_t ct_mark;
 #endif
-#ifdef _ND_USE_NETLINK
-    ndNetlinkAddressType lower_type;
-    ndNetlinkAddressType upper_type;
-#endif
+    ndAddr::Type lower_type;
+    ndAddr::Type upper_type;
+
     struct {
         atomic_bool ip_nat;
         atomic_bool tcp_fin;
@@ -248,10 +247,8 @@ public:
             uint8_t ip_version;
             uint32_t lower_teid;
             uint32_t upper_teid;
-#ifdef _ND_USE_NETLINK
-            ndNetlinkAddressType lower_type;
-            ndNetlinkAddressType upper_type;
-#endif
+            ndAddr::Type lower_type;
+            ndAddr::Type upper_type;
             ndAddr lower_addr;
             ndAddr upper_addr;
             uint8_t lower_map;
@@ -304,11 +301,10 @@ public:
 
     void update_lower_maps(void);
     void get_lower_map(
-#ifdef _ND_USE_NETLINK
-        ndNetlinkAddressType lt,
-        ndNetlinkAddressType ut,
-#endif
-        uint8_t &lm, uint8_t &ot);
+        ndAddr::Type lt,
+        ndAddr::Type ut,
+        uint8_t &lm, uint8_t &ot
+    );
 
     enum nd_encode_include {
         ENCODE_NONE = 0x00,
