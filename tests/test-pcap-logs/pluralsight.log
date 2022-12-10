@@ -1,12 +1,6 @@
-lo: [i4------] HTTP/S.netify.pluralsight 54.69.188.18:443 <-- 192.168.1.128:42642 H: pluralsight.com SSL C: pluralsight.com
-lo: [i4-u----] HTTP/S.netify.pluralsight 54.69.188.18:443 <-- 192.168.1.128:42642 H: pluralsight.com SSL C: pluralsight.com
-lo: [i4------] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42782 H: pluralsight2.imgix.net SSL C: pluralsight2.imgix.net
-lo: [i4------] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42790 H: pluralsight.imgix.net SSL C: pluralsight.imgix.net
-lo: [i4-u----] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42782 H: pluralsight2.imgix.net SSL C: pluralsight2.imgix.net
-lo: [i4-u----] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42790 H: pluralsight.imgix.net SSL C: pluralsight.imgix.net
-lo: [i4------] HTTP/S.netify.pluralsight 18.203.201.56:443 <-- 192.168.1.128:42618 H: stt.pluralsight.com SSL C: stt.pluralsight.com
-lo: [i4-u----] HTTP/S.netify.pluralsight 18.203.201.56:443 <-- 192.168.1.128:42618 H: stt.pluralsight.com SSL C: stt.pluralsight.com
-lo: [i4------] HTTP/S.netify.pluralsight 104.19.162.127:443 <-- 192.168.1.128:48948 H: www.pluralsight.com SSL C: www.pluralsight.com
-lo: [i4-u----] HTTP/S.netify.pluralsight 104.19.162.127:443 <-- 192.168.1.128:48948 H: www.pluralsight.com SSL C: www.pluralsight.com
-lo: [i4------] HTTP/S.netify.qualtrics 104.17.209.240:443 <-- 192.168.1.128:44770 H: zn6qzq6caaucudesr-pluralsight.siteintercept.qualtrics.com SSL C: zn6qzq6caaucudesr-pluralsight.siteintercept.qualtrics.com
-lo: [i4-u----] HTTP/S.netify.qualtrics 104.17.209.240:443 <-- 192.168.1.128:44770 H: zn6qzq6caaucudesr-pluralsight.siteintercept.qualtrics.com SSL C: zn6qzq6caaucudesr-pluralsight.siteintercept.qualtrics.com
+lo: [i4--g---] HTTP/S 54.69.188.18:443 <-- 192.168.1.128:42642
+lo: [i4--g---] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42782
+lo: [i4--g---] HTTP/S 146.75.62.208:443 <-- 192.168.1.128:42790
+lo: [i4--g---] HTTP/S 18.203.201.56:443 <-- 192.168.1.128:42618
+lo: [i4--g---] HTTP/S 104.19.162.127:443 <-- 192.168.1.128:48948
+lo: [i4--g---] HTTP/S 104.17.209.240:443 <-- 192.168.1.128:44770
