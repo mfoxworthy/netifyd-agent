@@ -316,7 +316,7 @@ uint16_t ndAddr::GetPort(bool byte_swap) const
     if (! IsValid()) return 0;
     if (IsIPv4())
         return ntohs(addr.in.sin_port);
-    if (IsIPv4())
+    if (IsIPv6())
         return ntohs(addr.in6.sin6_port);
 
     return 0;
