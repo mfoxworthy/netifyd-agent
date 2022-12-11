@@ -157,12 +157,12 @@ using namespace std;
 #include "nd-ndpi.h"
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
-#include "nd-util.h"
-#include "nd-addr.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
@@ -1094,6 +1094,9 @@ nd_process_ip:
             );
 
             if (is_query && nf->flags.detection_complete.load()) {
+                // Reset flow in case we have another query from the
+                // same client and server, using the same local and
+                // remote ports.
                 nf->flags.dhc_hit = false;
                 nf->flags.detection_init = false;
                 nf->flags.detection_complete = false;

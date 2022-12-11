@@ -76,7 +76,7 @@ public:
     bool Save(const string &filename);
 
     nd_app_id_t Find(const string &domain);
-    nd_app_id_t Find(sa_family_t af, void *addr);
+    nd_app_id_t Find(const ndAddr &addr);
 
     const char *Lookup(nd_app_id_t id);
     nd_app_id_t Lookup(const string &tag);

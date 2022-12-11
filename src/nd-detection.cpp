@@ -683,46 +683,11 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
     // Determine application by network CIDR if still unknown.
     if (ndEF->detected_application == ND_APP_UNKNOWN) {
-        switch (ndEF->ip_version) {
-        case 4:
-            SetDetectedApplication(entry,
-                nd_apps->Find(
-                    AF_INET,
-                    static_cast<void *>(
-                        &ndEF->lower_addr.addr.in.sin_addr
-                    )
-                )
-            );
-            if (ndEF->detected_application) break;
-            SetDetectedApplication(entry,
-                nd_apps->Find(
-                    AF_INET,
-                    static_cast<void *>(
-                        &ndEF->upper_addr.addr.in.sin_addr
-                    )
-                )
-            );
-            break;
-        case 6:
-            SetDetectedApplication(entry,
-                nd_apps->Find(
-                    AF_INET6,
-                    static_cast<void *>(
-                        &ndEF->lower_addr.addr.in6.sin6_addr
-                    )
-                )
-            );
-            if (ndEF->detected_application) break;
-            SetDetectedApplication(entry,
-                nd_apps->Find(
-                    AF_INET6,
-                    static_cast<void *>(
-                        &ndEF->upper_addr.addr.in6.sin6_addr
-                    )
-                )
-            );
-            break;
-        }
+
+        SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
+
+        if (ndEF->detected_application == ND_APP_UNKNOWN)
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
     }
 
     // Additional protocol-specific processing...

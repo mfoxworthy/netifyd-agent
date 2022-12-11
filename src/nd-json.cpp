@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -34,10 +35,16 @@
 #include <string.h>
 #include <errno.h>
 
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -48,9 +55,10 @@ using namespace std;
 #include "nd-base64.h"
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-util.h"
 
 extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;

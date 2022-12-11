@@ -1911,30 +1911,20 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
 int static nd_lookup_ip(const char *ip)
 {
+    ndAddr addr(ip);
+
+    if (! addr.IsValid() || ! addr.IsIP()) {
+        fprintf(stderr, "Invalid IP address: %s\n", ip);
+        return 1;
+    }
+
     if (nd_apps == NULL) {
         nd_apps = new ndApplications();
         if (! nd_apps->Load(nd_config.path_app_config))
             nd_apps->LoadLegacy(nd_config.path_legacy_config);
     }
 
-    nd_app_id_t id = 0;
-    struct sockaddr_in ip4;
-    struct sockaddr_in6 ip6;
-
-    if (inet_pton(AF_INET, ip, &ip4.sin_addr) == 1) {
-        id = nd_apps->Find(AF_INET,
-            static_cast<void *>(&ip4.sin_addr)
-        );
-    }
-    else if (inet_pton(AF_INET6, ip, &ip6.sin6_addr) == 1) {
-        id = nd_apps->Find(AF_INET6,
-            static_cast<void *>(&ip6.sin6_addr)
-        );
-    }
-    else {
-        fprintf(stderr, "WARNING: Not an IPv4 or IPv6 address: %s\n", ip);
-        return 1;
-    }
+    nd_app_id_t id = nd_apps->Find(addr);
 
     fprintf(stdout, "%u: %s\n", id, nd_apps->Lookup(id));
 

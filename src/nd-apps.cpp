@@ -341,47 +341,35 @@ nd_app_id_t ndApplications::Find(const string &domain)
     return ND_APP_UNKNOWN;
 }
 
-nd_app_id_t ndApplications::Find(sa_family_t af, void *addr)
+nd_app_id_t ndApplications::Find(const ndAddr &addr)
 {
-    unique_lock<mutex> ul(lock);
-
-    struct in_addr *dst_addr;
-    struct in6_addr *dst6_addr;
-
-    switch (af) {
-    case AF_INET:
-        dst_addr = static_cast<struct in_addr *>(addr);
-        break;
-    case AF_INET6:
-        dst6_addr = static_cast<struct in6_addr *>(addr);
-        break;
-    default:
-        nd_printf("Invalid address family: %hu\n", af);
+    if (! addr.IsValid() || ! addr.IsIP())
         return ND_APP_UNKNOWN;
-    }
 
-    if (af == AF_INET) {
+    if (addr.IsIPv4()) {
         ndRadixNetworkEntry<32> entry;
-        entry.prefix_len = 32;
-        entry.addr = ntohl(dst_addr->s_addr);
+        if (ndRadixNetworkEntry<32>::CreateQuery(entry, addr)) {
 
-        nd_rn4_app::iterator it;
-        nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
-        if ((it = rn4->longest_match(entry)) != rn4->end())
-            return it->second;
-    }
-    else if (af == AF_INET6) {
-        ndRadixNetworkEntry<128> entry;
-        entry.prefix_len = 128;
-        for (auto i = 0; i < 4; i++) {
-            entry.addr |= ntohl(dst6_addr->s6_addr32[i]);
-            if (i != 3) entry.addr <<= 32;
+            unique_lock<mutex> ul(lock);
+
+            nd_rn4_app::iterator it;
+            nd_rn4_app *rn4 = static_cast<nd_rn4_app *>(app_networks4);
+            if ((it = rn4->longest_match(entry)) != rn4->end())
+                return it->second;
         }
+    }
 
-        nd_rn6_app::iterator it;
-        nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
-        if ((it = rn6->longest_match(entry)) != rn6->end())
-            return it->second;
+    if (addr.IsIPv6()) {
+        ndRadixNetworkEntry<128> entry;
+        if (ndRadixNetworkEntry<128>::CreateQuery(entry, addr)) {
+
+            unique_lock<mutex> ul(lock);
+
+            nd_rn6_app::iterator it;
+            nd_rn6_app *rn6 = static_cast<nd_rn6_app *>(app_networks6);
+            if ((it = rn6->longest_match(entry)) != rn6->end())
+                return it->second;
+        }
     }
 
     return ND_APP_UNKNOWN;
