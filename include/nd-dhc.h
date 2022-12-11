@@ -28,20 +28,19 @@ class ndDNSHintCache
 {
 public:
     ndDNSHintCache();
-    virtual ~ndDNSHintCache();
 
-    void insert(sa_family_t af, const uint8_t *addr, const string &hostname);
-    void insert(const string &digest, const string &hostname);
+    void Insert(const ndAddr &addr, const string &hostname);
+    void Insert(const string &digest, const string &hostname);
 
-    bool lookup(const struct sockaddr_storage *addr, string &hostname);
-    bool lookup(const string &digest, string &hostname);
+    bool Lookup(const ndAddr &addr, string &hostname);
+    bool Lookup(const string &digest, string &hostname);
 
-    size_t purge(void);
+    size_t Purge(void);
 
-    void load(void);
-    void save(void);
+    void Load(void);
+    void Save(void);
 
-    size_t size(void) {
+    size_t GetSize(void) {
         unique_lock<mutex> ul(lock);
         return map_ar.size();
     };

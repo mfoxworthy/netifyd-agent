@@ -1661,7 +1661,7 @@ static void nd_dump_stats(void)
 
     if (ND_USE_DHC) {
         nd_json_agent_stats.dhc_status = true;
-        nd_json_agent_stats.dhc_size = dns_hint_cache->size();
+        nd_json_agent_stats.dhc_size = dns_hint_cache->GetSize();
     }
     else
         nd_json_agent_stats.dhc_status = false;
@@ -2757,8 +2757,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (dns_hint_cache) dns_hint_cache->load();
-    if (flow_hash_cache) flow_hash_cache->load();
+    if (dns_hint_cache) dns_hint_cache->Load();
+    if (flow_hash_cache) flow_hash_cache->Load();
 
     nd_sha1_file(
         nd_config.path_app_config, nd_config.digest_app_config
@@ -3015,7 +3015,7 @@ int main(int argc, char *argv[])
             nd_plugin_reap_tasks();
 #endif
             if (dns_hint_cache)
-                dns_hint_cache->purge();
+                dns_hint_cache->Purge();
 #if !defined(_ND_USE_LIBTCMALLOC) && !defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_MALLOC_TRIM)
             // Attempt to release heap back to OS when supported
             malloc_trim(0);
@@ -3159,12 +3159,12 @@ int main(int argc, char *argv[])
 #endif
 
     if (dns_hint_cache) {
-        dns_hint_cache->save();
+        dns_hint_cache->Save();
         delete dns_hint_cache;
     }
 
     if (flow_hash_cache) {
-        flow_hash_cache->save();
+        flow_hash_cache->Save();
         delete flow_hash_cache;
     }
 

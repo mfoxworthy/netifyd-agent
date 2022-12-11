@@ -311,6 +311,28 @@ bool ndAddr::Create(ndAddr &a,
     return true;
 }
 
+const uint8_t *ndAddr::GetAddress(void) const
+{
+    if (! IsValid()) return nullptr;
+    if (IsIPv4())
+        return (const uint8_t *)&addr.in.sin_addr;
+    if (IsIPv6())
+        return (const uint8_t *)&addr.in6.sin6_addr;
+
+    return nullptr;
+}
+
+size_t ndAddr::GetAddressSize(void) const
+{
+    if (! IsValid()) return 0;
+    if (IsIPv4())
+        return sizeof(struct in_addr);
+    if (IsIPv6())
+        return sizeof(struct in6_addr);
+
+    return 0;
+}
+
 uint16_t ndAddr::GetPort(bool byte_swap) const
 {
     if (! IsValid()) return 0;

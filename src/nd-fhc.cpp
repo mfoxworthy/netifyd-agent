@@ -86,7 +86,7 @@ ndFlowHashCache::~ndFlowHashCache()
     pthread_mutex_destroy(&lock);
 }
 
-void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
+void ndFlowHashCache::Push(const string &lower_hash, const string &upper_hash)
 {
     int rc;
 
@@ -129,7 +129,7 @@ void ndFlowHashCache::push(const string &lower_hash, const string &upper_hash)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
 }
 
-bool ndFlowHashCache::pop(const string &lower_hash, string &upper_hash)
+bool ndFlowHashCache::Pop(const string &lower_hash, string &upper_hash)
 {
     int rc;
     bool found = false;
@@ -156,7 +156,45 @@ bool ndFlowHashCache::pop(const string &lower_hash, string &upper_hash)
     return found;
 }
 
-void ndFlowHashCache::save(void)
+void ndFlowHashCache::Load(void)
+{
+    ostringstream os;
+
+    switch (nd_config.fhc_save) {
+    case ndFHC_PERSISTENT:
+        os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        break;
+    case ndFHC_VOLATILE:
+        os << ND_VOLATILE_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        break;
+    default:
+        return;
+    }
+
+    FILE *hf = fopen(os.str().c_str(), "rb");
+    if (hf != NULL) {
+        do {
+            string digest_lower, digest_mdata;
+            uint8_t digest[SHA1_DIGEST_LENGTH * 2];
+
+            if (fread(digest, SHA1_DIGEST_LENGTH * 2, 1, hf) != 1) break;
+
+            digest_lower.assign((const char *)digest, SHA1_DIGEST_LENGTH);
+            digest_mdata.assign((const char *)&digest[SHA1_DIGEST_LENGTH],
+                SHA1_DIGEST_LENGTH);
+
+            Push(digest_lower, digest_mdata);
+        }
+        while (! feof(hf));
+
+        fclose(hf);
+    }
+
+    if (index.size())
+        nd_dprintf("Loaded %lu flow hash cache entries.\n", index.size());
+}
+
+void ndFlowHashCache::Save(void)
 {
     ostringstream os;
 
@@ -186,44 +224,6 @@ void ndFlowHashCache::save(void)
     fclose(hf);
 
     nd_dprintf("Saved %lu flow hash cache entries.\n", index.size ());
-}
-
-void ndFlowHashCache::load(void)
-{
-    ostringstream os;
-
-    switch (nd_config.fhc_save) {
-    case ndFHC_PERSISTENT:
-        os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
-        break;
-    case ndFHC_VOLATILE:
-        os << ND_VOLATILE_STATEDIR << ND_FLOW_HC_FILE_NAME;
-        break;
-    default:
-        return;
-    }
-
-    FILE *hf = fopen(os.str().c_str(), "rb");
-    if (hf != NULL) {
-        do {
-            string digest_lower, digest_mdata;
-            uint8_t digest[SHA1_DIGEST_LENGTH * 2];
-
-            if (fread(digest, SHA1_DIGEST_LENGTH * 2, 1, hf) != 1) break;
-
-            digest_lower.assign((const char *)digest, SHA1_DIGEST_LENGTH);
-            digest_mdata.assign((const char *)&digest[SHA1_DIGEST_LENGTH],
-                SHA1_DIGEST_LENGTH);
-
-            push(digest_lower, digest_mdata);
-        }
-        while (! feof(hf));
-
-        fclose(hf);
-    }
-
-    if (index.size())
-        nd_dprintf("Loaded %lu flow hash cache entries.\n", index.size());
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

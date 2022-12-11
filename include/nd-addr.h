@@ -103,6 +103,9 @@ public:
     static bool Create(ndAddr &a,
         const struct in6_addr *in6_addr, uint8_t prefix = 128);
 
+    const uint8_t *GetAddress(void) const;
+    size_t GetAddressSize(void) const;
+
     uint16_t GetPort(bool byte_swap = true) const;
     bool SetPort(uint16_t port);
 

@@ -29,11 +29,11 @@ public:
     ndFlowHashCache(size_t cache_size = ND_MAX_FHC_ENTRIES);
     virtual ~ndFlowHashCache();
 
-    void push(const string &lower_hash, const string &upper_hash);
-    bool pop(const string &lower_hash, string &upper_hash);
+    void Push(const string &lower_hash, const string &upper_hash);
+    bool Pop(const string &lower_hash, string &upper_hash);
 
-    void save(void);
-    void load(void);
+    void Load(void);
+    void Save(void);
 
 protected:
     pthread_mutex_t lock;

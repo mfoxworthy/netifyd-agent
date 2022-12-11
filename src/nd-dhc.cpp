@@ -28,6 +28,7 @@
 #include <atomic>
 #include <regex>
 #include <mutex>
+#include <bitset>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,11 +46,17 @@
 #include <netinet/in.h>
 
 #include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
+
+#include <net/if.h>
 
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -58,12 +65,15 @@ using namespace std;
 #include "nd-config.h"
 #include "nd-packet.h"
 #include "nd-json.h"
+#include "nd-util.h"
+#include "nd-addr.h"
 #include "nd-ndpi.h"
 #include "nd-sha1.h"
-#include "nd-util.h"
 #include "nd-dhc.h"
 
 extern ndGlobalConfig nd_config;
+
+extern ndAddrType *nd_addrtype;
 
 ndDNSHintCache::ndDNSHintCache()
 {
@@ -72,25 +82,38 @@ ndDNSHintCache::ndDNSHintCache()
 #endif
 }
 
-ndDNSHintCache::~ndDNSHintCache()
+void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
 {
-}
+    if (! addr.IsValid() || ! addr.IsIP() || addr.IsNetwork()) {
+        nd_dprintf("Invalid DHC address: %s\n",
+            addr.GetString().c_str()
+        );
+        return;
+    }
 
-void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &hostname)
-{
+    ndAddr::Type type;
+    nd_addrtype->Classify(type, addr);
+
+    if (type != ndAddr::atOTHER) {
+        nd_dprintf("Invalid DHC address type: %d: %s\n",
+            type, addr.GetString().c_str()
+        );
+        return;
+    }
+
+    const uint8_t *sa = addr.GetAddress();
+    if (sa == nullptr) {
+        nd_dprintf("Invalid DHC address data.\n");
+        return;
+    }
+
     sha1 ctx;
     string digest;
     uint8_t _digest[SHA1_DIGEST_LENGTH];
 
-    if (af == AF_INET) {
-        // TODO: Temporary hack; certain addresses (ex: broadcast),
-        // should not be added to DNS cache...
-        if (((struct in_addr *)addr)->s_addr == 0xffffffff) return;
-    }
-
     sha1_init(&ctx);
-    sha1_write(&ctx, (const char *)addr, (af == AF_INET) ?
-        sizeof(struct in_addr) : sizeof(struct in6_addr));
+    sha1_write(&ctx, sa, addr.GetAddressSize());
+
     digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
 
     unique_lock<mutex> ul(lock);
@@ -102,7 +125,7 @@ void ndDNSHintCache::insert(sa_family_t af, const uint8_t *addr, const string &h
         i.first->second.first = time(NULL) + nd_config.ttl_dns_entry;
 }
 
-void ndDNSHintCache::insert(const string &digest, const string &hostname)
+void ndDNSHintCache::Insert(const string &digest, const string &hostname)
 {
     int i = 0;
     uint8_t v;
@@ -124,33 +147,36 @@ void ndDNSHintCache::insert(const string &digest, const string &hostname)
     map_ar.insert(nd_dhc_insert_pair(_digest, ar));
 }
 
-bool ndDNSHintCache::lookup(const struct sockaddr_storage *addr, string &hostname)
+bool ndDNSHintCache::Lookup(const ndAddr &addr, string &hostname)
 {
-    sha1 ctx;
-    string digest;
-    uint8_t _digest[SHA1_DIGEST_LENGTH];
-    const struct sockaddr_in *addr4;
-    const struct sockaddr_in6 *addr6;
-
-    sha1_init(&ctx);
-    switch (addr->ss_family) {
-    case AF_INET:
-        addr4 = (const struct sockaddr_in *)addr;
-        sha1_write(&ctx, (const char *)&addr4->sin_addr, sizeof(struct in_addr));
-        break;
-    case AF_INET6:
-        addr6 = (const struct sockaddr_in6 *)addr;
-        sha1_write(&ctx, (const char *)&addr6->sin6_addr, sizeof(struct in6_addr));
-        break;
-    default:
+    if (! addr.IsValid() || ! addr.IsIP() || addr.IsNetwork()) {
+        nd_dprintf("Invalid DHC address: %s\n",
+            addr.GetString().c_str()
+        );
         return false;
     }
 
+    const uint8_t *sa = addr.GetAddress();
+    size_t sa_length = addr.GetAddressSize();
+
+    if (sa == nullptr || sa_length == 0) {
+        nd_dprintf("Invalid DHC address data.\n");
+        return false;
+    }
+
+    sha1 ctx;
+    string digest;
+    uint8_t _digest[SHA1_DIGEST_LENGTH];
+
+    sha1_init(&ctx);
+    sha1_write(&ctx, sa, sa_length);
+
     digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
-    return lookup(digest, hostname);
+
+    return Lookup(digest, hostname);
 }
 
-bool ndDNSHintCache::lookup(const string &digest, string &hostname)
+bool ndDNSHintCache::Lookup(const string &digest, string &hostname)
 {
     bool found = false;
     unique_lock<mutex> ul(lock);
@@ -165,7 +191,7 @@ bool ndDNSHintCache::lookup(const string &digest, string &hostname)
     return found;
 }
 
-size_t ndDNSHintCache::purge(void)
+size_t ndDNSHintCache::Purge(void)
 {
     unique_lock<mutex> ul(lock);
     size_t purged = 0, remaining = 0;
@@ -188,7 +214,7 @@ size_t ndDNSHintCache::purge(void)
     return purged;
 }
 
-void ndDNSHintCache::load(void)
+void ndDNSHintCache::Load(void)
 {
     int rc;
     long ttl;
@@ -226,7 +252,7 @@ void ndDNSHintCache::load(void)
             break;
         }
 
-        insert(digest, host);
+        Insert(digest, host);
 
         free(host);
         free(digest);
@@ -240,7 +266,7 @@ void ndDNSHintCache::load(void)
     fclose(hf);
 }
 
-void ndDNSHintCache::save(void)
+void ndDNSHintCache::Save(void)
 {
     string digest;
     size_t saved = 0;

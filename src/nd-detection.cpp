@@ -604,11 +604,11 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         string hostname;
 
         if (ndEF->lower_type == ndAddr::atOTHER)
-            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->lower_addr.addr.ss, hostname);
+            ndEF->flags.dhc_hit = dhc->Lookup(ndEF->lower_addr, hostname);
 
         if (! ndEF->flags.dhc_hit.load() &&
             ndEF->upper_type == ndAddr::atOTHER) {
-            ndEF->flags.dhc_hit = dhc->lookup(&ndEF->upper_addr.addr.ss, hostname);
+            ndEF->flags.dhc_hit = dhc->Lookup(ndEF->upper_addr, hostname);
         }
 
         if (ndEF->flags.dhc_hit.load()) {
@@ -839,7 +839,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         flow_digest.assign(
             (const char *)ndEF->digest_lower, SHA1_DIGEST_LENGTH);
 
-        if (! fhc->pop(flow_digest, flow_digest_mdata)) {
+        if (! fhc->Pop(flow_digest, flow_digest_mdata)) {
 
             ndEF->hash(tag, true);
 
@@ -849,7 +849,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
             if (memcmp(ndEF->digest_lower, ndEF->digest_mdata,
                 SHA1_DIGEST_LENGTH))
-                fhc->push(flow_digest, flow_digest_mdata);
+                fhc->Push(flow_digest, flow_digest_mdata);
         }
         else {
             if (memcmp(ndEF->digest_mdata, flow_digest_mdata.c_str(),

@@ -1292,9 +1292,11 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
             continue;
 
         // Add responses to DHC...
-        dhc->insert(
-            (ns_rr_type(rr) == ns_t_a) ? AF_INET : AF_INET6,
-            ns_rr_rdata(rr), host
+        dhc->Insert(
+            (ns_rr_type(rr) == ns_t_a) ?
+                ndAddr((const struct in_addr *)ns_rr_rdata(rr)) :
+                ndAddr((const struct in6_addr *)ns_rr_rdata(rr)),
+            host
         );
 
 #ifdef _ND_LOG_DHC
