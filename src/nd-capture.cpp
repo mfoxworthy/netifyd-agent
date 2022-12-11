@@ -1295,32 +1295,20 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
             continue;
 
         // Add responses to DHC...
-        dhc->Insert(
+        ndAddr addr(
             (ns_rr_type(rr) == ns_t_a) ?
                 ndAddr((const struct in_addr *)ns_rr_rdata(rr)) :
-                ndAddr((const struct in6_addr *)ns_rr_rdata(rr)),
-            host
+                ndAddr((const struct in6_addr *)ns_rr_rdata(rr))
         );
 
+        dhc->Insert(addr, host);
+
 #ifdef _ND_LOG_DHC
-        char addr[INET6_ADDRSTRLEN];
-        struct in_addr addr4;
-        struct in6_addr addr6;
-
-        if (ns_rr_type(rr) == ns_t_a) {
-            memcpy(&addr4, ns_rr_rdata(rr), sizeof(struct in_addr));
-            inet_ntop(AF_INET, &addr4, addr, INET_ADDRSTRLEN);
-        }
-        else {
-            memcpy(&addr6, ns_rr_rdata(rr), sizeof(struct in6_addr));
-            inet_ntop(AF_INET6, &addr6, addr, INET6_ADDRSTRLEN);
-        }
-
         nd_dprintf(
             "%s: dns RR %s address: %s, ttl: %u, rlen: %hu: %s\n",
             tag.c_str(), host,
             (ns_rr_type(rr) == ns_t_a) ? "A" : "AAAA",
-            ns_rr_ttl(rr), ns_rr_rdlen(rr), addr);
+            ns_rr_ttl(rr), ns_rr_rdlen(rr), addr.GetCString());
 #endif // _ND_LOG_DHC
     }
 
