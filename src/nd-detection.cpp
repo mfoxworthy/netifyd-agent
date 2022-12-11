@@ -118,6 +118,9 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_LOG_FHC             1
 
+// Enable to log unknown protocol debug
+//#define _ND_LOG_PROTO_UNKNOWN 1
+
 extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
@@ -345,8 +348,6 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     bool flow_update = false;
 
     if (ndEFNF == NULL) {
-        if (ndEF->detection_packets.load() != 1)
-            nd_dprintf("WARNING: Flow ZOMBIE.\n");
 
         flows++;
 
@@ -367,7 +368,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
     );
 
     if (ndEF->detected_protocol == ND_PROTO_UNKNOWN &&
-        ndpi_rc.app_protocol != NDPI_PROTOCOL_UNKNOWN) {
+        ndpi_rc.master_protocol != NDPI_PROTOCOL_UNKNOWN) {
         ndEF->detected_protocol = nd_ndpi_proto_find(
             ndpi_rc.master_protocol,
             ndEF
@@ -380,19 +381,30 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             ndpi_rc.app_protocol,
             ndEF
         );
-
+#if _ND_LOG_PROTO_UNKNOWN
         if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
             char proto_name[64];
             ndpi_protocol2name(
                 ndpi, ndpi_rc, proto_name, sizeof(proto_name)
             );
-#if 0
             nd_dprintf(
                 "%s: Set detected protocol from application hint: %s\n",
                 tag.c_str(), proto_name
             );
-#endif
         }
+#endif
+    }
+
+    if (ndEF->detected_protocol == ND_PROTO_TODO) {
+        char proto_name[64];
+        ndpi_protocol2name(
+            ndpi, ndpi_rc, proto_name, sizeof(proto_name)
+        );
+        nd_dprintf(
+            "%s: Unmapped detected protocol: ID #%hu/%hu (%s)\n",
+                tag.c_str(), ndpi_rc.master_protocol,
+                ndpi_rc.app_protocol, proto_name
+        );
     }
 
     bool check_extra_packets = (ndEFNF->extra_packets_func != NULL);

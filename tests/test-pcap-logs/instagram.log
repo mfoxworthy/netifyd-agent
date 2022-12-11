@@ -46,8 +46,8 @@ lo: [i4------] HTTP/S.netify.instagram 31.13.86.52:443 <-- 192.168.2.17:49360 H:
 lo: [i4------] HTTP/S.netify.instagram 31.13.86.52:443 <-- 192.168.2.17:49361 H: scontent-mxp1-1.cdninstagram.com SSL C: scontent-mxp1-1.cdninstagram.com
 lo: [i4-u----] HTTP/S.netify.instagram 31.13.86.52:443 <-- 192.168.2.17:49360 H: scontent-mxp1-1.cdninstagram.com SSL C: scontent-mxp1-1.cdninstagram.com
 lo: [i4-u----] HTTP/S.netify.instagram 31.13.86.52:443 <-- 192.168.2.17:49361 H: scontent-mxp1-1.cdninstagram.com SSL C: scontent-mxp1-1.cdninstagram.com
+lo: [i4--g---] HTTP 46.33.70.150:80 <-- 192.168.0.103:40855
+lo: [i4--g---] HTTP 82.85.26.185:80 <-- 192.168.0.103:57966
 lo: [i4--g---] Unknown 192.168.0.1:520 --> 192.168.0.255:520
 lo: [i4--g---] HTTP 46.33.70.160:80 <-- 192.168.0.103:38817
 lo: [i4--g---] HTTP 92.122.48.138:80 <-- 192.168.0.103:41562
-lo: [i4--g---] HTTP 46.33.70.150:80 <-- 192.168.0.103:40855
-lo: [i4--g---] HTTP 82.85.26.185:80 <-- 192.168.0.103:57966

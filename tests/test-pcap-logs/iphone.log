@@ -63,4 +63,4 @@ lo: [i4-u----] HTTP/S.netify.apple-itunes 92.123.77.26:443 <-- 192.168.2.17:5058
 lo: [i4------] DNS.netify.apple-itunes 192.168.2.1:53 <-- 192.168.2.17:63677 H: sync.itunes.apple.com
 lo: [i4------] HTTP/S.netify.apple-itunes 95.101.24.53:443 <-- 192.168.2.17:50588 H: sync.itunes.apple.com SSL C: sync.itunes.apple.com
 lo: [i4-u----] HTTP/S.netify.apple-itunes 95.101.24.53:443 <-- 192.168.2.17:50588 H: sync.itunes.apple.com SSL C: sync.itunes.apple.com
-lo: [i4--g---] TODO 192.168.2.1:5351 --> 224.0.0.1:5350
+lo: [i4--g---] NAT/PMP 192.168.2.1:5351 --> 224.0.0.1:5350

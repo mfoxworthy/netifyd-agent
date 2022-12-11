@@ -297,7 +297,7 @@ nd_proto_id_t ndFlow::master_protocol(void) const
     switch (detected_protocol) {
     case ND_PROTO_HTTPS:
     case ND_PROTO_TLS:
-    case ND_PROTO_FTPS_CONTROL:
+    case ND_PROTO_FTPS:
     case ND_PROTO_FTPS_DATA:
     case ND_PROTO_MAIL_IMAPS:
     case ND_PROTO_MAIL_POPS:
