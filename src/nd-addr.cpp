@@ -337,9 +337,9 @@ uint16_t ndAddr::GetPort(bool byte_swap) const
 {
     if (! IsValid()) return 0;
     if (IsIPv4())
-        return ntohs(addr.in.sin_port);
+        return ((byte_swap) ? ntohs(addr.in.sin_port) : addr.in.sin_port);
     if (IsIPv6())
-        return ntohs(addr.in6.sin6_port);
+        return ((byte_swap) ? ntohs(addr.in6.sin6_port) : addr.in6.sin6_port);
 
     return 0;
 }
@@ -660,6 +660,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
                 if ((it = iface.second.longest_match(entry))
                     != iface.second.end()) {
                     type = it->second;
+                    if (type == ndAddr::atLOCALNET &&
+                        ! addr.IsNetwork()) type = ndAddr::atLOCAL;
                     return;
                 }
             }
@@ -674,6 +676,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             if ((it = ipv4_reserved.longest_match(entry))
                 != ipv4_reserved.end()) {
                 type = it->second;
+                if (type == ndAddr::atLOCALNET &&
+                    ! addr.IsNetwork()) type = ndAddr::atLOCAL;
                 return;
             }
         }
@@ -697,6 +701,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
                 if ((it = iface.second.longest_match(entry))
                     != iface.second.end()) {
                     type = it->second;
+                    if (type == ndAddr::atLOCALNET &&
+                        ! addr.IsNetwork()) type = ndAddr::atLOCAL;
                     return;
                 }
             }
@@ -711,6 +717,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             if ((it = ipv6_reserved.longest_match(entry))
                 != ipv6_reserved.end()) {
                 type = it->second;
+                if (type == ndAddr::atLOCALNET &&
+                    ! addr.IsNetwork()) type = ndAddr::atLOCAL;
                 return;
             }
         }

@@ -70,6 +70,7 @@ using namespace std;
 
 #include "netifyd.h"
 
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-packet.h"
 #include "nd-json.h"
@@ -89,6 +90,8 @@ using namespace std;
 //#define _ND_DEBUG_CONNTRACK     1
 
 #include "nd-conntrack.h"
+
+extern ndGlobalConfig nd_config;
 
 static time_t nd_ct_last_flow_purge_ttl = 0;
 
@@ -561,27 +564,15 @@ void ndConntrackThread::UpdateFlow(ndFlow *flow)
     sha1_write(&ctx, (const char *)&family, sizeof(sa_family_t));
     sha1_write(&ctx, (const char *)&flow->ip_protocol, sizeof(uint8_t));
 
-    switch (family) {
-    case AF_INET:
-        sha1_write(&ctx,
-            (const char *)&flow->lower_addr.addr.in.sin_addr, sizeof(struct in_addr));
-        sha1_write(&ctx,
-            (const char *)&flow->upper_addr.addr.in.sin_addr, sizeof(struct in_addr));
-        break;
-    case AF_INET6:
-        sha1_write(&ctx,
-            (const char *)&flow->lower_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
-        sha1_write(&ctx,
-            (const char *)&flow->upper_addr.addr.in6.sin6_addr, sizeof(struct in6_addr));
-        break;
-    }
+    sha1_write(&ctx, flow->lower_addr.GetAddress(),
+        flow->lower_addr.GetAddressSize());
+    sha1_write(&ctx, flow->upper_addr.GetAddress(),
+        flow->upper_addr.GetAddressSize());
 
     uint16_t port = flow->lower_addr.GetPort(false);
-    sha1_write(&ctx,
-        (const char *)&port, sizeof(uint16_t));
+    sha1_write(&ctx, (const char *)&port, sizeof(uint16_t));
     port = flow->upper_addr.GetPort(false);
-    sha1_write(&ctx,
-        (const char *)&port, sizeof(uint16_t));
+    sha1_write(&ctx, (const char *)&port, sizeof(uint16_t));
 
     digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
 

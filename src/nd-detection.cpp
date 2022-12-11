@@ -888,6 +888,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 #endif
 #ifdef _ND_USE_CONNTRACK
     if (! ndEF->iface.internal && thread_conntrack != NULL) {
+
         if ((ndEF->lower_type == ndAddr::atLOCAL &&
             ndEF->upper_type == ndAddr::atOTHER ) ||
             (ndEF->lower_type == ndAddr::atOTHER &&
