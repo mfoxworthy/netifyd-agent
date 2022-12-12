@@ -1308,7 +1308,7 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
             "%s: dns RR %s address: %s, ttl: %u, rlen: %hu: %s\n",
             tag.c_str(), host,
             (ns_rr_type(rr) == ns_t_a) ? "A" : "AAAA",
-            ns_rr_ttl(rr), ns_rr_rdlen(rr), addr.GetCString());
+            ns_rr_ttl(rr), ns_rr_rdlen(rr), addr.GetString().c_str());
 #endif // _ND_LOG_DHC
     }
 

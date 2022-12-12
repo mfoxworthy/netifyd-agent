@@ -188,9 +188,6 @@ public:
         }
         return false;
     }
-    const char *GetCString(uint8_t flags = mfALL) const {
-        return GetString(flags).c_str();
-    }
 
     inline bool operator==(const ndAddr &a) const {
         if (a.prefix != prefix) return false;

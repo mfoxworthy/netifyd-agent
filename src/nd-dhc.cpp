@@ -85,7 +85,7 @@ ndDNSHintCache::ndDNSHintCache()
 void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
 {
     if (! addr.IsValid() || ! addr.IsIP() || addr.IsNetwork()) {
-        nd_dprintf("Invalid DHC address: %s\n", addr.GetCString());
+        nd_dprintf("Invalid DHC address: %s\n", addr.GetString().c_str());
         return;
     }
 
@@ -94,7 +94,7 @@ void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
 
     if (type != ndAddr::atOTHER) {
         nd_dprintf("Invalid DHC address type: %d: %s\n",
-            type, addr.GetCString());
+            type, addr.GetString().c_str());
         return;
     }
 
@@ -147,7 +147,7 @@ void ndDNSHintCache::Insert(const string &digest, const string &hostname)
 bool ndDNSHintCache::Lookup(const ndAddr &addr, string &hostname)
 {
     if (! addr.IsValid() || ! addr.IsIP() || addr.IsNetwork()) {
-        nd_dprintf("Invalid DHC address: %s\n", addr.GetCString());
+        nd_dprintf("Invalid DHC address: %s\n", addr.GetString().c_str());
         return false;
     }
 

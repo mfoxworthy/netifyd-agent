@@ -454,8 +454,8 @@ bool ndFlow::has_mdns_domain_name(void) const
 void ndFlow::print(void) const
 {
     const char
-        *lower_name = lower_addr.GetCString(),
-        *upper_name = upper_addr.GetCString();
+        *lower_name = lower_addr.GetString().c_str(),
+        *upper_name = upper_addr.GetString().c_str();
 
     if (ND_DEBUG_WITH_ETHERS) {
         string key;

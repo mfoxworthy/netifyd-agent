@@ -857,8 +857,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
                 nd_addrtype->Classify(type, ndEF->lower_mac);
 
-                mac = ndEF->lower_mac.GetCString();
-                ip = ndEF->lower_addr.GetCString();
+                mac = ndEF->lower_mac.GetString().c_str();
+                ip = ndEF->lower_addr.GetString().c_str();
             }
             else if (t == ndFlow::TYPE_UPPER && (
                 ndEF->upper_type == ndAddr::atLOCAL ||
@@ -867,8 +867,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
                 nd_addrtype->Classify(type, ndEF->upper_mac);
 
-                mac = ndEF->upper_mac.GetCString();
-                ip = ndEF->upper_addr.GetCString();
+                mac = ndEF->upper_mac.GetString().c_str();
+                ip = ndEF->upper_addr.GetString().c_str();
             }
             else continue;
 

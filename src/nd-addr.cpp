@@ -78,12 +78,10 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
 
     size_t p;
     if ((p = addr.find_first_of("/")) != string::npos) {
-        char *ep = NULL;
-        a.prefix = (uint8_t)strtoul(
-            addr.substr(p + 1).c_str(), &ep, 10
-        );
-
-        if (*ep != '\0') {
+        try {
+            a.prefix = (uint8_t)stoul(addr.substr(p + 1), nullptr, 10);
+        }
+        catch (...) {
             nd_dprintf("Invalid IP address prefix length: %s\n",
                 addr.substr(p + 1).c_str()
             );
@@ -133,12 +131,10 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
                 string byte;
                 getline(ss, byte, ':');
 
-                char *ep = NULL;
-                hw_addr[octet] = (uint8_t)strtoul(
-                    byte.c_str(), &ep, 16
-                );
-
-                if (*ep != '\0') {
+                try {
+                    hw_addr[octet] = (uint8_t)stoul(byte, nullptr, 16);
+                }
+                catch (...) {
                     nd_dprintf(
                         "Invalid hardware address, octet #%hhu\n",
                         octet
@@ -459,12 +455,12 @@ bool ndAddrType::AddAddress(
 {
     if (! addr.IsValid()) {
         nd_printf("Invalid address: %s\n",
-            addr.GetCString());
+            addr.GetString().c_str());
         return false;
     }
 #if 0
     nd_dprintf("%s: %d: %s: %s\n", __PRETTY_FUNCTION__, type,
-        (ifname) ? ifname : "(global)", addr.GetCString()
+        (ifname) ? ifname : "(global)", addr.GetString().c_str()
     );
 #endif
     unique_lock<mutex> ul(lock);
@@ -522,7 +518,7 @@ bool ndAddrType::AddAddress(
     }
     catch (runtime_error &e) {
         nd_dprintf("Error adding address: %s: %s\n",
-            addr.GetCString(), e.what());
+            addr.GetString().c_str(), e.what());
     }
 
     return false;
@@ -533,12 +529,12 @@ bool ndAddrType::RemoveAddress(
 {
     if (! addr.IsValid()) {
         nd_printf("Invalid address: %s\n",
-            addr.GetCString());
+            addr.GetString().c_str());
         return false;
     }
 #if 0
     nd_dprintf("%s: %s: %s\n", __PRETTY_FUNCTION__,
-        (ifname) ? ifname : "(global)", addr.GetCString()
+        (ifname) ? ifname : "(global)", addr.GetString().c_str()
     );
 #endif
     unique_lock<mutex> ul(lock);
@@ -592,7 +588,7 @@ bool ndAddrType::RemoveAddress(
     }
     catch (runtime_error &e) {
         nd_dprintf("Error removing address: %s: %s\n",
-            addr.GetCString(), e.what());
+            addr.GetString().c_str(), e.what());
     }
 
     return false;
