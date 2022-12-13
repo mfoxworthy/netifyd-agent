@@ -118,6 +118,7 @@ typedef void* yyscan_t;
 %token FLOW_LOCAL_PORT FLOW_OTHER_PORT
 %token FLOW_TUNNEL_TYPE
 %token FLOW_DETECTION_GUESSED
+%token FLOW_DETECTION_UPDATED
 %token FLOW_CATEGORY
 %token FLOW_RISKS FLOW_NDPI_RISK_SCORE FLOW_NDPI_RISK_SCORE_CLIENT FLOW_NDPI_RISK_SCORE_SERVER
 %token FLOW_DOMAIN_CATEGORY
@@ -148,7 +149,7 @@ typedef void* yyscan_t;
 %type <bool_result> expr expr_ip_proto expr_ip_version expr_ip_nat expr_vlan_id expr_other_type
 %type <bool_result> expr_local_mac expr_other_mac expr_local_ip expr_other_ip
 %type <bool_result> expr_local_port expr_other_port
-%type <bool_result> expr_tunnel_type expr_detection_guessed
+%type <bool_result> expr_tunnel_type expr_detection_guessed expr_detection_updated
 %type <bool_result> expr_category
 %type <bool_result> expr_risks expr_ndpi_risk_score expr_ndpi_risk_score_client expr_ndpi_risk_score_server
 %type <bool_result> expr_app expr_app_id expr_app_name expr_app_category
@@ -178,6 +179,7 @@ expr:
     | expr_other_port
     | expr_tunnel_type
     | expr_detection_guessed
+    | expr_detection_updated
     | expr_category
     | expr_risks
     | expr_ndpi_risk_score
@@ -659,6 +661,51 @@ expr_detection_guessed:
         ));
         _NDFP_debugf(
             "Detection guessed != false? %s\n", (_NDFP_result) ? "yes" : "no"
+        );
+    }
+    ;
+
+expr_detection_updated:
+      FLOW_DETECTION_UPDATED {
+        _NDFP_result = ($$ = (_NDFP_flow->flags.detection_updated.load()));
+        _NDFP_debugf("Detection was updated? %s\n", (_NDFP_result) ? "yes" : "no");
+    }
+    | '!'  FLOW_DETECTION_UPDATED {
+        _NDFP_result = ($$ = !(_NDFP_flow->flags.detection_updated.load()));
+        _NDFP_debugf(
+            "Detection was not updated? %s\n", (_NDFP_result) ? "yes" : "no"
+        );
+    }
+    | FLOW_DETECTION_UPDATED CMP_EQUAL VALUE_TRUE {
+        _NDFP_result = ($$ = (
+            _NDFP_flow->flags.detection_updated.load() == true
+        ));
+        _NDFP_debugf(
+            "Detection updated == true? %s\n", (_NDFP_result) ? "yes" : "no"
+        );
+    }
+    | FLOW_DETECTION_UPDATED CMP_EQUAL VALUE_FALSE {
+        _NDFP_result = ($$ = (
+            _NDFP_flow->flags.detection_updated.load() == false
+        ));
+        _NDFP_debugf(
+            "Detection updated == false? %s\n", (_NDFP_result) ? "yes" : "no"
+        );
+    }
+    | FLOW_DETECTION_UPDATED CMP_NOTEQUAL VALUE_TRUE {
+        _NDFP_result = ($$ = (
+            _NDFP_flow->flags.detection_updated.load() != true
+        ));
+        _NDFP_debugf(
+            "Detection updated != true? %s\n", (_NDFP_result) ? "yes" : "no"
+        );
+    }
+    | FLOW_DETECTION_UPDATED CMP_NOTEQUAL VALUE_FALSE {
+        _NDFP_result = ($$ = (
+            _NDFP_flow->flags.detection_updated.load() != false
+        ));
+        _NDFP_debugf(
+            "Detection updated != false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
     ;

@@ -51,6 +51,7 @@ tunnel_type             return FLOW_TUNNEL_TYPE;
 tunnel_none             yylval->us_number = _NDFP_TUNNEL_NONE; return FLOW_TUNNEL_NONE;
 tunnel_gtp              yylval->us_number = _NDFP_TUNNEL_GTP; return FLOW_TUNNEL_GTP;
 detection_guessed       return FLOW_DETECTION_GUESSED;
+detection_updated       return FLOW_DETECTION_UPDATED;
 app                     return FLOW_APPLICATION;
 application             return FLOW_APPLICATION;
 application_id          return FLOW_APPLICATION;
