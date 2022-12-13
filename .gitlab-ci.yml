@@ -27,6 +27,8 @@ debian 9 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "debian:9"
     OS_NAME: "debian"
@@ -38,6 +40,8 @@ debian 10 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
@@ -71,6 +75,8 @@ debian 11 i386 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "i386/debian:11"
     OS_NAME: "debian"
@@ -85,6 +91,8 @@ ubuntu 18.04 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "ubuntu:18.04"
     OS_NAME: "ubuntu"
@@ -96,6 +104,8 @@ ubuntu 20.04 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "ubuntu:20.04"
     OS_NAME: "ubuntu"
@@ -107,6 +117,8 @@ ubuntu 22.04 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "ubuntu:22.04"
     OS_NAME: "ubuntu"
@@ -121,6 +133,8 @@ centos 7 build:
   extends: .rpmos_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_IMAGE: "centos:7.9.2009"
     RPMOS_OS: "centos"
@@ -132,73 +146,14 @@ almalinux 8 build:
   extends: .rpmos_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_IMAGE: "almalinux:8"
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
     RPMOS_ARCH: "x86_64"
     RPMOS_REPOS: "--enablerepo=powertools,epel"
-
-# FreeBSD OS Targets
-#-------------------
-
-.freebsd 11.2 build:
-  extends: .xbsd_build
-  tags:
-    - freebsd112
-  only:
-    - web
-  variables:
-    OS_BASENAME: "freebsd"
-    OS_VERSION: "11"
-    OS_RELEASE: "2"
-    OS_ARCH: "x86_64"
-    OS_MAKE_TARGET: "deploy-freebsd-11x"
-    OS_CONFIGURE_FLAGS: ""
-    OS_PKG_EXTENSION: "txz"
-
-# freebsd 11.3 build:
-#   extends: .xbsd_build
-#   tags:
-#     - freebsd113
-#   variables:
-#     OS_BASENAME: "freebsd"
-#     OS_VERSION: "11"
-#     OS_RELEASE: "3"
-#     OS_ARCH: "x86_64"
-#     OS_MAKE_TARGET: "deploy-freebsd-11x"
-#     OS_CONFIGURE_FLAGS: ""
-#     OS_PKG_EXTENSION: "txz"
-
-.freebsd 12.1 build:
-  extends: .xbsd_build
-  tags:
-    - freebsd121
-  only:
-    - web
-  variables:
-    OS_BASENAME: "freebsd"
-    OS_VERSION: "12"
-    OS_RELEASE: "1"
-    OS_ARCH: "x86_64"
-    OS_MAKE_TARGET: "deploy-freebsd-12x"
-    OS_CONFIGURE_FLAGS: "--disable-libtcmalloc"
-    OS_PKG_EXTENSION: "txz"
-
-.freebsd 12.3 build:
-  extends: .xbsd_build
-  tags:
-    - freebsd123
-  only:
-    - web
-  variables:
-    OS_BASENAME: "freebsd"
-    OS_VERSION: "12"
-    OS_RELEASE: "3"
-    OS_ARCH: "x86_64"
-    OS_MAKE_TARGET: "deploy-freebsd-12x"
-    OS_CONFIGURE_FLAGS: ""
-    OS_PKG_EXTENSION: "pkg"
 
 # -------------------------------------------------------------------------
 # Test stage
@@ -211,6 +166,8 @@ centos 7 test:
   extends: .rpmos_test
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
@@ -223,6 +180,8 @@ almalinux 8 test:
   extends: .rpmos_test
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
@@ -230,92 +189,6 @@ almalinux 8 test:
     RPMOS_ARCH: "x86_64"
     RPMOS_UUID: "NE-CE-08-X1"
   needs: ["almalinux 8 build"]
-
-# OPNsense/pfSense
-#-----------------
-
-.opnsense 19.7 test:
-  extends: .xsense_test
-  tags:
-    - opnsense197
-  only:
-    - web
-  variables:
-    AGENT_UUID: "NE-PN-19-XC"
-    FREEBSD_VERSION: "11"
-    FREEBSD_RELEASE: "2"
-    FREEBSD_LIBS_RELEASE: "3"
-    FREEBSD_PKG_EXTENSION: "txz"
-  before_script:
-    - ntpdate -u time.nist.gov
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
-  needs: ["freebsd 11.2 build"]
-
-.opnsense 20.1 test:
-  extends: .xsense_test
-  tags:
-    - opnsense201
-  only:
-    - web
-  variables:
-    AGENT_UUID: "NE-PN-20-XC"
-    FREEBSD_VERSION: "11"
-    FREEBSD_RELEASE: "2"
-    FREEBSD_LIBS_RELEASE: "3"
-    FREEBSD_PKG_EXTENSION: "txz"
-  before_script:
-    - ntpdate -u time.nist.gov
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
-  needs: ["freebsd 11.2 build"]
-
-.opnsense 20.7 test:
-  extends: .xsense_test
-  tags:
-   - opnsense207
-  only:
-    - web
-  variables:
-    AGENT_UUID: "NE-PN-27-XC"
-    FREEBSD_VERSION: "12"
-    FREEBSD_RELEASE: "1"
-    FREEBSD_LIBS_RELEASE: "1"
-    FREEBSD_PKG_EXTENSION: "txz"
-  before_script:
-    - ntpdate -u time.nist.gov
-  needs: ["freebsd 12.1 build"]
-
-.pfsense 2.4.5 test:
-  extends: .xsense_test
-  tags:
-    - pfsense245
-  only:
-    - web
-  variables:
-    AGENT_UUID: "NE-PF-24-XC"
-    FREEBSD_VERSION: "11"
-    FREEBSD_RELEASE: "2"
-    FREEBSD_LIBS_RELEASE: "3"
-    FREEBSD_PKG_EXTENSION: "txz"
-  before_script:
-    - ntpdate -u time.nist.gov
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/libunwind-20170615.txz
-    - pkg add http://pkg.freebsd.org/freebsd:$FREEBSD_VERSION:x86:64/release_$FREEBSD_LIBS_RELEASE/All/google-perftools-2.7.txz
-  needs: ["freebsd 11.2 build"]
-
-.pfsense 2.6.0 test:
-  extends: .xsense_test
-  tags:
-    - pfsense260
-  only:
-    - web
-  variables:
-    AGENT_UUID: "NE-PF-26-XC"
-    FREEBSD_VERSION: "12"
-    FREEBSD_RELEASE: "3"
-    FREEBSD_PKG_EXTENSION: "pkg"
-  needs: ["freebsd 12.3 build"]
 
 # -------------------------------------------------------------------------
 # Variants stage
@@ -328,6 +201,8 @@ clearos 7 variant:
   extends: .rpmos_variants
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "clearos"
@@ -340,6 +215,8 @@ nethserver 7 variant:
   extends: .rpmos_variants
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "nethserver"
@@ -352,6 +229,8 @@ rhel 7 variant:
   extends: .rpmos_variants
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "rhel"
@@ -364,6 +243,8 @@ rhel 8 variant:
   extends: .rpmos_variants
   tags:
     - docker
+  only:
+    - tags
   variables:
     RPMOS_OS_SOURCE: "almalinux"
     RPMOS_OS: "rhel"
