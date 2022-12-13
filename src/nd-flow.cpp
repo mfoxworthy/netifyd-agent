@@ -524,20 +524,13 @@ void ndFlow::print(void) const
 void ndFlow::update_lower_maps(void)
 {
     if (lower_map == LOWER_UNKNOWN)
-#ifdef _ND_USE_NETLINK
         get_lower_map(lower_type, upper_type, lower_map, other_type);
-#else
-        get_lower_map(lower_map, other_type);
-#endif
+
     switch (tunnel_type) {
     case TUNNEL_GTP:
         if (gtp.lower_map == LOWER_UNKNOWN) {
             get_lower_map(
-#ifdef _ND_USE_NETLINK
                 gtp.lower_type, gtp.upper_type, gtp.lower_map, gtp.other_type
-#else
-                gtp.lower_map, gtp.other_type
-#endif
             );
         }
     break;
@@ -549,14 +542,29 @@ void ndFlow::get_lower_map(
     ndAddr::Type ut,
     uint8_t &lm, uint8_t &ot)
 {
+#if 0
+    nd_dprintf("lower type: %s: %u, upper_type: %s: %u\n",
+        lower_addr.GetString().c_str(), lt,
+        upper_addr.GetString().c_str(), ut
+    );
+#endif
     if (lt == ndAddr::atERROR ||
         ut == ndAddr::atERROR) {
         ot = OTHER_ERROR;
-        return;
+    }
+    else if (lt == ndAddr::atLOCAL &&
+        ut == ndAddr::atLOCAL) {
+        lm = LOWER_LOCAL;
+        ot = OTHER_LOCAL;
+    }
+    else if (lt == ndAddr::atLOCAL &&
+        ut == ndAddr::atLOCAL) {
+        lm = LOWER_LOCAL;
+        ot = OTHER_LOCAL;
     }
     else if (lt == ndAddr::atLOCAL &&
         ut == ndAddr::atLOCALNET) {
-        lm = LOWER_OTHER;
+        lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
     else if (lt == ndAddr::atLOCALNET &&
@@ -626,6 +634,9 @@ void ndFlow::get_lower_map(
         lm = LOWER_LOCAL;
         ot = OTHER_REMOTE;
     }
+#if 0
+    nd_dprintf("lower map: %u, other type: %u\n", lm, ot);
+#endif
 }
 
 void ndFlow::json_encode(json &j, uint8_t encode_includes)

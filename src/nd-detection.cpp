@@ -1067,9 +1067,11 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
 #ifdef _ND_USE_PLUGINS
     for (nd_plugins::iterator i = plugins->begin();
         i != plugins->end(); i++) {
+
         ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
             i->second->GetPlugin()
         );
+
         p->ProcessFlow(ndEF);
     }
 #endif

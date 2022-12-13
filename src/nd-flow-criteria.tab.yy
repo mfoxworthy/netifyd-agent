@@ -1513,6 +1513,7 @@ bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
         }
         break;
     default:
+        //nd_dprintf("Bad lower map: %u\n", flow->lower_map);
         return false;
     }
 
