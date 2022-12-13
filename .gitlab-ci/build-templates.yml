@@ -39,7 +39,7 @@
     - mv -v ../*.dsc builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     - mv -v ../*.tar.gz builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
+    - if [ -n "$CI_COMMIT_TAG" ]; then rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/; fi
   artifacts:
     when: always
     paths:
