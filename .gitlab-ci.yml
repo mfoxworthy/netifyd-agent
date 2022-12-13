@@ -29,6 +29,7 @@ debian 9 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "debian:9"
     OS_NAME: "debian"
@@ -42,6 +43,7 @@ debian 10 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "debian:10"
     OS_NAME: "debian"
@@ -55,6 +57,7 @@ debian 10 i386 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "i386/debian:10"
     OS_NAME: "debian"
@@ -79,6 +82,7 @@ debian 11 i386 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "i386/debian:11"
     OS_NAME: "debian"
@@ -95,6 +99,7 @@ ubuntu 18.04 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "ubuntu:18.04"
     OS_NAME: "ubuntu"
@@ -108,6 +113,7 @@ ubuntu 20.04 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "ubuntu:20.04"
     OS_NAME: "ubuntu"
@@ -121,6 +127,7 @@ ubuntu 22.04 build:
     - docker
   only:
     - tags
+    - web
   variables:
     OS_IMAGE: "ubuntu:22.04"
     OS_NAME: "ubuntu"
@@ -137,6 +144,7 @@ centos 7 build:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_IMAGE: "centos:7.9.2009"
     RPMOS_OS: "centos"
@@ -150,6 +158,7 @@ almalinux 8 build:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_IMAGE: "almalinux:8"
     RPMOS_OS: "almalinux"
@@ -170,6 +179,7 @@ centos 7 test:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS: "centos"
     RPMOS_VERSION: "7"
@@ -184,6 +194,7 @@ almalinux 8 test:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS: "almalinux"
     RPMOS_VERSION: "8"
@@ -205,6 +216,7 @@ clearos 7 variant:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "clearos"
@@ -219,6 +231,7 @@ nethserver 7 variant:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "nethserver"
@@ -233,6 +246,7 @@ rhel 7 variant:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS_SOURCE: "centos"
     RPMOS_OS: "rhel"
@@ -247,6 +261,7 @@ rhel 8 variant:
     - docker
   only:
     - tags
+    - web
   variables:
     RPMOS_OS_SOURCE: "almalinux"
     RPMOS_OS: "rhel"
