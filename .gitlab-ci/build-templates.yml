@@ -80,7 +80,7 @@
     - cp -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
     - cp -v *.src.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
+    - if [ -n "$CI_COMMIT_TAG" ]; then rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/; fi
   artifacts:
     when: always
     paths:
