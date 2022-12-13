@@ -53,6 +53,8 @@ debian 10 i386 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
   variables:
     OS_IMAGE: "i386/debian:10"
     OS_NAME: "debian"
