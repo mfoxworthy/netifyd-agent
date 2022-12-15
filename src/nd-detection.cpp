@@ -1072,7 +1072,12 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
             i->second->GetPlugin()
         );
 
-        p->ProcessFlow(ndEF);
+        p->ProcessFlow(
+            (ndEF->flags.detection_updated.load()) ?
+                ndPluginDetection::EVENT_UPDATED :
+                ndPluginDetection::EVENT_NEW,
+            ndEF
+        );
     }
 #endif
     if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||

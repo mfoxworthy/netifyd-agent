@@ -637,6 +637,21 @@ static int nd_start_capture_threads(void)
     return 0;
 }
 
+static void nd_expire_flow(ndFlow *flow)
+{
+    flow->flags.detection_expiring = true;
+#ifdef _ND_USE_PLUGINS
+    for (auto &i : plugin_detections) {
+
+        ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
+            i.second->GetPlugin()
+        );
+
+        p->ProcessFlow(ndPluginDetection::EVENT_EXPIRING, flow);
+    }
+#endif
+}
+
 static void nd_stop_capture_threads(bool expire_flows = false)
 {
     if (capture_threads.size() == 0) return;
@@ -659,7 +674,7 @@ static void nd_stop_capture_threads(bool expire_flows = false)
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
             if (it->second->flags.detection_expiring.load() == false) {
-                it->second->flags.detection_expiring = true;
+                nd_expire_flow(it->second);
                 detection_threads[it->second->dpi_thread_id]->QueuePacket(it->second);
             }
         }
@@ -1131,7 +1146,7 @@ static void nd_process_flows(
 
                         expiring++;
 
-                        i->second->flags.detection_expiring = true;
+                        nd_expire_flow(i->second);
 
                         auto it = detection_threads.find(i->second->dpi_thread_id);
                         if (it != detection_threads.end())

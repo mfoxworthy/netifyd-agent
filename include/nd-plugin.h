@@ -17,7 +17,7 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20221211
+#define _ND_PLUGIN_VER  0x20221215
 
 #define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
 #define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
@@ -151,10 +151,18 @@ protected:
 class ndPluginDetection : public ndPlugin
 {
 public:
+
+    enum ndDetectionEvent
+    {
+        EVENT_NEW,
+        EVENT_UPDATED,
+        EVENT_EXPIRING,
+    };
+
     ndPluginDetection(const string &tag);
     virtual ~ndPluginDetection();
 
-    virtual void ProcessFlow(ndFlow *flow) = 0;
+    virtual void ProcessFlow(ndDetectionEvent event, ndFlow *flow) = 0;
 
 protected:
 };
