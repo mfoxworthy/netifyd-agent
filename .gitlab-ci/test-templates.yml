@@ -24,22 +24,3 @@
     paths:
     - builds
     expire_in: 1 day
-
-# OPNsense/pfSense
-#-----------------
-
-.xsense_test:
-  stage: test
-  script:
-    - grep ^Version netifyd.spec | sed 's/.*[[:space:]]//' > /tmp/version
-    - rsync master-mirror.egloo.ca::netify-builds/$CI_PROJECT_NAME/freebsd/$FREEBSD_VERSION.$FREEBSD_RELEASE/x86_64/netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION .
-    - pkg add netifyd-`cat /tmp/version`_1.$FREEBSD_PKG_EXTENSION
-    # Set our Agent UUID
-    - echo "$AGENT_UUID" > /usr/local/etc/netify.d/agent.uuid
-    - netifyd --enable-sink
-    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
-    - grep "enable_sink.*=.*yes" /usr/local/etc/netifyd.conf || exit 1
-    - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I em1 )
-    - service netifyd onestart
-    - netifyd --status
-    - ps afx | grep netify

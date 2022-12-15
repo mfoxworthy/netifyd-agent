@@ -39,7 +39,7 @@
     - mv -v ../*.dsc builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     - mv -v ../*.tar.gz builds/netify/$OS_NAME/$OS_VERSION-devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
+    - if [ -n "$CI_COMMIT_TAG" ]; then rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/; fi
   artifacts:
     when: always
     paths:
@@ -80,37 +80,9 @@
     - cp -v ~/rpmbuild/RPMS/$RPMOS_ARCH/*.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/
     - cp -v *.src.rpm builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/source/
     # Push build to master node
-    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/
+    - if [ -n "$CI_COMMIT_TAG" ]; then rsync -rtv builds/* master-mirror.netify-backend.gcp::netify/; fi
   artifacts:
     when: always
     paths:
     - builds
     expire_in: 1 day
-
-# FreeBSD Build
-#--------------
-
-.xbsd_build:
-  stage: build
-  before_script:
-    # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
-    - find . -name '\.git*' -print0 | xargs -0 rm -rf
-  script:
-    # Build environment
-    - ntpdate -d -u time.nist.gov
-    - ntpdate -u time.nist.gov
-    # Build packages
-    - ./autogen.sh
-    - ./configure --disable-conntrack --disable-inotify $OS_CONFIGURE_FLAGS CC=clang CXX=clang++ MAKE=gmake
-    - mkdir -p /usr/ports/distfiles
-    - gmake $OS_MAKE_TARGET
-    - gmake deploy-pfsense
-    # Push build to master mirror
-    - mkdir -p builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/$OS_BASENAME/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - mv deploy/pfsense/work/pkg/*.$OS_PKG_EXTENSION builds/$CI_PROJECT_NAME/$OS_BASENAME/$OS_VERSION.$OS_RELEASE/$OS_ARCH/
-    - rsync -rtv builds/* master-mirror.netify-backend.gcp::netify-builds/
-  allow_failure: true
-
