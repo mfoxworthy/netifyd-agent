@@ -612,7 +612,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     nd_addrtype->Classify(ndEF->lower_type, ndEF->lower_addr);
     nd_addrtype->Classify(ndEF->upper_type, ndEF->upper_addr);
 
-    if (dhc != NULL) {
+    if (dhc != NULL && ndEF->master_protocol() != ND_PROTO_DNS) {
         string hostname;
 
         if (ndEF->lower_type == ndAddr::atOTHER)
@@ -701,25 +701,27 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         break;
     }
 
-    // Determine application by host_server_name if still unknown.
-    if (ndEF->detected_application == ND_APP_UNKNOWN) {
-        if (ndEF->host_server_name[0] != '\0')
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
-    }
+    if (ndEF->master_protocol() != ND_PROTO_DNS) {
+        // Determine application by host_server_name if still unknown.
+        if (ndEF->detected_application == ND_APP_UNKNOWN) {
+            if (ndEF->host_server_name[0] != '\0')
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
+        }
 
-    // Determine application by dns_host_name if still unknown.
-    if (ndEF->detected_application == ND_APP_UNKNOWN) {
-        if (ndEF->dns_host_name[0] != '\0')
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
-    }
+        // Determine application by dns_host_name if still unknown.
+        if (ndEF->detected_application == ND_APP_UNKNOWN) {
+            if (ndEF->dns_host_name[0] != '\0')
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
+        }
 
-    // Determine application by network CIDR if still unknown.
-    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        // Determine application by network CIDR if still unknown.
+        if (ndEF->detected_application == ND_APP_UNKNOWN) {
 
-        SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
 
-        if (ndEF->detected_application == ND_APP_UNKNOWN)
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
+            if (ndEF->detected_application == ND_APP_UNKNOWN)
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
+        }
     }
 
     // Additional protocol-specific processing...

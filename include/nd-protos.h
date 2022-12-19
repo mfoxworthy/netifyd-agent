@@ -975,4 +975,4 @@ const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow);
 const uint16_t nd_ndpi_proto_find(unsigned id);
 
 #endif // _ND_PROTOS_H
-// vi: expandtab shiftwidth=5 softtabstop=4 tabstop=4
+// vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
