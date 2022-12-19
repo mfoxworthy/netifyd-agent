@@ -338,6 +338,19 @@ typedef enum {
     ND_PROTO_ALICLOUD               = 301,
     ND_PROTO_SYSLOGS                = 302,
     ND_PROTO_NATPMP                 = 303,  // NAT Port Mapping Protocol
+    // TUYA LAN Protocol
+    // https://github.com/tuya/tuya-iotos-embeded-sdk-wifi-ble-bk7231n */
+    ND_PROTO_TUYA_LP                = 304,
+
+    ND_PROTO_ELASTICSEARCH          = 305,
+    ND_PROTO_AVAST                  = 306,
+    ND_PROTO_CRYNET                 = 307,
+    ND_PROTO_FASTCGI                = 308,
+    ND_PROTO_KISMET                 = 309,
+    ND_PROTO_LINE_CALL              = 310,
+    ND_PROTO_MUNIN                  = 311,
+    ND_PROTO_SYNCTHING              = 312,
+    ND_PROTO_TIVOCONNECT            = 313,
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -355,6 +368,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_APPLEJUICE, "APPLJ" },
     { ND_PROTO_APPLE_PUSH, "Apple/Push" },
     { ND_PROTO_ARMAGETRON, "Armagetron" },
+    { ND_PROTO_AVAST, "AVAST" },
     { ND_PROTO_AVAST_SDNS, "AVASTSecureDNS" },
     { ND_PROTO_AYIYA, "Ayiya" },
     { ND_PROTO_BGP, "BGP" },
@@ -372,6 +386,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_CORBA, "Corba" },
     { ND_PROTO_CPHA, "CheckPointHA" },
     { ND_PROTO_CROSSFIRE, "Crossfire" },
+    { ND_PROTO_CRYNET, "CryNetwork" },
     { ND_PROTO_CSGO, "CSGO" },
     { ND_PROTO_DHCP, "DHCP" },
     { ND_PROTO_DHCPV6, "DHCPv6" },
@@ -389,7 +404,9 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_DROPBOX, "Dropbox" },
     { ND_PROTO_DTLS, "DTLS" },
     { ND_PROTO_EAQ, "EAQ" },
+    { ND_PROTO_ELASTICSEARCH, "ElasticSearch" },
     { ND_PROTO_ETHERNET_IP, "EtherNet/IP" },
+    { ND_PROTO_FASTCGI, "FastCGI" },
     { ND_PROTO_FASTTRACK, "FastTrack" },
     { ND_PROTO_FIESTA, "Fiesta" },
     { ND_PROTO_FIX, "FIX" },
@@ -434,8 +451,10 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_IRCS, "IRC/S" },
     { ND_PROTO_KAKAOTALK_VOICE, "KakaoTalk/Voice" },
     { ND_PROTO_KERBEROS, "Kerberos" },
+    { ND_PROTO_KISMET, "KISMET" },
     { ND_PROTO_KONTIKI, "Kontiki" },
     { ND_PROTO_LDAP, "LDAP" },
+    { ND_PROTO_LINE_CALL, "Line/Call" },
     { ND_PROTO_LISP, "LISP" },
     { ND_PROTO_LLMNR, "LLMNR" },
     { ND_PROTO_LOTUS_NOTES, "LotusNotes" },
@@ -458,6 +477,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_MQTT, "MQTT" },
     { ND_PROTO_MQTTS, "MQTT/S" },
     { ND_PROTO_MSSQL_TDS, "MSSQL/TDS" },
+    { ND_PROTO_MUNIN, "Munin" },
     { ND_PROTO_MYSQL, "MYSQL" },
     { ND_PROTO_NATPMP, "NAT/PMP" },
     { ND_PROTO_NATS, "NATS" },
@@ -520,6 +540,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_STEALTHNET, "Stealthnet" },
     { ND_PROTO_STEAM, "Steam" },
     { ND_PROTO_STUN, "STUN" },
+    { ND_PROTO_SYNCTHING, "Syncthing" },
     { ND_PROTO_SYSLOGS, "SYSLOG/S" },
     { ND_PROTO_SYSLOG, "SYSLOG" },
     { ND_PROTO_TARGUS_GETDATA, "Targus/Dataspeed" },
@@ -532,10 +553,12 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_THREEMA, "Threema" },
     { ND_PROTO_THUNDER, "Thunder" },
     { ND_PROTO_TINC, "TINC" },
+    { ND_PROTO_TIVOCONNECT, "TiVo/Connect" },
     { ND_PROTO_TLS, "TLS" },
     { ND_PROTO_TOCA_BOCA, "TocaBoca" },
     { ND_PROTO_TODO, "TODO" },
     { ND_PROTO_TRUPHONE, "TruPhone" },
+    { ND_PROTO_TUYA_LP, "Tuya/LP" },
     { ND_PROTO_TVUPLAYER, "TVUplayer" },
     { ND_PROTO_UBNTAC2, "UBNTAC2" },
     { ND_PROTO_ULTRASURF, "UltraSurf" },
@@ -594,6 +617,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_APPLEJUICE, ND_PROTO_APPLEJUICE },
     { NDPI_PROTOCOL_APPLE_PUSH, ND_PROTO_APPLE_PUSH },
     { NDPI_PROTOCOL_ARMAGETRON, ND_PROTO_ARMAGETRON },
+    { NDPI_PROTOCOL_AVAST, ND_PROTO_AVAST },
     { NDPI_PROTOCOL_AVAST_SECUREDNS, ND_PROTO_AVAST_SDNS },
     { NDPI_PROTOCOL_AYIYA, ND_PROTO_AYIYA },
     { NDPI_PROTOCOL_BGP, ND_PROTO_BGP },
@@ -609,6 +633,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_CORBA, ND_PROTO_CORBA },
     { NDPI_PROTOCOL_CPHA, ND_PROTO_CPHA },
     { NDPI_PROTOCOL_CROSSFIRE, ND_PROTO_CROSSFIRE },
+    { NDPI_PROTOCOL_CRYNET, ND_PROTO_CRYNET },
     { NDPI_PROTOCOL_CSGO, ND_PROTO_CSGO },
     { NDPI_PROTOCOL_DATASAVER, ND_PROTO_DATASAVER },
     { NDPI_PROTOCOL_DHCP, ND_PROTO_DHCP },
@@ -625,7 +650,9 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_DROPBOX, ND_PROTO_DROPBOX },
     { NDPI_PROTOCOL_DTLS, ND_PROTO_DTLS },
     { NDPI_PROTOCOL_EAQ, ND_PROTO_EAQ },
+    { NDPI_PROTOCOL_ELASTICSEARCH, ND_PROTO_ELASTICSEARCH },
     { NDPI_PROTOCOL_ETHERNET_IP, ND_PROTO_ETHERNET_IP },
+    { NDPI_PROTOCOL_FASTCGI, ND_PROTO_FASTCGI },
     { NDPI_PROTOCOL_FASTTRACK, ND_PROTO_FASTTRACK },
     { NDPI_PROTOCOL_FIESTA, ND_PROTO_FIESTA },
     { NDPI_PROTOCOL_FIX, ND_PROTO_FIX },
@@ -670,8 +697,10 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_JABBER, ND_PROTO_XMPP },
     { NDPI_PROTOCOL_KAKAOTALK_VOICE, ND_PROTO_KAKAOTALK_VOICE },
     { NDPI_PROTOCOL_KERBEROS, ND_PROTO_KERBEROS },
+    { NDPI_PROTOCOL_KISMET, ND_PROTO_KISMET },
     { NDPI_PROTOCOL_KONTIKI, ND_PROTO_KONTIKI },
     { NDPI_PROTOCOL_LDAP, ND_PROTO_LDAP },
+    { NDPI_PROTOCOL_LINE_CALL, ND_PROTO_LINE_CALL },
     { NDPI_PROTOCOL_LISP, ND_PROTO_LISP },
     { NDPI_PROTOCOL_LLMNR, ND_PROTO_LLMNR },
     { NDPI_PROTOCOL_LOTUS_NOTES, ND_PROTO_LOTUS_NOTES },
@@ -693,6 +722,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_MPEGTS, ND_PROTO_MPEGTS },
     { NDPI_PROTOCOL_MQTT, ND_PROTO_MQTT },
     { NDPI_PROTOCOL_MSSQL_TDS, ND_PROTO_MSSQL_TDS },
+    { NDPI_PROTOCOL_MUNIN, ND_PROTO_MUNIN},
     { NDPI_PROTOCOL_MYSQL, ND_PROTO_MYSQL },
     { NDPI_PROTOCOL_NATPMP, ND_PROTO_NATPMP },
     { NDPI_PROTOCOL_NATS, ND_PROTO_NATS },
@@ -751,6 +781,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_STEALTHNET, ND_PROTO_STEALTHNET },
     { NDPI_PROTOCOL_STEAM, ND_PROTO_STEAM },
     { NDPI_PROTOCOL_STUN, ND_PROTO_STUN },
+    { NDPI_PROTOCOL_SYNCTHING, ND_PROTO_SYNCTHING },
     { NDPI_PROTOCOL_SYSLOG, ND_PROTO_SYSLOG },
     { NDPI_PROTOCOL_TARGUS_GETDATA, ND_PROTO_TARGUS_GETDATA },
     { NDPI_PROTOCOL_TEAMSPEAK, ND_PROTO_TEAMSPEAK },
@@ -763,9 +794,11 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_THUNDER, ND_PROTO_THUNDER },
     { NDPI_PROTOCOL_TIKTOK, ND_PROTO_TIKTOK },
     { NDPI_PROTOCOL_TINC, ND_PROTO_TINC },
+    { NDPI_PROTOCOL_TIVOCONNECT, ND_PROTO_TIVOCONNECT },
     { NDPI_PROTOCOL_TLS, ND_PROTO_TLS },
     { NDPI_PROTOCOL_TOCA_BOCA, ND_PROTO_TOCA_BOCA },
     { NDPI_PROTOCOL_TRUPHONE, ND_PROTO_TRUPHONE },
+    { NDPI_PROTOCOL_TUYA_LP, ND_PROTO_TUYA_LP },
     { NDPI_PROTOCOL_TVUPLAYER, ND_PROTO_TVUPLAYER },
     { NDPI_PROTOCOL_UBNTAC2, ND_PROTO_UBNTAC2 },
     { NDPI_PROTOCOL_ULTRASURF, ND_PROTO_ULTRASURF },
@@ -812,6 +845,7 @@ const nd_ndpi_disabled_t nd_ndpi_disabled = {
     NDPI_PROTOCOL_APPLE,        // Not a protocol: ID# 140 (Apple)
     NDPI_PROTOCOL_APPLE_SIRI,   // Not a protocol (no dissector): ID# 254 (AppleSiri)
     NDPI_PROTOCOL_APPLESTORE,   // Not a protocol: ID# 224 (AppleStore)
+    NDPI_PROTOCOL_APPLETVPLUS,  // Not a protocol (no dissector): ID# 317 (AppleTVPlus)
     NDPI_PROTOCOL_BADOO,        // Not a protocol: ID# 279 (Badoo)
     NDPI_PROTOCOL_BLOOMBERG,    // Not a protocol: ID# 246 (Bloomberg)
     NDPI_PROTOCOL_CACHEFLY,     // Not a protocol: ID# 289 (Cachefly)
@@ -820,8 +854,10 @@ const nd_ndpi_disabled_t nd_ndpi_disabled = {
     NDPI_PROTOCOL_CNN,          // Not a protocol: ID# 180 (CNN)
     NDPI_PROTOCOL_CRASHLYSTICS, // Not a protocol (no dissector): ID# 275 (Crashlytics)
     NDPI_PROTOCOL_CYBERSECURITY, // Not a protocol: ID# 283 (Cybersec)
+    NDPI_PROTOCOL_DAILYMOTION,  // Not a protocol: ID# 322 (Dailymotion)
     NDPI_PROTOCOL_DAZN,         // Not a protocol: ID# 292 (Dazn)
     NDPI_PROTOCOL_DEEZER,       // Not a protocol: ID# 210 (Deezer)
+    NDPI_PROTOCOL_DIRECTV,      // Not a protocol (no dissector): ID# 318 (DirecTV)
     NDPI_PROTOCOL_DISCORD,      // Not a protocol (no dissector): ID# 58 (Discord)
     NDPI_PROTOCOL_DISNEYPLUS,   // Not a protocol: ID# 71 (DisneyPlus)
     NDPI_PROTOCOL_EBAY,         // Not a protocol: ID# 179 (eBay)
@@ -843,16 +879,20 @@ const nd_ndpi_disabled_t nd_ndpi_disabled = {
     NDPI_PROTOCOL_GOOGLE_PLUS,  // Not a protocol: ID# 72 (GooglePlus)
     NDPI_PROTOCOL_GOOGLE_SERVICES, // Not a protocol: ID# 239 (GoogleServices)
     NDPI_PROTOCOL_GOTO,         // Not a protocol: ID# 293 (GoTo)
+    NDPI_PROTOCOL_HBO,          // Not a protocol: ID# 319 (HBO)
     NDPI_PROTOCOL_HOTSPOT_SHIELD, // Not a protocol: ID# 215 (HotspotShield)
     NDPI_PROTOCOL_HULU,         // Not a protocol: ID# 137 (Hulu)
     NDPI_PROTOCOL_ICLOUD_PRIVATE_RELAY, // Not a protocol (no dissector): ID# 277 (iCloudPrivateRelay)
     NDPI_PROTOCOL_IFLIX,        // Not a protocol: ID# 202 (IFLIX)
+    NDPI_PROTOCOL_IHEARTRADIO,  // Not a protocol: ID# 325 (IHeartRadio)
     NDPI_PROTOCOL_IMO,          // Weak, too many false-positives, and obscure/undocumented.
     NDPI_PROTOCOL_INSTAGRAM,    // Not a protocol: ID# 211 (Instagram)
     NDPI_PROTOCOL_KAKAOTALK,    // Not a protocol (see KAKAOTALK_VOICE): ID# 193 (KakaoTalk)
     NDPI_PROTOCOL_LASTFM,       // Not a protocol: ID# 134 (LastFM)
     NDPI_PROTOCOL_LIKEE,        // Not a protocol: ID# 261 (Likee)
+    NDPI_PROTOCOL_LINE,         // Not a protocol: ID# 315 (Line)
     NDPI_PROTOCOL_LINKEDIN,     // Not a protocol: ID# 233 (LinkedIn)
+    NDPI_PROTOCOL_LIVESTREAM,   // Not a protocol: ID# 323 (Livestream)
     NDPI_PROTOCOL_MESSENGER,    // Not a protocol (no dissector): ID# 157 (Messenger)
     NDPI_PROTOCOL_MICROSOFT_365, // Not a protocol: ID# 219 (Microsoft365)
     NDPI_PROTOCOL_MICROSOFT_AZURE, // Not a protocol (no dissector): ID# 276 (Azure)
@@ -874,22 +914,28 @@ const nd_ndpi_disabled_t nd_ndpi_disabled = {
     NDPI_PROTOCOL_PSIPHON,      // Not a protocol: ID# 303 (Psiphon)
     NDPI_PROTOCOL_REDDIT,       // Not a protocol: ID# 205 (Reddit)
     NDPI_PROTOCOL_SALESFORCE,   // Not a protocol: ID# 266 (Salesforce)
+    NDPI_PROTOCOL_SHOWTIME,     // Not a protocol: ID# 321 (Showtime)
     NDPI_PROTOCOL_SIGNAL,       // Not a protocol (see SIGNAL_VOIP): ID# 39 (Signal)
     NDPI_PROTOCOL_SINA,         // Not a protocol (no dissector): ID# 200 (Sina(Weibo))
+    NDPI_PROTOCOL_SIRIUSXMRADIO, // Not a protocol: ID# 328 (SiriusXMRadio)
     NDPI_PROTOCOL_SLACK,        // Not a protocol (no dissector): ID# 118 (Slack)
     NDPI_PROTOCOL_SNAPCHAT,     // Not a protocol (no dissector): ID# 199 (Snapchat)
     NDPI_PROTOCOL_SOFTETHER,    // Not a protocol (no dissector): ID# 290 (Softether)
     NDPI_PROTOCOL_SOUNDCLOUD,   // Not a protocol: ID# 234 (SoundCloud)
     NDPI_PROTOCOL_TENCENT,      // Not a protocol: ID# 285 (Tencent)
+    NDPI_PROTOCOL_TENCENTVIDEO, // Not a protocol: ID# 324 (Tencentvideo)
+    NDPI_PROTOCOL_TIDAL,        // Not a protocol: ID# 326 (Tidal)
     NDPI_PROTOCOL_TOR,          // Not a protocol (no dissector): ID# 163 (Tor)
     NDPI_PROTOCOL_TUENTI,       // Not a protocol: ID# 149 (Tuenti)
     NDPI_PROTOCOL_TUMBLR,       // Not a protocol: ID# 90 (Tumblr)
+    NDPI_PROTOCOL_TUNEIN,       // Not a protocol: ID# 327 (TuneIn)
     NDPI_PROTOCOL_TUNNELBEAR,   // Not a protocol (no dissector): ID# 299 (TunnelBear)
     NDPI_PROTOCOL_TWITCH,       // Not a protocol (no dissector): ID# 195 (Twitch)
     NDPI_PROTOCOL_TWITTER,      // Not a protocol: ID# 120 (Twitter)
     NDPI_PROTOCOL_UBUNTUONE,    // Not a protocol: ID# 169 (UbuntuONE)
     NDPI_PROTOCOL_VEVO,         // Not a protocol: ID# 186 (Vevo)
     NDPI_PROTOCOL_VIMEO,        // Not a protocol: ID# 267 (Vimeo)
+    NDPI_PROTOCOL_VUDU,         // Not a protocol: ID# 320 (Vudu)
     NDPI_PROTOCOL_WAZE,         // Not a protocol: ID# 135 (Waze)
     NDPI_PROTOCOL_WEBEX,        // Not a protocol (no dissector): ID# 141 (Webex)
     NDPI_PROTOCOL_WECHAT,       // Not a protocol (no dissector): ID# 197 (WeChat)
@@ -929,4 +975,4 @@ const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow);
 const uint16_t nd_ndpi_proto_find(unsigned id);
 
 #endif // _ND_PROTOS_H
-// vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
+// vi: expandtab shiftwidth=5 softtabstop=4 tabstop=4

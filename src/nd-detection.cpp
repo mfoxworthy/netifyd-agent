@@ -649,28 +649,48 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     // Protocol / Application "Twins"
     switch (ndEF->detected_protocol) {
 
-    case ND_PROTO_SPOTIFY:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
+    case ND_PROTO_APPLE_PUSH:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
         break;
 
-    case ND_PROTO_UBNTAC2:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
+    case ND_PROTO_AVAST:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.avast"));
+        break;
+
+    case ND_PROTO_LINE_CALL:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.line"));
         break;
 
     case ND_PROTO_NEST_LOG_SINK:
         SetDetectedApplication(entry, nd_apps->Lookup("netify.nest"));
         break;
 
+    case ND_PROTO_SPOTIFY:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
+        break;
+
     case ND_PROTO_STEAM:
         SetDetectedApplication(entry, nd_apps->Lookup("netify.steam"));
+        break;
+
+    case ND_PROTO_SYNCTHING:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.syncthing"));
         break;
 
     case ND_PROTO_TEAMVIEWER:
         SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
         break;
 
-    case ND_PROTO_APPLE_PUSH:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
+    case ND_PROTO_TIVOCONNECT:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.tivo"));
+        break;
+
+    case ND_PROTO_TUYA_LP:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.tuya-smart"));
+        break;
+
+    case ND_PROTO_UBNTAC2:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
         break;
 
     case ND_PROTO_ZOOM:
