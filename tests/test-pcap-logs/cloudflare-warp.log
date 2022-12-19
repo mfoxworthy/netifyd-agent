@@ -1,0 +1,9 @@
+lo: [i4------] XMPP 10.8.0.1:42344 --> 159.138.85.48:5223
+lo: [i4------] HTTP/S.netify.meta-messaging 10.8.0.1:40214 --> 157.240.16.32:443 H: mqtt-mini.facebook.com SSL C: mqtt-mini.facebook.com
+lo: [i4-u----] HTTP/S.netify.meta-messaging 10.8.0.1:40214 --> 157.240.16.32:443 H: mqtt-mini.facebook.com SSL C: mqtt-mini.facebook.com
+lo: [i4------] HTTP/S.netify.cloudflare 10.8.0.1:45606 --> 104.18.47.234:443 H: api.cloudflareclient.com SSL C: api.cloudflareclient.com
+lo: [i4------] HTTP/S.netify.cloudflare 10.8.0.1:45610 --> 104.18.47.234:443 H: api.cloudflareclient.com SSL C: api.cloudflareclient.com
+lo: [i4------] HTTP/S.netify.crashlytics 10.8.0.1:51296 --> 142.250.183.163:443 H: crashlyticsreports-pa.googleapis.com SSL C: crashlyticsreports-pa.googleapis.com
+lo: [i4--g---] HTTP/S.netify.google 10.158.134.93:55512 --> 142.251.42.106:443
+lo: [i4--g--s] XMPP.netify.google-chat 10.8.0.1:43600 --> 172.217.194.188:5228
+lo: [i4--g---] HTTP/S.netify.google 10.158.134.93:40454 --> 216.58.196.68:443

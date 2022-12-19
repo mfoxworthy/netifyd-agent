@@ -1,0 +1,24 @@
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:50178 --> 104.17.154.236:443 H: api.tunnelbear.com SSL C: api.tunnelbear.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45104 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45106 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45108 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45114 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.new-relic 10.8.0.1:47496 --> 162.247.243.188:443 H: mobile-collector.newrelic.com SSL C: mobile-collector.newrelic.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45124 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:45126 --> 104.17.115.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.158.132.91:38398 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.meta-messaging 10.8.0.1:60224 --> 157.240.7.32:443 H: mqtt-mini.facebook.com SSL C: mqtt-mini.facebook.com
+lo: [i4-u----] HTTP/S.netify.meta-messaging 10.8.0.1:60224 --> 157.240.7.32:443 H: mqtt-mini.facebook.com SSL C: mqtt-mini.facebook.com
+lo: [i4------] HTTP/S.netify.grammarly 10.8.0.1:47594 --> 99.83.135.170:443 H: capi.grammarly.com SSL C: capi.grammarly.com
+lo: [i4-u----] HTTP/S.netify.grammarly 10.8.0.1:47594 --> 99.83.135.170:443 H: capi.grammarly.com SSL C: capi.grammarly.com
+lo: [i4-u----] HTTP/S.netify.grammarly 10.8.0.1:47594 --> 99.83.135.170:443 H: capi.grammarly.com SSL C: capi.grammarly.com
+lo: [i4-----s] XMPP.netify.google-chat 10.8.0.1:47046 --> 74.125.200.188:5228 H: mtalk.google.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33830 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33838 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:50904 --> 104.17.154.236:443 H: api.tunnelbear.com SSL C: api.tunnelbear.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33842 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33846 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33848 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4------] HTTP/S.netify.new-relic 10.8.0.1:48222 --> 162.247.243.188:443 H: mobile-collector.newrelic.com SSL C: mobile-collector.newrelic.com
+lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33858 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
+lo: [i4--g---] DNS.netify.google 8.8.8.8:53 <-- 10.158.132.91:51120

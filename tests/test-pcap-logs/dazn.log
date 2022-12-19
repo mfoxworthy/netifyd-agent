@@ -1,0 +1,6 @@
+lo: [i4------] HTTP/S.netify.dazn 52.84.223.58:443 <-- 192.168.1.128:54020 H: www.dazn.com SSL C: www.dazn.com
+lo: [i4-u----] HTTP/S.netify.dazn 52.84.223.58:443 <-- 192.168.1.128:54020 H: www.dazn.com SSL C: www.dazn.com
+lo: [i4------] HTTP/S.netify.dazn 13.226.244.27:443 <-- 192.168.1.128:46036 H: user-profile.ar.indazn.com SSL C: user-profile.ar.indazn.com
+lo: [i4-u----] HTTP/S.netify.dazn 13.226.244.27:443 <-- 192.168.1.128:46036 H: user-profile.ar.indazn.com SSL C: user-profile.ar.indazn.com
+lo: [i4------] HTTP/S.netify.dazn 13.226.244.30:443 <-- 192.168.1.128:40882 H: subscriptions-service.dazn-api.com SSL C: subscriptions-service.dazn-api.com
+lo: [i4-u----] HTTP/S.netify.dazn 13.226.244.30:443 <-- 192.168.1.128:40882 H: subscriptions-service.dazn-api.com SSL C: subscriptions-service.dazn-api.com

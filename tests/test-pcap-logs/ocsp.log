@@ -1,0 +1,10 @@
+lo: [i4------] HTTP 109.70.240.130:80 <-- 192.168.1.227:49813 H: ocsp07.actalis.it
+lo: [i4------] HTTP.netify.google 142.250.184.99:80 <-- 192.168.1.128:54154 H: ocsp.pki.goog
+lo: [i4------] HTTP.netify.lets-encrypt 92.122.95.235:80 <-- 192.168.1.128:43728 H: r3.o.lencr.org
+lo: [i4------] HTTP.netify.sectigo 151.139.128.14:80 <-- 192.168.1.128:34320 H: geant.ocsp.sectigo.com
+lo: [i4------] HTTP.netify.sectigo 151.139.128.14:80 <-- 192.168.1.128:34340 H: ocsp.usertrust.com
+lo: [i4------] HTTP.netify.digicert 93.184.220.29:80 <-- 192.168.1.128:47904 H: ocsp.digicert.com
+lo: [i4------] HTTP.netify.amazon 52.85.15.92:80 <-- 192.168.1.128:49382 H: ocsp.sca1b.amazontrust.com
+lo: [i4------] HTTP.netify.globalsign 151.101.2.133:80 <-- 192.168.1.128:59922 H: ocsp.globalsign.com
+lo: [i4------] HTTP 109.70.240.114:80 <-- 192.168.1.128:45514 H: ocsp09.actalis.it
+lo: [i4------] HTTP.netify.entrust 23.12.96.145:80 <-- 192.168.1.128:49034 H: ocsp.entrust.net
