@@ -3,12 +3,12 @@ lo: [i4------] Nintendo 134.3.248.25:56955 --> 192.168.12.114:52119
 lo: [i4------] Nintendo 109.21.255.11:50251 <-- 192.168.12.114:52119
 lo: [i4------] HTTP/S 54.187.10.185:443 <-- 192.168.12.114:48328
 lo: [i4------] Nintendo 35.158.74.61:33335 <-- 192.168.12.114:52119
-lo: [i4------] DNS.netify.nintendo 192.168.12.1:53 <-- 192.168.12.114:18874 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
+lo: [i4------] DNS 192.168.12.1:53 <-- 192.168.12.114:18874 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4------] HTTP/S.netify.nintendo 54.192.27.217:443 <-- 192.168.12.114:41517 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4-u----] HTTP/S.netify.nintendo 54.192.27.217:443 <-- 192.168.12.114:41517 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4-u----] HTTP/S.netify.nintendo 54.192.27.217:443 <-- 192.168.12.114:41517 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
-lo: [i4------] DNS.netify.nintendo 192.168.12.1:53 <-- 192.168.12.114:10184 H: g2df33d01-lp1.p.srv.nintendo.net
-lo: [i4------] DNS.netify.nintendo 192.168.12.1:53 <-- 192.168.12.114:51035 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
+lo: [i4------] DNS 192.168.12.1:53 <-- 192.168.12.114:10184 H: g2df33d01-lp1.p.srv.nintendo.net
+lo: [i4------] DNS 192.168.12.1:53 <-- 192.168.12.114:51035 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4------] HTTP/S.netify.nintendo 54.192.27.8:443 <-- 192.168.12.114:31329 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4-u----] HTTP/S.netify.nintendo 54.192.27.8:443 <-- 192.168.12.114:31329 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com
 lo: [i4-u----] HTTP/S.netify.nintendo 54.192.27.8:443 <-- 192.168.12.114:31329 H: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com SSL C: e0d67c509fb203858ebcb2fe3f88c2aa.baas.nintendo.com

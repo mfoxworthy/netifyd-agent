@@ -1,20 +1,20 @@
-lo: [i4------] DNS.netify.google 8.8.8.8:53 <-- 192.168.180.2:38472 H: ocu03.labgency.ws
-lo: [i4------] DNS.netify.crashlytics 8.8.8.8:53 <-- 192.168.180.2:40097 H: settings.crashlytics.com
-lo: [i4------] DNS.netify.google 8.8.8.8:53 <-- 192.168.180.2:1291 H: api.eu01.capptain.com
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:38472 H: ocu03.labgency.ws
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:40097 H: settings.crashlytics.com
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:1291 H: api.eu01.capptain.com
 lo: [i4------] HTTP 178.248.208.54:80 <-- 192.168.180.2:48250 H: ocu03.labgency.ws
 lo: [i4------] HTTP 137.135.129.206:80 <-- 192.168.180.2:53356 H: api.eu01.capptain.com
 lo: [i4------] HTTP 137.135.129.206:80 <-- 192.168.180.2:44959 H: api.eu01.capptain.com
-lo: [i4------] DNS.netify.android 8.8.8.8:53 <-- 192.168.180.2:48770 H: android.clients.google.com
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:48770 H: android.clients.google.com
 lo: [i4------] HTTP/S.netify.google 192.168.180.2:41223 --> 216.58.208.46:443
 lo: [i4------] HTTP/S.netify.crashlytics 23.21.230.199:443 <-- 192.168.180.2:39263 H: settings.crashlytics.com SSL C: settings.crashlytics.com
-lo: [i4------] DNS.netify.google 8.8.8.8:53 <-- 192.168.180.2:3621 H: xmpp.device06.eu01.capptain.com
-lo: [i4------] DNS.netify.google 8.8.8.8:53 <-- 192.168.180.2:2589 H: ocs.labgency.ws
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:3621 H: xmpp.device06.eu01.capptain.com
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:2589 H: ocs.labgency.ws
 lo: [i4------] HTTP 178.248.208.54:80 <-- 192.168.180.2:49881 H: ocu03.labgency.ws
 lo: [i4------] HTTP/S 178.248.208.54:443 <-- 192.168.180.2:36680 H: ocs.labgency.ws SSL C: ocs.labgency.ws
 lo: [i4------] HTTP/S.netify.google-chat 64.233.184.188:443 <-- 192.168.180.2:32946 H: mtalk.google.com SSL C: mtalk.google.com
-lo: [i4------] DNS.netify.google-play 8.8.8.8:53 <-- 192.168.180.2:11793 H: play.googleapis.com
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:11793 H: play.googleapis.com
 lo: [i4------] HTTP/S.netify.google 64.233.166.95:443 <-- 192.168.180.2:47803
-lo: [i4------] DNS.netify.orange-cinema-series 8.8.8.8:53 <-- 192.168.180.2:24245 H: www.ocs.fr
+lo: [i4------] DNS 8.8.8.8:53 <-- 192.168.180.2:24245 H: www.ocs.fr
 lo: [i4------] HTTP.netify.orange-cinema-series 178.248.208.210:80 <-- 192.168.180.2:42590 H: www.ocs.fr
 lo: [i4--g--s] XMPP.netify.google-chat 64.233.184.188:5228 <-- 192.168.180.2:47699
 lo: [i4--g---] Unknown 137.135.131.52:5122 <-- 192.168.180.2:46166

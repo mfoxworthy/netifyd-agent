@@ -1,7 +1,7 @@
 lo: [i4------] IMAP/S.netify.apple 17.172.100.70:993 <-- 192.168.2.4:49199
 lo: [i4------] HTTP/S 23.50.148.228:443 <-- 192.168.2.4:49172
-lo: [i4------] DNS.netify.apple 192.168.2.1:53 <-- 192.168.2.4:51897 H: query.ess.apple.com
-lo: [i4------] DNS.netify.whatsapp 192.168.2.1:53 <-- 192.168.2.4:52190 H: e13.whatsapp.net
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.4:51897 H: query.ess.apple.com
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.4:52190 H: e13.whatsapp.net
 lo: [i4------] HTTP/S.netify.apple 17.178.104.12:443 <-- 192.168.2.4:49201 H: query.ess.apple.com SSL C: query.ess.apple.com
 lo: [i4-u----] HTTP/S.netify.apple 17.178.104.12:443 <-- 192.168.2.4:49201 H: query.ess.apple.com SSL C: query.ess.apple.com
 lo: [i4------] Apple/Push.netify.apple-push 17.110.229.14:5223 <-- 192.168.2.4:49193
@@ -22,10 +22,10 @@ lo: [i4------] STUN 1.194.90.191:60312 --> 192.168.2.4:51518
 lo: [i4------] STUN 91.253.176.65:9344 <-- 192.168.2.4:51518
 lo: [i4------] ICMP 91.253.176.65:0 <-- 192.168.2.4:0
 lo: [i4------] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-imac
-lo: [i4------] MDNS.netify.internal-network 169.254.166.207:5353 --> 224.0.0.251:5353 H: lucas-imac.local
-lo: [i6------] MDNS.netify.internal-network fe80::da30:62ff:fe56:1c:5353 --> ff02::fb:5353 H: lucas-imac.local
-lo: [i4------] MDNS.netify.internal-network 192.168.2.1:5353 --> 224.0.0.251:5353 H: lucas-imac.local
-lo: [i6------] MDNS.netify.internal-network fe80::c42c:3ff:fe60:6a64:5353 --> ff02::fb:5353 H: lucas-imac.local
+lo: [i4------] MDNS 169.254.166.207:5353 --> 224.0.0.251:5353 H: lucas-imac.local
+lo: [i6------] MDNS fe80::da30:62ff:fe56:1c:5353 --> ff02::fb:5353 H: lucas-imac.local
+lo: [i4------] MDNS 192.168.2.1:5353 --> 224.0.0.251:5353 H: lucas-imac.local
+lo: [i6------] MDNS fe80::c42c:3ff:fe60:6a64:5353 --> ff02::fb:5353 H: lucas-imac.local
 lo: [i4------] STUN.netify.meta-cdn 31.13.73.48:3478 <-- 192.168.2.4:52794
 lo: [i4------] STUN.netify.meta-cdn 31.13.93.48:3478 <-- 192.168.2.4:52794
 lo: [i4------] STUN.netify.meta-cdn 31.13.79.192:3478 <-- 192.168.2.4:52794

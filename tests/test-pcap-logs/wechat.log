@@ -1,11 +1,11 @@
-lo: [i4------] MDNS.netify.internal-network 192.168.1.103:5353 --> 224.0.0.251:5353 H: _googlecast._tcp.local
-lo: [i6------] MDNS.netify.internal-network fe80::7a92:9cff:fe0f:a88e:5353 --> ff02::fb:5353 H: _googlecast._tcp.local
-lo: [i4------] DNS.netify.google 192.168.1.103:53734 --> 192.168.1.254:53 H: safebrowsing.googleusercontent.com
+lo: [i4------] MDNS 192.168.1.103:5353 --> 224.0.0.251:5353 H: _googlecast._tcp.local
+lo: [i6------] MDNS fe80::7a92:9cff:fe0f:a88e:5353 --> ff02::fb:5353 H: _googlecast._tcp.local
+lo: [i4------] DNS 192.168.1.103:53734 --> 192.168.1.254:53 H: safebrowsing.googleusercontent.com
 lo: [i4------] HTTP/S.netify.google 172.217.22.14:443 <-- 192.168.1.103:38657 H: safebrowsing.googleusercontent.com SSL C: safebrowsing.googleusercontent.com
 lo: [i4-u----] HTTP/S.netify.google 172.217.22.14:443 <-- 192.168.1.103:38657 H: safebrowsing.googleusercontent.com SSL C: safebrowsing.googleusercontent.com
-lo: [i4------] DNS.netify.google 192.168.1.103:46078 --> 192.168.1.254:53 H: ssl.gstatic.com
+lo: [i4------] DNS 192.168.1.103:46078 --> 192.168.1.254:53 H: ssl.gstatic.com
 lo: [i4------] QUIC.netify.google 172.217.23.67:443 <-- 192.168.1.103:51507 H: ssl.gstatic.com SSL C: ssl.gstatic.com
-lo: [i4------] DNS.netify.gsuite 192.168.1.103:55862 --> 192.168.1.254:53 H: docs.google.com
+lo: [i4------] DNS 192.168.1.103:55862 --> 192.168.1.254:53 H: docs.google.com
 lo: [i4------] QUIC.netify.gsuite 192.168.1.103:57591 --> 216.58.198.46:443 H: docs.google.com SSL C: docs.google.com
 lo: [i4------] HTTP/S 192.168.1.103:54058 --> 203.205.151.162:443
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54089 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
@@ -64,10 +64,10 @@ lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54111 --> 203.205.151.162:443 
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54113 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54113 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54113 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4------] DNS.netify.qq 192.168.1.103:19041 --> 192.168.1.254:53 H: res.wx.qq.com
+lo: [i4------] DNS 192.168.1.103:19041 --> 192.168.1.254:53 H: res.wx.qq.com
 lo: [i4------] HTTP/S.netify.qq 192.168.1.103:43850 --> 203.205.158.34:443 H: res.wx.qq.com SSL C: res.wx.qq.com
 lo: [i4-u----] HTTP/S.netify.qq 192.168.1.103:43850 --> 203.205.158.34:443 H: res.wx.qq.com SSL C: res.wx.qq.com
-lo: [i4------] DNS.netify.google 192.168.1.103:60562 --> 192.168.1.254:53 H: ssl.gstatic.com
+lo: [i4------] DNS 192.168.1.103:60562 --> 192.168.1.254:53 H: ssl.gstatic.com
 lo: [i4------] QUIC.netify.google 172.217.23.67:443 <-- 192.168.1.103:35601 H: ssl.gstatic.com SSL C: ssl.gstatic.com
 lo: [i4------] NETBIOS 192.168.1.100:138 --> 192.168.1.255:138 H: giovanni-pc
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54117 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
@@ -82,15 +82,15 @@ lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54119 --> 203.205.151.162:443 
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:54120 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54120 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:54120 --> 203.205.151.162:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4------] DNS.netify.wechat 192.168.1.103:60356 --> 192.168.1.254:53 H: web.wechat.com
+lo: [i4------] DNS 192.168.1.103:60356 --> 192.168.1.254:53 H: web.wechat.com
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:58036 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58036 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58036 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4------] HTTP/S.netify.wechat 192.168.1.103:58038 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58038 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58038 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
-lo: [i4------] MDNS.netify.internal-network 192.168.1.100:5353 --> 224.0.0.251:5353 H: _googlecast._tcp.local
-lo: [i6------] MDNS.netify.internal-network fe80::91f9:3df3:7436:6cd6:5353 --> ff02::fb:5353 H: _googlecast._tcp.local
+lo: [i4------] MDNS 192.168.1.100:5353 --> 224.0.0.251:5353 H: _googlecast._tcp.local
+lo: [i6------] MDNS fe80::91f9:3df3:7436:6cd6:5353 --> ff02::fb:5353 H: _googlecast._tcp.local
 lo: [i4------] LLMNR 192.168.1.100:54124 --> 224.0.0.252:5355 H: lbjamwptxz
 lo: [i4------] LLMNR 192.168.1.100:49832 --> 224.0.0.252:5355 H: cansaqcq
 lo: [i4------] LLMNR 192.168.1.100:57401 --> 224.0.0.252:5355 H: mcztmpkc
@@ -113,22 +113,22 @@ lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58042 --> 203.205.147.171:443 
 lo: [i4-u----] HTTP/S.netify.wechat 192.168.1.103:58042 --> 203.205.147.171:443 H: web.wechat.com SSL C: web.wechat.com
 lo: [i4------] HTTP/S 192.168.1.103:54183 --> 203.205.151.162:443
 lo: [i4-----s] NTP.netify.ntp 192.168.1.103:37578 --> 193.204.114.233:123
-lo: [i4------] DNS.netify.wechat 192.168.1.103:58165 --> 192.168.1.254:53 H: webpush.web.wechat.com
-lo: [i4------] DNS.netify.wechat 192.168.1.103:43317 --> 192.168.1.254:53 H: webpush.web.wechat.com
-lo: [i4------] DNS.netify.wechat 192.168.1.103:56367 --> 192.168.1.254:53 H: webpush.web.wechat.com
-lo: [i4------] DNS.netify.wechat 192.168.1.103:33915 --> 192.168.1.254:53 H: webpush.web.wechat.com
+lo: [i4------] DNS 192.168.1.103:58165 --> 192.168.1.254:53 H: webpush.web.wechat.com
+lo: [i4------] DNS 192.168.1.103:43317 --> 192.168.1.254:53 H: webpush.web.wechat.com
+lo: [i4------] DNS 192.168.1.103:56367 --> 192.168.1.254:53 H: webpush.web.wechat.com
+lo: [i4------] DNS 192.168.1.103:33915 --> 192.168.1.254:53 H: webpush.web.wechat.com
 lo: [i4------] IGMP 192.168.1.108:0 --> 224.0.0.22:0
 lo: [i4------] HTTP/S.netify.google 192.168.1.103:58143 --> 216.58.205.131:443
-lo: [i4------] DNS.netify.wechat 192.168.1.103:45366 --> 192.168.1.254:53 H: webpush.web.wechat.com
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:59567 --> 192.168.1.254:53 H: ssl.gstatic.com.lan
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:42074 --> 192.168.1.254:53 H: ssl.gstatic.com.lan
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:43705 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
-lo: [i4------] DNS.netify.ntp 192.168.1.103:44063 --> 192.168.1.254:53 H: 1.debian.pool.ntp.org
-lo: [i4------] DNS.netify.google 192.168.1.103:42589 --> 192.168.1.254:53 H: ssl.gstatic.com
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:42856 --> 192.168.1.254:53 H: 1.debian.pool.ntp.org.lan
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:44346 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
-lo: [i4------] DNS.netify.ntp 192.168.1.103:41759 --> 192.168.1.254:53 H: 2.debian.pool.ntp.org
-lo: [i4------] DNS.netify.internal-network 192.168.1.103:53515 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
+lo: [i4------] DNS 192.168.1.103:45366 --> 192.168.1.254:53 H: webpush.web.wechat.com
+lo: [i4------] DNS 192.168.1.103:59567 --> 192.168.1.254:53 H: ssl.gstatic.com.lan
+lo: [i4------] DNS 192.168.1.103:42074 --> 192.168.1.254:53 H: ssl.gstatic.com.lan
+lo: [i4------] DNS 192.168.1.103:43705 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
+lo: [i4------] DNS 192.168.1.103:44063 --> 192.168.1.254:53 H: 1.debian.pool.ntp.org
+lo: [i4------] DNS 192.168.1.103:42589 --> 192.168.1.254:53 H: ssl.gstatic.com
+lo: [i4------] DNS 192.168.1.103:42856 --> 192.168.1.254:53 H: 1.debian.pool.ntp.org.lan
+lo: [i4------] DNS 192.168.1.103:44346 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
+lo: [i4------] DNS 192.168.1.103:41759 --> 192.168.1.254:53 H: 2.debian.pool.ntp.org
+lo: [i4------] DNS 192.168.1.103:53515 --> 192.168.1.254:53 H: webpush.web.wechat.com.lan
 lo: [i4--g---] HTTP 95.101.34.33:80 <-- 192.168.1.103:34981
 lo: [i4--g---] HTTP/S 192.168.1.103:40741 --> 203.205.151.211:443
 lo: [i4--g---] HTTP/S 192.168.1.103:54106 --> 203.205.151.162:443

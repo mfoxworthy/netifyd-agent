@@ -21,4 +21,4 @@ lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33846 --> 104.17.114.40:443 H: 
 lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33848 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
 lo: [i4------] HTTP/S.netify.new-relic 10.8.0.1:48222 --> 162.247.243.188:443 H: mobile-collector.newrelic.com SSL C: mobile-collector.newrelic.com
 lo: [i4------] HTTP/S.netify.tunnelbear 10.8.0.1:33858 --> 104.17.114.40:443 H: api.polargrizzly.com SSL C: api.polargrizzly.com
-lo: [i4--g---] DNS.netify.google 8.8.8.8:53 <-- 10.158.132.91:51120
+lo: [i4--g---] DNS 8.8.8.8:53 <-- 10.158.132.91:51120

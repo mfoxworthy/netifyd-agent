@@ -1,10 +1,10 @@
-lo: [i4------] DNS.netify.google 172.217.40.76:56680 --> 193.24.227.238:53 H: weberlab.de
-lo: [i6------] DNS.netify.google 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c03::10a:46433 H: pa.weberlab.de
-lo: [i6------] DNS.netify.google 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c06::105:63369 H: fg2.weberlab.de
-lo: [i4------] DNS.netify.google 173.194.169.104:59464 --> 193.24.227.238:53 H: fg2.weberlab.de
-lo: [i6------] DNS.netify.google 2001:470:765b::a25:53:53 <-- 2a00:1450:400c:c00::106:54430 H: fg2.weberlab.de
-lo: [i4------] DNS.netify.google 74.125.47.136:59330 --> 193.24.227.238:53 H: weberlab.de
-lo: [i6------] DNS.netify.google 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c05::10e:34944 H: fg2.weberlab.de
+lo: [i4------] DNS 172.217.40.76:56680 --> 193.24.227.238:53 H: weberlab.de
+lo: [i6------] DNS 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c03::10a:46433 H: pa.weberlab.de
+lo: [i6------] DNS 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c06::105:63369 H: fg2.weberlab.de
+lo: [i4------] DNS 173.194.169.104:59464 --> 193.24.227.238:53 H: fg2.weberlab.de
+lo: [i6------] DNS 2001:470:765b::a25:53:53 <-- 2a00:1450:400c:c00::106:54430 H: fg2.weberlab.de
+lo: [i4------] DNS 74.125.47.136:59330 --> 193.24.227.238:53 H: weberlab.de
+lo: [i6------] DNS 2001:470:765b::a25:53:53 <-- 2a00:1450:4013:c05::10e:34944 H: fg2.weberlab.de
 lo: [i6------] DNS 2001:470:1f0b:16b0:20c:29ff:fe7c:a4cb:47634 --> 2001:470:765b::a25:53:53 H: fg2-mgmt.weberlab.de
 lo: [i6------] DNS 2001:470:1f0b:16b0:20c:29ff:fe7c:a4cb:33592 --> 2001:470:765b::a25:53:53 H: fg2-mgmt.weberlab.de
 lo: [i6------] DNS 2001:470:1f0b:16b0:20c:29ff:fe7c:a4cb:46316 --> 2001:470:765b::a25:53:53 H: fg2-mgmt.weberlab.de

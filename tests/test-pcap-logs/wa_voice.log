@@ -1,24 +1,24 @@
-lo: [i4------] DNS.netify.google 192.168.2.1:53 <-- 192.168.2.12:51431 H: www.google.com
-lo: [i4------] DNS.netify.whatsapp 192.168.2.1:53 <-- 192.168.2.12:60765 H: g.whatsapp.net
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.12:51431 H: www.google.com
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.12:60765 H: g.whatsapp.net
 lo: [i4------] Apple/Push.netify.apple-push 17.242.60.84:5223 <-- 192.168.2.12:49354
 lo: [i4------] Spotify.netify.spotify 192.168.2.1:57621 --> 192.168.2.255:57621
 lo: [i4-----s] XMPP.netify.meta-messaging 157.240.20.53:5222 <-- 192.168.2.12:49355
-lo: [i4------] DNS.netify.whatsapp 192.168.2.1:53 <-- 192.168.2.12:55296 H: media-mxp1-1.cdn.whatsapp.net
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.12:55296 H: media-mxp1-1.cdn.whatsapp.net
 lo: [i4------] HTTP/S.netify.whatsapp 31.13.86.51:443 <-- 192.168.2.12:50503 H: media-mxp1-1.cdn.whatsapp.net SSL C: media-mxp1-1.cdn.whatsapp.net
 lo: [i4-u----] HTTP/S.netify.whatsapp 31.13.86.51:443 <-- 192.168.2.12:50503 H: media-mxp1-1.cdn.whatsapp.net SSL C: media-mxp1-1.cdn.whatsapp.net
 lo: [i4------] Dropbox 192.168.2.1:17500 --> 192.168.2.255:17500
 lo: [i4------] HTTP/S.netify.apple 17.171.47.85:443 <-- 192.168.2.12:50502
 lo: [i4------] SSDP 169.254.162.244:50384 --> 239.255.255.250:1900 H: 239.255.255.250
 lo: [i4------] SSDP 192.168.2.1:50384 --> 239.255.255.250:1900 H: 239.255.255.250
-lo: [i4------] MDNS.netify.internal-network 192.168.2.12:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
-lo: [i6------] MDNS.netify.internal-network fe80::414:409d:8afd:9f05:5353 --> ff02::fb:5353 H: _raop._tcp.local
+lo: [i4------] MDNS 192.168.2.12:5353 --> 224.0.0.251:5353 H: _raop._tcp.local
+lo: [i6------] MDNS fe80::414:409d:8afd:9f05:5353 --> ff02::fb:5353 H: _raop._tcp.local
 lo: [i4------] STUN.netify.meta-cdn 31.13.86.48:3478 <-- 192.168.2.12:56328
 lo: [i4------] STUN.netify.meta-cdn 185.60.216.51:3478 <-- 192.168.2.12:56328
 lo: [i4------] STUN.netify.meta-cdn 157.240.193.48:3478 <-- 192.168.2.12:56328
 lo: [i4------] STUN.netify.meta-cdn 179.60.192.48:3478 <-- 192.168.2.12:56328
 lo: [i4------] STUN.netify.meta-cdn 157.240.196.62:3478 <-- 192.168.2.12:56328
 lo: [i4------] SSDP 192.168.2.12:64716 --> 239.255.255.250:1900 H: 239.255.255.250
-lo: [i4------] DNS.netify.whatsapp 192.168.2.1:53 <-- 192.168.2.12:60549 H: pps.whatsapp.net
+lo: [i4------] DNS 192.168.2.1:53 <-- 192.168.2.12:60549 H: pps.whatsapp.net
 lo: [i4------] HTTP/S.netify.whatsapp 157.240.20.52:443 <-- 192.168.2.12:50504 H: pps.whatsapp.net SSL C: pps.whatsapp.net
 lo: [i4-u----] HTTP/S.netify.whatsapp 157.240.20.52:443 <-- 192.168.2.12:50504 H: pps.whatsapp.net SSL C: pps.whatsapp.net
 lo: [i4------] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: lucas-imac
