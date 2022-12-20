@@ -685,6 +685,10 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         SetDetectedApplication(entry, nd_apps->Lookup("netify.tivo"));
         break;
 
+    case ND_PROTO_TPLINK_SHP:
+        SetDetectedApplication(entry, nd_apps->Lookup("netify.tp-link"));
+        break;
+
     case ND_PROTO_TUYA_LP:
         SetDetectedApplication(entry, nd_apps->Lookup("netify.tuya-smart"));
         break;

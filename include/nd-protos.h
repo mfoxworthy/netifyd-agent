@@ -351,6 +351,7 @@ typedef enum {
     ND_PROTO_MUNIN                  = 311,
     ND_PROTO_SYNCTHING              = 312,
     ND_PROTO_TIVOCONNECT            = 313,
+    ND_PROTO_TPLINK_SHP             = 314,  // TP-LINK Smart Home Protocol
 
     ND_PROTO_MAX,
     ND_PROTO_TODO                   = 0xffffffff
@@ -557,6 +558,7 @@ const nd_protos_t nd_protos = {
     { ND_PROTO_TLS, "TLS" },
     { ND_PROTO_TOCA_BOCA, "TocaBoca" },
     { ND_PROTO_TODO, "TODO" },
+    { ND_PROTO_TPLINK_SHP, "TPLINK/SHP" },
     { ND_PROTO_TRUPHONE, "TruPhone" },
     { ND_PROTO_TUYA_LP, "Tuya/LP" },
     { ND_PROTO_TVUPLAYER, "TVUplayer" },
@@ -797,6 +799,7 @@ const nd_ndpi_proto_t nd_ndpi_protos = {
     { NDPI_PROTOCOL_TIVOCONNECT, ND_PROTO_TIVOCONNECT },
     { NDPI_PROTOCOL_TLS, ND_PROTO_TLS },
     { NDPI_PROTOCOL_TOCA_BOCA, ND_PROTO_TOCA_BOCA },
+    { NDPI_PROTOCOL_TPLINK_SHP, ND_PROTO_TPLINK_SHP },
     { NDPI_PROTOCOL_TRUPHONE, ND_PROTO_TRUPHONE },
     { NDPI_PROTOCOL_TUYA_LP, ND_PROTO_TUYA_LP },
     { NDPI_PROTOCOL_TVUPLAYER, ND_PROTO_TVUPLAYER },
