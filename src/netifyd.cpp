@@ -354,8 +354,6 @@ static void nd_usage(int rc = 0, bool version = false)
             "    Default: %s\n"
             "  --force-reset\n    Reset Agent sink configuration options.\n"
             "    Deletes: %s, %s, %s\n"
-
-#ifndef _ND_LEAN_AND_MEAN
             "\nDump options:\n"
             "  --dump-sort-by-tag\n    Sort entries by tag.\n"
             "    Default: sort entries by ID.\n"
@@ -365,7 +363,6 @@ static void nd_usage(int rc = 0, bool version = false)
             "  --dump-categories\n    Dump application and protocol categories.\n"
             "  --dump-category <type>\n    Dump categories by type: application or protocol\n"
             "  --dump-risks\n    Dump flow security risks.\n"
-#endif
             "\nCapture options:\n"
             "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
             "  -E, --external <interface>\n    Specify an external (WAN) interface to capture from.\n"
@@ -1836,7 +1833,6 @@ static void nd_dump_stats(void)
     }
 }
 
-#ifndef _ND_LEAN_AND_MEAN
 enum ndDumpFlags {
     ndDUMP_NONE = 0x00,
     ndDUMP_TYPE_PROTOS = 0x01,
@@ -1958,7 +1954,6 @@ int static nd_export_applications(void)
 
     return 0;
 }
-#endif
 
 static void nd_status(void)
 {
@@ -2274,9 +2269,7 @@ int main(int argc, char *argv[])
     struct itimerspec itspec_update;
     string last_device;
     nd_device_addr device_addresses;
-#ifndef _ND_LEAN_AND_MEAN
     uint8_t dump_flags = ndDUMP_NONE;
-#endif
     setlocale(LC_ALL, "");
 
     ostringstream os;
@@ -2422,15 +2415,6 @@ int main(int argc, char *argv[])
             nd_config.flags |= ndGF_WAIT_FOR_CLIENT;
             break;
 
-        case _ND_LO_DUMP_SORT_BY_TAG:
-#ifndef _ND_LEAN_AND_MEAN
-            dump_flags |= ndDUMP_SORT_BY_TAG;
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
-            break;
-
         case _ND_LO_EXPORT_APPS:
 #ifndef _ND_LEAN_AND_MEAN
             exit(nd_export_applications());
@@ -2438,49 +2422,28 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
             exit(1);
 #endif
+        case _ND_LO_DUMP_SORT_BY_TAG:
+            dump_flags |= ndDUMP_SORT_BY_TAG;
+            break;
+
         case _ND_LO_DUMP_PROTOS:
-#ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_PROTOS | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case _ND_LO_DUMP_APPS:
-#ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case _ND_LO_DUMP_CAT:
-#ifndef _ND_LEAN_AND_MEAN
             if (strncasecmp("application", optarg, 8) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_APP | dump_flags);
             else if (strncasecmp("protocol", optarg, 11) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_PROTO | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case _ND_LO_DUMP_CATS:
-#ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_CATS | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case _ND_LO_DUMP_RISKS:
-#ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_RISKS | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case _ND_LO_LOOKUP_IP:
 #ifndef _ND_LEAN_AND_MEAN
             exit(nd_lookup_ip(optarg));
@@ -2578,13 +2541,8 @@ int main(int argc, char *argv[])
 #endif
             break;
         case 'P':
-#ifndef _ND_LEAN_AND_MEAN
             nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
             exit(0);
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
-#endif
         case 'p':
             if (nd_conf_filename == NULL)
                 nd_conf_filename = strdup(ND_CONF_FILE_NAME);
