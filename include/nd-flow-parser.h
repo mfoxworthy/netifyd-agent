@@ -44,7 +44,7 @@
 #define _NDFP_origin             ((ndFlowParser *)yyget_extra(scanner))->origin
 #define _NDFP_result             ((ndFlowParser *)yyget_extra(scanner))->expr_result
 
-#if 0
+#if 1
 #define _NDFP_debugf(f, ...)     nd_dprintf(f, __VA_ARGS__)
 #else
 #define _NDFP_debugf(f, ...)     do {} while(0)
