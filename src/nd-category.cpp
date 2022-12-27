@@ -70,6 +70,8 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-category.h"
 
+#define _ND_DOMAINS_LOG_DEBUG   1
+
 extern ndGlobalConfig nd_config;
 
 ndCategories *nd_categories = NULL;
@@ -434,7 +436,15 @@ nd_cat_id_t ndDomains::Lookup(const string &domain)
     unique_lock<mutex> ul(lock);
 
     for (auto &it : domains) {
+#ifdef _ND_DOMAINS_LOG_DEBUG
+        nd_dprintf("%s: searching category %hu for: %s\n",
+            __PRETTY_FUNCTION__, it.first, domain.c_str()
+        );
+#endif
         if (it.second.find(domain) == it.second.end()) continue;
+#ifdef _ND_DOMAINS_LOG_DEBUG
+        nd_dprintf("%s: found: %s\n", domain.c_str());
+#endif
         return it.first;
     }
 
