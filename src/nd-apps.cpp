@@ -493,7 +493,8 @@ ndApplication *ndApplications::AddApp(
 bool ndApplications::AddDomain(nd_app_id_t id, const string &domain)
 {
     auto rc = domains.insert(make_pair(domain, id));
-    if (domain.find_first_of(".") == string::npos) tlds.insert(domain);
+    if (domain.find_first_of(".") == string::npos)
+        tlds.insert(domain);
     return rc.second;
 }
 

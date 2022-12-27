@@ -435,17 +435,27 @@ nd_cat_id_t ndDomains::Lookup(const string &domain)
 {
     unique_lock<mutex> ul(lock);
 
+    string search(domain);
+    size_t p = string::npos;
+
     for (auto &it : domains) {
+        do {
 #ifdef _ND_LOG_DOMAINS
-        nd_dprintf("%s: searching category %hu for: %s\n",
-            __PRETTY_FUNCTION__, it.first, domain.c_str()
-        );
+            nd_dprintf("%s: searching category %hu for: %s\n",
+                __PRETTY_FUNCTION__, it.first, search.c_str()
+            );
 #endif
-        if (it.second.find(domain) == it.second.end()) continue;
+            if (it.second.find(search) != it.second.end()) {
 #ifdef _ND_LOG_DOMAINS
-        nd_dprintf("%s: found: %s\n", __PRETTY_FUNCTION__, domain.c_str());
+                nd_dprintf("%s: found: %s\n", __PRETTY_FUNCTION__, search.c_str());
 #endif
-        return it.first;
+                return it.first;
+            }
+
+            if ((p = search.find_first_of(".")) != string::npos)
+                search = search.substr(p + 1);
+        }
+        while (search.size() && p != string::npos);
     }
 
     return ND_DOMAIN_UNKNOWN;

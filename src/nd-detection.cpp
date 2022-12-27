@@ -122,7 +122,7 @@ using namespace std;
 //#define _ND_LOG_PROTO_UNKNOWN   1
 
 // Enable to log custom domain category lookups
-#define _ND_LOG_DOMAIN_LOOKUPS  1
+//#define _ND_LOG_DOMAIN_LOOKUPS  1
 
 extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
