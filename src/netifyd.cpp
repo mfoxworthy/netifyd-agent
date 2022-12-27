@@ -636,7 +636,7 @@ static int nd_start_capture_threads(void)
 
 static void nd_expire_flow(ndFlow *flow)
 {
-    flow->flags.detection_expiring = true;
+    flow->flags.expiring = true;
 #ifdef _ND_USE_PLUGINS
     for (auto &i : plugin_detections) {
 
@@ -670,7 +670,7 @@ static void nd_stop_capture_threads(bool expire_flows = false)
         nd_flow_map *fm = nd_flow_buckets->Acquire(b);
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
-            if (it->second->flags.detection_expiring.load() == false) {
+            if (it->second->flags.expiring.load() == false) {
                 nd_expire_flow(it->second);
                 detection_threads[it->second->dpi_thread_id]->QueuePacket(it->second);
             }
@@ -1126,7 +1126,7 @@ static void nd_process_flows(
                 i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
             if (i->second->tickets.load() > 0) tickets++;
 #endif
-            if (i->second->flags.detection_expired.load() == false) {
+            if (i->second->flags.expired.load() == false) {
 
                 uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
                     nd_config.ttl_idle_flow : (
@@ -1138,8 +1138,8 @@ static void nd_process_flows(
                 if ((i->second->ts_last_seen / 1000) + ttl < now) {
 
                     if (i->second->flags.detection_complete.load() == true)
-                        i->second->flags.detection_expired = true;
-                    else if (i->second->flags.detection_expiring.load() == false) {
+                        i->second->flags.expired = true;
+                    else if (i->second->flags.expiring.load() == false) {
 
                         expiring++;
 
@@ -1149,12 +1149,12 @@ static void nd_process_flows(
                         if (it != detection_threads.end())
                             it->second->QueuePacket(i->second);
                         else
-                            i->second->flags.detection_expired = true;
+                            i->second->flags.expired = true;
                     }
                 }
             }
 
-            if (i->second->flags.detection_expired.load() == true) {
+            if (i->second->flags.expired.load() == true) {
 
                 expired++;
 

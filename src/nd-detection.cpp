@@ -305,7 +305,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
         if (entry != NULL) {
             if (ndEF->detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
-                (ndEF->flags.detection_expiring.load() == false ||
+                (ndEF->flags.expiring.load() == false ||
                     ndEF->tickets.load() > 1) &&
                 ndEF->detection_packets.load() < nd_config.max_detection_pkts
             )) {
@@ -316,8 +316,8 @@ void ndDetectionThread::ProcessPacketQueue(void)
             }
 
             if (ndEF->detection_packets.load() == nd_config.max_detection_pkts ||
-                (ndEF->flags.detection_expiring.load() &&
-                    ndEF->flags.detection_expired.load() == false)) {
+                (ndEF->flags.expiring.load() &&
+                    ndEF->flags.expired.load() == false)) {
 
                 if (ndEF->flags.detection_complete.load() == false &&
                     ndEF->flags.detection_guessed.load() == false &&
@@ -334,8 +334,8 @@ void ndDetectionThread::ProcessPacketQueue(void)
                     FlowUpdate(entry);
                 }
 
-                if (ndEF->flags.detection_expiring.load())
-                    ndEF->flags.detection_expired = true;
+                if (ndEF->flags.expiring.load())
+                    ndEF->flags.expired = true;
             }
 
             if (ndEF->flags.detection_complete.load())
