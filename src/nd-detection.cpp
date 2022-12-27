@@ -119,7 +119,10 @@ using namespace std;
 //#define _ND_LOG_FHC             1
 
 // Enable to log unknown protocol debug
-//#define _ND_LOG_PROTO_UNKNOWN 1
+//#define _ND_LOG_PROTO_UNKNOWN   1
+
+// Enable to log custom domain category lookups
+#define _ND_LOG_DOMAIN_LOOKUPS  1
 
 extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
@@ -953,6 +956,10 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         ndEF->category.domain = nd_domains->Lookup(
             ndEFNF->host_server_name
         );
+#ifdef _ND_LOG_DOMAIN_LOOKUPS
+        nd_dprintf("%s: category.domain: %hu\n",
+            tag.c_str(), ndEF->category.domain);
+#endif
     }
 
     ndEF->update_lower_maps();
