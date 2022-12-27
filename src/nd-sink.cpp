@@ -259,8 +259,19 @@ void *ndSinkThread::Entry(void)
 
             if ((rc = pthread_mutex_lock(&uploads_cond_mutex)) != 0)
                 throw ndSinkThreadException(strerror(rc));
-            if ((rc = pthread_cond_wait(&uploads_cond, &uploads_cond_mutex)) != 0)
+
+            struct timespec ts_cond;
+            if (clock_gettime(CLOCK_MONOTONIC, &ts_cond) != 0)
+                throw ndSinkThreadException(strerror(errno));
+
+            ts_cond.tv_sec += 1;
+
+            if ((rc = pthread_cond_timedwait(&uploads_cond,
+                &uploads_cond_mutex, &ts_cond)) != 0 &&
+                rc != ETIMEDOUT) {
                 throw ndSinkThreadException(strerror(rc));
+            }
+
             if ((rc = pthread_mutex_unlock(&uploads_cond_mutex)) != 0)
                 throw ndSinkThreadException(strerror(rc));
 
