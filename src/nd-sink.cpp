@@ -161,7 +161,11 @@ ndSinkThread::ndSinkThread(int16_t cpu)
 
 ndSinkThread::~ndSinkThread()
 {
+    Lock();
+
     pthread_cond_broadcast(&uploads_cond);
+
+    Unlock();
 
     Join();
 
