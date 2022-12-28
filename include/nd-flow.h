@@ -225,18 +225,18 @@ public:
     ndAddr::Type upper_type;
 
     struct {
-        atomic_bool ip_nat;
-        atomic_bool tcp_fin;
-        atomic_uchar tcp_fin_ack;
-        atomic_bool dhc_hit;
-        atomic_bool detection_init;
         atomic_bool detection_complete;
-        atomic_bool detection_expiring;
-        atomic_bool detection_expired;
         atomic_bool detection_guessed;
+        atomic_bool detection_init;
         atomic_bool detection_updated;
+        atomic_bool dhc_hit;
+        atomic_bool expired;
+        atomic_bool expiring;
+        atomic_bool ip_nat;
         atomic_bool risk_checked;
         atomic_bool soft_dissector;
+        atomic_bool tcp_fin;
+        atomic_uchar tcp_fin_ack;
     } flags;
 
     atomic_uint tickets;

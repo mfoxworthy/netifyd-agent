@@ -1100,8 +1100,8 @@ nd_process_ip:
                 nf->flags.dhc_hit = false;
                 nf->flags.detection_init = false;
                 nf->flags.detection_complete = false;
-                nf->flags.detection_expiring = false;
-                nf->flags.detection_expired = false;
+                nf->flags.expiring = false;
+                nf->flags.expired = false;
                 nf->flags.detection_guessed = false;
                 nf->flags.detection_updated = false;
                 nf->flags.risk_checked = false;
@@ -1120,7 +1120,7 @@ nd_process_ip:
     }
 
     if (nf->flags.detection_complete.load() == false &&
-        nf->flags.detection_expired.load() == false &&
+        nf->flags.expired.load() == false &&
         nf->detection_packets.load() <= nd_config.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
