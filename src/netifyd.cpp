@@ -371,6 +371,7 @@ static void nd_usage(int rc = 0, bool version = false)
             "  -N, --device-netfilter <interface>\n    Interface/device option: associate Netlink messages from an alternate interface (ex: physdev of PPP interface).\n"
             "  -t, --disable-conntrack\n    Disable connection tracking thread.\n"
             "  -l, --disable-netlink\n    Don't process Netlink messages for capture interfaces.\n"
+            "  -r, --replay-delay\n    Simulate packet-to-packet arrival times in offline playback mode.\n"
 
             "\nThreading options:\n"
             "  --thread-capture-base <offset>\n    Specify a thread affinity base or offset for capture threads.\n"
