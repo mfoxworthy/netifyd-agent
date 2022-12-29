@@ -1097,21 +1097,12 @@ nd_process_ip:
                 // Reset flow in case we have another query from the
                 // same client and server, using the same local and
                 // remote ports.
-                nf->flags.dhc_hit = false;
-                nf->flags.detection_init = false;
-                nf->flags.detection_complete = false;
-                nf->flags.expiring = false;
-                nf->flags.expired = false;
-                nf->flags.detection_guessed = false;
-                nf->flags.detection_updated = false;
-                nf->flags.risk_checked = false;
-                nf->flags.soft_dissector = false;
+                nf->reset(true);
                 nf->lower_bytes = flow.lower_bytes;
                 nf->upper_bytes = flow.upper_bytes;
                 nf->lower_packets = flow.lower_packets;
                 nf->upper_packets = flow.upper_packets;
                 nf->total_packets = flow.total_packets;
-                nf->detection_packets = 0;
 #ifdef _ND_LOG_DHC
                 nd_dprintf("%s: Reset DNS flow.\n", tag.c_str());
 #endif

@@ -272,11 +272,27 @@ int ndFlow::dump(pcap_t *pcap, const uint8_t *digest)
     return 0;
 }
 
-void ndFlow::reset(void)
+void ndFlow::reset(bool full_reset)
 {
     ts_first_update = 0;
     lower_bytes = upper_bytes = 0;
     lower_packets = upper_packets = 0;
+
+    if (full_reset) {
+        detection_packets = 0;
+
+        flags.detection_complete = false;
+        flags.detection_guessed = false;
+        flags.detection_init = false;
+        flags.detection_updated = false;
+        flags.dhc_hit = false;
+        flags.expired = false;
+        flags.expiring = false;
+        flags.risk_checked = false;
+        flags.soft_dissector = false;
+
+        risks.clear();
+    }
 }
 
 void ndFlow::release(void)

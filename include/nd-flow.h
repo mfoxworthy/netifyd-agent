@@ -272,7 +272,7 @@ public:
 
     int dump(pcap_t *pcap, const uint8_t *digest);
 
-    void reset(void);
+    void reset(bool full_reset = false);
 
     void release(void);
 
