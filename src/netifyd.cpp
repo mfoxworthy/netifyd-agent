@@ -3095,7 +3095,8 @@ int main(int argc, char *argv[])
     }
 
     timer_delete(timer_update);
-    timer_delete(timer_napi);
+    if (ND_USE_NAPI)
+        timer_delete(timer_napi);
 
     nd_stop_detection_threads();
 
