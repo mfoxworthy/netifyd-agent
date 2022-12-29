@@ -708,26 +708,34 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         break;
     }
 
-    if (ndEF->master_protocol() != ND_PROTO_DNS) {
-        // Determine application by host_server_name if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            if (ndEF->host_server_name[0] != '\0')
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
-        }
+    // Determine application by host_server_name if still unknown.
+    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        if (ndEF->host_server_name[0] != '\0')
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
+    }
 
-        // Determine application by dns_host_name if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
-            if (ndEF->dns_host_name[0] != '\0')
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
-        }
+    // Determine application by dns_host_name if still unknown.
+    if (ndEF->detected_application == ND_APP_UNKNOWN) {
+        if (ndEF->dns_host_name[0] != '\0')
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
+    }
 
-        // Determine application by network CIDR if still unknown.
-        if (ndEF->detected_application == ND_APP_UNKNOWN) {
+    // Determine application by network CIDR if still unknown.
+    // DNS flows excluded...
+    if (ndEF->master_protocol() != ND_PROTO_DNS &&
+        ndEF->detected_application == ND_APP_UNKNOWN) {
 
+        if (ndEF->lower_type == ndAddr::atOTHER) {
             SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
 
             if (ndEF->detected_application == ND_APP_UNKNOWN)
                 SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
+        }
+        else {
+            SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
+
+            if (ndEF->detected_application == ND_APP_UNKNOWN)
+                SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
         }
     }
 
