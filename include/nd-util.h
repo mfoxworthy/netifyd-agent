@@ -28,6 +28,26 @@ void *nd_mem_alloc(size_t size);
 
 void nd_mem_free(void *ptr);
 
+class ndLogBuffer : public streambuf
+{
+public:
+    int overflow(int ch = EOF);
+    int sync();
+
+private:
+    ostringstream os;
+};
+
+class ndLogStream : public ostream
+{
+public:
+    ndLogStream() : ostream(new ndLogBuffer) { }
+
+    virtual ~ndLogStream() {
+        delete rdbuf();
+    }
+};
+
 void nd_printf(const char *format, ...);
 void nd_printf(const char *format, va_list ap);
 void nd_dprintf(const char *format, ...);

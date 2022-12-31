@@ -217,6 +217,28 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
 }
 #endif // NDPI_ENABLE_DEBUG_MESSAGES
 
+int ndLogBuffer::overflow(int ch)
+{
+//    os << "{" << ch << "}";
+
+    if (ch != EOF)
+        os << (char)ch;
+
+    if (ch == '\n') return sync();
+
+    return 0;
+}
+
+int ndLogBuffer::sync()
+{
+    if (! os.str().empty()) {
+        nd_printf("%s", os.str().c_str());
+        os.str("");
+    }
+
+    return 0;
+}
+
 void nd_print_address(const struct sockaddr_storage *addr)
 {
     int rc;
