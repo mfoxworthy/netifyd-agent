@@ -219,8 +219,6 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
 
 int ndLogBuffer::overflow(int ch)
 {
-//    os << "{" << ch << "}";
-
     if (ch != EOF)
         os << (char)ch;
 
