@@ -1131,7 +1131,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         j["established"] = false;
 
         json jf;
-        ndEF->json_encode(jf, ndFlow::ENCODE_METADATA);
+        ndEF->encode(jf, ndFlow::ENCODE_METADATA);
         j["flow"] = jf;
 
         string json_string;

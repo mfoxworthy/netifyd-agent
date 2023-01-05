@@ -1165,7 +1165,7 @@ static void nd_process_flows(
                         (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                         json jf;
-                        i->second->json_encode(jf);
+                        i->second->encode<json>(jf);
 
                         string iface_name;
                         nd_iface_name(i->second->iface.ifname, iface_name);
@@ -1185,7 +1185,7 @@ static void nd_process_flows(
                             j["internal"] = i->second->iface.internal;
                             j["established"] = false;
 
-                            i->second->json_encode(
+                            i->second->encode<json>(
                                 jf, ndFlow::ENCODE_METADATA
                             );
                             j["flow"] = jf;
@@ -1211,7 +1211,7 @@ static void nd_process_flows(
                             j["internal"] = i->second->iface.internal;
                             j["established"] = false;
 
-                            i->second->json_encode(
+                            i->second->encode<json>(
                                 jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
                             );
                             j["flow"] = jf;
@@ -1248,7 +1248,7 @@ static void nd_process_flows(
                         (ND_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
 
                         json jf;
-                        i->second->json_encode(jf);
+                        i->second->encode<json>(jf);
 
                         string iface_name;
                         nd_iface_name(i->second->iface.ifname, iface_name);
@@ -1264,7 +1264,7 @@ static void nd_process_flows(
                             j["established"] = false;
 
                             jf.clear();
-                            i->second->json_encode(
+                            i->second->encode<json>(
                                 jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
                             );
                             j["flow"] = jf;
@@ -1689,14 +1689,50 @@ static void nd_dump_stats(void)
     json jstatus;
     string json_string;
     nd_json_agent_status(jstatus);
+#if 0
+#ifdef _ND_USE_PLUGINS
+    for (nd_plugins::iterator pi = plugin_stats.begin();
+        pi != plugin_stats.end(); pi++) {
+        ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+            pi->second->GetPlugin()
+        );
+        // p->ProcessStats(...);
+    }
+#endif
+#endif
 
     json ji, jd;
 
+    nd_ifaddrs_update(nd_interface_addrs);
     nd_json_add_interfaces(ji);
     jstatus["interfaces"] = ji;
+#ifdef _ND_USE_PLUGINS
+    for (nd_plugins::iterator pi = plugin_stats.begin();
+        pi != plugin_stats.end(); pi++) {
+        ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+            pi->second->GetPlugin()
+        );
+        p->ProcessStats(
+            nd_interfaces,
+#ifdef _ND_USE_NETLINK
+            nd_netlink_devices,
+#endif
+            nd_interface_addrs
+        );
+    }
+#endif
 
     nd_json_add_devices(jd);
     jstatus["devices"] = jd;
+#ifdef _ND_USE_PLUGINS
+    for (nd_plugins::iterator pi = plugin_stats.begin();
+        pi != plugin_stats.end(); pi++) {
+        ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+            pi->second->GetPlugin()
+        );
+        p->ProcessStats(nd_devices);
+    }
+#endif
 
     unordered_map<string, json> jflows;
 

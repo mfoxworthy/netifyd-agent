@@ -183,8 +183,6 @@ void nd_json_protocols(string &json_string)
 
 void nd_json_add_interfaces(json &parent)
 {
-    nd_ifaddrs_update(nd_interface_addrs);
-
     for (auto &i : nd_interfaces) {
         string iface_name;
         nd_iface_name(i.second.ifname, iface_name);

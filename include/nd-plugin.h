@@ -174,7 +174,15 @@ public:
     virtual ~ndPluginStats();
 
     virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
-    virtual void ProcessStats(const string &iface, const ndPacketStats &pkt_stats) { }
+    virtual void ProcessStats(
+        const nd_interface_map &nd_interfaces,
+#ifdef _ND_USE_NETLINK
+        const nd_netlink_device &nd_netlink_devices,
+#endif
+        const nd_interface_addr_map &nd_interface_addrs) { }
+    virtual void ProcessStats(const nd_device &nd_devices) { }
+    virtual void ProcessStats(
+        const string &iface, const ndPacketStats &pkt_stats) { }
     virtual void ProcessStats(const ndFlowMap *flows) { }
 
 protected:
