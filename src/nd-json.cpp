@@ -268,8 +268,6 @@ void nd_json_add_devices(json &parent)
                     device_addrs[j->first].push_back((*k));
             }
         }
-
-        i->second.second->clear();
     }
 
     for (nd_device_addrs::const_iterator i = device_addrs.begin();

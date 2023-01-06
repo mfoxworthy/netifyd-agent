@@ -1743,6 +1743,13 @@ static void nd_dump_stats(void)
         p->ProcessStats(nd_devices);
     }
 #endif
+    for (auto i = nd_devices.begin(); i != nd_devices.end(); i++) {
+        if (i->second.first == NULL) continue;
+
+        unique_lock<mutex> lock(*i->second.first);
+
+        i->second.second->clear();
+    }
 
     unordered_map<string, json> jflows;
 
