@@ -1686,6 +1686,16 @@ static void nd_dump_stats(void)
         nd_json_agent_stats.sink_queue_size = thread_sink->QueuePendingSize();
     }
 
+#ifdef _ND_USE_PLUGINS
+    for (nd_plugins::iterator pi = plugin_stats.begin();
+        pi != plugin_stats.end(); pi++) {
+        ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
+            pi->second->GetPlugin()
+        );
+        p->ProcessStats(ndPluginStats::INIT);
+    }
+#endif
+
     json jstatus;
     string json_string;
     nd_json_agent_status(jstatus);
@@ -1778,6 +1788,7 @@ static void nd_dump_stats(void)
         );
         p->ProcessStats(pkt_totals);
         p->ProcessStats(nd_flow_buckets);
+        p->ProcessStats(ndPluginStats::COMPLETE);
     }
 #endif
     nd_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));

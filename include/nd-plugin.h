@@ -173,6 +173,12 @@ public:
     ndPluginStats(const string &tag);
     virtual ~ndPluginStats();
 
+    enum ndStatsEvent {
+        INIT,
+        COMPLETE,
+    };
+
+    virtual void ProcessStats(ndStatsEvent event) { }
     virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
     virtual void ProcessStats(
         const nd_interface_map &nd_interfaces,
