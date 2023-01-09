@@ -195,6 +195,7 @@ exit 0
 %attr(755,root,root) %{_sysconfdir}/init.d/%{name}
 %config(noreplace) %attr(644,root,root) %{_sysconfdir}/sysconfig/%{name}
 %config(noreplace) %attr(640,root,root) %{statedir_pdata}/netify-apps.conf
+%attr(640,root,root) %{statedir_pdata}/netify-categories.json
 %config(noreplace) %attr(660,root,root) %{_sysconfdir}/%{name}.conf
 %{_sbindir}/%{name}
 %{_libdir}/lib%{name}.so*
