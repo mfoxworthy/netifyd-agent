@@ -49,7 +49,6 @@ define Package/@PACKAGE_TARNAME@/conffiles
 /etc/netify.d/agent.uuid
 /etc/netify.d/serial.uuid
 /etc/netify.d/site.uuid
-/etc/netify.d/netify-categories.json
 endef
 
 TARGET_CFLAGS+=-ffunction-sections -fdata-sections -Wno-psabi
@@ -108,7 +107,6 @@ define Package/@PACKAGE_TARNAME@/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib@PACKAGE_TARNAME@.so.* $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/etc/netify.d
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-apps.conf $(1)/etc/netify.d
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/netify-categories.json $(1)/etc/netify.d
 	$(INSTALL_DIR) $(1)/usr/share/netifyd
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/deploy/functions.sh $(1)/usr/share/netifyd
 endef
