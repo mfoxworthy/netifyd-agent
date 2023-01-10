@@ -84,6 +84,7 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-risks.h"
 #include "nd-category.h"
+#include "nd-serializer.h"
 #include "nd-flow.h"
 
 nd_risk_id_t nd_risk_lookup(const string &name)

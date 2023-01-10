@@ -71,6 +71,7 @@ class ndPluginLoader;
 #include <nd-protos.h>
 #include <nd-risks.h>
 #include <nd-category.h>
+#include <nd-serializer.h>
 #include <nd-flow.h>
 class ndFlowMap;
 #ifdef _ND_USE_PLUGINS

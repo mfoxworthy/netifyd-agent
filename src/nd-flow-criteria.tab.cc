@@ -134,6 +134,7 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-protos.h"
 #include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-flow.h"
 
 #include "nd-flow-parser.h"
@@ -153,13 +154,13 @@ void yyerror(YYLTYPE *yyllocp, yyscan_t scanner, const char *message)
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
 
-#line 157 "nd-flow-criteria.tab.cc" /* yacc.c:316  */
+#line 158 "nd-flow-criteria.tab.cc" /* yacc.c:316  */
 
 
 
 /* Copy the first part of user declarations.  */
 
-#line 163 "nd-flow-criteria.tab.cc" /* yacc.c:339  */
+#line 164 "nd-flow-criteria.tab.cc" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -189,11 +190,11 @@ extern ndDomains *nd_domains;
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 99 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
+#line 100 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
 
 typedef void* yyscan_t;
 
-#line 197 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
+#line 198 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -321,7 +322,7 @@ typedef void* yyscan_t;
 
 union YYSTYPE
 {
-#line 106 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
+#line 107 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
 
     char string[_NDFP_MAX_NAMELEN];
 
@@ -331,7 +332,7 @@ union YYSTYPE
 
     bool bool_result;
 
-#line 335 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
+#line 336 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -361,7 +362,7 @@ int yyparse (yyscan_t scanner);
 
 /* Copy the second part of user declarations.  */
 
-#line 365 "nd-flow-criteria.tab.cc" /* yacc.c:358  */
+#line 366 "nd-flow-criteria.tab.cc" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -666,27 +667,27 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   163,   163,   165,   169,   170,   171,   172,   173,   174,
-     175,   176,   177,   178,   179,   180,   181,   182,   183,   184,
-     185,   186,   187,   188,   189,   190,   191,   192,   193,   194,
-     195,   196,   197,   198,   202,   206,   210,   215,   219,   223,
-     227,   231,   235,   239,   246,   250,   257,   261,   265,   269,
-     273,   277,   284,   288,   292,   296,   300,   304,   308,   312,
-     319,   325,   331,   375,   422,   423,   424,   425,   426,   427,
-     428,   432,   438,   447,   453,   462,   468,   477,   483,   492,
-     493,   497,   501,   505,   509,   513,   517,   521,   525,   532,
-     536,   540,   544,   548,   552,   556,   560,   567,   573,   579,
-     598,   620,   621,   624,   628,   634,   642,   650,   658,   669,
-     673,   679,   687,   695,   703,   714,   720,   728,   729,   732,
-     741,   753,   778,   806,   831,   859,   863,   867,   885,   907,
-     911,   915,   919,   923,   927,   931,   935,   942,   946,   950,
-     954,   958,   962,   966,   970,   977,   981,   985,   989,   993,
-     997,  1001,  1005,  1012,  1028,  1047,  1063,  1082,  1088,  1094,
-    1095,  1098,  1104,  1113,  1132,  1153,  1170,  1190,  1197,  1204,
-    1222,  1240,  1277,  1286,  1294,  1302,  1310,  1318,  1326,  1334,
-    1342,  1353,  1357,  1361,  1365,  1369,  1373,  1377,  1381,  1388,
-    1392,  1396,  1400,  1404,  1408,  1412,  1416,  1423,  1427,  1431,
-    1435,  1442,  1443,  1444
+       0,   164,   164,   166,   170,   171,   172,   173,   174,   175,
+     176,   177,   178,   179,   180,   181,   182,   183,   184,   185,
+     186,   187,   188,   189,   190,   191,   192,   193,   194,   195,
+     196,   197,   198,   199,   203,   207,   211,   216,   220,   224,
+     228,   232,   236,   240,   247,   251,   258,   262,   266,   270,
+     274,   278,   285,   289,   293,   297,   301,   305,   309,   313,
+     320,   326,   332,   376,   423,   424,   425,   426,   427,   428,
+     429,   433,   439,   448,   454,   463,   469,   478,   484,   493,
+     494,   498,   502,   506,   510,   514,   518,   522,   526,   533,
+     537,   541,   545,   549,   553,   557,   561,   568,   574,   580,
+     599,   621,   622,   625,   629,   635,   643,   651,   659,   670,
+     674,   680,   688,   696,   704,   715,   721,   729,   730,   733,
+     742,   754,   779,   807,   832,   860,   864,   868,   886,   908,
+     912,   916,   920,   924,   928,   932,   936,   943,   947,   951,
+     955,   959,   963,   967,   971,   978,   982,   986,   990,   994,
+     998,  1002,  1006,  1013,  1029,  1048,  1064,  1083,  1089,  1095,
+    1096,  1099,  1105,  1114,  1133,  1154,  1171,  1191,  1198,  1205,
+    1223,  1241,  1278,  1287,  1295,  1303,  1311,  1319,  1327,  1335,
+    1343,  1354,  1358,  1362,  1366,  1370,  1374,  1378,  1382,  1389,
+    1393,  1397,  1401,  1405,  1409,  1413,  1417,  1424,  1428,  1432,
+    1436,  1443,  1444,  1445
 };
 #endif
 
@@ -1788,270 +1789,270 @@ yyreduce:
   switch (yyn)
     {
         case 33:
-#line 198 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 199 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = ((yyvsp[-2].bool_result) || (yyvsp[0].bool_result)));
         _NDFP_debugf("OR (%d || %d == %d)\n", (yyvsp[-2].bool_result), (yyvsp[0].bool_result), (yyval.bool_result));
     }
-#line 1797 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1798 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 202 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 203 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = ((yyvsp[-2].bool_result) && (yyvsp[0].bool_result)));
         _NDFP_debugf("AND (%d && %d == %d)\n", (yyvsp[-2].bool_result), (yyvsp[0].bool_result), (yyval.bool_result));
     }
-#line 1806 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1807 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 206 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 207 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { _NDFP_result = ((yyval.bool_result) = (yyvsp[-1].bool_result)); }
-#line 1812 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1813 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 210 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 211 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol != 0));
         _NDFP_debugf(
             "IP Protocol is non-zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1822 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1823 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 215 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 216 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol == 0));
         _NDFP_debugf("IP Protocol is zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1831 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1832 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 219 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 220 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol == (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1840 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1841 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 223 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 224 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol != (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1849 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1850 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 227 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 228 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol >= (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1858 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1859 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 231 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 232 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol <= (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1867 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1868 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 235 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 236 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol > (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1876 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1877 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 239 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 240 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol < (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1885 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1886 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 246 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 247 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_version == (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Version == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1894 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1895 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 250 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 251 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_version != (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Version != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1903 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1904 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 257 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 258 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == true));
         _NDFP_debugf("IP NAT is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1912 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1913 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 261 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 262 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == false));
         _NDFP_debugf("IP NAT is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1921 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1922 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 265 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 266 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == true));
         _NDFP_debugf("IP NAT == true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1930 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1931 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 269 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 270 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == false));
         _NDFP_debugf("IP NAT == false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1939 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1940 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 273 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 274 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() != true));
         _NDFP_debugf("IP NAT != true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1948 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1949 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 277 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 278 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() != false));
         _NDFP_debugf("IP NAT != false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1957 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1958 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 284 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 285 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id != 0));
         _NDFP_debugf("VLAN ID is non-zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1966 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1967 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 288 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 289 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id == 0));
         _NDFP_debugf("VLAN ID is zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1975 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1976 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 292 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 293 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id == (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1984 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1985 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 296 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 297 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id != (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1993 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1994 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 300 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 301 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id >= (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2002 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2003 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 304 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 305 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id <= (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2011 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2012 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 308 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 309 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id > (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2020 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2021 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 312 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 313 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id < (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2029 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2030 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 319 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 320 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->other_type != ndFlow::OTHER_UNKNOWN
         ));
         _NDFP_debugf("Other type known? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2040 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2041 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 325 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 326 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->other_type == ndFlow::OTHER_UNKNOWN
         ));
         _NDFP_debugf("Other type unknown? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2051 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2052 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 331 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 332 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_OTHER_UNKNOWN:
@@ -2096,11 +2097,11 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Other type == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2100 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2101 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 375 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 376 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_OTHER_UNKNOWN:
@@ -2145,319 +2146,319 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Other type != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2149 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2150 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 422 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 423 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2155 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2156 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 423 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 424 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2161 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2162 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 424 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 425 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2167 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2168 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 425 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 426 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2173 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2174 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 426 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 427 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2179 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2180 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 427 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 428 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2185 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2186 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 428 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 429 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2191 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2192 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 432 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 433 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_mac, (yyvsp[0].string), ND_STR_ETHALEN) == 0
         ));
         _NDFP_debugf("Local MAC == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2202 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2203 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 438 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 439 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_mac, (yyvsp[0].string), ND_STR_ETHALEN) != 0
         ));
         _NDFP_debugf("Local MAC != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2213 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2214 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 447 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 448 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_mac, (yyvsp[0].string), ND_STR_ETHALEN) == 0
         ));
         _NDFP_debugf("Other MAC == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2224 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2225 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 453 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 454 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_mac, (yyvsp[0].string), ND_STR_ETHALEN) != 0
         ));
         _NDFP_debugf("Other MAC != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2235 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2236 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 462 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 463 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) == 0
         ));
         _NDFP_debugf("Local IP == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2246 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2247 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 468 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 469 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) != 0
         ));
         _NDFP_debugf("Local IP != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2257 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2258 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 477 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 478 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) == 0
         ));
         _NDFP_debugf("Other IP == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2268 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2269 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 483 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 484 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) != 0
         ));
         _NDFP_debugf("Other IP != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2279 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2280 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 492 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 493 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
-#line 2285 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2286 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 493 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 494 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
-#line 2291 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2292 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 497 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 498 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port != 0));
         _NDFP_debugf("Local port is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2300 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2301 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 501 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 502 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port == 0));
         _NDFP_debugf("Local port is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2309 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2310 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 505 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 506 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port == (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2318 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2319 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 509 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 510 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port != (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2327 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2328 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 513 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 514 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port >= (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2336 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2337 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 517 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 518 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port <= (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2345 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2346 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 521 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 522 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port > (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2354 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2355 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 525 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 526 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port < (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2363 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2364 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 532 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 533 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port != 0));
         _NDFP_debugf("Other port is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2372 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2373 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 536 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 537 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port == 0));
         _NDFP_debugf("Other port is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2381 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2382 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 540 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 541 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port == (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2390 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2391 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 544 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 545 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port != (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2399 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2400 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 548 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 549 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port >= (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2408 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2409 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 552 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 553 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port <= (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2417 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2418 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 556 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 557 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port > (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2426 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2427 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 560 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 561 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port < (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2435 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2436 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 567 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 568 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->tunnel_type != ndFlow::TUNNEL_NONE
         ));
         _NDFP_debugf("Tunnel type set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2446 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2447 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 573 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 574 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->tunnel_type == ndFlow::TUNNEL_NONE
         ));
         _NDFP_debugf("Tunnel type is none? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2457 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2458 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 579 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 580 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_TUNNEL_NONE:
@@ -2477,11 +2478,11 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Tunnel type == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2481 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2482 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 598 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 599 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_TUNNEL_NONE:
@@ -2501,43 +2502,43 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Tunnel type != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2505 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2506 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 101:
-#line 620 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 621 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2511 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2512 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 621 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 622 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2517 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2518 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 103:
-#line 624 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 625 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.detection_guessed.load()));
         _NDFP_debugf("Detection was guessed? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2526 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2527 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 104:
-#line 628 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 629 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = !(_NDFP_flow->flags.detection_guessed.load()));
         _NDFP_debugf(
             "Detection was not guessed? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2537 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2538 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 105:
-#line 634 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 635 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() == true
@@ -2546,11 +2547,11 @@ yyreduce:
             "Detection guessed == true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2550 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2551 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 106:
-#line 642 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 643 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() == false
@@ -2559,11 +2560,11 @@ yyreduce:
             "Detection guessed == false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2563 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2564 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 107:
-#line 650 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 651 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() != true
@@ -2572,11 +2573,11 @@ yyreduce:
             "Detection guessed != true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2576 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2577 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 108:
-#line 658 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 659 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() != false
@@ -2585,31 +2586,31 @@ yyreduce:
             "Detection guessed != false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2589 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2590 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 109:
-#line 669 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 670 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.detection_updated.load()));
         _NDFP_debugf("Detection was updated? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2598 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2599 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 110:
-#line 673 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 674 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = !(_NDFP_flow->flags.detection_updated.load()));
         _NDFP_debugf(
             "Detection was not updated? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2609 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2610 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 111:
-#line 679 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 680 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() == true
@@ -2618,11 +2619,11 @@ yyreduce:
             "Detection updated == true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2622 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2623 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 112:
-#line 687 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 688 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() == false
@@ -2631,11 +2632,11 @@ yyreduce:
             "Detection updated == false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2635 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2636 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 113:
-#line 695 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 696 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() != true
@@ -2644,11 +2645,11 @@ yyreduce:
             "Detection updated != true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2648 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2649 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 114:
-#line 703 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 704 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() != false
@@ -2657,22 +2658,22 @@ yyreduce:
             "Detection updated != false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2661 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2662 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 115:
-#line 714 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 715 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_application != 0
         ));
         _NDFP_debugf("Application detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2672 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2673 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 116:
-#line 720 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 721 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_application == 0
@@ -2681,11 +2682,11 @@ yyreduce:
             "Application not detected? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2685 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2686 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 119:
-#line 732 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 733 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = false);
         if ((yyvsp[0].ul_number) == _NDFP_flow->detected_application)
@@ -2695,11 +2696,11 @@ yyreduce:
             "Application ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2699 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2700 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 120:
-#line 741 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 742 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = true);
         if ((yyvsp[0].ul_number) == _NDFP_flow->detected_application)
@@ -2709,11 +2710,11 @@ yyreduce:
             "Application ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2713 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2714 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 121:
-#line 753 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 754 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->detected_application_name != NULL) {
@@ -2739,11 +2740,11 @@ yyreduce:
             "Application name == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2743 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2744 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 122:
-#line 778 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 779 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->detected_application_name != NULL) {
@@ -2769,11 +2770,11 @@ yyreduce:
             "Application name != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2773 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2774 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 123:
-#line 806 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 807 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -2799,11 +2800,11 @@ yyreduce:
             );
         }
     }
-#line 2803 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2804 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 124:
-#line 831 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 832 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -2829,29 +2830,29 @@ yyreduce:
             );
         }
     }
-#line 2833 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2834 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 125:
-#line 859 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 860 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->risks.size() != 0));
         _NDFP_debugf("Risks detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2842 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2843 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 126:
-#line 863 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 864 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->risks.size() == 0));
         _NDFP_debugf("Risks not detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2851 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2852 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 127:
-#line 867 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 868 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string risk((yyvsp[0].string));
@@ -2870,11 +2871,11 @@ yyreduce:
 
         _NDFP_debugf("Risks == %s %s\n", (yyvsp[0].string), risk.c_str(), (_NDFP_result) ? "yes" : "no");
     }
-#line 2874 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2875 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 128:
-#line 885 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 886 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string risk((yyvsp[0].string));
@@ -2894,227 +2895,227 @@ yyreduce:
         _NDFP_result = !_NDFP_result;
         _NDFP_debugf("Risks != %s %s\n", (yyvsp[0].string), risk.c_str(), (_NDFP_result) ? "yes" : "no");
     }
-#line 2898 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2899 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 129:
-#line 907 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 908 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score != 0));
         _NDFP_debugf("nDPI risk score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2907 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2908 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 130:
-#line 911 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 912 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score == 0));
         _NDFP_debugf("nDPI risk score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2916 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2917 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 131:
-#line 915 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 916 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2925 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2926 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 132:
-#line 919 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 920 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2934 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2935 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 133:
-#line 923 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 924 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2943 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2944 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 134:
-#line 927 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 928 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2952 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2953 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 135:
-#line 931 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 932 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2961 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2962 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 136:
-#line 935 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 936 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2970 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2971 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 137:
-#line 942 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 943 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client != 0));
         _NDFP_debugf("nDPI risk client score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2979 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2980 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 946 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 947 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client == 0));
         _NDFP_debugf("nDPI risk client score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2988 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2989 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 950 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 951 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2997 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2998 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 140:
-#line 954 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 955 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3006 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3007 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 141:
-#line 958 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 959 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3015 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3016 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 142:
-#line 962 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 963 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3024 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3025 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 143:
-#line 966 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 967 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3033 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3034 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 144:
-#line 970 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 971 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3042 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3043 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 145:
-#line 977 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 978 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server != 0));
         _NDFP_debugf("nDPI risk server score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3051 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3052 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 146:
-#line 981 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 982 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server == 0));
         _NDFP_debugf("nDPI risk server score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3060 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3061 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 147:
-#line 985 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 986 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3069 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3070 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 148:
-#line 989 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 990 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3078 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3079 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 149:
-#line 993 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 994 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3087 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3088 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 150:
-#line 997 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 998 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3096 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3097 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 151:
-#line 1001 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1002 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3105 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3106 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 152:
-#line 1005 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1006 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3114 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3115 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 153:
-#line 1012 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1013 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3131,11 +3132,11 @@ yyreduce:
 
         _NDFP_debugf("App category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3135 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3136 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 154:
-#line 1028 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1029 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3152,11 +3153,11 @@ yyreduce:
 
         _NDFP_debugf("App category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3156 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3157 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 155:
-#line 1047 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1048 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3173,11 +3174,11 @@ yyreduce:
 
         _NDFP_debugf("Domain category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3177 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3178 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 156:
-#line 1063 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1064 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3194,55 +3195,55 @@ yyreduce:
 
         _NDFP_debugf("Domain category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3198 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3199 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 157:
-#line 1082 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1083 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol != 0
         ));
         _NDFP_debugf("Protocol detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3209 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3210 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 158:
-#line 1088 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1089 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol == 0
         ));
         _NDFP_debugf("Protocol not detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3220 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3221 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 161:
-#line 1098 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1099 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol == (yyvsp[0].ul_number)
         ));
         _NDFP_debugf("Protocol ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3231 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3232 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 162:
-#line 1104 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1105 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol != (yyvsp[0].ul_number)
         ));
         _NDFP_debugf("Protocol ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3242 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3243 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 163:
-#line 1113 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1114 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->detected_protocol_name != NULL) {
@@ -3262,11 +3263,11 @@ yyreduce:
             "Protocol name == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 3266 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3267 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 164:
-#line 1132 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1133 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->detected_protocol_name != NULL) {
@@ -3285,11 +3286,11 @@ yyreduce:
             "Protocol name != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 3289 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3290 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 165:
-#line 1153 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1154 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3307,11 +3308,11 @@ yyreduce:
         _NDFP_debugf("Protocol category == %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3311 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3312 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 166:
-#line 1170 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1171 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         size_t p;
         string category((yyvsp[0].string));
@@ -3329,11 +3330,11 @@ yyreduce:
         _NDFP_debugf("Protocol category != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3333 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3334 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 167:
-#line 1190 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1191 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->host_server_name[0] != '\0'
@@ -3341,11 +3342,11 @@ yyreduce:
         _NDFP_debugf("Application hostname detected? %s\n",
             (_NDFP_result) ? "yes" : "no");
     }
-#line 3345 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3346 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 168:
-#line 1197 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1198 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->host_server_name[0] == '\0'
@@ -3353,11 +3354,11 @@ yyreduce:
         _NDFP_debugf("Application hostname not detected? %s\n",
             (_NDFP_result) ? "yes" : "no");
     }
-#line 3357 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3358 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 169:
-#line 1204 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1205 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->host_server_name[0] != '\0') {
@@ -3376,11 +3377,11 @@ yyreduce:
         _NDFP_debugf("Detected hostname == %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3380 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3381 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 170:
-#line 1222 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1223 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->host_server_name[0] != '\0') {
@@ -3399,11 +3400,11 @@ yyreduce:
         _NDFP_debugf("Detected hostname != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3403 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3404 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 171:
-#line 1240 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1241 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = false);
 #if HAVE_WORKING_REGEX
@@ -3441,22 +3442,22 @@ yyreduce:
         _NDFP_debugf("Detected hostname == %s? Broken regex support.\n", (yyvsp[0].string));
 #endif
     }
-#line 3445 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3446 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 172:
-#line 1277 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1278 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = true);
 
         _NDFP_debugf("Detected hostname != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3456 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3457 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 173:
-#line 1286 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1287 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark != 0));
@@ -3465,11 +3466,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3469 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3470 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 174:
-#line 1294 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1295 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark == 0));
@@ -3478,11 +3479,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3482 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3483 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 175:
-#line 1302 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1303 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark == (yyvsp[0].ul_number)));
@@ -3491,11 +3492,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3495 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3496 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 176:
-#line 1310 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1311 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark != (yyvsp[0].ul_number)));
@@ -3504,11 +3505,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3508 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3509 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 177:
-#line 1318 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1319 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark >= (yyvsp[0].ul_number)));
@@ -3517,11 +3518,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3521 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3522 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 178:
-#line 1326 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1327 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark <= (yyvsp[0].ul_number)));
@@ -3530,11 +3531,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3534 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3535 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 179:
-#line 1334 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1335 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark > (yyvsp[0].ul_number)));
@@ -3543,11 +3544,11 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3547 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3548 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 180:
-#line 1342 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1343 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark < (yyvsp[0].ul_number)));
@@ -3556,209 +3557,209 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3560 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3561 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 181:
-#line 1353 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1354 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version != 0));
         _NDFP_debugf("SSL version set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3569 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3570 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 182:
-#line 1357 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1358 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version == 0));
         _NDFP_debugf("SSL version not set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3578 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3579 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 183:
-#line 1361 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1362 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version == (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3587 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3588 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 184:
-#line 1365 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1366 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version != (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3596 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3597 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 185:
-#line 1369 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1370 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version >= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3605 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3606 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 186:
-#line 1373 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1374 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version <= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3614 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3615 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 187:
-#line 1377 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1378 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version > (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3623 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3624 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 188:
-#line 1381 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1382 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version < (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3632 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3633 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 189:
-#line 1388 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1389 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite != 0));
         _NDFP_debugf("SSL cipher suite set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3641 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3642 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 190:
-#line 1392 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1393 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite == 0));
         _NDFP_debugf("SSL cipher suite not set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3650 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3651 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 191:
-#line 1396 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1397 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite == (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3659 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3660 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 192:
-#line 1400 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1401 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite != (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3668 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3669 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 193:
-#line 1404 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1405 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite >= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3677 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3678 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 194:
-#line 1408 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1409 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite <= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3686 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3687 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 195:
-#line 1412 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1413 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite > (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3695 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3696 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 196:
-#line 1416 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1417 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite < (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3704 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3705 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 197:
-#line 1423 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1424 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin != _NDFP_ORIGIN_UNKNOWN));
         _NDFP_debugf("Flow origin known? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3713 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3714 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 198:
-#line 1427 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1428 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin == _NDFP_ORIGIN_UNKNOWN));
         _NDFP_debugf("Flow origin unknown? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3722 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3723 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 199:
-#line 1431 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1432 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin == (yyvsp[0].us_number)));
         _NDFP_debugf("Flow origin == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3731 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3732 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 200:
-#line 1435 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1436 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin != (yyvsp[0].us_number)));
         _NDFP_debugf("Flow origin != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3740 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3741 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 201:
-#line 1442 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1443 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3746 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3747 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 202:
-#line 1443 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1444 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3752 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3753 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
   case 203:
-#line 1444 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
+#line 1445 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
     { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3758 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3759 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
 
 
-#line 3762 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3763 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3993,7 +3994,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1446 "nd-flow-criteria.tab.yy" /* yacc.c:1906  */
+#line 1447 "nd-flow-criteria.tab.yy" /* yacc.c:1906  */
 
 
 ndFlowParser::ndFlowParser()

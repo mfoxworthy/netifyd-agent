@@ -52,7 +52,7 @@ typedef vector<nd_flow_push> nd_flow_capture;
 
 typedef unordered_map<string, string> nd_flow_kvmap;
 
-class ndFlow
+class ndFlow : public ndSerializer
 {
 public:
     const ndInterface iface;
@@ -306,7 +306,7 @@ public:
         uint8_t &lm, uint8_t &ot
     );
 
-    enum nd_encode_include {
+    enum ndEncodeIncludes {
         ENCODE_NONE = 0x00,
         ENCODE_METADATA = 0x01,
         ENCODE_TUNNELS = 0x02,
@@ -330,13 +330,13 @@ public:
 
         if (memcmp(digest_mdata, digest_null, SHA1_DIGEST_LENGTH) != 0) {
             nd_sha1_to_string(digest_mdata, digest);
-            assign(output, { "digest" }, digest);
+            serialize(output, { "digest" }, digest);
         } else {
             nd_sha1_to_string(digest_lower, digest);
-            assign(output, { "digest" }, digest);
+            serialize(output, { "digest" }, digest);
         }
 
-        assign(output, { "last_seen_at" }, ts_last_seen);
+        serialize(output, { "last_seen_at" }, ts_last_seen);
 
         switch (lower_map) {
         case LOWER_LOCAL:
@@ -387,102 +387,102 @@ public:
         }
 
         if (encode_includes & ENCODE_METADATA) {
-            assign(output, { "ip_nat" }, (bool)flags.ip_nat.load());
-            assign(output, { "dhc_hit" }, (bool)flags.dhc_hit.load());
-            assign(output, { "soft_dissector" }, (bool)flags.soft_dissector.load());
+            serialize(output, { "ip_nat" }, (bool)flags.ip_nat.load());
+            serialize(output, { "dhc_hit" }, (bool)flags.dhc_hit.load());
+            serialize(output, { "soft_dissector" }, (bool)flags.soft_dissector.load());
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
-            assign(output, { "ct_id" }, ct_id);
-            assign(output, { "ct_mark" }, ct_mark);
+            serialize(output, { "ct_id" }, ct_id);
+            serialize(output, { "ct_mark" }, ct_mark);
 #endif
-            assign(output, { "ip_version" }, (unsigned)ip_version);
-            assign(output, { "ip_protocol" }, (unsigned)ip_protocol);
-            assign(output, { "vlan_id" }, (unsigned)vlan_id);
-            assign(output, { "other_type" }, _other_type);
+            serialize(output, { "ip_version" }, (unsigned)ip_version);
+            serialize(output, { "ip_protocol" }, (unsigned)ip_protocol);
+            serialize(output, { "vlan_id" }, (unsigned)vlan_id);
+            serialize(output, { "other_type" }, _other_type);
 
             switch (origin) {
             case ORIGIN_UPPER:
-                assign(output, { "local_origin" },
+                serialize(output, { "local_origin" },
                     (_lower_ip == "local_ip") ? false : true);
                 break;
             case ORIGIN_LOWER:
             default:
-                assign(output, { "local_origin" },
+                serialize(output, { "local_origin" },
                     (_lower_ip == "local_ip") ? true : false);
                 break;
             }
 
-            // 00-52-14 to 00-52-FF: Unassigned (small allocations)
-            assign(output, { _lower_mac }, (privacy_mask & PRIVATE_LOWER) ?
+            // 00-52-14 to 00-52-FF: Unserializeed (small allocations)
+            serialize(output, { _lower_mac }, (privacy_mask & PRIVATE_LOWER) ?
                 "00:52:14:00:00:00" : lower_mac.GetString());
-            assign(output, { _upper_mac }, (privacy_mask & PRIVATE_UPPER) ?
+            serialize(output, { _upper_mac }, (privacy_mask & PRIVATE_UPPER) ?
                 "00:52:ff:00:00:00" : upper_mac.GetString());
 
             if (privacy_mask & PRIVATE_LOWER) {
                 if (ip_version == 4)
-                    assign(output, { _lower_ip }, ND_PRIVATE_IPV4 "253");
+                    serialize(output, { _lower_ip }, ND_PRIVATE_IPV4 "253");
                 else
-                    assign(output, { _lower_ip }, ND_PRIVATE_IPV6 "fd");
+                    serialize(output, { _lower_ip }, ND_PRIVATE_IPV6 "fd");
             }
             else
-                assign(output, { _lower_ip }, lower_addr.GetString());
+                serialize(output, { _lower_ip }, lower_addr.GetString());
 
             if (privacy_mask & PRIVATE_UPPER) {
                 if (ip_version == 4)
-                    assign(output, { _upper_ip }, ND_PRIVATE_IPV4 "254");
+                    serialize(output, { _upper_ip }, ND_PRIVATE_IPV4 "254");
                 else
-                    assign(output, { _upper_ip }, ND_PRIVATE_IPV6 "fe");
+                    serialize(output, { _upper_ip }, ND_PRIVATE_IPV6 "fe");
             }
             else
-                assign(output, { _upper_ip }, upper_addr.GetString());
+                serialize(output, { _upper_ip }, upper_addr.GetString());
 
-            assign(output, { _lower_port }, (unsigned)lower_addr.GetPort());
-            assign(output, { _upper_port }, (unsigned)upper_addr.GetPort());
+            serialize(output, { _lower_port }, (unsigned)lower_addr.GetPort());
+            serialize(output, { _upper_port }, (unsigned)upper_addr.GetPort());
 
-            assign(output, { "detected_protocol" }, (unsigned)detected_protocol);
-            assign(output, { "detected_protocol_name"},
+            serialize(output, { "detected_protocol" }, (unsigned)detected_protocol);
+            serialize(output, { "detected_protocol_name"},
                 (detected_protocol_name != NULL) ? detected_protocol_name : "Unknown");
 
-            assign(output, { "detected_application" }, (unsigned)detected_application);
-            assign(output, { "detected_application_name" },
+            serialize(output, { "detected_application" }, (unsigned)detected_application);
+            serialize(output, { "detected_application_name" },
                 (detected_application_name != NULL) ? detected_application_name : "Unknown");
 
-            assign(output, { "detection_guessed" }, flags.detection_guessed.load());
-            assign(output, { "detection_updated" }, flags.detection_updated.load());
+            serialize(output, { "detection_guessed" }, flags.detection_guessed.load());
+            serialize(output, { "detection_updated" }, flags.detection_updated.load());
 
-            assign(output, { "category", "application" }, category.application);
-            assign(output, { "category", "protocol" }, category.protocol);
-            assign(output, { "category", "domain" }, category.domain);
+            serialize(output, { "category", "application" }, category.application);
+            serialize(output, { "category", "protocol" }, category.protocol);
+            serialize(output, { "category", "domain" }, category.domain);
 
             if (dns_host_name[0] != '\0')
-                assign(output, { "dns_host_name" }, dns_host_name);
+                serialize(output, { "dns_host_name" }, dns_host_name);
 
             if (host_server_name[0] != '\0')
-                assign(output, { "host_server_name" }, host_server_name);
+                serialize(output, { "host_server_name" }, host_server_name);
 
             if (has_http_user_agent() || has_http_url()) {
 
                 if (has_http_user_agent())
-                    assign(output, { "http", "user_agent" }, http.user_agent);
+                    serialize(output, { "http", "user_agent" }, http.user_agent);
                 if (has_http_url())
-                    assign(output, { "http", "url" }, http.url);
+                    serialize(output, { "http", "url" }, http.url);
             }
 
             if (has_dhcp_fingerprint() || has_dhcp_class_ident()) {
 
                 if (has_dhcp_fingerprint())
-                    assign(output, { "dhcp", "fingerprint" }, dhcp.fingerprint);
+                    serialize(output, { "dhcp", "fingerprint" }, dhcp.fingerprint);
 
                 if (has_dhcp_class_ident())
-                    assign(output, { "dhcp", "class_ident" }, dhcp.class_ident);
+                    serialize(output, { "dhcp", "class_ident" }, dhcp.class_ident);
             }
 
             if (has_ssh_client_agent() || has_ssh_server_agent()) {
 
                 if (has_ssh_client_agent())
-                    assign(output, { "ssh", "client" }, ssh.client_agent);
+                    serialize(output, { "ssh", "client" }, ssh.client_agent);
 
                 if (has_ssh_server_agent())
-                    assign(output, { "ssh", "server" }, ssh.server_agent);
+                    serialize(output, { "ssh", "server" }, ssh.server_agent);
             }
 
             if (master_protocol() == ND_PROTO_TLS
@@ -491,59 +491,59 @@ public:
                 char tohex[7];
 
                 sprintf(tohex, "0x%04hx", ssl.version);
-                assign(output, { "ssl", "version" }, tohex);
+                serialize(output, { "ssl", "version" }, tohex);
 
                 sprintf(tohex, "0x%04hx", ssl.cipher_suite);
-                assign(output, { "ssl", "cipher_suite" }, tohex);
+                serialize(output, { "ssl", "cipher_suite" }, tohex);
 
                 if (has_ssl_client_sni())
-                    assign(output, { "ssl", "client_sni" }, ssl.client_sni);
+                    serialize(output, { "ssl", "client_sni" }, ssl.client_sni);
 
                 if (has_ssl_server_cn())
-                    assign(output, { "ssl", "server_cn" }, ssl.server_cn);
+                    serialize(output, { "ssl", "server_cn" }, ssl.server_cn);
 
                 if (has_ssl_issuer_dn())
-                    assign(output, { "ssl", "issuer_dn" }, ssl.issuer_dn);
+                    serialize(output, { "ssl", "issuer_dn" }, ssl.issuer_dn);
 
                 if (has_ssl_subject_dn())
-                    assign(output, { "ssl", "subject_dn" }, ssl.subject_dn);
+                    serialize(output, { "ssl", "subject_dn" }, ssl.subject_dn);
 
                 if (has_ssl_client_ja3())
-                    assign(output, { "ssl", "client_ja3" }, ssl.client_ja3);
+                    serialize(output, { "ssl", "client_ja3" }, ssl.client_ja3);
 
                 if (has_ssl_server_ja3())
-                    assign(output, { "ssl", "server_ja3" }, ssl.server_ja3);
+                    serialize(output, { "ssl", "server_ja3" }, ssl.server_ja3);
 
                 if (ssl.cert_fingerprint_found) {
                     nd_sha1_to_string((const uint8_t *)ssl.cert_fingerprint, digest);
-                    assign(output, { "ssl", "fingerprint" }, digest);
+                    serialize(output, { "ssl", "fingerprint" }, digest);
                 }
 
-                assign(output, { "ssl", "alpn" }, tls_alpn);
-                assign(output, { "ssl", "alpn_server" }, tls_alpn_server);
+                serialize(output, { "ssl", "alpn" }, tls_alpn);
+                serialize(output, { "ssl", "alpn_server" }, tls_alpn_server);
             }
 
             if (has_bt_info_hash()) {
                 nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
-                assign(output, { "bt", "info_hash" }, digest);
+                serialize(output, { "bt", "info_hash" }, digest);
             }
 
             if (has_ssdp_headers())
-                assign(output, { "ssdp" }, ssdp.headers);
+                serialize(output, { "ssdp" }, ssdp.headers);
 #if 0
             if (has_mining_variant())
-                assign(output, { "mining", "variant" }, mining.variant);
+                serialize(output, { "mining", "variant" }, mining.variant);
 #endif
             if (has_mdns_domain_name())
-                assign(output, { "mdns", "answer" }, mdns.domain_name);
+                serialize(output, { "mdns", "answer" }, mdns.domain_name);
 
-            assign(output, { "first_seen_at" }, ts_first_seen);
-            assign(output, { "first_update_at" }, ts_first_update);
+            serialize(output, { "first_seen_at" }, ts_first_seen);
+            serialize(output, { "first_update_at" }, ts_first_update);
 
-            assign(output, { "risks", "risks" }, risks);
-            assign(output, { "risks", "ndpi_risk_score" }, ndpi_risk_score);
-            assign(output, { "risks", "ndpi_risk_score_client" }, ndpi_risk_score_client);
-            assign(output, { "risks", "ndpi_risk_score_server" }, ndpi_risk_score_server);
+            serialize(output, { "risks", "risks" }, risks);
+            serialize(output, { "risks", "ndpi_risk_score" }, ndpi_risk_score);
+            serialize(output, { "risks", "ndpi_risk_score_client" }, ndpi_risk_score_client);
+            serialize(output, { "risks", "ndpi_risk_score_server" }, ndpi_risk_score_server);
         }
 
         if (encode_includes & ENCODE_TUNNELS) {
@@ -586,202 +586,29 @@ public:
                     break;
                 }
 
-                assign(output, { "gtp", "version" }, gtp.version);
-                assign(output, { "gtp", "ip_version" }, gtp.ip_version);
-                assign(output, { "gtp", _lower_ip }, gtp.lower_addr.GetString());
-                assign(output, { "gtp", _upper_ip }, gtp.upper_addr.GetString());
-                assign(output, { "gtp", _lower_port }, (unsigned)gtp.lower_addr.GetPort());
-                assign(output, { "gtp", _upper_port }, (unsigned)gtp.upper_addr.GetPort());
-                assign(output, { "gtp", _lower_teid }, htonl(gtp.lower_teid));
-                assign(output, { "gtp", _upper_teid }, htonl(gtp.upper_teid));
-                assign(output, { "gtp", "other_type" }, _other_type);
+                serialize(output, { "gtp", "version" }, gtp.version);
+                serialize(output, { "gtp", "ip_version" }, gtp.ip_version);
+                serialize(output, { "gtp", _lower_ip }, gtp.lower_addr.GetString());
+                serialize(output, { "gtp", _upper_ip }, gtp.upper_addr.GetString());
+                serialize(output, { "gtp", _lower_port }, (unsigned)gtp.lower_addr.GetPort());
+                serialize(output, { "gtp", _upper_port }, (unsigned)gtp.upper_addr.GetPort());
+                serialize(output, { "gtp", _lower_teid }, htonl(gtp.lower_teid));
+                serialize(output, { "gtp", _upper_teid }, htonl(gtp.upper_teid));
+                serialize(output, { "gtp", "other_type" }, _other_type);
 
                 break;
             }
         }
 
         if (encode_includes & ENCODE_STATS) {
-            assign(output, { _lower_bytes }, lower_bytes);
-            assign(output, { _upper_bytes }, upper_bytes);
-            assign(output, { _lower_packets }, lower_packets);
-            assign(output, { _upper_packets }, upper_packets);
-            assign(output, { "total_packets" }, total_packets);
-            assign(output, { "total_bytes" }, total_bytes);
-            assign(output, { "detection_packets" }, detection_packets.load());
+            serialize(output, { _lower_bytes }, lower_bytes);
+            serialize(output, { _upper_bytes }, upper_bytes);
+            serialize(output, { _lower_packets }, lower_packets);
+            serialize(output, { _upper_packets }, upper_packets);
+            serialize(output, { "total_packets" }, total_packets);
+            serialize(output, { "total_bytes" }, total_bytes);
+            serialize(output, { "detection_packets" }, detection_packets.load());
         }
-    }
-
-    inline void assign(json &j, const vector<string> &keys, const string &value) const {
-        if (keys.empty() || value.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, uint8_t value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, uint16_t value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, uint32_t value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, uint64_t value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, bool value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, const char *value) const {
-        if (keys.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = value;
-        if (keys.size() == 1)
-            j[keys[0]] = value;
-    }
-    inline void assign(json &j, const vector<string> &keys, const vector<nd_risk_id_t> &values) const {
-        if (keys.empty() || values.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = values;
-        if (keys.size() == 1)
-            j[keys[0]] = values;
-    }
-    inline void assign(json &j, const vector<string> &keys, const vector<unsigned> &values) const {
-        if (keys.empty() || values.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = values;
-        if (keys.size() == 1)
-            j[keys[0]] = values;
-    }
-    inline void assign(json &j, const vector<string> &keys, const vector<string> &values) const {
-        if (keys.empty() || values.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = values;
-        if (keys.size() == 1)
-            j[keys[0]] = values;
-    }
-    inline void assign(json &j, const vector<string> &keys, const unordered_map<string, string> &values) const {
-        if (keys.empty() || values.empty()) return;
-        if (keys.size() == 2)
-            j[keys[0]][keys[1]] = values;
-        if (keys.size() == 1)
-            j[keys[0]] = values;
-    }
-
-    inline void assign(vector<string> &v, const vector<string> &keys, const string &value) const {
-        if (keys.empty() || value.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(value);
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, uint8_t value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(to_string(value));
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, uint16_t value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(to_string(value));
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, uint32_t value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(to_string(value));
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, uint64_t value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(to_string(value));
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, bool value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(to_string(value));
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, const char *value) const {
-        if (keys.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(value);
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, const vector<unsigned> &values) const {
-        if (keys.empty() || values.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        string _values;
-        for (auto &value : values) _values.append(_values.empty() ? to_string(value) : string(",") + to_string(value));
-        v.push_back(_values);
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, const vector<nd_risk_id_t> &values) const {
-        if (keys.empty() || values.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        string _values;
-        for (auto &value : values) _values.append(_values.empty() ? to_string(value) : string(",") + to_string(value));
-        v.push_back(_values);
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, const vector<string> &values) const {
-        if (keys.empty() || values.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(values.empty() ? string() :
-            accumulate(
-                ++values.begin(), values.end(),
-                *values.begin(), [](const string &a, const string &b) { return a + "," + b; }
-            )
-        );
-    }
-    inline void assign(vector<string> &v, const vector<string> &keys, const unordered_map<string, string> &values) const {
-        if (keys.empty() || values.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-
-        vector<string> _values;
-        for (auto &v : values) _values.push_back(v.first + ":" + v.second);
-        v.push_back(_values.empty() ? string() :
-            accumulate(
-                ++_values.begin(), _values.end(),
-                *_values.begin(), [](const string &a, const string &b) { return a + "," + b; }
-            )
-        );
     }
 
     inline bool operator==(const ndFlow &f) const {

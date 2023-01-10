@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 99 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
+#line 100 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
 
 typedef void* yyscan_t;
 
@@ -172,7 +172,7 @@ typedef void* yyscan_t;
 
 union YYSTYPE
 {
-#line 106 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
+#line 107 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
 
     char string[_NDFP_MAX_NAMELEN];
 
