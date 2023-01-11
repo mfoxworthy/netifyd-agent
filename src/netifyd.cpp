@@ -94,6 +94,8 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
@@ -106,9 +108,7 @@ using namespace std;
 #endif
 #include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-risks.h"
 #include "nd-category.h"
-#include "nd-serializer.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
@@ -2883,9 +2883,6 @@ int main(int argc, char *argv[])
 
     nd_dprintf("Online CPU cores: %ld\n", nd_json_agent_stats.cpus);
 
-    if (nd_start_detection_threads() < 0)
-        return 1;
-
     try {
         if (thread_socket != NULL)
             thread_socket->Create();
@@ -2894,6 +2891,9 @@ int main(int argc, char *argv[])
         nd_printf("Error starting socket thread: %s\n", e.what());
         return 1;
     }
+
+    if (nd_start_detection_threads() < 0)
+        return 1;
 
     // Always send an update on start-up.
     // XXX: BEFORE capture threads have started.
@@ -3144,16 +3144,16 @@ int main(int argc, char *argv[])
         nd_printf("Unhandled signal: %s\n", strsignal(sig));
     }
 
-    if (thread_socket) {
-        thread_socket->Terminate();
-        delete thread_socket;
-    }
-
     timer_delete(timer_update);
     if (ND_USE_NAPI)
         timer_delete(timer_napi);
 
     nd_stop_detection_threads();
+
+    if (thread_socket) {
+        thread_socket->Terminate();
+        delete thread_socket;
+    }
 
     nd_destroy();
 

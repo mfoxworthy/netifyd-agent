@@ -66,7 +66,7 @@ protected:
     time_t tv_usec;
 };
 
-class ndPacketStats
+class ndPacketStats : public ndSerializer
 {
 public:
     struct pkt_t {

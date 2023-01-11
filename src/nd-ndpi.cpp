@@ -55,6 +55,8 @@ using namespace std;
 #include "nd-ndpi.h"
 #include "nd-protos.h"
 #include "nd-thread.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"

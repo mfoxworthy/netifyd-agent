@@ -61,6 +61,9 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-ndpi.h"

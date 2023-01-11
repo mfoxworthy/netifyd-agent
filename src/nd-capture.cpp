@@ -155,18 +155,18 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
 #include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-risks.h"
 #include "nd-category.h"
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
-#include "nd-serializer.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"

@@ -61,6 +61,8 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
@@ -71,8 +73,6 @@ using namespace std;
 #include "nd-apps.h"
 #include "nd-category.h"
 #include "nd-protos.h"
-#include "nd-risks.h"
-#include "nd-serializer.h"
 #include "nd-flow.h"
 
 // Enable flow hash cache debug logging

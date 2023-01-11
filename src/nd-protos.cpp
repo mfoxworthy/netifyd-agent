@@ -72,6 +72,8 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-thread.h"
@@ -82,9 +84,7 @@ using namespace std;
 #endif
 #include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-risks.h"
 #include "nd-category.h"
-#include "nd-serializer.h"
 #include "nd-flow.h"
 
 const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)

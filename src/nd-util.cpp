@@ -85,8 +85,10 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
-#include "nd-sha1.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
+#include "nd-sha1.h"
 #include "nd-json.h"
 #include "nd-util.h"
 

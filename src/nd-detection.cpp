@@ -87,6 +87,8 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
@@ -96,9 +98,7 @@ using namespace std;
 #endif
 #include "nd-apps.h"
 #include "nd-protos.h"
-#include "nd-risks.h"
 #include "nd-category.h"
-#include "nd-serializer.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"

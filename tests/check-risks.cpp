@@ -59,6 +59,8 @@ class ndPluginLoader;
 
 #include <netifyd.h>
 #include <nd-ndpi.h>
+#include <nd-risks.h>
+#include <nd-serializer.h>
 #include <nd-packet.h>
 #include <nd-json.h>
 #include <nd-util.h>
@@ -69,9 +71,7 @@ class ndPluginLoader;
 #endif
 #include <nd-apps.h>
 #include <nd-protos.h>
-#include <nd-risks.h>
 #include <nd-category.h>
-#include <nd-serializer.h>
 #include <nd-flow.h>
 class ndFlowMap;
 #ifdef _ND_USE_PLUGINS

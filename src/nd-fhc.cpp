@@ -53,6 +53,9 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-ndpi.h"
+#include "nd-risks.h"
+#include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-ndpi.h"
@@ -61,7 +64,6 @@ using namespace std;
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
-#include "nd-packet.h"
 #include "nd-json.h"
 #include "nd-util.h"
 
