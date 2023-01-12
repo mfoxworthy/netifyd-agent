@@ -44,10 +44,6 @@
 
 #include <pcap/pcap.h>
 
-#include <libmnl/libmnl.h>
-#include <linux/netfilter/xt_connlabel.h>
-#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
-
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
