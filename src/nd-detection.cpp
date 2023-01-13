@@ -885,8 +885,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     if (device_addrs != NULL) {
 
         for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
-            ndAddr::Type type;
-            const char *ip, *mac;
+            ndAddr::Type type = ndAddr::atNONE;
+            const char *ip = nullptr, *mac = nullptr;
 
             if (t == ndFlow::TYPE_LOWER && (
                 ndEF->lower_type == ndAddr::atLOCAL ||

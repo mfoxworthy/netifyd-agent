@@ -724,9 +724,6 @@ nd_process_ip:
         return packet;
     }
 
-    flow.lower_mac.MakeCachedString();
-    flow.upper_mac.MakeCachedString();
-
     if (l2_len + l3_len + l4_len > packet->caplen) {
         stats.pkt.discard++;
         stats.pkt.discard_bytes += packet->length;
@@ -907,9 +904,6 @@ nd_process_ip:
         //nd_dprintf("%s: non TCP/UDP protocol: %d\n", tag.c_str(), flow.ip_protocol);
         break;
     }
-
-    flow.lower_addr.MakeCachedString(ndAddr::mfNONE);
-    flow.upper_addr.MakeCachedString(ndAddr::mfNONE);
 
     flow.hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);

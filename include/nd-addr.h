@@ -33,21 +33,22 @@ public:
         atERROR = 0x7f,
     };
 
-    ndAddr(uint8_t prefix = 0) : addr{0}, prefix(prefix) { };
+    ndAddr(uint8_t prefix = 0)
+        : addr{0}, prefix(prefix), cached_addr("<UNSPEC>") { }
 
     ndAddr(const string &addr)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, addr);
     }
 
     ndAddr(const uint8_t *hw_addr, size_t length = ETH_ALEN)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, hw_addr, length);
     }
 
     ndAddr(const struct sockaddr_storage *ss_addr,
         uint8_t prefix = 0)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, ss_addr, prefix);
     }
     ndAddr(const struct sockaddr_storage &ss_addr,
@@ -55,7 +56,7 @@ public:
 
     ndAddr(const struct sockaddr_in *ss_in,
         uint8_t prefix = 32)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, ss_in, prefix);
     }
     ndAddr(const struct sockaddr_in &ss_in,
@@ -63,21 +64,21 @@ public:
 
     ndAddr(const struct sockaddr_in6 *ss_in6,
         uint8_t prefix = 128)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, ss_in6, prefix);
     }
     ndAddr(const struct sockaddr_in6 &ss_in6,
         uint8_t prefix = 128) : ndAddr(&ss_in6, prefix) { }
 
     ndAddr(const struct in_addr *in_addr, uint8_t prefix = 32)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, in_addr, prefix);
     }
     ndAddr(const struct in_addr &in_addr, uint8_t prefix = 32)
         : ndAddr(&in_addr, prefix) { }
 
     ndAddr(const struct in6_addr *in6_addr, uint8_t prefix = 128)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), cached_addr("<UNSPEC>") {
         Create(*this, in6_addr, prefix);
     }
     ndAddr(const struct in6_addr &in6_addr, uint8_t prefix = 128)
@@ -155,39 +156,9 @@ public:
         mfALL = (mfPREFIX | mfPORT)
     };
 
-    bool MakeString(string &result, uint8_t flags = mfALL) const;
+    static bool MakeString(const ndAddr &a, string &result, uint8_t flags = mfALL);
 
-    inline bool MakeCachedString(uint8_t flags = mfALL) {
-        string cached;
-        if (MakeString(cached, flags)) {
-            cached_addr = cached;
-            return true;
-        }
-        return false;
-    }
-    inline bool MakeCachedString(
-        string &result, uint8_t flags = mfALL) {
-        if (MakeCachedString(flags)) {
-            result = cached_addr;
-            return true;
-        }
-        return false;
-    }
-
-    const string GetString(uint8_t flags = mfALL) const {
-        if (cached_addr.size()) return cached_addr;
-        string result;
-        if (MakeString(result, flags)) return result;
-        return string("<UNSPEC>");
-    }
-    inline bool GetString(string &addr,
-        uint8_t flags = mfALL) const {
-        if (IsValid()) {
-            addr = GetString(flags);
-            return true;
-        }
-        return false;
-    }
+    inline const string GetString() const { return cached_addr; }
 
     inline bool operator==(const ndAddr &a) const {
         if (a.prefix != prefix) return false;
@@ -365,7 +336,7 @@ public:
         case 128: // AF_INET6
             for (auto i = 0; i < 4; i++) {
                 bitset<N> b;
-                for (auto j = 0; j < N; j++)
+                for (size_t j = 0; j < N; j++)
                     b[j] = addr[i * N + j];
                 a.addr.in6.sin6_addr.s6_addr32[3 - i] = htonl(b.to_ulong());
             }
@@ -373,7 +344,7 @@ public:
         default:
             return false;
         }
-        return a.GetString(ip);
+        return ndAddr::MakeString(a, ip);
     }
 };
 

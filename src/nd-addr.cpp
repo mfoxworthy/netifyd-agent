@@ -105,7 +105,7 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
         }
 
         a.addr.ss.ss_family = AF_INET;
-        return true;
+        return ndAddr::MakeString(a, a.cached_addr, mfNONE);
     }
 
     if (inet_pton(AF_INET6,
@@ -119,7 +119,7 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
         }
 
         a.addr.ss.ss_family = AF_INET6;
-        return true;
+        return ndAddr::MakeString(a, a.cached_addr, mfNONE);
     }
 
     switch (addr.size()) {
@@ -168,7 +168,7 @@ bool ndAddr::Create(ndAddr &a,
         a.addr.ll.sll_halen = ETH_ALEN;
         memcpy(a.addr.ll.sll_addr, hw_addr, ETH_ALEN);
 
-        return true;
+        return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 
     default:
         nd_dprintf("Invalid hardware address size: %lu\n", length);
@@ -217,7 +217,7 @@ bool ndAddr::Create(ndAddr &a,
         return false;
     }
 
-    return true;
+    return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
 
 bool ndAddr::Create(ndAddr &a,
@@ -242,7 +242,7 @@ bool ndAddr::Create(ndAddr &a,
     if (prefix) a.prefix = prefix;
     else a.prefix = 32;
 
-    return true;
+    return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
 
 bool ndAddr::Create(ndAddr &a,
@@ -267,7 +267,7 @@ bool ndAddr::Create(ndAddr &a,
     if (prefix) a.prefix = prefix;
     else a.prefix = 128;
 
-    return true;
+    return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
 
 bool ndAddr::Create(ndAddr &a,
@@ -287,7 +287,7 @@ bool ndAddr::Create(ndAddr &a,
     if (prefix) a.prefix = prefix;
     else a.prefix = 32;
 
-    return true;
+    return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
 
 bool ndAddr::Create(ndAddr &a,
@@ -307,7 +307,7 @@ bool ndAddr::Create(ndAddr &a,
     if (prefix) a.prefix = prefix;
     else a.prefix = 128;
 
-    return true;
+    return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
 
 const uint8_t *ndAddr::GetAddress(void) const
@@ -358,24 +358,24 @@ bool ndAddr::SetPort(uint16_t port)
     return false;
 }
 
-bool ndAddr::MakeString(string &result, uint8_t flags) const
+bool ndAddr::MakeString(const ndAddr &a, string &result, uint8_t flags)
 {
-    if (! IsValid()) return false;
+    if (! a.IsValid()) return false;
 
     char sa[INET6_ADDRSTRLEN + 4] = { 0 };
 
-    switch (addr.ss.ss_family) {
+    switch (a.addr.ss.ss_family) {
     case AF_PACKET:
-        switch (addr.ll.sll_hatype) {
+        switch (a.addr.ll.sll_hatype) {
         case ARPHRD_ETHER:
             {
                 char *p = sa;
-                for (unsigned i = 0; i < addr.ll.sll_halen
+                for (unsigned i = 0; i < a.addr.ll.sll_halen
                     && (sa - p) < (INET6_ADDRSTRLEN - 1); i++) {
-                    sprintf(p, "%02hhx", addr.ll.sll_addr[i]);
+                    sprintf(p, "%02hhx", a.addr.ll.sll_addr[i]);
                     p += 2;
 
-                    if (i < (unsigned)(addr.ll.sll_halen - 1)
+                    if (i < (unsigned)(a.addr.ll.sll_halen - 1)
                         && (sa - p) < (INET6_ADDRSTRLEN - 1)) {
                         *p = ':';
                         p++;
@@ -391,18 +391,18 @@ bool ndAddr::MakeString(string &result, uint8_t flags) const
 
     case AF_INET:
         inet_ntop(AF_INET,
-            (const void *)&addr.in.sin_addr.s_addr,
+            (const void *)&a.addr.in.sin_addr.s_addr,
             sa, INET_ADDRSTRLEN
         );
 
         result = sa;
 
-        if ((flags & mfPREFIX) && (prefix > 0 && prefix != 32))
-            result.append("/" + to_string((size_t)prefix));
+        if ((flags & mfPREFIX) && (a.prefix > 0 && a.prefix != 32))
+            result.append("/" + to_string((size_t)a.prefix));
 
-        if ((flags & mfPORT) && addr.in.sin_port != 0) {
+        if ((flags & mfPORT) && a.addr.in.sin_port != 0) {
             result.append(":" + to_string(
-                ntohs(addr.in.sin_port))
+                ntohs(a.addr.in.sin_port))
             );
         }
 
@@ -410,18 +410,18 @@ bool ndAddr::MakeString(string &result, uint8_t flags) const
 
     case AF_INET6:
         inet_ntop(AF_INET6,
-            (const void *)&addr.in6.sin6_addr.s6_addr,
+            (const void *)&a.addr.in6.sin6_addr.s6_addr,
             sa, INET6_ADDRSTRLEN
         );
 
         result = sa;
 
-        if ((flags & mfPREFIX) && prefix > 0 && prefix != 128)
-            result.append("/" + to_string((size_t)prefix));
+        if ((flags & mfPREFIX) && a.prefix > 0 && a.prefix != 128)
+            result.append("/" + to_string((size_t)a.prefix));
 
-        if ((flags & mfPORT) && addr.in6.sin6_port != 0) {
+        if ((flags & mfPORT) && a.addr.in6.sin6_port != 0) {
             result.append(":" + to_string(
-                ntohs(addr.in6.sin6_port))
+                ntohs(a.addr.in6.sin6_port))
             );
         }
 
@@ -470,18 +470,16 @@ bool ndAddrType::AddAddress(
 
     try {
         if (addr.IsEthernet()) {
-            string mac;
-            if (addr.GetString(mac)) {
-                auto it = ether_reserved.find(mac);
-                if (it != ether_reserved.end()) {
-                    nd_dprintf("Reserved MAC address exists: %s\n",
-                        mac.c_str()
-                    );
-                    return false;
-                }
-                ether_reserved[mac] = type;
-                return true;
+            string mac = addr.GetString();
+            auto it = ether_reserved.find(mac);
+            if (it != ether_reserved.end()) {
+                nd_dprintf("Reserved MAC address exists: %s\n",
+                    mac.c_str()
+                );
+                return false;
             }
+            ether_reserved[mac] = type;
+            return true;
         }
 
         if (type == ndAddr::atLOCAL && addr.IsNetwork())
@@ -544,15 +542,13 @@ bool ndAddrType::RemoveAddress(
 
     try {
         if (addr.IsEthernet()) {
-            string mac;
-            if (addr.GetString(mac)) {
-                auto it = ether_reserved.find(mac);
-                if (it != ether_reserved.end()) {
-                    ether_reserved.erase(it);
-                    return true;
-                }
-                return false;
+            string mac = addr.GetString();
+            auto it = ether_reserved.find(mac);
+            if (it != ether_reserved.end()) {
+                ether_reserved.erase(it);
+                return true;
             }
+            return false;
         }
 
         if (addr.IsIPv4() && ifname == nullptr) {
