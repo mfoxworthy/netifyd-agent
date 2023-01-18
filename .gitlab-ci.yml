@@ -69,9 +69,6 @@ debian 11 build:
   extends: .debian_build
   tags:
     - docker
-  only:
-    - tags
-    - web
   variables:
     OS_IMAGE: "debian:11"
     OS_NAME: "debian"
@@ -97,6 +94,9 @@ debian 11 armel build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
+    - web
   variables:
     OS_IMAGE: "arm32v5/debian:11"
     OS_NAME: "debian"
@@ -108,6 +108,9 @@ debian 11 armhf build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
+    - web
   variables:
     OS_IMAGE: "arm32v7/debian:11"
     OS_NAME: "debian"
