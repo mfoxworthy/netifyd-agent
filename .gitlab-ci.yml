@@ -69,6 +69,9 @@ debian 11 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
+    - web
   variables:
     OS_IMAGE: "debian:11"
     OS_NAME: "debian"
@@ -90,18 +93,18 @@ debian 11 i386 build:
     OS_ARCH: "i386"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 11 arm32v6 build:
+debian 11 armel build:
   extends: .debian_build
   tags:
     - docker
   variables:
-    OS_IMAGE: "arm32v6/debian:11"
+    OS_IMAGE: "arm32v5/debian:11"
     OS_NAME: "debian"
     OS_VERSION: "11"
     OS_ARCH: "armel"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 11 arm32v7 build:
+debian 11 armhf build:
   extends: .debian_build
   tags:
     - docker
@@ -112,10 +115,13 @@ debian 11 arm32v7 build:
     OS_ARCH: "armhf"
     OS_EXTRA_PACKAGES: "byacc flex"
 
-debian 11 arm64v8 build:
+debian 11 arm64 build:
   extends: .debian_build
   tags:
     - docker
+  only:
+    - tags
+    - web
   variables:
     OS_IMAGE: "arm64v8/debian:11"
     OS_NAME: "debian"
