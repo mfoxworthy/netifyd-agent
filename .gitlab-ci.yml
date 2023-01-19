@@ -90,6 +90,48 @@ debian 11 i386 build:
     OS_ARCH: "i386"
     OS_EXTRA_PACKAGES: "byacc flex"
 
+debian 11 armel build:
+  extends: .debian_build
+  tags:
+    - docker
+  only:
+    - tags
+    - web
+  variables:
+    OS_IMAGE: "arm32v5/debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "armel"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+debian 11 armhf build:
+  extends: .debian_build
+  tags:
+    - docker
+  only:
+    - tags
+    - web
+  variables:
+    OS_IMAGE: "arm32v7/debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "armhf"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
+debian 11 arm64 build:
+  extends: .debian_build
+  tags:
+    - docker
+  only:
+    - tags
+    - web
+  variables:
+    OS_IMAGE: "arm64v8/debian:11"
+    OS_NAME: "debian"
+    OS_VERSION: "11"
+    OS_ARCH: "arm64"
+    OS_EXTRA_PACKAGES: "byacc flex"
+
 # Ubuntu OS Targets
 #------------------
 
