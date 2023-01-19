@@ -130,6 +130,7 @@ extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
 extern ndAddrType *nd_addrtype;
+extern ndInterface nd_interfaces;
 
 #define ndEF    entry->flow
 #define ndEFNF  entry->flow->ndpi_flow
@@ -148,7 +149,6 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_PLUGINS
     nd_plugins *plugin_detections,
 #endif
-    nd_device &devices,
     ndDNSHintCache *dhc,
     ndFlowHashCache *fhc,
     uint8_t private_addr)
@@ -164,7 +164,6 @@ ndDetectionThread::ndDetectionThread(
     plugins(plugin_detections),
 #endif
     ndpi(NULL),
-    devices(devices),
     dhc(dhc), fhc(fhc),
     flows(0)
 {
@@ -175,15 +174,7 @@ ndDetectionThread::ndDetectionThread(
 
     private_addrs.second.ss_family = AF_INET6;
     nd_private_ipaddr(private_addr, private_addrs.second);
-#if 0
-    memcpy(this->dev_mac, dev_mac, ETH_ALEN);
-    nd_dprintf(
-        "%s: hwaddr: %02hhx:%02hhx:%02hhx:%02hhx:%02hx:%02hhx\n",
-        dev.c_str(),
-        dev_mac[0], dev_mac[1], dev_mac[2],
-        dev_mac[3], dev_mac[4], dev_mac[5]
-    );
-#endif
+
     int rc;
 
     pthread_condattr_t cond_attr;
@@ -880,62 +871,38 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
     else ndEF->hash(tag, true);
 
-#ifdef _ND_USE_NETLINK
-    nd_device_addrs *device_addrs = devices[ndEF->iface.ifname].second;
-    if (device_addrs != NULL) {
+    for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
+        const ndAddr *mac, *ip;
+        ndAddr::Type type = ndAddr::atNONE;
 
-        for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
-            ndAddr::Type type = ndAddr::atNONE;
-            const char *ip = nullptr, *mac = nullptr;
+        if (t == ndFlow::TYPE_LOWER && (
+            ndEF->lower_type == ndAddr::atLOCAL ||
+            ndEF->lower_type == ndAddr::atLOCALNET ||
+            ndEF->lower_type == ndAddr::atRESERVED)) {
 
-            if (t == ndFlow::TYPE_LOWER && (
-                ndEF->lower_type == ndAddr::atLOCAL ||
-                ndEF->lower_type == ndAddr::atLOCALNET ||
-                ndEF->lower_type == ndAddr::atRESERVED)) {
+            nd_addrtype->Classify(type, ndEF->lower_mac);
 
-                nd_addrtype->Classify(type, ndEF->lower_mac);
-
-                mac = ndEF->lower_mac.GetString().c_str();
-                ip = ndEF->lower_addr.GetString().c_str();
-            }
-            else if (t == ndFlow::TYPE_UPPER && (
-                ndEF->upper_type == ndAddr::atLOCAL ||
-                ndEF->upper_type == ndAddr::atLOCALNET ||
-                ndEF->upper_type == ndAddr::atRESERVED)) {
-
-                nd_addrtype->Classify(type, ndEF->upper_mac);
-
-                mac = ndEF->upper_mac.GetString().c_str();
-                ip = ndEF->upper_addr.GetString().c_str();
-            }
-            else continue;
-
-            if (type != ndAddr::atOTHER) continue;
-
-            unique_lock<mutex> lock(
-                *devices[ndEF->iface.ifname].first
-            );
-
-            auto it_dev = device_addrs->find(mac);
-
-            if (it_dev == device_addrs->end())
-                (*device_addrs)[mac].push_back(ip);
-            else {
-                bool duplicate = false;
-                vector<string>::iterator j;
-                for (j = (*device_addrs)[mac].begin();
-                    j != (*device_addrs)[mac].end(); j++) {
-                    if (ip != (*j)) continue;
-                    duplicate = true;
-                    break;
-                }
-
-                if (! duplicate)
-                    (*device_addrs)[mac].push_back(ip);
-            }
+            mac = &ndEF->lower_mac;
+            ip = &ndEF->lower_addr;
         }
+        else if (t == ndFlow::TYPE_UPPER && (
+            ndEF->upper_type == ndAddr::atLOCAL ||
+            ndEF->upper_type == ndAddr::atLOCALNET ||
+            ndEF->upper_type == ndAddr::atRESERVED)) {
+
+            nd_addrtype->Classify(type, ndEF->upper_mac);
+
+            mac = &ndEF->upper_mac;
+            ip = &ndEF->upper_addr;
+        }
+        else continue;
+
+        if (type != ndAddr::atOTHER ||
+            mac == nullptr || ip == nullptr) continue;
+
+        ndEF->iface.PushEndpoint(*mac, *ip);
     }
-#endif
+
 #ifdef _ND_USE_CONNTRACK
     if (! ndEF->iface.internal && thread_conntrack != NULL) {
 

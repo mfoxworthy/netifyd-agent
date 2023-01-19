@@ -24,6 +24,7 @@
 #include <map>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <atomic>
 #include <regex>
@@ -39,6 +40,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <ifaddrs.h>
 
 #include <arpa/inet.h>
 
@@ -72,6 +74,8 @@ using namespace std;
 #include "nd-addr.h"
 
 extern ndGlobalConfig nd_config;
+
+ndInterfaces nd_interfaces;
 
 ndAddrType *nd_addrtype = NULL;
 
@@ -720,6 +724,83 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             }
         }
     }
+}
+
+size_t ndInterface::UpdateAddrs(ndInterfaces& interfaces)
+{
+    size_t count = 0;
+
+    struct ifaddrs *if_addrs;
+
+    if (getifaddrs(&if_addrs) == 0) {
+        for (auto &i : interfaces) {
+            i.second.addrs.Clear();
+            i.second.UpdateAddrs(if_addrs);
+        }
+
+        freeifaddrs(if_addrs);
+    }
+
+    return count;
+}
+
+size_t ndInterface::UpdateAddrs(const struct ifaddrs *if_addrs)
+{
+    size_t count = 0;
+    const struct ifaddrs *ifa_addr = if_addrs;
+#if defined(__linux__)
+    struct sockaddr_ll *sa_ll;
+#elif defined(BSD4_4)
+    struct sockaddr_dl *sa_ll;
+#endif
+    const uint8_t *mac_addr = nullptr;
+
+    for ( ; ifa_addr != NULL; ifa_addr = ifa_addr->ifa_next) {
+
+        if (ifa_addr->ifa_addr == NULL ||
+            (ifname != ifa_addr->ifa_name &&
+            ifname_peer != ifa_addr->ifa_name)) continue;
+
+        ndAddr addr;
+
+        switch (ifa_addr->ifa_addr->sa_family) {
+        case AF_LINK:
+#if defined(__linux__)
+            sa_ll = (struct sockaddr_ll *)ifa_addr->ifa_addr;
+            mac_addr = sa_ll->sll_addr;
+#elif defined(BSD4_4)
+            sa_ll = (struct sockaddr_dl *)ifa->ifa_addr;
+            mac_addr = sa_ll->sdl_data + sdl_nlen;
+#endif
+            if (mac_addr != nullptr) {
+                ndAddr::Create(addr, mac_addr, ETH_ALEN);
+                if (addrs.Push(addr)) count++;
+            }
+            break;
+        case AF_INET:
+            ndAddr::Create(
+                addr,
+                reinterpret_cast<const struct sockaddr_in *>(
+                    ifa_addr->ifa_addr
+                )
+            );
+            if (addrs.Push(addr)) count++;
+            break;
+        case AF_INET6:
+            ndAddr::Create(
+                addr,
+                reinterpret_cast<const struct sockaddr_in6 *>(
+                    ifa_addr->ifa_addr
+                )
+            );
+            if (addrs.Push(addr)) count++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return count;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -80,9 +80,7 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 
-nd_device_ether nd_device_ethers;
-
-ndFlow::ndFlow(const ndInterface &iface)
+ndFlow::ndFlow(ndInterface &iface)
     : iface(iface), dpi_thread_id(-1),
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
@@ -477,23 +475,6 @@ void ndFlow::print(void) const
     const char
         *lower_name = lower_addr.GetString().c_str(),
         *upper_name = upper_addr.GetString().c_str();
-
-    if (ND_DEBUG_WITH_ETHERS) {
-        string key;
-        nd_device_ether::const_iterator i;
-
-        key.assign((const char *)lower_mac.addr.ll.sll_addr, ETH_ALEN);
-
-        i = nd_device_ethers.find(key);
-        if (i != nd_device_ethers.end())
-            lower_name = i->second.c_str();
-
-        key.assign((const char *)upper_mac.addr.ll.sll_addr, ETH_ALEN);
-
-        i = nd_device_ethers.find(key);
-        if (i != nd_device_ethers.end())
-            upper_name = i->second.c_str();
-    }
 
     string iface_name;
     nd_iface_name(iface.ifname, iface_name);

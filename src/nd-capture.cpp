@@ -204,10 +204,6 @@ extern ndFlowMap *nd_flow_buckets;
 
 atomic_uint nd_flow_count;
 
-nd_device nd_devices;
-nd_interface_addr_map nd_interface_addrs;
-nd_interface_map nd_interfaces;
-
 struct __attribute__((packed)) nd_mpls_header_t
 {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -282,8 +278,7 @@ struct __attribute__((packed)) nd_dns_header_t {
 ndCaptureThread::ndCaptureThread(
     nd_capture_type cs_type,
     int16_t cpu,
-    const ndInterface &iface,
-    const uint8_t *dev_mac,
+    ndInterface& iface,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
@@ -302,14 +297,6 @@ ndCaptureThread::ndCaptureThread(
 
     private_addrs.second.ss_family = AF_INET6;
     nd_private_ipaddr(private_addr, private_addrs.second);
-
-    memcpy(this->dev_mac, dev_mac, ETH_ALEN);
-    nd_dprintf(
-        "%s: hwaddr: %02hhx:%02hhx:%02hhx:%02hhx:%02hx:%02hhx\n",
-        tag.c_str(),
-        dev_mac[0], dev_mac[1], dev_mac[2],
-        dev_mac[3], dev_mac[4], dev_mac[5]
-    );
 }
 
 const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)

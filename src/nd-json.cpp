@@ -64,9 +64,7 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
-extern nd_device nd_devices;
-extern nd_interface_addr_map nd_interface_addrs;
-extern nd_interface_map nd_interfaces;
+extern ndInterfaces nd_interfaces;
 #ifdef _ND_USE_NETLINK
 extern nd_netlink_device nd_netlink_devices;
 #endif
@@ -185,54 +183,15 @@ void nd_json_protocols(string &json_string)
 
 void nd_json_add_interfaces(json &parent)
 {
+    static vector<string> keys = { "addr" };
+
     for (auto &i : nd_interfaces) {
+        json jo;
+        i.second.Encode(jo);
+        i.second.EncodeAddrs(jo, keys);
+
         string iface_name;
         nd_iface_name(i.second.ifname, iface_name);
-
-        json jo;
-
-        jo["role"] = (i.second.internal) ? "LAN" : "WAN";
-
-        vector<string> addrs;
-        bool found_mac = false;
-        string iface_lookup = iface_name;
-        auto iface_it = nd_interface_addrs.find(iface_lookup);
-
-        while (iface_it != nd_interface_addrs.end()) {
-
-            for (auto addr_it = iface_it->second->begin();
-                addr_it != iface_it->second->end(); addr_it++) {
-
-                string ip;
-                if (! found_mac && (*addr_it)->family == AF_LINK) {
-                    char mac_addr[ND_STR_ETHALEN + 1];
-                    snprintf(mac_addr, sizeof(mac_addr),
-                        "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-                        (*addr_it)->mac[0], (*addr_it)->mac[1], (*addr_it)->mac[2],
-                        (*addr_it)->mac[3], (*addr_it)->mac[4], (*addr_it)->mac[5]
-                    );
-                    jo["mac"] = mac_addr;
-                    found_mac = true;
-                }
-                else if (((*addr_it)->family == AF_INET
-                    || (*addr_it)->family == AF_INET6)
-                    && nd_ip_to_string((*addr_it)->ip, ip)) {
-                    addrs.push_back(ip);
-                }
-            }
-#ifdef _ND_USE_NETLINK
-            auto nld_it = nd_netlink_devices.find(iface_lookup);
-            if (nld_it == nd_netlink_devices.end()) break;
-
-            iface_lookup = nld_it->second;
-            iface_it = nd_interface_addrs.find(iface_lookup);
-#endif
-        }
-
-        if (! found_mac)
-            jo["mac"] = "00:00:00:00:00:00";
-
-        jo["addr"] = addrs;
 
         parent[iface_name] = jo;
     }
@@ -240,50 +199,8 @@ void nd_json_add_interfaces(json &parent)
 
 void nd_json_add_devices(json &parent)
 {
-    nd_device_addrs device_addrs;
-
-    for (auto i = nd_devices.begin(); i != nd_devices.end(); i++) {
-        if (i->second.first == NULL) continue;
-
-        unique_lock<mutex> lock(*i->second.first);
-
-        for (nd_device_addrs::const_iterator j = i->second.second->begin();
-            j != i->second.second->end(); j++) {
-
-            for (vector<string>::const_iterator k = j->second.begin();
-                k != j->second.end(); k++) {
-
-                bool duplicate = false;
-
-                if (device_addrs.find(j->first) != device_addrs.end()) {
-
-                    vector<string>::const_iterator l;
-                    for (l = device_addrs[j->first].begin();
-                        l != device_addrs[j->first].end(); l++) {
-                        if ((*k) != (*l)) continue;
-                        duplicate = true;
-                        break;
-                    }
-                }
-
-                if (! duplicate)
-                    device_addrs[j->first].push_back((*k));
-            }
-        }
-    }
-
-    for (nd_device_addrs::const_iterator i = device_addrs.begin();
-        i != device_addrs.end(); i++) {
-
-        json ja;
-
-        for (vector<string>::const_iterator j = i->second.begin();
-            j != i->second.end(); j++) {
-            ja.push_back((*j));
-        }
-
-        parent[i->first] = ja;
-    }
+    for (auto &i : nd_interfaces)
+        i.second.EncodeEndpoints(parent);
 }
 
 void nd_json_add_stats(json &parent, const ndPacketStats &stats)

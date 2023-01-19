@@ -55,7 +55,7 @@ typedef unordered_map<string, string> nd_flow_kvmap;
 class ndFlow : public ndSerializer
 {
 public:
-    const ndInterface iface;
+    ndInterface &iface;
 
     int16_t dpi_thread_id;
 
@@ -261,7 +261,7 @@ public:
     uint16_t ndpi_risk_score_client;
     uint16_t ndpi_risk_score_server;
 
-    ndFlow(const ndInterface &iface);
+    ndFlow(ndInterface &iface);
     ndFlow(const ndFlow &flow);
     virtual ~ndFlow();
 
@@ -411,7 +411,7 @@ public:
                 break;
             }
 
-            // 00-52-14 to 00-52-FF: Unserializeed (small allocations)
+            // 00-52-14 to 00-52-FF: Unserialized (small allocations)
             serialize(output, { _lower_mac }, (privacy_mask & PRIVATE_LOWER) ?
                 "00:52:14:00:00:00" : lower_mac.GetString());
             serialize(output, { _upper_mac }, (privacy_mask & PRIVATE_UPPER) ?

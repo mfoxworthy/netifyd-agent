@@ -161,11 +161,9 @@ static nd_device_filter device_filters;
 static bool nd_capture_stopped_by_signal = false;
 static ndDNSHintCache *dns_hint_cache = NULL;
 static ndFlowHashCache *flow_hash_cache = NULL;
-static time_t nd_ethers_mtime = 0;
 
 extern ndGlobalConfig nd_config;
-extern nd_device nd_devices;
-extern nd_device_ether nd_device_ethers;
+extern ndInterfaces nd_interfaces;
 extern ndFlowMap *nd_flow_buckets;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
@@ -173,8 +171,6 @@ extern ndDomains *nd_domains;
 extern ndAddrType *nd_addrtype;
 extern atomic_uint nd_flow_count;
 extern nd_agent_stats nd_json_agent_stats;
-extern nd_interface_map nd_interfaces;
-extern nd_interface_addr_map nd_interface_addrs;
 #ifdef _ND_USE_NETLINK
 extern ndNetlink *netlink;
 extern nd_netlink_device nd_netlink_devices;
@@ -369,7 +365,7 @@ static void nd_usage(int rc = 0, bool version = false)
             "  -E, --external <interface>\n    Specify an external (WAN) interface to capture from.\n"
             "  -A, --device-address <address>\n    Interface/device option: consider address is assigned to interface.\n"
             "  -F, --device-filter <BPF expression>\n    Interface/device option: attach a BPF filter expression to interface.\n"
-            "  -N, --device-netfilter <interface>\n    Interface/device option: associate Netlink messages from an alternate interface (ex: physdev of PPP interface).\n"
+            "  -N, --device-peer <interface>\n    Interface/device option: associate interface with a peer (ex: PPPoE interface, pppX).\n"
             "  -t, --disable-conntrack\n    Disable connection tracking thread.\n"
             "  -l, --disable-netlink\n    Don't process Netlink messages for capture interfaces.\n"
             "  -r, --replay-delay\n    Simulate packet-to-packet arrival times in offline playback mode.\n"
@@ -467,26 +463,7 @@ static void nd_init(void)
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
-    for (auto &i : nd_interfaces) {
-
-        if (! i.second.internal) {
-            // XXX: Only collect device MAC/addresses on LAN interfaces.
-            nd_devices[i.second.ifname] = make_pair(
-                (mutex *)NULL, (nd_device_addrs *)NULL
-            );
-        }
-        else {
-            nd_devices[i.second.ifname] = make_pair(
-                new mutex, new nd_device_addrs
-            );
-            if (nd_devices[i.second.ifname].first == NULL)
-                throw ndSystemException(__PRETTY_FUNCTION__, "new mutex", ENOMEM);
-            if (nd_devices[i.second.ifname].second == NULL)
-                throw ndSystemException(__PRETTY_FUNCTION__, "new nd_device_addrs", ENOMEM);
-        }
-    }
-
-    nd_ifaddrs_update(nd_interface_addrs);
+    ndInterface::UpdateAddrs(nd_interfaces);
 
 #ifdef _ND_USE_NETLINK
     if (ND_USE_NETLINK) {
@@ -503,17 +480,6 @@ static void nd_destroy(void)
     if (ND_USE_NETLINK && netlink != NULL)
         delete netlink;
 #endif
-
-    for (auto &i : nd_interfaces) {
-        if (nd_devices.find(i.second.ifname) != nd_devices.end()) {
-            if (nd_devices[i.second.ifname].first != NULL)
-                delete nd_devices[i.second.ifname].first;
-            if (nd_devices[i.second.ifname].second != NULL)
-                delete nd_devices[i.second.ifname].second;
-        }
-    }
-
-    nd_devices.clear();
 
     if (nd_flow_buckets) {
         delete nd_flow_buckets;
@@ -536,8 +502,6 @@ static int nd_start_capture_threads(void)
     if (capture_threads.size() > 0) return 1;
 
     try {
-        string netlink_dev;
-        uint8_t mac[ETH_ALEN];
         uint8_t private_addr = 0;
         vector<ndCaptureThread *> threads;
 
@@ -547,10 +511,6 @@ static int nd_start_capture_threads(void)
         ) ? nd_config.ca_capture_base : 0;
 
         for (auto & it : nd_interfaces) {
-
-            if (! nd_ifaddrs_get_mac(
-                nd_interface_addrs, it.second.ifname, mac))
-                memset(mac, 0, ETH_ALEN);
 
             switch (nd_config.capture_type) {
             case ndCT_PCAP:
@@ -570,7 +530,6 @@ static int nd_start_capture_threads(void)
                 ndCapturePcap *thread = new ndCapturePcap(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
                     it.second,
-                    mac,
                     thread_socket,
                     detection_threads,
                     dns_hint_cache,
@@ -589,7 +548,6 @@ static int nd_start_capture_threads(void)
                     ndCaptureTPv3 *thread = new ndCaptureTPv3(
                         (nd_interfaces.size() > 1) ? cpu++ : -1,
                         it.second,
-                        mac,
                         thread_socket,
                         detection_threads,
                         dns_hint_cache,
@@ -728,7 +686,6 @@ static int nd_start_detection_threads(void)
 #ifdef _ND_USE_PLUGINS
                 &plugin_detections,
 #endif
-                nd_devices,
                 dns_hint_cache,
                 flow_hash_cache,
                 (uint8_t)cpu
@@ -1562,66 +1519,6 @@ static void nd_print_stats(void)
 #endif // _ND_LEAN_AND_MEAN
 }
 
-#ifndef _ND_LEAN_AND_MEAN
-static void nd_load_ethers(void)
-{
-    char buffer[1024 + ND_STR_ETHALEN + 17];
-
-    struct stat ethers_stat;
-    if (stat(ND_ETHERS_FILE_NAME, &ethers_stat) < 0) {
-        fprintf(stderr, "Could not stat ethers file: %s: %s\n",
-            ND_ETHERS_FILE_NAME, strerror(errno));
-        return;
-    }
-
-    if (nd_ethers_mtime == ethers_stat.st_mtime) return;
-    nd_ethers_mtime = ethers_stat.st_mtime;
-
-    FILE *fh = fopen(ND_ETHERS_FILE_NAME, "r");
-
-    if (fh == NULL) return;
-
-    nd_device_ethers.clear();
-
-    size_t line = 0;
-    while (! feof(fh)) {
-        if (fgets(buffer, sizeof(buffer), fh)) {
-            line++;
-            char *p = buffer;
-            while (isspace(*p) && *p != '\0') p++;
-
-            char *ether = p;
-            if (! isxdigit(*p)) continue;
-            while (*p != '\0' && (isxdigit(*p) || *p == ':')) p++;
-            *p = '\0';
-            if (strlen(ether) != ND_STR_ETHALEN) continue;
-
-            while (isspace(*(++p)) && *p != '\0');
-
-            char *name = p;
-            while (*p != '\n' && *p != '\0') p++;
-            *p = '\0';
-            if (! strlen(name)) continue;
-
-            const char *a = ether;
-            uint8_t mac[ETH_ALEN], *m = mac;
-            for (int j = 0; j < ND_STR_ETHALEN; j += 3, m++)
-                sscanf(a + j, "%2hhx", m);
-            string key;
-            key.assign((const char *)mac, ETH_ALEN);
-            nd_device_ethers[key] = name;
-            //nd_dprintf("%2lu: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx (%s): %s\n", line,
-            //    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], ether, name);
-        }
-    }
-
-    fclose(fh);
-
-    nd_dprintf("Loaded %lu entries from: %s\n",
-        nd_device_ethers.size(), ND_ETHERS_FILE_NAME);
-}
-#endif
-
 static void nd_dump_stats(void)
 {
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
@@ -1714,7 +1611,8 @@ static void nd_dump_stats(void)
 
     json ji, jd;
 
-    nd_ifaddrs_update(nd_interface_addrs);
+    ndInterface::UpdateAddrs(nd_interfaces);
+
     nd_json_add_interfaces(ji);
     jstatus["interfaces"] = ji;
 #ifdef _ND_USE_PLUGINS
@@ -1723,13 +1621,7 @@ static void nd_dump_stats(void)
         ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
             pi->second->GetPlugin()
         );
-        p->ProcessStats(
-            nd_interfaces,
-#ifdef _ND_USE_NETLINK
-            nd_netlink_devices,
-#endif
-            nd_interface_addrs
-        );
+        p->ProcessStats(nd_interfaces);
     }
 #endif
 
@@ -1741,16 +1633,11 @@ static void nd_dump_stats(void)
         ndPluginStats *p = reinterpret_cast<ndPluginStats *>(
             pi->second->GetPlugin()
         );
-        p->ProcessStats(nd_devices);
+        p->ProcessStats(nd_interfaces);
     }
 #endif
-    for (auto i = nd_devices.begin(); i != nd_devices.end(); i++) {
-        if (i->second.first == NULL) continue;
-
-        unique_lock<mutex> lock(*i->second.first);
-
-        i->second.second->clear();
-    }
+    for (auto &it : nd_interfaces)
+        it.second.ClearEndpoints();
 
     unordered_map<string, json> jflows;
 
@@ -1881,12 +1768,8 @@ static void nd_dump_stats(void)
             nd_config.path_export_json, e.what());
     }
 
-    if (ND_DEBUG) {
-#ifndef _ND_LEAN_AND_MEAN
-        if (ND_DEBUG_WITH_ETHERS) nd_load_ethers();
-#endif
+    if (ND_DEBUG)
         nd_print_stats();
-    }
 }
 
 enum ndDumpFlags {
@@ -2359,7 +2242,7 @@ int main(int argc, char *argv[])
         { "debug-uploads", 0, 0, 'D' },
         { "device-address", 1, 0, 'A' },
         { "device-filter", 1, 0, 'F' },
-        { "device-netlink", 1, 0, 'N' },
+        { "device-peer", 1, 0, 'N' },
         { "disable-conntrack", 0, 0, 't' },
         { "disable-netlink", 0, 0, 'l' },
         { "export-json", 1, 0, 'j' },
@@ -2529,7 +2412,7 @@ int main(int argc, char *argv[])
             break;
         case 'E':
         {
-            nd_interface_map_entry entry = nd_interfaces.emplace(
+            auto entry = nd_interfaces.emplace(
                 make_pair(optarg, ndInterface(optarg, false))
             );
 
@@ -2562,7 +2445,7 @@ int main(int argc, char *argv[])
             nd_usage();
         case 'I':
         {
-            nd_interface_map_entry entry = nd_interfaces.emplace(
+            auto entry = nd_interfaces.emplace(
                 make_pair(optarg, ndInterface(optarg))
             );
 
@@ -2585,16 +2468,21 @@ int main(int argc, char *argv[])
             nd_config.flags |= ndGF_DEBUG_NDPI;
             break;
         case 'N':
-#if _ND_USE_NETLINK
             if (last_device.size() == 0) {
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            nd_netlink_devices[last_device] = optarg;
-#else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            return 1;
-#endif
+            else {
+                auto iface = nd_interfaces.find(last_device);
+                if (iface == nd_interfaces.end()) {
+                    fprintf(stderr, "Last defined interface not found: %s\n",
+                        last_device.c_str()
+                    );
+                    exit(1);
+                }
+
+                iface->second.ifname_peer = optarg;
+            }
             break;
         case 'P':
             nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
@@ -2807,10 +2695,6 @@ int main(int argc, char *argv[])
     sigaddset(&sigset, SIGTERM);
     sigaddset(&sigset, SIGUSR1);
     sigaddset(&sigset, SIGUSR2);
-
-#ifndef _ND_LEAN_AND_MEAN
-    if (ND_DEBUG_WITH_ETHERS) nd_load_ethers();
-#endif
 
     try {
 #ifdef _ND_USE_CONNTRACK
@@ -3189,8 +3073,6 @@ int main(int argc, char *argv[])
     }
 
     delete nd_addrtype;
-
-    nd_ifaddrs_free(nd_interface_addrs);
 
     nd_dprintf("Normal exit.\n");
 

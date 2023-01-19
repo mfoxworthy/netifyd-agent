@@ -32,8 +32,7 @@ public:
     ndCaptureThread(
         nd_capture_type cs_type,
         int16_t cpu,
-        const ndInterface &iface,
-        const uint8_t *dev_mac,
+        ndInterface& iface,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,
@@ -52,8 +51,7 @@ protected:
     int dl_type;
     nd_capture_type cs_type;
 
-    const ndInterface iface;
-    uint8_t dev_mac[ETH_ALEN];
+    ndInterface& iface;
     ndSocketThread *thread_socket;
 //    bool capture_unknown_flows;
 

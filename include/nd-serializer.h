@@ -92,7 +92,8 @@ public:
             j[keys[0]] = values;
     }
 
-    inline void serialize(json &j, const vector<string> &keys, const vector<string> &values) const {
+    inline void serialize(json &j, const vector<string> &keys,
+        const vector<string> &values, const string &delim = "") const {
         if (keys.empty() || values.empty()) return;
         if (keys.size() == 2)
             j[keys[0]][keys[1]] = values;
@@ -184,17 +185,25 @@ public:
         v.push_back(_values);
     }
 
-    inline void serialize(vector<string> &v, const vector<string> &keys, const vector<string> &values) const {
-        if (keys.empty() || values.empty()) return;
-        string key;
-        for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
-        v.push_back(key);
-        v.push_back(values.empty() ? string() :
-            accumulate(
-                ++values.begin(), values.end(),
-                *values.begin(), [](const string &a, const string &b) { return a + "," + b; }
-            )
-        );
+    inline void serialize(vector<string> &v, const vector<string> &keys,
+        const vector<string> &values, const string &delim = ",") const {
+        if (values.empty()) return;
+        if (! keys.empty()) {
+            string key;
+            for (auto &k : keys) key.append(key.empty() ? k : string(":") + k);
+            v.push_back(key);
+        }
+        if (delim.empty()) {
+            for (auto &i : values) v.push_back(i);
+        }
+        else {
+            v.push_back(values.empty() ? string() :
+                accumulate(
+                    ++values.begin(), values.end(),
+                    *values.begin(), [delim](const string &a, const string &b) { return a + delim + b; }
+                )
+            );
+        }
     }
 
     inline void serialize(vector<string> &v, const vector<string> &keys, const unordered_map<string, string> &values) const {

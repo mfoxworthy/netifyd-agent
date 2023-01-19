@@ -18,5 +18,5 @@ NETIFYD_AUTODETECT="yes"
 # NETIFYD_INTNET="eth1 eth2 eth3,192.168.0.0/24,10.0.0.0/16"
 
 # Define external network interfaces.  For PPPoE interfaces, you can optionally
-# specify the associated physical ethernet interface to set the MAC address.
-# NETIFYD_EXTNET="eth4 ppp0,eth5"
+# specify the associated software interface to dynamically track the address(es).
+# NETIFYD_EXTNET="eth4 eth5,ppp0

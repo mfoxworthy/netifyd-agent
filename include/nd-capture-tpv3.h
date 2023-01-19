@@ -24,8 +24,7 @@ class ndCaptureTPv3 : public ndCaptureThread
 public:
     ndCaptureTPv3(
         int16_t cpu,
-        const ndInterface &iface,
-        const uint8_t *dev_mac,
+        ndInterface& iface,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,

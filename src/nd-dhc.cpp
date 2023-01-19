@@ -24,6 +24,7 @@
 #include <map>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <atomic>
 #include <regex>

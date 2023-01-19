@@ -24,8 +24,7 @@ class ndCapturePcap : public ndCaptureThread
 public:
     ndCapturePcap(
         int16_t cpu,
-        const ndInterface &face,
-        const uint8_t *dev_mac,
+        ndInterface& iface,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,

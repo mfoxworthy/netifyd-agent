@@ -109,15 +109,14 @@ extern ndGlobalConfig nd_config;
 
 ndCapturePcap::ndCapturePcap(
     int16_t cpu,
-    const ndInterface &iface,
-    const uint8_t *dev_mac,
+    ndInterface& iface,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     :
     ndCaptureThread(ndCT_PCAP,
-        (long)cpu, iface, dev_mac, thread_socket,
+        (long)cpu, iface, thread_socket,
         threads_dpi, dhc, private_addr),
     pcap(NULL), pcap_fd(-1),
     pkt_header(NULL), pkt_data(NULL),
