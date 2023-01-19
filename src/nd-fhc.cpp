@@ -29,6 +29,7 @@
 #include <regex>
 #include <mutex>
 #include <bitset>
+#include <atomic>
 
 #include <sys/types.h>
 #include <sys/stat.h>

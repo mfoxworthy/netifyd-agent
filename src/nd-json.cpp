@@ -27,6 +27,7 @@
 #include <regex>
 #include <mutex>
 #include <bitset>
+#include <atomic>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -200,7 +201,7 @@ void nd_json_add_interfaces(json &parent)
 void nd_json_add_devices(json &parent)
 {
     for (auto &i : nd_interfaces)
-        i.second.EncodeEndpoints(parent);
+        i.second.EncodeEndpoints(i.second.LastEndpointSnapshot(), parent);
 }
 
 void nd_json_add_stats(json &parent, const ndPacketStats &stats)

@@ -26,6 +26,7 @@
 #include <regex>
 #include <mutex>
 #include <bitset>
+#include <atomic>
 
 #include <unistd.h>
 #include <string.h>

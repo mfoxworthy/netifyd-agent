@@ -710,6 +710,7 @@ public:
         bool internal = true, unsigned instances = 1)
         : ifname(ifname), ifname_peer(ifname),
         internal(internal), instances(instances), lock(nullptr) {
+        endpoint_snapshot = false;
         lock = new mutex;
         if (lock == nullptr) {
             throw ndSystemException(
@@ -721,6 +722,7 @@ public:
     ndInterface(const ndInterface &iface) :
         ifname(iface.ifname), ifname_peer(iface.ifname_peer),
         internal(iface.internal), instances(iface.instances) {
+        endpoint_snapshot = false;
         lock = new mutex;
         if (lock == nullptr) {
             throw ndSystemException(
@@ -756,9 +758,21 @@ public:
             serialize(output, keys, ip_addrs, delim);
     }
 
+    inline bool NextEndpointSnapshot(void) {
+        const bool snapshot = endpoint_snapshot.exchange(
+            ! endpoint_snapshot.load()
+        );
+        ClearEndpoints(endpoint_snapshot.load());
+        return snapshot;
+    }
+
+    inline bool LastEndpointSnapshot(void) const {
+        return ! endpoint_snapshot.load();
+    }
+
     inline bool PushEndpoint(const ndAddr &mac, const ndAddr &ip) {
         unique_lock<mutex> ul(*lock);
-        auto result = endpoints.emplace(
+        auto result = endpoints[endpoint_snapshot.load()].emplace(
             make_pair(mac, ndInterfaceAddr(ip))
         );
 
@@ -768,23 +782,23 @@ public:
         return true;
     }
 
-    inline void ClearEndpoints(void) {
+    inline void ClearEndpoints(bool snapshot) {
         unique_lock<mutex> ul(*lock);
-        for (auto &it : endpoints) it.second.Clear();
-        endpoints.clear();
+        for (auto &it : endpoints[snapshot]) it.second.Clear();
+        endpoints[snapshot].clear();
     }
 
     template <class T>
-    inline void EncodeEndpoints(T &output) const {
+    inline void EncodeEndpoints(bool snapshot, T &output) const {
         unique_lock<mutex> ul(*lock);
-        for (auto &i : endpoints)
+        for (auto &i : endpoints[snapshot])
             i.second.Encode(output,  i.first.GetString());
     }
 
-    inline void GetEndpoints(
+    inline void GetEndpoints(bool snapshot,
         unordered_map<string, unordered_set<string>> &output) const {
         unique_lock<mutex> ul(*lock);
-        for (auto& i : endpoints) {
+        for (auto& i : endpoints[snapshot]) {
             vector<string> ip_addrs;
             if (! i.second.FindAllOf(
                 { AF_INET, AF_INET6 }, ip_addrs)) continue;
@@ -801,7 +815,8 @@ public:
 
 protected:
     ndInterfaceAddr addrs;
-    ndInterfaceEndpoints endpoints;
+    ndInterfaceEndpoints endpoints[2];
+    atomic_bool endpoint_snapshot;
     mutex *lock;
 };
 

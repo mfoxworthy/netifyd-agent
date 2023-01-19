@@ -1624,6 +1624,8 @@ static void nd_dump_stats(void)
         p->ProcessStats(nd_interfaces);
     }
 #endif
+    for (auto &it : nd_interfaces)
+        it.second.NextEndpointSnapshot();
 
     nd_json_add_devices(jd);
     jstatus["devices"] = jd;
@@ -1636,9 +1638,6 @@ static void nd_dump_stats(void)
         p->ProcessStats(nd_interfaces);
     }
 #endif
-    for (auto &it : nd_interfaces)
-        it.second.ClearEndpoints();
-
     unordered_map<string, json> jflows;
 
     for (auto &it : capture_threads) {
