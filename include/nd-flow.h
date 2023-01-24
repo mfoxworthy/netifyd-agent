@@ -412,10 +412,16 @@ public:
             }
 
             // 00-52-14 to 00-52-FF: Unserialized (small allocations)
-            serialize(output, { _lower_mac }, (privacy_mask & PRIVATE_LOWER) ?
-                "00:52:14:00:00:00" : lower_mac.GetString());
-            serialize(output, { _upper_mac }, (privacy_mask & PRIVATE_UPPER) ?
-                "00:52:ff:00:00:00" : upper_mac.GetString());
+            serialize(output, { _lower_mac },
+                (privacy_mask & PRIVATE_LOWER) ?
+                    "00:52:14:00:00:00" : (lower_mac.IsValid()) ?
+                    lower_mac.GetString() : "00:00:00:00:00:00"
+            );
+            serialize(output, { _upper_mac },
+                (privacy_mask & PRIVATE_UPPER) ?
+                    "00:52:ff:00:00:00" : (upper_mac.IsValid()) ?
+                    upper_mac.GetString() : "00:00:00:00:00:00"
+            );
 
             if (privacy_mask & PRIVATE_LOWER) {
                 if (ip_version == 4)
