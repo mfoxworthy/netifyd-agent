@@ -34,21 +34,21 @@ public:
     };
 
     ndAddr(uint8_t prefix = 0)
-        : addr{0}, prefix(prefix) { }
+        : addr{0}, prefix(prefix), comparison_flags(cfALL) { }
 
     ndAddr(const string &addr)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, addr);
     }
 
     ndAddr(const uint8_t *hw_addr, size_t length = ETH_ALEN)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, hw_addr, length);
     }
 
     ndAddr(const struct sockaddr_storage *ss_addr,
         uint8_t prefix = 0)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, ss_addr, prefix);
     }
     ndAddr(const struct sockaddr_storage &ss_addr,
@@ -56,7 +56,7 @@ public:
 
     ndAddr(const struct sockaddr_in *ss_in,
         uint8_t prefix = 32)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, ss_in, prefix);
     }
     ndAddr(const struct sockaddr_in &ss_in,
@@ -64,21 +64,21 @@ public:
 
     ndAddr(const struct sockaddr_in6 *ss_in6,
         uint8_t prefix = 128)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, ss_in6, prefix);
     }
     ndAddr(const struct sockaddr_in6 &ss_in6,
         uint8_t prefix = 128) : ndAddr(&ss_in6, prefix) { }
 
     ndAddr(const struct in_addr *in_addr, uint8_t prefix = 32)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, in_addr, prefix);
     }
     ndAddr(const struct in_addr &in_addr, uint8_t prefix = 32)
         : ndAddr(&in_addr, prefix) { }
 
     ndAddr(const struct in6_addr *in6_addr, uint8_t prefix = 128)
-        : addr{0}, prefix(0) {
+        : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, in6_addr, prefix);
     }
     ndAddr(const struct in6_addr &in6_addr, uint8_t prefix = 128)
@@ -160,22 +160,53 @@ public:
 
     inline const string GetString() const { return cached_addr; }
 
+    enum ComparisonFlags {
+        cfADDR = 0x1,
+        cfPORT = 0x2,
+        cfPREFIX = 0x4,
+
+        cfALL = (cfADDR | cfPORT | cfPREFIX)
+    };
+
+    inline void SetComparisonFlags(uint8_t flags = cfALL) {
+        comparison_flags = flags;
+    }
+
     inline bool operator==(const ndAddr &a) const {
-        if (a.prefix != prefix)
-            return false;
         if (a.addr.ss.ss_family != addr.ss.ss_family)
+            return false;
+        if ((comparison_flags & cfPREFIX) && a.prefix != prefix)
             return false;
 
         switch (addr.ss.ss_family) {
         case AF_PACKET:
+            if (! (comparison_flags & cfADDR)) return true;
             return (memcmp(&addr.ll,
                 &a.addr.ll, sizeof(struct sockaddr_ll)) == 0);
         case AF_INET:
-            return (memcmp(&addr.in,
-                &a.addr.in, sizeof(struct sockaddr_in)) == 0);
+            if ((comparison_flags & cfADDR) &&
+                (comparison_flags & cfPORT)) {
+                return (memcmp(&addr.in,
+                    &a.addr.in, sizeof(struct sockaddr_in)) == 0);
+            }
+            if ((comparison_flags & cfADDR) &&
+                memcmp(&addr.in.sin_addr, &a.addr.in.sin_addr,
+                    sizeof(struct in_addr)) == 0) return true;
+            if ((comparison_flags & cfPORT) &&
+                addr.in.sin_port == a.addr.in.sin_port) return true;
+            break;
         case AF_INET6:
-            return (memcmp(&addr.in6,
-                &a.addr.in6, sizeof(struct sockaddr_in6)) == 0);
+            if ((comparison_flags & cfADDR) &&
+                (comparison_flags & cfPORT)) {
+                return (memcmp(&addr.in6,
+                    &a.addr.in6, sizeof(struct sockaddr_in6)) == 0);
+            }
+            if ((comparison_flags & cfADDR) &&
+                memcmp(&addr.in6.sin6_addr, &a.addr.in6.sin6_addr,
+                    sizeof(struct in6_addr)) == 0) return true;
+            if ((comparison_flags & cfPORT) &&
+                addr.in6.sin6_port == a.addr.in6.sin6_port) return true;
+            break;
         }
         return false;
     }
@@ -323,6 +354,8 @@ public:
     uint8_t prefix;
 
     string cached_addr;
+
+    uint8_t comparison_flags;
 };
 
 template<size_t N>
