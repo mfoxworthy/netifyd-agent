@@ -2371,9 +2371,9 @@ int main(int argc, char *argv[])
             nd_dump_protocols(ndDUMP_TYPE_APPS | dump_flags);
             exit(0);
         case _ND_LO_DUMP_CAT:
-            if (strncasecmp("application", optarg, 8) == 0)
+            if (strncasecmp("application", optarg, 11) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_APP | dump_flags);
-            else if (strncasecmp("protocol", optarg, 11) == 0)
+            else if (strncasecmp("protocol", optarg, 8) == 0)
                 nd_dump_protocols(ndDUMP_TYPE_CAT_PROTO | dump_flags);
             exit(0);
         case _ND_LO_DUMP_CATS:
