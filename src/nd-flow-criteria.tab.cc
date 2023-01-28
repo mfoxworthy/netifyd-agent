@@ -2789,9 +2789,7 @@ yyreduce:
             )
         );
 
-        if (_NDFP_result)
-            _NDFP_debugf("App category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
-        else {
+        if (! _NDFP_result) {
             _NDFP_result = (
                 (yyval.bool_result) = (
                     nd_categories->LookupTag(
@@ -2799,6 +2797,8 @@ yyreduce:
                 )
             );
         }
+
+        _NDFP_debugf("App/domain category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
 #line 2804 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
@@ -2819,9 +2819,7 @@ yyreduce:
             )
         );
 
-        if (_NDFP_result)
-            _NDFP_debugf("App category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
-        else {
+        if (! _NDFP_result) {
             _NDFP_result = (
                 (yyval.bool_result) = (
                     nd_categories->LookupTag(
@@ -2829,6 +2827,8 @@ yyreduce:
                 )
             );
         }
+
+        _NDFP_debugf("App/domain category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
 #line 2834 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
     break;
