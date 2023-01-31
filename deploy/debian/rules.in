@@ -1,0 +1,41 @@
+#!/usr/bin/make -f
+
+CFLAGS=-g -pipe
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS+=-O0
+else
+CFLAGS+=-O2
+endif
+
+# Build destination directory
+export DESTDIR=debian/@PACKAGE_TARNAME@
+
+
+%:
+	dh $@ --parallel
+
+
+override_dh_auto_test:
+	DEB_BUILD_OPTIONS=nocheck dh_auto_test
+
+override_dh_install:
+	dh_install
+
+	rm -rf $(DESTDIR)@bindir@
+
+	install -d -m 0755 $(DESTDIR)@volatilestatedir@
+	install -d -m 0755 $(DESTDIR)@sysconfdir@/netify.d
+
+	rm -f $(DESTDIR)@sysconfdir@/netify.d/netify-sink.conf
+
+	chmod a+x $(DESTDIR)@datadir@/*.sh
+
+	dh_systemd_enable
+
+	install -D -m 0755 deploy/debian/debian.init \
+		$(DESTDIR)@sysconfdir@/init.d/@PACKAGE_TARNAME@
+
+	dh_systemd_start
+
+	install -D -m 0644 deploy/@PACKAGE_TARNAME@.default \
+		$(DESTDIR)@sysconfdir@/default/@PACKAGE_TARNAME@
