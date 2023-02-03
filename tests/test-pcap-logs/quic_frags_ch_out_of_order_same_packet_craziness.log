@@ -37,7 +37,7 @@ lo: [i4------] QUIC.netify.google-authentication 192.168.254.11:59048 --> 251.23
 lo: [i4------] QUIC.netify.google 93.100.151.221:443 <-- 192.168.254.11:38331 H: litepages.googlezip.net SSL C: litepages.googlezip.net
 lo: [i4------] QUIC.netify.google 170.196.90.126:443 <-- 192.168.254.11:45652 H: content-autofill.googleapis.com SSL C: content-autofill.googleapis.com
 lo: [i4------] QUIC.netify.google 98.251.203.81:443 <-- 192.168.254.11:43427 H: optimizationguide-pa.googleapis.com SSL C: optimizationguide-pa.googleapis.com
-lo: [i4------] QUIC.netify.bank-of-america 171.182.169.23:443 <-- 192.168.254.11:54692 H: www.freearabianporn.com SSL C: www.freearabianporn.com
+lo: [i4------] QUIC 171.182.169.23:443 <-- 192.168.254.11:54692 H: www.freearabianporn.com SSL C: www.freearabianporn.com
 lo: [i4------] QUIC 168.78.153.39:443 <-- 192.168.254.11:35124 H: s-img.adskeeper.co.uk SSL C: s-img.adskeeper.co.uk
 lo: [i4------] QUIC.netify.google-ads 117.148.117.30:443 <-- 192.168.254.11:51075 H: pagead2.googlesyndication.com SSL C: pagead2.googlesyndication.com
 lo: [i4------] QUIC.netify.google 87.179.155.149:443 <-- 192.168.254.11:49689 H: www.google.com SSL C: www.google.com
@@ -100,7 +100,7 @@ lo: [i4------] QUIC.netify.google 52.187.20.175:53260 --> 102.194.207.179:443 H:
 lo: [i4------] QUIC.netify.youtube 76.231.104.92:443 <-- 168.144.64.5:50023 H: www.youtube.com SSL C: www.youtube.com
 lo: [i4------] QUIC.netify.google-ads 65.33.51.74:443 <-- 168.144.64.5:65360 H: googleads.g.doubleclick.net SSL C: googleads.g.doubleclick.net
 lo: [i4------] QUIC.netify.google 159.117.176.124:64134 --> 207.121.63.92:443 H: www.google.com SSL C: www.google.com
-lo: [i4------] QUIC.netify.google 52.187.20.175:61484 --> 202.152.155.121:443 H: ogs.google.com SSL C: ogs.google.com
+lo: [i4------] QUIC.netify.google-authentication 52.187.20.175:61484 --> 202.152.155.121:443 H: ogs.google.com SSL C: ogs.google.com
 lo: [i4------] QUIC.netify.whatsapp 16.205.123.234:443 <-- 159.117.176.124:51856 H: media.fmct2-1.fna.whatsapp.net SSL C: media.fmct2-1.fna.whatsapp.net
 lo: [i4------] QUIC.netify.google-dns 153.98.28.78:443 <-- 168.144.64.5:54120 H: dns.google SSL C: dns.google
 lo: [i4------] QUIC.netify.google-dns 153.98.28.78:443 <-- 168.144.64.5:52396 H: dns.google SSL C: dns.google
@@ -110,4 +110,4 @@ lo: [i4------] QUIC.netify.google 168.144.64.5:58351 --> 193.68.169.100:443 H: w
 lo: [i4------] QUIC.netify.android 7.71.118.27:443 <-- 168.144.64.5:57319 H: android.clients.google.com SSL C: android.clients.google.com
 lo: [i4------] QUIC.netify.google-ads 53.101.228.200:443 <-- 168.144.64.5:60919 H: adservice.google.com SSL C: adservice.google.com
 lo: [i4------] QUIC.netify.google 144.237.113.58:443 <-- 168.144.64.5:50423 H: www.google.com SSL C: www.google.com
-lo: [i4------] QUIC.netify.google 76.231.104.92:443 <-- 168.144.64.5:59206 H: ogs.google.com SSL C: ogs.google.com
+lo: [i4------] QUIC.netify.google-authentication 76.231.104.92:443 <-- 168.144.64.5:59206 H: ogs.google.com SSL C: ogs.google.com

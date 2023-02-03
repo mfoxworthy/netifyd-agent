@@ -2,6 +2,6 @@ lo: [i4------] Xiaomi 10.52.151.160:39180 --> 47.241.7.88:5222
 lo: [i4------] Xiaomi 115.164.74.232:5222 <-- 192.168.244.219:45904 H: 47.241.35.73
 lo: [i4------] Xiaomi 115.164.74.232:5222 <-- 192.168.247.13:38018 H: 47.241.35.73
 lo: [i4------] Xiaomi 97.39.119.172:5222 <-- 192.168.93.59:51488 H: 47.241.59.87
-lo: [i4------] Xiaomi.netify.amazon-aws 3.127.176.74:5222 <-- 192.168.2.100:37708 H: fr-app-chat-global-xiaomi-net1-1667981913.eu-central-1.elb.amazonaws.com
-lo: [i4------] Xiaomi.netify.amazon-aws 18.193.233.122:5222 <-- 192.168.2.100:45106 H: fr-app-chat-global-xiaomi-net2-2117517874.eu-central-1.elb.amazonaws.com
+lo: [i4------] Xiaomi.netify.xiaomi 3.127.176.74:5222 <-- 192.168.2.100:37708 H: fr-app-chat-global-xiaomi-net1-1667981913.eu-central-1.elb.amazonaws.com
+lo: [i4------] Xiaomi.netify.xiaomi 18.193.233.122:5222 <-- 192.168.2.100:45106 H: fr-app-chat-global-xiaomi-net2-2117517874.eu-central-1.elb.amazonaws.com
 lo: [i4------] HTTP 192.168.2.100:48698 --> 203.107.1.65:80 H: 203.107.1.65

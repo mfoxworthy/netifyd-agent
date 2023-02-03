@@ -3,52 +3,52 @@ lo: [i6------] ICMPv6 :::0 --> ff02::16:0
 lo: [i4------] DHCP 0.0.0.0:68 --> 255.255.255.255:67 H: android-1c1335ec95a27318
 lo: [i4------] DHCP 172.16.42.1:67 <-- 172.16.42.216:68
 lo: [i6------] ICMPv6 fe80::7af8:82ff:fed3:fbc2:0 --> ff02::2:0
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:3440 H: connectivitycheck.android.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:55619 H: connectivitycheck.android.com
+lo: [i4------] DNS.netify.android 172.16.42.1:53 <-- 172.16.42.216:3440 H: connectivitycheck.android.com
+lo: [i4------] DNS.netify.android 172.16.42.1:53 <-- 172.16.42.216:55619 H: connectivitycheck.android.com
 lo: [i4------] HTTP.netify.android 172.16.42.216:60246 --> 172.217.9.142:80 H: connectivitycheck.android.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:53188 H: mtalk.google.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:52603 H: www.google.com
+lo: [i4------] DNS.netify.google-chat 172.16.42.1:53 <-- 172.16.42.216:53188 H: mtalk.google.com
+lo: [i4------] DNS.netify.google 172.16.42.1:53 <-- 172.16.42.216:52603 H: www.google.com
 lo: [i4-----s] XMPP.netify.google-chat 172.16.42.216:42878 --> 173.194.223.188:5228 H: mtalk.google.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:10462 H: www.google.com
+lo: [i4------] DNS.netify.google 172.16.42.1:53 <-- 172.16.42.216:10462 H: www.google.com
 lo: [i4------] HTTP.netify.android 172.16.42.216:35540 --> 172.217.9.142:80 H: connectivitycheck.android.com
 lo: [i4------] ICMP 172.16.42.1:0 --> 172.16.42.216:0
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:48155 H: www.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:48155 H: www.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.85.209.197:443 <-- 172.16.42.216:55242 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.197:443 <-- 172.16.42.216:55242 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.197:443 <-- 172.16.42.216:55242 H: www.amazon.com SSL C: www.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:19967 H: mads.amazon-adsystem.com
+lo: [i4------] DNS.netify.amazon-advertising 172.16.42.1:53 <-- 172.16.42.216:19967 H: mads.amazon-adsystem.com
 lo: [i4------] HTTP/S.netify.amazon-advertising 52.94.232.0:443 <-- 172.16.42.216:33556 H: mads.amazon-adsystem.com SSL C: mads.amazon-adsystem.com
 lo: [i4-u----] HTTP/S.netify.amazon-advertising 52.94.232.0:443 <-- 172.16.42.216:33556 H: mads.amazon-adsystem.com SSL C: mads.amazon-adsystem.com
 lo: [i4-u----] HTTP/S.netify.amazon-advertising 52.94.232.0:443 <-- 172.16.42.216:33556 H: mads.amazon-adsystem.com SSL C: mads.amazon-adsystem.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:7358 H: firs-ta-g7g.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:7358 H: firs-ta-g7g.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.22.185:443 <-- 172.16.42.216:53682 H: firs-ta-g7g.amazon.com SSL C: firs-ta-g7g.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.22.185:443 <-- 172.16.42.216:53682 H: firs-ta-g7g.amazon.com SSL C: firs-ta-g7g.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.22.185:443 <-- 172.16.42.216:53682 H: firs-ta-g7g.amazon.com SSL C: firs-ta-g7g.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:41030 H: alexa.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:41030 H: alexa.amazon.com
 lo: [i4------] HTTP.netify.amazon-alexa 52.94.232.134:80 <-- 172.16.42.216:49572 H: alexa.amazon.com
 lo: [i6------] ICMPv6 fe80::7af8:82ff:fed3:fbc2:0 --> ff02::16:0
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:23559 H: cognito-identity.us-east-1.amazonaws.com
+lo: [i4------] DNS.netify.amazon-aws 172.16.42.1:53 <-- 172.16.42.216:23559 H: cognito-identity.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon-aws 34.199.52.240:443 <-- 172.16.42.216:38363 H: cognito-identity.us-east-1.amazonaws.com SSL C: cognito-identity.us-east-1.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 34.199.52.240:443 <-- 172.16.42.216:38363 H: cognito-identity.us-east-1.amazonaws.com SSL C: cognito-identity.us-east-1.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 34.199.52.240:443 <-- 172.16.42.216:38363 H: cognito-identity.us-east-1.amazonaws.com SSL C: cognito-identity.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon-aws 34.199.52.240:443 <-- 172.16.42.216:38364 H: cognito-identity.us-east-1.amazonaws.com SSL C: cognito-identity.us-east-1.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 34.199.52.240:443 <-- 172.16.42.216:38364 H: cognito-identity.us-east-1.amazonaws.com SSL C: cognito-identity.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:54886 H: pitangui.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:54886 H: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45661 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45661 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45662 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45663 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45663 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45662 H: pitangui.amazon.com SSL C: pitangui.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:21391 H: mobileanalytics.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:52077 H: www.amazon.com
+lo: [i4------] DNS.netify.amazon-aws 172.16.42.1:53 <-- 172.16.42.216:21391 H: mobileanalytics.us-east-1.amazonaws.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:52077 H: www.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.239.24.186:443 <-- 172.16.42.216:34019 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon 52.85.209.216:443 <-- 172.16.42.216:54411 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.85.209.216:443 <-- 172.16.42.216:54412 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.216:443 <-- 172.16.42.216:54411 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.216:443 <-- 172.16.42.216:54412 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.239.24.186:443 <-- 172.16.42.216:34019 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:43350 H: fls-na.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:43350 H: fls-na.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 72.21.206.135:443 <-- 172.16.42.216:42130 H: fls-na.amazon.com SSL C: fls-na.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 72.21.206.135:443 <-- 172.16.42.216:42129 H: fls-na.amazon.com SSL C: fls-na.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 72.21.206.135:443 <-- 172.16.42.216:42129 H: fls-na.amazon.com SSL C: fls-na.amazon.com
@@ -81,14 +81,14 @@ lo: [i4------] IGMP 0.0.0.0:0 --> 224.0.0.1:0
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45688 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45688 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.239.24.186:443 <-- 172.16.42.216:34041 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:44475 H: www.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:44475 H: www.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 72.21.206.135:443 <-- 172.16.42.216:42148 H: fls-na.amazon.com SSL C: fls-na.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.85.209.216:443 <-- 172.16.42.216:54434 H: www.amazon.com SSL C: www.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:60804 H: api.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:60804 H: api.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.29.146:443 <-- 172.16.42.216:41691 H: api.amazon.com SSL C: api.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.146:443 <-- 172.16.42.216:41691 H: api.amazon.com SSL C: api.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.146:443 <-- 172.16.42.216:41691 H: api.amazon.com SSL C: api.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:25081 H: alexa.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:25081 H: alexa.amazon.com
 lo: [i4------] HTTP.netify.amazon-alexa 52.94.232.134:80 <-- 172.16.42.216:49606 H: alexa.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45694 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45693 H: pitangui.amazon.com SSL C: pitangui.amazon.com
@@ -130,11 +130,11 @@ lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45712 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45714 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.239.24.186:443 <-- 172.16.42.216:34069 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:35726 H: s3-external-2.amazonaws.com
+lo: [i4------] DNS.netify.amazon-aws 172.16.42.1:53 <-- 172.16.42.216:35726 H: s3-external-2.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41820 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41820 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41820 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:41639 H: dp-gw-na-js.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:41639 H: dp-gw-na-js.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 172.16.42.216:44001 --> 176.32.101.52:443 H: dp-gw-na-js.amazon.com SSL C: dp-gw-na-js.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 172.16.42.216:44001 --> 176.32.101.52:443 H: dp-gw-na-js.amazon.com SSL C: dp-gw-na-js.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45711 H: pitangui.amazon.com SSL C: pitangui.amazon.com
@@ -142,14 +142,14 @@ lo: [i4------] HTTP/S.netify.amazon-aws 54.239.24.186:443 <-- 172.16.42.216:3407
 lo: [i4------] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41825 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41825 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.231.72.88:443 <-- 172.16.42.216:41825 H: s3-external-2.amazonaws.com SSL C: s3-external-2.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:14476 H: skills-store.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:14476 H: skills-store.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40854 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40853 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40856 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40854 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40853 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40856 H: skills-store.amazon.com SSL C: skills-store.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:20922 H: pitangui.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:20922 H: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45729 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45728 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45730 H: pitangui.amazon.com SSL C: pitangui.amazon.com
@@ -160,11 +160,11 @@ lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45728 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45731 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45732 H: pitangui.amazon.com SSL C: pitangui.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:28614 H: mobileanalytics.us-east-1.amazonaws.com
+lo: [i4------] DNS.netify.amazon-aws 172.16.42.1:53 <-- 172.16.42.216:28614 H: mobileanalytics.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.239.24.180:443 <-- 172.16.42.216:37551 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40864 H: skills-store.amazon.com SSL C: skills-store.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 54.239.29.253:443 <-- 172.16.42.216:40864 H: skills-store.amazon.com SSL C: skills-store.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:4920 H: ecx.images-amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:4920 H: ecx.images-amazon.com
 lo: [i4------] HTTP.netify.amazon 52.84.63.56:80 <-- 172.16.42.216:51989 H: ecx.images-amazon.com
 lo: [i4------] HTTP.netify.amazon 52.84.63.56:80 <-- 172.16.42.216:51988 H: ecx.images-amazon.com
 lo: [i4------] HTTP.netify.amazon 52.84.63.56:80 <-- 172.16.42.216:51985 H: ecx.images-amazon.com
@@ -185,12 +185,12 @@ lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45750 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45751 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45751 H: pitangui.amazon.com SSL C: pitangui.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:64073 H: alexa.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:64073 H: alexa.amazon.com
 lo: [i4------] HTTP/S 52.94.232.134:443 <-- 172.16.42.216:39750
 lo: [i4-u----] HTTP/S 52.94.232.134:443 <-- 172.16.42.216:39750
 lo: [i4------] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45752 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 52.94.232.134:443 <-- 172.16.42.216:45752 H: pitangui.amazon.com SSL C: pitangui.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:4312 H: pitangui.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:4312 H: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50796 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50797 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50796 H: pitangui.amazon.com SSL C: pitangui.amazon.com
@@ -199,20 +199,20 @@ lo: [i4------] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50799 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4------] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50800 H: pitangui.amazon.com SSL C: pitangui.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:50800 H: pitangui.amazon.com SSL C: pitangui.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:8669 H: mobileanalytics.us-east-1.amazonaws.com
+lo: [i4------] DNS.netify.amazon-aws 172.16.42.1:53 <-- 172.16.42.216:8669 H: mobileanalytics.us-east-1.amazonaws.com
 lo: [i4------] HTTP/S.netify.amazon-aws 54.239.23.94:443 <-- 172.16.42.216:44912 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
 lo: [i4-u----] HTTP/S.netify.amazon-aws 54.239.23.94:443 <-- 172.16.42.216:44912 H: mobileanalytics.us-east-1.amazonaws.com SSL C: mobileanalytics.us-east-1.amazonaws.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:59908 H: alexa.amazon.com
+lo: [i4------] DNS.netify.amazon-alexa 172.16.42.1:53 <-- 172.16.42.216:59908 H: alexa.amazon.com
 lo: [i4------] HTTP/S 54.239.28.178:443 <-- 172.16.42.216:38757
 lo: [i4-u----] HTTP/S.netify.amazon-alexa 54.239.28.178:443 <-- 172.16.42.216:38757
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:14934 H: www.amazon.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:40425 H: android.clients.google.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:14934 H: www.amazon.com
+lo: [i4------] DNS.netify.android 172.16.42.1:53 <-- 172.16.42.216:40425 H: android.clients.google.com
 lo: [i4------] HTTP/S.netify.amazon 52.85.209.143:443 <-- 172.16.42.216:41828 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.143:443 <-- 172.16.42.216:41828 H: www.amazon.com SSL C: www.amazon.com
 lo: [i4------] HTTP/S.netify.android 172.16.42.216:49067 --> 216.58.194.78:443 H: android.clients.google.com SSL C: android.clients.google.com
 lo: [i4-u----] HTTP/S.netify.android 172.16.42.216:49067 --> 216.58.194.78:443 H: android.clients.google.com SSL C: android.clients.google.com
 lo: [i4-u----] HTTP/S.netify.android 172.16.42.216:49067 --> 216.58.194.78:443 H: android.clients.google.com SSL C: android.clients.google.com
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:4612 H: images-na.ssl-images-amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:4612 H: images-na.ssl-images-amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.84.62.115:443 <-- 172.16.42.216:41913 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.84.62.115:443 <-- 172.16.42.216:41912 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
 lo: [i4------] HTTP/S.netify.amazon 52.84.62.115:443 <-- 172.16.42.216:41914 H: images-na.ssl-images-amazon.com SSL C: images-na.ssl-images-amazon.com
@@ -224,7 +224,7 @@ lo: [i4-u----] HTTP/S 54.239.28.178:443 <-- 172.16.42.216:58048
 lo: [i4------] HTTP/S 52.85.209.143:443 <-- 172.16.42.216:38483
 lo: [i4-u----] HTTP/S 52.85.209.143:443 <-- 172.16.42.216:38483
 lo: [i4-u----] HTTP/S.netify.amazon 52.85.209.143:443 <-- 172.16.42.216:38483
-lo: [i4------] DNS 172.16.42.1:53 <-- 172.16.42.216:2707 H: fls-na.amazon.com
+lo: [i4------] DNS.netify.amazon 172.16.42.1:53 <-- 172.16.42.216:2707 H: fls-na.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 72.21.206.121:443 <-- 172.16.42.216:47605 H: fls-na.amazon.com SSL C: fls-na.amazon.com
 lo: [i4------] HTTP/S.netify.amazon 72.21.206.121:443 <-- 172.16.42.216:47606 H: fls-na.amazon.com SSL C: fls-na.amazon.com
 lo: [i4-u----] HTTP/S.netify.amazon 72.21.206.121:443 <-- 172.16.42.216:47605 H: fls-na.amazon.com SSL C: fls-na.amazon.com

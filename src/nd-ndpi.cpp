@@ -151,7 +151,7 @@ void ndpi_global_init(void)
         nd_dprintf("Enabled all protocols.\n");
     }
 
-    for (auto &it : nd_ndpi_disabled) {
+    for (auto &it : nd_ndpi_disabled_protos) {
         NDPI_DEL_PROTOCOL_FROM_BITMASK(ndpi_protos, it);
         nd_dprintf("Banned protocol by ID: %hu\n", it);
     }

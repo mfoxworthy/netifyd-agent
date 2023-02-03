@@ -97,8 +97,12 @@ int main(int argc, char *argv[])
 
         auto it = nd_ndpi_protos.find(id);
         if (find(
-            nd_ndpi_disabled.begin(),
-            nd_ndpi_disabled.end(), id) != nd_ndpi_disabled.end()
+            nd_ndpi_disabled_protos.begin(),
+            nd_ndpi_disabled_protos.end(), id) != nd_ndpi_disabled_protos.end()
+        ) continue;
+        if (find(
+            nd_ndpi_free_protos.begin(),
+            nd_ndpi_free_protos.end(), id) != nd_ndpi_free_protos.end()
         ) continue;
 
         if (it != nd_ndpi_protos.end()) continue;

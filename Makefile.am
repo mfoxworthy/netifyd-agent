@@ -3,7 +3,7 @@
 #
 # This is free software, licensed under the GNU General Public License v3.
 
-DEBUG_HOST := gw
+DEBUG_HOST := root@gw.sokoloski.ca
 
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4

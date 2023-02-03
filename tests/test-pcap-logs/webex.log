@@ -40,7 +40,7 @@ lo: [i4-u----] HTTP/S.netify.webex 10.8.0.1:51646 --> 114.29.204.49:443
 lo: [i4------] SIP 10.8.0.1:64538 --> 172.16.1.75:5060
 lo: [i4-u----] HTTP/S.netify.webex 10.8.0.1:47116 --> 114.29.202.139:443
 lo: [i4-u----] HTTP/S.netify.webex 10.8.0.1:47841 --> 114.29.200.11:443
-lo: [i4------] HTTP/S.netify.google-ads 10.8.0.1:43433 --> 216.58.208.40:443 H: ssl.google-analytics.com SSL C: ssl.google-analytics.com
+lo: [i4------] HTTP/S.netify.analytics 10.8.0.1:43433 --> 216.58.208.40:443 H: ssl.google-analytics.com SSL C: ssl.google-analytics.com
 lo: [i4------] HTTP/S 10.133.206.47:33459 --> 80.74.110.68:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:47135 --> 114.29.202.139:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:41757 --> 114.29.213.212:443
@@ -51,7 +51,7 @@ lo: [i4------] HTTP/S.netify.webex 10.8.0.1:51134 --> 62.109.224.120:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:51135 --> 62.109.224.120:443
 lo: [i4------] HTTP/S 10.8.0.1:33511 --> 80.74.110.68:443
 lo: [i4------] HTTP/S 10.8.0.1:33512 --> 80.74.110.68:443
-lo: [i4-u----] HTTP/S.netify.google-ads 10.8.0.1:43433 --> 216.58.208.40:443 H: ssl.google-analytics.com SSL C: ssl.google-analytics.com
+lo: [i4-u----] HTTP/S.netify.analytics 10.8.0.1:43433 --> 216.58.208.40:443 H: ssl.google-analytics.com SSL C: ssl.google-analytics.com
 lo: [i4-u----] HTTP/S 10.8.0.1:33512 --> 80.74.110.68:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:51154 --> 62.109.224.120:443
 lo: [i4------] HTTP/S.netify.webex 10.8.0.1:51155 --> 62.109.224.120:443

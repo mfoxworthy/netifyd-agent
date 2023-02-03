@@ -1,2 +1,2 @@
-lo: [i4------] HTTP/S 104.154.89.105:443 <-- 192.168.2.222:54772 H: wrong.host.badssl.com SSL C: wrong.host.badssl.com
-lo: [i4-u----] HTTP/S 104.154.89.105:443 <-- 192.168.2.222:54772 H: wrong.host.badssl.com SSL C: wrong.host.badssl.com
+lo: [i4------] HTTP/S.netify.badssl 104.154.89.105:443 <-- 192.168.2.222:54772 H: wrong.host.badssl.com SSL C: wrong.host.badssl.com
+lo: [i4-u----] HTTP/S.netify.badssl 104.154.89.105:443 <-- 192.168.2.222:54772 H: wrong.host.badssl.com SSL C: wrong.host.badssl.com
