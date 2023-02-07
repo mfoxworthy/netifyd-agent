@@ -12,17 +12,12 @@ Optionally, the Netify Agent can be coupled with a [Netify Cloud](https://www.ne
 Supported platforms with installation instructions can be found [here](https://www.netify.ai/get-netify).
 
 Alternatively, binary packages are available for the following OS distributions (manual install):
+- [AlmaLinux](https://download.netify.ai/netify/almalinux/)
 - [CentOS](http://download.netify.ai/netify/centos/)
-- [ClearOS](http://download.netify.ai/netify/clearos/)
 - [Debian](http://download.netify.ai/netify/debian/)
-- [EdgeOS](http://sokoloski.ca/netify-edgeos/)
-- [FreeBSD](http://download.netify.ai/netify/freebsd/)
+- [Endian](https://download.netify.ai/netify/endian/)
 - [NethServer](http://download.netify.ai/netify/nethserver/)
-- [OpenWrt/LEDE](https://downloads.openwrt.org/snapshots/packages/)
-- [pfSense](http://download.netify.ai/netify/pfsense/)
-- [Raspbian](https://software.opensuse.org//download.html?project=home%3Aegloo&package=netifyd)
-- [RHEL](http://download.netify.ai/netify/rhel/)
-- [UbiOS](http://sokoloski.ca/netify-ubios/)
+- [OpenWrt](https://downloads.openwrt.org/snapshots/packages/)
 - [Ubuntu](http://download.netify.ai/netify/ubuntu/)
 
 ### Runtime Requirements
