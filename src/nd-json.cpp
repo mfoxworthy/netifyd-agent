@@ -106,8 +106,8 @@ void nd_json_agent_hello(string &json_string)
     json j;
 
     j["type"] = "agent_hello";
+    j["agent_version"] = PACKAGE_VERSION;
     j["build_version"] = nd_get_version_and_features();
-    j["agent_version"] = strtod(PACKAGE_VERSION, NULL);
     j["json_version"] = (double)ND_JSON_VERSION;
 
     nd_json_to_string(j, json_string);
@@ -116,7 +116,6 @@ void nd_json_agent_hello(string &json_string)
 
 void nd_json_agent_status(json &j)
 {
-    j["version"] = (double)ND_JSON_VERSION;
     j["timestamp"] = time(NULL);
     j["update_interval"] = nd_config.update_interval;
     j["update_imf"] = nd_config.update_imf;

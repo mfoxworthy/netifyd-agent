@@ -1694,6 +1694,7 @@ static void nd_dump_stats(void)
 
     try {
         jstatus["type"] = "agent_status";
+        jstatus["agent_version"] = PACKAGE_VERSION;
 
         nd_json_to_string(jstatus, json_string);
         json_string.append("\n");
