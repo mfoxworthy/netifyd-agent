@@ -15,7 +15,7 @@ Alternatively, binary packages are available for the following OS distributions 
 - [AlmaLinux](https://download.netify.ai/netify/almalinux/)
 - [CentOS](http://download.netify.ai/netify/centos/)
 - [Debian](http://download.netify.ai/netify/debian/)
-- [Endian](https://download.netify.ai/netify/endian/)
+- [Endian](https://www.endian.com/)
 - [NethServer](http://download.netify.ai/netify/nethserver/)
 - [OpenWrt](https://downloads.openwrt.org/snapshots/packages/)
 - [Ubuntu](http://download.netify.ai/netify/ubuntu/)
