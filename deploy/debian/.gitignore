@@ -3,7 +3,14 @@ Makefile.in
 changelog
 conffiles
 control
+debian.changelog
+debian.conffiles
+debian.control
+debian.control-ci
 debian.init
+debian.postinst
+debian.rules
+debian.rules-ci
 netifyd-dev.install
 netifyd.dsc
 netifyd.install
