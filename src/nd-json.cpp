@@ -116,6 +116,7 @@ void nd_json_agent_hello(string &json_string)
 
 void nd_json_agent_status(json &j)
 {
+    j["version"] = (double)ND_JSON_VERSION;
     j["timestamp"] = time(NULL);
     j["update_interval"] = nd_config.update_interval;
     j["update_imf"] = nd_config.update_imf;
