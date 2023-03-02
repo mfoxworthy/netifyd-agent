@@ -203,12 +203,17 @@ void *ndCapturePcap::Entry(void)
             }
 
             if (rc < 0) {
+                capture_state = STATE_OFFLINE;
+
                 if (rc == -1) {
                     nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
                     if (pcap_file.size())
                         Terminate();
-                    else
+                    else {
+                        pcap_close(pcap);
+                        pcap = NULL;
                         sleep(1);
+                    }
                 }
                 else if (rc == -2) {
                     nd_dprintf(
@@ -234,6 +239,7 @@ void *ndCapturePcap::Entry(void)
             warnings = true;
 
             if ((pcap = OpenCapture()) == NULL) {
+                capture_state = STATE_OFFLINE;
                 sleep(1);
                 continue;
             }
@@ -246,6 +252,8 @@ void *ndCapturePcap::Entry(void)
                 tag.c_str(), cpu >= 0 ? cpu : 0);
         }
     }
+
+    capture_state = STATE_OFFLINE;
 
     nd_dprintf(
         "%s: PCAP capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
@@ -302,6 +310,8 @@ pcap_t *ndCapturePcap::OpenCapture(void)
     if (pcap_new == NULL)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
+        capture_state = STATE_ONLINE;
+
         if (pcap_file.empty()) {
             if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
                 nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);

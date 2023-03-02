@@ -234,66 +234,6 @@ void nd_json_add_stats(json &parent, const ndPacketStats &stats)
     parent["pcap_ifdrop"] = 0;
 }
 
-void ndJsonStatus::Parse(const string &json_string)
-{
-    try {
-        json j = json::parse(json_string);
-
-        // Extract and validate JSON type
-        string type = j["type"].get<string>();
-
-        if (type != "agent_status")
-            throw ndJsonParseException("Required type: agent_status");
-
-        uptime = j["uptime"].get<time_t>();
-        timestamp = j["timestamp"].get<time_t>();
-        update_interval = j["update_interval"].get<unsigned>();
-        update_imf = j["update_imf"].get<unsigned>();
-
-        stats.flows = j["flow_count"].get<unsigned>();
-        stats.flows_prev = j["flow_count_prev"].get<unsigned>();
-
-        stats.cpus = (long)j["cpu_cores"].get<unsigned>();
-
-        stats.cpu_user = j["cpu_user"].get<double>();
-        stats.cpu_user_prev = j["cpu_user_prev"].get<double>();
-        stats.cpu_system = j["cpu_system"].get<double>();
-        stats.cpu_system_prev = j["cpu_system_prev"].get<double>();
-
-        stats.maxrss_kb = j["maxrss_kb"].get<unsigned>();
-        stats.maxrss_kb_prev = j["maxrss_kb_prev"].get<unsigned>();
-
-#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
-        stats.tcm_alloc_kb = j["tcm_kb"].get<unsigned>();
-        stats.tcm_alloc_kb_prev = j["tcm_kb_prev"].get<unsigned>();
-#endif // _ND_USE_LIBTCMALLOC
-
-        stats.dhc_status = j["dhc_status"].get<bool>();
-        if (stats.dhc_status)
-            stats.dhc_size = j["dhc_size"].get<unsigned>();
-
-        stats.sink_status = j["sink_status"].get<bool>();
-        if (stats.sink_status) {
-
-            stats.sink_uploads = j["sink_uploads"].get<bool>();
-
-            stats.sink_queue_size = j["sink_queue_size_kb"].get<unsigned>();
-            stats.sink_queue_size *= 1024;
-
-            sink_queue_max_size_kb = j["sink_queue_max_size_kb"].get<unsigned>();
-
-            unsigned resp_code = j["sink_resp_code"].get<unsigned>();
-
-            if (resp_code > 0 && resp_code < ndJSON_RESP_MAX)
-                stats.sink_resp_code = (ndJsonResponseCode)resp_code;
-        }
-    }
-    catch (exception &e) {
-        throw ndJsonParseException(e.what());
-    }
-}
-
 void ndJsonResponse::Parse(const string &json_string)
 {
     try {

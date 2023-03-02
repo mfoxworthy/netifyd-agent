@@ -1673,6 +1673,7 @@ static void nd_dump_stats(void)
         }
 #endif
         jstatus["stats"][iface_name] = js;
+        jstatus["interfaces"][iface_name]["state"] = it.second[0]->capture_state.load();
     }
 #ifdef _ND_USE_PLUGINS
     for (nd_plugins::iterator pi = plugin_stats.begin();
@@ -1939,8 +1940,7 @@ static void nd_status(void)
     fprintf(stderr, "- persistent state path: %s\n", ND_PERSISTENT_STATEDIR);
     fprintf(stderr, "- volatile state path: %s\n", ND_VOLATILE_STATEDIR);
 
-    ndJsonStatus json_status;
-    bool json_status_valid = false;
+    json jstatus;
 
     try {
         string status;
@@ -1950,94 +1950,155 @@ static void nd_status(void)
                 ND_C_YELLOW, ND_C_RESET
             );
         }
-        else {
-            json_status.Parse(status);
-            json_status_valid = true;
-        }
+
+        jstatus = json::parse(status);
+
+        if (jstatus["type"].get<string>() != "agent_status")
+            throw ndJsonParseException("Required type: agent_status");
     }
     catch (runtime_error &e) {
         fprintf(stderr, "%s-%s agent run-time status exception: %s%s%s\n",
             ND_C_RED, ND_C_RESET, ND_C_RED, e.what(), ND_C_RESET);
     }
 
-    if (json_status_valid) {
-        char timestamp[64];
-        struct tm *tm_local = localtime(&json_status.timestamp);
+    char timestamp[64];
+    time_t ts = jstatus["timestamp"].get<time_t>();
+    struct tm *tm_local = localtime(&ts);
 
-        if (nd_pid <= 0) {
-            fprintf(stderr, "%sThe following information may be out-dated:%s\n",
-                ND_C_YELLOW, ND_C_RESET);
-        }
+    if (nd_pid <= 0) {
+        fprintf(stderr, "%sThe following run-time information is likely out-dated:%s\n",
+            ND_C_YELLOW, ND_C_RESET);
+    }
 
-        if (strftime(timestamp, sizeof(timestamp), "%c", tm_local) > 0) {
-            fprintf(stderr, "%s-%s agent timestamp: %s\n",
-                ND_C_GREEN, ND_C_RESET, timestamp);
-        }
-        string uptime;
-        nd_uptime(json_status.uptime, uptime);
-        fprintf(stderr, "%s-%s agent uptime: %s\n",
-            ND_C_GREEN, ND_C_RESET, uptime.c_str());
-        fprintf(stderr, "%s-%s active flows: %u\n",
-            ND_C_GREEN, ND_C_RESET, json_status.stats. flows);
+    if (strftime(timestamp, sizeof(timestamp), "%c", tm_local) > 0) {
+        fprintf(stderr, "%s-%s agent timestamp: %s\n",
+            ND_C_GREEN, ND_C_RESET, timestamp);
+    }
+    string uptime;
+    nd_uptime(jstatus["uptime"].get<time_t>(), uptime);
+    fprintf(stderr, "- agent uptime: %s\n", uptime.c_str());
+    fprintf(stderr, "- active flows: %u\n",
+        jstatus["flow_count"].get<unsigned>());
 
-        double cpu_user_delta =
-            json_status.stats.cpu_user - json_status.stats.cpu_user_prev;
-        double cpu_system_delta =
-            json_status.stats.cpu_system - json_status.stats.cpu_system_prev;
+    fprintf(stderr, "- CPU cores: %u\n",
+        jstatus["cpu_cores"].get<unsigned>());
 
-        double cpu_max_time =
-            (double)json_status.update_interval * (double)json_status.stats.cpus;
+    double cpu_user_delta =
+        jstatus["cpu_user"].get<double>() -
+        jstatus["cpu_user_prev"].get<double>();
+    double cpu_system_delta =
+        jstatus["cpu_system"].get<double>() -
+        jstatus["cpu_system_prev"].get<double>();
+    double cpu_max_time =
+        jstatus["update_interval"].get<double>() *
+        jstatus["cpu_cores"].get<double>();
 
-        double cpu_user_percent = cpu_user_delta * 100.0 / cpu_max_time;
-        double cpu_system_percent = cpu_system_delta * 100.0 / cpu_max_time;
-        double cpu_total = cpu_user_percent + cpu_system_percent;
+    double cpu_user_percent = cpu_user_delta * 100.0 / cpu_max_time;
+    double cpu_system_percent = cpu_system_delta * 100.0 / cpu_max_time;
+    double cpu_total = cpu_user_percent + cpu_system_percent;
 
-        if (cpu_total < 33.34)
-            color = ND_C_GREEN;
-        else if (cpu_total < 66.67)
-            color = ND_C_YELLOW;
-        else
-            color = ND_C_RED;
+    if (cpu_total < 33.34)
+        color = ND_C_GREEN;
+    else if (cpu_total < 66.67)
+        color = ND_C_YELLOW;
+    else
+        color = ND_C_RED;
 
-        fprintf(stderr, "%s-%s CPU utilization (user + system): %s%.1f%%%s\n",
-            color, ND_C_RESET, color, cpu_total, ND_C_RESET);
-        fprintf(stderr, "%s-%s CPU time (user / system): %.1fs / %.1fs\n",
-            color, ND_C_RESET, cpu_user_delta, cpu_system_delta);
+    fprintf(stderr, "%s-%s CPU utilization (user + system): %s%.1f%%%s\n",
+        color, ND_C_RESET, color, cpu_total, ND_C_RESET);
+    fprintf(stderr, "%s-%s CPU time (user / system): %.1fs / %.1fs\n",
+        color, ND_C_RESET, cpu_user_delta, cpu_system_delta);
 
 #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
-#if (SIZEOF_LONG == 4)
-        fprintf(stderr, "%s-%s current memory usage: %u kB\n",
-            ND_C_GREEN, ND_C_RESET, json_status.stats.tcm_alloc_kb);
-#elif (SIZEOF_LONG == 8)
-        fprintf(stderr, "%s-%s current memory usage: %lu kB\n",
-            ND_C_GREEN, ND_C_RESET, json_status.stats.tcm_alloc_kb);
-#endif
+(defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
+    fprintf(stderr, "%s-%s current memory usage: %u kB\n",
+        ND_C_GREEN, ND_C_RESET,
+        jstatus["tcm_kb"].get<unsigned>()
+    );
 #endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
-#if (SIZEOF_LONG == 4)
-        fprintf(stderr, "%s-%s maximum memory usage: %u kB\n",
-            ND_C_GREEN, ND_C_RESET, json_status.stats.maxrss_kb);
-#elif (SIZEOF_LONG == 8)
-        fprintf(stderr, "%s-%s maximum memory usage: %lu kB\n",
-            ND_C_GREEN, ND_C_RESET, json_status.stats.maxrss_kb);
-#endif
-        fprintf(stderr, "%s-%s DNS hint cache: %s%s%s\n",
-            (json_status.stats.dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
-            ND_C_RESET,
-            (json_status.stats.dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
-            (json_status.stats.dhc_status) ? "enabled" : "disabled",
-            ND_C_RESET
-        );
+    fprintf(stderr, "%s-%s maximum memory usage: %u kB\n",
+        ND_C_GREEN, ND_C_RESET,
+        jstatus["maxrss_kb"].get<unsigned>()
+    );
 
-        if (json_status.stats.dhc_status) {
-#if (SIZEOF_LONG == 4)
-            fprintf(stderr, "%s-%s DNS hint cache entries: %u\n",
-                ND_C_GREEN, ND_C_RESET, json_status.stats.dhc_size);
-#elif (SIZEOF_LONG == 8)
-            fprintf(stderr, "%s-%s DNS hint cache entries: %lu\n",
-                ND_C_GREEN, ND_C_RESET, json_status.stats.dhc_size);
-#endif
+    for (auto& i : jstatus["interfaces"].items()) {
+        const json& j = i.value();
+        const string &iface = i.key();
+        unsigned pkts = 0, dropped = 0;
+
+        color = ND_C_RED;
+        string state = "unknown";
+
+        const char *colors[3] = {
+            ND_C_RED, ND_C_RESET, ND_C_RESET
+        };
+
+        try {
+            auto jstate = j.find("state");
+
+            if (jstate != j.end()) {
+                switch (jstate->get<unsigned>()) {
+                case ndCaptureThread::STATE_INIT:
+                    colors[0] = color = ND_C_YELLOW;
+                    state = "initializing";
+                    break;
+                case ndCaptureThread::STATE_ONLINE:
+                    colors[0] = color = ND_C_GREEN;
+                    state = "online";
+                    break;
+                case ndCaptureThread::STATE_OFFLINE:
+                    state = "offline";
+                    break;
+                default:
+                    state = "invalid";
+                    break;
+                }
+            }
+
+            pkts = jstatus["stats"][iface]["raw"].get<unsigned>();
+            dropped = jstatus["stats"][iface]["capture_dropped"].get<unsigned>();
+            dropped += jstatus["stats"][iface]["queue_dropped"].get<unsigned>();
+
+            if (pkts == 0) {
+                colors[1] = color = ND_C_YELLOW;
+            }
+            else {
+                double percent =
+                    (double)dropped * 100 /
+                    (double)pkts;
+
+                if (percent > 0.0)
+                    colors[2] = color = ND_C_YELLOW;
+                else if (percent > 5.0)
+                    colors[2] = color = ND_C_RED;
+            }
         }
+        catch (...) { }
+
+        fprintf(stderr,
+            "%s-%s %s [%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
+            color, ND_C_RESET,
+            iface.c_str(), j["role"].get<string>().c_str(),
+            colors[0], state.c_str(), ND_C_RESET,
+            colors[2], dropped, ND_C_RESET,
+            colors[1], pkts, ND_C_RESET
+        );
+    }
+
+    bool dhc_status = jstatus["dhc_status"].get<bool>();
+    fprintf(stderr, "%s-%s DNS hint cache: %s%s%s\n",
+        (dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
+        ND_C_RESET,
+        (dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
+        (dhc_status) ? "enabled" : "disabled",
+        ND_C_RESET
+    );
+
+    if (dhc_status) {
+        fprintf(stderr, "%s-%s DNS hint cache entries: %u\n",
+            ND_C_GREEN, ND_C_RESET,
+            jstatus["dhc_size"].get<unsigned>()
+        );
     }
 
     fprintf(stderr, "%s-%s sink URL: %s\n",
@@ -2046,15 +2107,18 @@ static void nd_status(void)
         (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
         (ND_USE_SINK) ? "enabled" : "disabled"
     );
+
     if (! ND_USE_SINK) {
         fprintf(stderr, "  To enable sink services, run the following command:\n");
         fprintf(stderr, "  # netifyd --enable-sink\n");
     }
+
+    bool sink_uploads = jstatus["sink_uploads"].get<bool>();
     fprintf(stderr, "%s-%s sink uploads are %s.\n",
-        (json_status.stats.sink_uploads) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
-        (json_status.stats.sink_uploads) ? "enabled" : "disabled"
+        (sink_uploads) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
+        (sink_uploads) ? "enabled" : "disabled"
     );
-    if (! json_status.stats.sink_uploads)
+    if (! sink_uploads)
         fprintf(stderr, "  To enable sink uploads, ensure your Agent has been provisioned.\n");
 
     string uuid;
@@ -2098,11 +2162,12 @@ static void nd_status(void)
             ND_C_GREEN, ND_C_RESET, uuid.c_str());
     }
 
-    if (json_status_valid && json_status.stats.sink_status) {
+    bool sink_status = jstatus["sink_status"].get<bool>();
+    if (sink_status) {
         string status, help;
         color = ND_C_GREEN;
-
-        switch (json_status.stats.sink_resp_code) {
+        unsigned resp_code = jstatus["sink_resp_code"].get<unsigned>();
+        switch (resp_code) {
         case ndJSON_RESP_NULL:
             status = "not available";
             color = ND_C_YELLOW;
@@ -2155,24 +2220,25 @@ static void nd_status(void)
 
         fprintf(stderr, "%s-%s sink server status: %s%s (%d)%s\n",
             color, ND_C_RESET, color,
-            status.c_str(), json_status.stats.sink_resp_code,
-            ND_C_RESET
+            status.c_str(), resp_code, ND_C_RESET
         );
 
         if (help.size() > 0)
             fprintf(stderr, "  %s\n", help.c_str());
 
-        float sink_util =
-            (float)((json_status.stats.sink_queue_size / 1024) * 100.0f) /
-            (float)json_status.sink_queue_max_size_kb;
-        if (sink_util < 33.34f)
+        double sink_util =
+            jstatus["sink_queue_size_kb"].get<double>() * 100 /
+            jstatus["sink_queue_max_size_kb"].get<double>();
+
+        if (sink_util < 33.34)
             color = ND_C_GREEN;
-        else if (sink_util < 66.67f)
+        else if (sink_util < 66.67)
             color = ND_C_YELLOW;
         else
             color = ND_C_RED;
 
-        fprintf(stderr, "%s-%s sink queue utilization: %s%.1f%%%s\n",
+        fprintf(stderr,
+            "%s-%s sink queue utilization: %s%.1lf%%%s\n",
             color, ND_C_RESET, color, sink_util, ND_C_RESET);
     }
 }

@@ -65,26 +65,6 @@ public:
     virtual void Parse(const string &json_string) = 0;
 };
 
-class ndJsonStatus : public ndJsonObject
-{
-public:
-    ndJsonStatus()
-        : ndJsonObject(), timestamp(0), uptime(0),
-        update_interval(0), update_imf(0),
-        sink_queue_max_size_kb(0)
-    {
-        memset(&stats, 0, sizeof(nd_agent_stats));
-    }
-
-    virtual void Parse(const string &json_string);
-
-    time_t timestamp, uptime;
-    unsigned update_interval, update_imf;
-    uint32_t sink_queue_max_size_kb;
-
-    nd_agent_stats stats;
-};
-
 class ndJsonResponse : public ndJsonObject
 {
 public:

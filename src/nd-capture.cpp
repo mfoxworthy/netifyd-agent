@@ -290,6 +290,8 @@ ndCaptureThread::ndCaptureThread(
     ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
+    capture_state = STATE_INIT;
+
     nd_iface_name(iface.ifname, tag);
 
     private_addrs.first.ss_family = AF_INET;

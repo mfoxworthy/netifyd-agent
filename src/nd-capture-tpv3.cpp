@@ -659,6 +659,8 @@ void *ndCaptureTPv3::Entry(void)
     vector<ndPacket *> pkt_queue;
     pkt_queue.reserve(nd_config.tpv3_rb_blocks);
 
+    capture_state = STATE_ONLINE;
+
     while (! ShouldTerminate() && rc >= 0) {
 
         ndPacketRingBlock *entry = _ring->Next();
@@ -698,6 +700,7 @@ void *ndCaptureTPv3::Entry(void)
             }
             catch (...) {
                 Unlock();
+                capture_state = STATE_OFFLINE;
                 throw;
             }
 
@@ -706,6 +709,8 @@ void *ndCaptureTPv3::Entry(void)
             pkt_queue.clear();
         }
     }
+
+    capture_state = STATE_OFFLINE;
 
     nd_dprintf("%s: TPv3 capture ended on CPU: %lu\n",
         tag.c_str(), cpu >= 0 ? cpu : 0);

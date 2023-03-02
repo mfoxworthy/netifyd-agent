@@ -47,6 +47,14 @@ public:
         this->stats.AddAndReset(stats);
     }
 
+    enum nd_capture_states {
+        STATE_INIT,
+        STATE_ONLINE,
+        STATE_OFFLINE,
+    };
+
+    atomic_uchar capture_state;
+
 protected:
     int dl_type;
     nd_capture_type cs_type;
