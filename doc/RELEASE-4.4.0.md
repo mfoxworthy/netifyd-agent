@@ -59,7 +59,7 @@
 
 ## New Features
 
-- Added interface status information to `netifyd --status` output (https://gitlab.com/netify.ai/public/netify-agent/-/issues/63).
+- Added interface status information to `netifyd --status` output (https://gitlab.com/netify.ai/public/netify-agent/-/issues/62).
 - Added agent version to run-time JSON status (usually `/run/netifyd/status.json`) (https://gitlab.com/netify.ai/public/netify-agent/-/issues/61).
 - Introduced device endpoint "snapshots" for stats plugins.
 - Added INIT/COMPLETE events for stats plugins.
