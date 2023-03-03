@@ -1897,7 +1897,8 @@ int static nd_export_applications(void)
 
 static void nd_status(void)
 {
-    const char *color = ND_C_GREEN;
+    const char *icon = ND_I_INFO;
+    const char *color = ND_C_RESET;
 
     fprintf(stderr, "%s\n", nd_get_version_and_features().c_str());
 
@@ -1930,15 +1931,19 @@ static void nd_status(void)
         }
     }
 
-    fprintf(stderr, "%s-%s agent %s.\n",
+    fprintf(stderr, "%s%s%s agent %s.\n",
         (nd_pid < 0) ? ND_C_YELLOW :
             (nd_pid == 0) ? ND_C_RED : ND_C_GREEN,
+        (nd_pid < 0) ? ND_I_WARN :
+            (nd_pid == 0) ? ND_I_FAIL : ND_I_OK,
         ND_C_RESET,
         (nd_pid < 0) ? "status could not be determined" :
             (nd_pid == 0) ? "is not running" : "is running");
 
-    fprintf(stderr, "- persistent state path: %s\n", ND_PERSISTENT_STATEDIR);
-    fprintf(stderr, "- volatile state path: %s\n", ND_VOLATILE_STATEDIR);
+    fprintf(stderr, "%s persistent state path: %s\n",
+        ND_I_INFO, ND_PERSISTENT_STATEDIR);
+    fprintf(stderr, "%s volatile state path: %s\n",
+        ND_I_INFO, ND_VOLATILE_STATEDIR);
 
     json jstatus;
 
@@ -1946,8 +1951,8 @@ static void nd_status(void)
         string status;
         if (nd_file_load(ND_JSON_FILE_STATUS, status) < 0) {
             fprintf(stderr,
-                "%s-%s agent run-time status could not be determined.\n",
-                ND_C_YELLOW, ND_C_RESET
+                "%s%s%s agent run-time status could not be determined.\n",
+                ND_C_YELLOW, ND_I_WARN, ND_C_RESET
             );
         }
 
@@ -1957,8 +1962,8 @@ static void nd_status(void)
             throw ndJsonParseException("Required type: agent_status");
     }
     catch (runtime_error &e) {
-        fprintf(stderr, "%s-%s agent run-time status exception: %s%s%s\n",
-            ND_C_RED, ND_C_RESET, ND_C_RED, e.what(), ND_C_RESET);
+        fprintf(stderr, "%s%s%s agent run-time status exception: %s%s%s\n",
+            ND_C_RED, ND_I_FAIL, ND_C_RESET, ND_C_RED, e.what(), ND_C_RESET);
     }
 
     char timestamp[64];
@@ -1966,22 +1971,27 @@ static void nd_status(void)
     struct tm *tm_local = localtime(&ts);
 
     if (nd_pid <= 0) {
-        fprintf(stderr, "%sThe following run-time information is likely out-dated:%s\n",
-            ND_C_YELLOW, ND_C_RESET);
+        fprintf(stderr, "%s%s The following run-time information is likely out-dated.%s\n",
+            ND_C_YELLOW, ND_I_WARN, ND_C_RESET);
     }
 
     if (strftime(timestamp, sizeof(timestamp), "%c", tm_local) > 0) {
-        fprintf(stderr, "%s-%s agent timestamp: %s\n",
-            ND_C_GREEN, ND_C_RESET, timestamp);
+        fprintf(stderr, "%s%s%s agent timestamp: %s\n",
+            ND_C_GREEN, ND_I_INFO, ND_C_RESET, timestamp);
     }
     string uptime;
     nd_uptime(jstatus["uptime"].get<time_t>(), uptime);
-    fprintf(stderr, "- agent uptime: %s\n", uptime.c_str());
-    fprintf(stderr, "- active flows: %u\n",
-        jstatus["flow_count"].get<unsigned>());
+    fprintf(stderr, "%s agent uptime: %s\n",
+        ND_I_INFO, uptime.c_str());
+    unsigned flows = jstatus["flow_count"].get<unsigned>();
+    fprintf(stderr, "%s%s%s active flows: %u\n",
+        (flows > 0) ? ND_C_GREEN : ND_C_YELLOW,
+        (flows > 0) ? ND_I_OK : ND_I_WARN,
+        ND_C_RESET, flows
+    );
 
-    fprintf(stderr, "- CPU cores: %u\n",
-        jstatus["cpu_cores"].get<unsigned>());
+    fprintf(stderr, "%s CPU cores: %u\n",
+        ND_I_INFO, jstatus["cpu_cores"].get<unsigned>());
 
     double cpu_user_delta =
         jstatus["cpu_user"].get<double>() -
@@ -1997,27 +2007,35 @@ static void nd_status(void)
     double cpu_system_percent = cpu_system_delta * 100.0 / cpu_max_time;
     double cpu_total = cpu_user_percent + cpu_system_percent;
 
-    if (cpu_total < 33.34)
+    if (cpu_total < 33.34) {
+        icon = ND_I_OK;
         color = ND_C_GREEN;
-    else if (cpu_total < 66.67)
+    }
+    else if (cpu_total < 66.67) {
+        icon = ND_I_WARN;
         color = ND_C_YELLOW;
-    else
+    }
+    else {
+        icon = ND_I_FAIL;
         color = ND_C_RED;
+    }
 
-    fprintf(stderr, "%s-%s CPU utilization (user + system): %s%.1f%%%s\n",
-        color, ND_C_RESET, color, cpu_total, ND_C_RESET);
-    fprintf(stderr, "%s-%s CPU time (user / system): %.1fs / %.1fs\n",
-        color, ND_C_RESET, cpu_user_delta, cpu_system_delta);
+    fprintf(stderr,
+        "%s%s%s CPU utilization (user + system): %s%.1f%%%s\n",
+        color, icon, ND_C_RESET, color, cpu_total, ND_C_RESET);
+    fprintf(stderr,
+        "%s%s%s CPU time (user / system): %.1fs / %.1fs\n",
+        color, icon, ND_C_RESET, cpu_user_delta, cpu_system_delta);
 
 #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
 (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
-    fprintf(stderr, "%s-%s current memory usage: %u kB\n",
-        ND_C_GREEN, ND_C_RESET,
+    fprintf(stderr, "%s%s%s current memory usage: %u kB\n",
+        ND_C_GREEN, ND_I_INFO, ND_C_RESET,
         jstatus["tcm_kb"].get<unsigned>()
     );
 #endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
-    fprintf(stderr, "%s-%s maximum memory usage: %u kB\n",
-        ND_C_GREEN, ND_C_RESET,
+    fprintf(stderr, "%s%s%s maximum memory usage: %u kB\n",
+        ND_C_GREEN, ND_I_INFO, ND_C_RESET,
         jstatus["maxrss_kb"].get<unsigned>()
     );
 
@@ -2026,6 +2044,7 @@ static void nd_status(void)
         const string &iface = i.key();
         unsigned pkts = 0, dropped = 0;
 
+        icon = ND_I_FAIL;
         color = ND_C_RED;
         string state = "unknown";
 
@@ -2039,10 +2058,12 @@ static void nd_status(void)
             if (jstate != j.end()) {
                 switch (jstate->get<unsigned>()) {
                 case ndCaptureThread::STATE_INIT:
+                    icon = ND_I_WARN;
                     colors[0] = color = ND_C_YELLOW;
                     state = "initializing";
                     break;
                 case ndCaptureThread::STATE_ONLINE:
+                    icon = ND_I_OK;
                     colors[0] = color = ND_C_GREEN;
                     state = "online";
                     break;
@@ -2060,6 +2081,7 @@ static void nd_status(void)
             dropped += jstatus["stats"][iface]["queue_dropped"].get<unsigned>();
 
             if (pkts == 0) {
+                icon = ND_I_WARN;
                 colors[1] = color = ND_C_YELLOW;
             }
             else {
@@ -2067,17 +2089,21 @@ static void nd_status(void)
                     (double)dropped * 100 /
                     (double)pkts;
 
-                if (percent > 0.0)
+                if (percent > 0.0) {
+                    icon = ND_I_WARN;
                     colors[2] = color = ND_C_YELLOW;
-                else if (percent > 5.0)
+                }
+                else if (percent > 5.0) {
+                    icon = ND_I_FAIL;
                     colors[2] = color = ND_C_RED;
+                }
             }
         }
         catch (...) { }
 
         fprintf(stderr,
-            "%s-%s %s [%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
-            color, ND_C_RESET,
+            "%s%s%s %s [%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
+            color, icon, ND_C_RESET,
             iface.c_str(), j["role"].get<string>().c_str(),
             colors[0], state.c_str(), ND_C_RESET,
             colors[2], dropped, ND_C_RESET,
@@ -2086,8 +2112,9 @@ static void nd_status(void)
     }
 
     bool dhc_status = jstatus["dhc_status"].get<bool>();
-    fprintf(stderr, "%s-%s DNS hint cache: %s%s%s\n",
+    fprintf(stderr, "%s%s%s DNS hint cache: %s%s%s\n",
         (dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
+        (dhc_status) ? ND_I_OK : ND_I_WARN,
         ND_C_RESET,
         (dhc_status) ? ND_C_GREEN : ND_C_YELLOW,
         (dhc_status) ? "enabled" : "disabled",
@@ -2095,16 +2122,18 @@ static void nd_status(void)
     );
 
     if (dhc_status) {
-        fprintf(stderr, "%s-%s DNS hint cache entries: %u\n",
-            ND_C_GREEN, ND_C_RESET,
+        fprintf(stderr, "%s%s%s DNS hint cache entries: %u\n",
+            ND_C_GREEN, ND_I_INFO, ND_C_RESET,
             jstatus["dhc_size"].get<unsigned>()
         );
     }
 
-    fprintf(stderr, "%s-%s sink URL: %s\n",
-        ND_C_GREEN, ND_C_RESET, nd_config.url_sink);
-    fprintf(stderr, "%s-%s sink services are %s.\n",
-        (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
+    fprintf(stderr, "%s%s%s sink URL: %s\n",
+        ND_C_GREEN, ND_I_INFO, ND_C_RESET, nd_config.url_sink);
+    fprintf(stderr, "%s%s%s sink services are %s.\n",
+        (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED,
+        (ND_USE_SINK) ? ND_I_OK : ND_I_FAIL,
+        ND_C_RESET,
         (ND_USE_SINK) ? "enabled" : "disabled"
     );
 
@@ -2114,10 +2143,13 @@ static void nd_status(void)
     }
 
     bool sink_uploads = jstatus["sink_uploads"].get<bool>();
-    fprintf(stderr, "%s-%s sink uploads are %s.\n",
-        (sink_uploads) ? ND_C_GREEN : ND_C_RED, ND_C_RESET,
+    fprintf(stderr, "%s%s%s sink uploads are %s.\n",
+        (sink_uploads) ? ND_C_GREEN : ND_C_RED,
+        (sink_uploads) ? ND_I_OK : ND_I_FAIL,
+        ND_C_RESET,
         (sink_uploads) ? "enabled" : "disabled"
     );
+
     if (! sink_uploads)
         fprintf(stderr, "  To enable sink uploads, ensure your Agent has been provisioned.\n");
 
@@ -2128,14 +2160,14 @@ static void nd_status(void)
         nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN);
 
     if (uuid.size() != ND_AGENT_UUID_LEN || uuid == "00-00-00-00") {
-        fprintf(stderr, "%s-%s sink agent UUID is not set.\n",
-            ND_C_RED, ND_C_RESET);
+        fprintf(stderr, "%s%s%s sink agent UUID is not set.\n",
+            ND_C_RED, ND_I_FAIL, ND_C_RESET);
         fprintf(stderr, "  To generate a new one, run the following command:\n");
         fprintf(stderr, "  # netifyd --provision\n");
     }
     else {
-        fprintf(stderr, "%s-%s sink agent UUID: %s\n",
-            ND_C_GREEN, ND_C_RESET, uuid.c_str());
+        fprintf(stderr, "%s%s%s sink agent UUID: %s\n",
+            ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
     }
 
     uuid = (nd_config.uuid_serial != NULL) ? nd_config.uuid_serial : "-";
@@ -2143,8 +2175,8 @@ static void nd_status(void)
         nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN);
 
     if (uuid.size() && uuid != "-") {
-        fprintf(stderr, "%s-%s sink serial UUID: %s\n",
-            ND_C_GREEN, ND_C_RESET, uuid.c_str());
+        fprintf(stderr, "%s%s%s sink serial UUID: %s\n",
+            ND_C_GREEN, ND_I_INFO, ND_C_RESET, uuid.c_str());
     }
 
     uuid = (nd_config.uuid_site != NULL) ? nd_config.uuid_site : "-";
@@ -2152,24 +2184,26 @@ static void nd_status(void)
         nd_load_uuid(uuid, nd_config.path_uuid_site, ND_SITE_UUID_LEN);
 
     if (! uuid.size() || uuid == "-") {
-        fprintf(stderr, "%s-%s sink site UUID is not set.\n",
-            ND_C_YELLOW, ND_C_RESET);
+        fprintf(stderr, "%s%s%s sink site UUID is not set.\n",
+            ND_C_YELLOW, ND_I_WARN, ND_C_RESET);
         fprintf(stderr, "  A new site UUID will be automatically set "
             "after this agent has been provisioned by the sink server.\n");
     }
     else {
-        fprintf(stderr, "%s-%s sink site UUID: %s\n",
-            ND_C_GREEN, ND_C_RESET, uuid.c_str());
+        fprintf(stderr, "%s%s%s sink site UUID: %s\n",
+            ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
     }
 
     bool sink_status = jstatus["sink_status"].get<bool>();
     if (sink_status) {
         string status, help;
+        icon = ND_I_OK;
         color = ND_C_GREEN;
         unsigned resp_code = jstatus["sink_resp_code"].get<unsigned>();
         switch (resp_code) {
         case ndJSON_RESP_NULL:
             status = "not available";
+            icon = ND_I_WARN;
             color = ND_C_YELLOW;
             help = "Sink status not yet available, try again.";
             break;
@@ -2178,48 +2212,56 @@ static void nd_status(void)
             break;
         case ndJSON_RESP_AUTH_FAIL:
             status = "authorization failed";
+            icon = ND_I_FAIL;
             color = ND_C_YELLOW;
             help = "If no site UUID is set, please provision this agent.";
             break;
         case ndJSON_RESP_MALFORMED_DATA:
             status = "malformed data";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "This should never happen, please contact support.";
             break;
         case ndJSON_RESP_SERVER_ERROR:
             status = "server error";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "Contact support if this error persists.";
             break;
         case ndJSON_RESP_POST_ERROR:
             status = "upload error";
+            icon = ND_I_WARN;
             color = ND_C_YELLOW;
             help = "This error should resolve automatically.";
             break;
         case ndJSON_RESP_PARSE_ERROR:
             status = "parse error";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "This should never happen, please contact support.";
             break;
         case ndJSON_RESP_INVALID_RESPONSE:
             status = "invalid response";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "This should never happen, please contact support.";
             break;
         case ndJSON_RESP_INVALID_CONTENT_TYPE:
             status = "invalid response content type";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "This should never happen, please contact support.";
             break;
         default:
             status = "unknown error";
+            icon = ND_I_FAIL;
             color = ND_C_RED;
             help = "This should never happen, please contact support.";
             break;
         }
 
-        fprintf(stderr, "%s-%s sink server status: %s%s (%d)%s\n",
-            color, ND_C_RESET, color,
+        fprintf(stderr, "%s%s%s sink server status: %s%s (%d)%s\n",
+            color, icon, ND_C_RESET, color,
             status.c_str(), resp_code, ND_C_RESET
         );
 
@@ -2230,16 +2272,22 @@ static void nd_status(void)
             jstatus["sink_queue_size_kb"].get<double>() * 100 /
             jstatus["sink_queue_max_size_kb"].get<double>();
 
-        if (sink_util < 33.34)
+        if (sink_util < 33.34) {
+            icon = ND_I_OK;
             color = ND_C_GREEN;
-        else if (sink_util < 66.67)
+        }
+        else if (sink_util < 66.67) {
+            icon = ND_I_WARN;
             color = ND_C_YELLOW;
-        else
+        }
+        else {
+            icon = ND_I_FAIL;
             color = ND_C_RED;
+        }
 
         fprintf(stderr,
-            "%s-%s sink queue utilization: %s%.1lf%%%s\n",
-            color, ND_C_RESET, color, sink_util, ND_C_RESET);
+            "%s%s%s sink queue utilization: %s%.1lf%%%s\n",
+            color, icon, ND_C_RESET, color, sink_util, ND_C_RESET);
     }
 }
 

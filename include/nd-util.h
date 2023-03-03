@@ -24,6 +24,11 @@
 #define ND_C_GREEN          "\033[0;32m"
 #define ND_C_YELLOW         "\033[0;33m"
 
+#define ND_I_INFO           "•"
+#define ND_I_OK             "✓"
+#define ND_I_WARN           "!"
+#define ND_I_FAIL           "✗"
+
 void *nd_mem_alloc(size_t size);
 
 void nd_mem_free(void *ptr);
