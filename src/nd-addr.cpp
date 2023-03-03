@@ -101,7 +101,7 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
     if (inet_pton(AF_INET,
         _addr.c_str(), &a.addr.in.sin_addr) == 1) {
 
-        if (a.prefix > 32) {
+        if (a.prefix > _ND_ADDR_BITSv4) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 a.prefix
             );
@@ -115,7 +115,7 @@ bool ndAddr::Create(ndAddr &a, const string &addr)
     if (inet_pton(AF_INET6,
         _addr.c_str(), &a.addr.in6.sin6_addr) == 1) {
 
-        if (a.prefix > 128) {
+        if (a.prefix > _ND_ADDR_BITSv6) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 a.prefix
             );
@@ -187,7 +187,7 @@ bool ndAddr::Create(ndAddr &a,
 {
     switch (ss_addr->ss_family) {
     case AF_INET:
-        if (prefix > 32) {
+        if (prefix > _ND_ADDR_BITSv4) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
@@ -195,13 +195,13 @@ bool ndAddr::Create(ndAddr &a,
         }
 
         if (prefix) a.prefix = prefix;
-        else a.prefix = 32;
+        else a.prefix = _ND_ADDR_BITSv4;
 
         memcpy(&a.addr.in, ss_addr, sizeof(struct sockaddr_in));
         break;
 
     case AF_INET6:
-        if (prefix > 128) {
+        if (prefix > _ND_ADDR_BITSv6) {
             nd_dprintf("Invalid IP address prefix length: %hhu\n",
                 prefix
             );
@@ -209,7 +209,7 @@ bool ndAddr::Create(ndAddr &a,
         }
 
         if (prefix) a.prefix = prefix;
-        else a.prefix = 128;
+        else a.prefix = _ND_ADDR_BITSv6;
 
         memcpy(&a.addr.in6, ss_addr, sizeof(struct sockaddr_in6));
         break;
@@ -234,7 +234,7 @@ bool ndAddr::Create(ndAddr &a,
         return false;
     }
 
-    if (prefix > 32) {
+    if (prefix > _ND_ADDR_BITSv4) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
@@ -244,7 +244,7 @@ bool ndAddr::Create(ndAddr &a,
     memcpy(&a.addr.in, ss_in, sizeof(struct sockaddr_in));
 
     if (prefix) a.prefix = prefix;
-    else a.prefix = 32;
+    else a.prefix = _ND_ADDR_BITSv4;
 
     return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
@@ -259,7 +259,7 @@ bool ndAddr::Create(ndAddr &a,
         return false;
     }
 
-    if (prefix > 128) {
+    if (prefix > _ND_ADDR_BITSv6) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
@@ -269,7 +269,7 @@ bool ndAddr::Create(ndAddr &a,
     memcpy(&a.addr.in6, ss_in6, sizeof(struct sockaddr_in6));
 
     if (prefix) a.prefix = prefix;
-    else a.prefix = 128;
+    else a.prefix = _ND_ADDR_BITSv6;
 
     return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
@@ -277,7 +277,7 @@ bool ndAddr::Create(ndAddr &a,
 bool ndAddr::Create(ndAddr &a,
     const struct in_addr *in_addr, uint8_t prefix)
 {
-    if (prefix > 32) {
+    if (prefix > _ND_ADDR_BITSv4) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
@@ -289,7 +289,7 @@ bool ndAddr::Create(ndAddr &a,
     a.addr.in.sin_addr.s_addr = in_addr->s_addr;
 
     if (prefix) a.prefix = prefix;
-    else a.prefix = 32;
+    else a.prefix = _ND_ADDR_BITSv4;
 
     return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
@@ -297,7 +297,7 @@ bool ndAddr::Create(ndAddr &a,
 bool ndAddr::Create(ndAddr &a,
     const struct in6_addr *in6_addr, uint8_t prefix)
 {
-    if (prefix > 128) {
+    if (prefix > _ND_ADDR_BITSv6) {
         nd_dprintf("Invalid IP address prefix length: %hhu\n",
             prefix
         );
@@ -309,7 +309,7 @@ bool ndAddr::Create(ndAddr &a,
     memcpy(&a.addr.in6.sin6_addr, in6_addr, sizeof(struct in6_addr));
 
     if (prefix) a.prefix = prefix;
-    else a.prefix = 128;
+    else a.prefix = _ND_ADDR_BITSv6;
 
     return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 }
@@ -401,7 +401,7 @@ bool ndAddr::MakeString(const ndAddr &a, string &result, uint8_t flags)
 
         result = sa;
 
-        if ((flags & mfPREFIX) && (a.prefix > 0 && a.prefix != 32))
+        if ((flags & mfPREFIX) && (a.prefix > 0 && a.prefix != _ND_ADDR_BITSv4))
             result.append("/" + to_string((size_t)a.prefix));
 
         if ((flags & mfPORT) && a.addr.in.sin_port != 0) {
@@ -420,7 +420,7 @@ bool ndAddr::MakeString(const ndAddr &a, string &result, uint8_t flags)
 
         result = sa;
 
-        if ((flags & mfPREFIX) && a.prefix > 0 && a.prefix != 128)
+        if ((flags & mfPREFIX) && a.prefix > 0 && a.prefix != _ND_ADDR_BITSv6)
             result.append("/" + to_string((size_t)a.prefix));
 
         if ((flags & mfPORT) && a.addr.in6.sin6_port != 0) {
@@ -490,32 +490,32 @@ bool ndAddrType::AddAddress(
             type = ndAddr::atLOCALNET;
 
         if (addr.IsIPv4() && ifname == nullptr) {
-            ndRadixNetworkEntry<32> entry;
-            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 ipv4_reserved[entry] = type;
                 return true;
             }
         }
 
         if (addr.IsIPv6() && ifname == nullptr) {
-            ndRadixNetworkEntry<128> entry;
-            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 ipv6_reserved[entry] = type;
                 return true;
             }
         }
 
         if (addr.IsIPv4() && ifname != nullptr) {
-            ndRadixNetworkEntry<32> entry;
-            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 ipv4_iface[ifname][entry] = type;
                 return true;
             }
         }
 
         if (addr.IsIPv6() && ifname != nullptr) {
-            ndRadixNetworkEntry<128> entry;
-            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 ipv6_iface[ifname][entry] = type;
                 return true;
             }
@@ -556,22 +556,22 @@ bool ndAddrType::RemoveAddress(
         }
 
         if (addr.IsIPv4() && ifname == nullptr) {
-            ndRadixNetworkEntry<32> entry;
-            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 return ipv4_reserved.erase(entry);
             }
         }
 
         if (addr.IsIPv6() && ifname == nullptr) {
-            ndRadixNetworkEntry<128> entry;
-            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 return ipv6_reserved.erase(entry);
             }
         }
 
         if (addr.IsIPv4() && ifname != nullptr) {
-            ndRadixNetworkEntry<32> entry;
-            if (ndRadixNetworkEntry<32>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 auto it = ipv4_iface.find(ifname);
                 if (it != ipv4_iface.end())
                     return it->second.erase(entry);
@@ -580,8 +580,8 @@ bool ndAddrType::RemoveAddress(
         }
 
         if (addr.IsIPv6() && ifname != nullptr) {
-            ndRadixNetworkEntry<128> entry;
-            if (ndRadixNetworkEntry<128>::Create(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 auto it = ipv6_iface.find(ifname);
                 if (it != ipv6_iface.end())
                     return it->second.erase(entry);
@@ -652,8 +652,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
         }
 
         for (auto &iface : ipv4_iface) {
-            ndRadixNetworkEntry<32> entry;
-            if (ndRadixNetworkEntry<32>::CreateQuery(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::CreateQuery(entry, addr)) {
 
                 unique_lock<mutex> ul(lock);
 
@@ -668,8 +668,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             }
         }
 
-        ndRadixNetworkEntry<32> entry;
-        if (ndRadixNetworkEntry<32>::CreateQuery(entry, addr)) {
+        ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
+        if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::CreateQuery(entry, addr)) {
 
             unique_lock<mutex> ul(lock);
 
@@ -693,8 +693,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
         }
 
         for (auto &iface : ipv6_iface) {
-            ndRadixNetworkEntry<128> entry;
-            if (ndRadixNetworkEntry<128>::CreateQuery(entry, addr)) {
+            ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+            if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::CreateQuery(entry, addr)) {
 
                 unique_lock<mutex> ul(lock);
 
@@ -709,8 +709,8 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             }
         }
 
-        ndRadixNetworkEntry<128> entry;
-        if (ndRadixNetworkEntry<128>::CreateQuery(entry, addr)) {
+        ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
+        if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::CreateQuery(entry, addr)) {
 
             unique_lock<mutex> ul(lock);
 

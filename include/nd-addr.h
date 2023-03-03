@@ -17,6 +17,9 @@
 #ifndef _ND_ADDR_H
 #define _ND_ADDR_H
 
+#define _ND_ADDR_BITSv4     32
+#define _ND_ADDR_BITSv6     128
+
 class ndAddr
 {
 public:
@@ -55,33 +58,33 @@ public:
         uint8_t prefix = 0) : ndAddr(&ss_addr, prefix) { }
 
     ndAddr(const struct sockaddr_in *ss_in,
-        uint8_t prefix = 32)
+        uint8_t prefix = _ND_ADDR_BITSv4)
         : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, ss_in, prefix);
     }
     ndAddr(const struct sockaddr_in &ss_in,
-        uint8_t prefix = 32) : ndAddr(&ss_in, prefix) { }
+        uint8_t prefix = _ND_ADDR_BITSv4) : ndAddr(&ss_in, prefix) { }
 
     ndAddr(const struct sockaddr_in6 *ss_in6,
-        uint8_t prefix = 128)
+        uint8_t prefix = _ND_ADDR_BITSv6)
         : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, ss_in6, prefix);
     }
     ndAddr(const struct sockaddr_in6 &ss_in6,
-        uint8_t prefix = 128) : ndAddr(&ss_in6, prefix) { }
+        uint8_t prefix = _ND_ADDR_BITSv6) : ndAddr(&ss_in6, prefix) { }
 
-    ndAddr(const struct in_addr *in_addr, uint8_t prefix = 32)
+    ndAddr(const struct in_addr *in_addr, uint8_t prefix = _ND_ADDR_BITSv4)
         : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, in_addr, prefix);
     }
-    ndAddr(const struct in_addr &in_addr, uint8_t prefix = 32)
+    ndAddr(const struct in_addr &in_addr, uint8_t prefix = _ND_ADDR_BITSv4)
         : ndAddr(&in_addr, prefix) { }
 
-    ndAddr(const struct in6_addr *in6_addr, uint8_t prefix = 128)
+    ndAddr(const struct in6_addr *in6_addr, uint8_t prefix = _ND_ADDR_BITSv6)
         : addr{0}, prefix(0), comparison_flags(cfALL) {
         Create(*this, in6_addr, prefix);
     }
-    ndAddr(const struct in6_addr &in6_addr, uint8_t prefix = 128)
+    ndAddr(const struct in6_addr &in6_addr, uint8_t prefix = _ND_ADDR_BITSv6)
         : ndAddr(&in6_addr, prefix) { }
 
     static bool Create(ndAddr &a, const string &addr);
@@ -93,16 +96,16 @@ public:
         const struct sockaddr_storage *ss_addr, uint8_t prefix = 0);
 
     static bool Create(ndAddr &a,
-        const struct sockaddr_in *ss_in, uint8_t prefix = 32);
+        const struct sockaddr_in *ss_in, uint8_t prefix = _ND_ADDR_BITSv4);
 
     static bool Create(ndAddr &a,
-        const struct sockaddr_in6 *ss_in6, uint8_t prefix = 128);
+        const struct sockaddr_in6 *ss_in6, uint8_t prefix = _ND_ADDR_BITSv6);
 
     static bool Create(ndAddr &a,
-        const struct in_addr *in_addr, uint8_t prefix = 32);
+        const struct in_addr *in_addr, uint8_t prefix = _ND_ADDR_BITSv4);
 
     static bool Create(ndAddr &a,
-        const struct in6_addr *in6_addr, uint8_t prefix = 128);
+        const struct in6_addr *in6_addr, uint8_t prefix = _ND_ADDR_BITSv6);
 
     const uint8_t *GetAddress(void) const;
     size_t GetAddressSize(void) const;
@@ -115,15 +118,15 @@ public:
     }
     inline bool HasValidPrefix(void) const {
         return (prefix > 0 && (
-            (addr.ss.ss_family == AF_INET && prefix <= 32)
-            || (addr.ss.ss_family == AF_INET6 && prefix <= 128)
+            (addr.ss.ss_family == AF_INET && prefix <= _ND_ADDR_BITSv4)
+            || (addr.ss.ss_family == AF_INET6 && prefix <= _ND_ADDR_BITSv6)
         ));
     }
     inline bool IsNetwork(void) const {
         if (! HasValidPrefix()) return false;
-        if (addr.ss.ss_family == AF_INET && prefix != 32)
+        if (addr.ss.ss_family == AF_INET && prefix != _ND_ADDR_BITSv4)
             return true;
-        return (addr.ss.ss_family == AF_INET6 && prefix != 128);
+        return (addr.ss.ss_family == AF_INET6 && prefix != _ND_ADDR_BITSv6);
     }
     inline bool IsEthernet(void) const {
         return (addr.ss.ss_family == AF_PACKET
@@ -402,24 +405,24 @@ public:
         }
 
         switch (N) {
-        case 32: // AF_INET
+        case _ND_ADDR_BITSv4: // AF_INET
             entry.addr = ntohl(addr.addr.in.sin_addr.s_addr);
             entry.addr &= mask;
             return true;
 
-        case 128: // AF_INET6
+        case _ND_ADDR_BITSv6: // AF_INET6
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[0]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[1]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[2]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[3]
             );
@@ -447,23 +450,23 @@ public:
         entry.prefix_len = N;
 
         switch (N) {
-        case 32: // AF_INET
+        case _ND_ADDR_BITSv4: // AF_INET
             entry.addr = ntohl(addr.addr.in.sin_addr.s_addr);
             return true;
 
-        case 128: // AF_INET6
+        case _ND_ADDR_BITSv6: // AF_INET6
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[0]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[1]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[2]
             );
-            entry.addr <<= 32;
+            entry.addr <<= _ND_ADDR_BITSv4;
             entry.addr |= ntohl(
                 addr.addr.in6.sin6_addr.s6_addr32[3]
             );
@@ -492,10 +495,10 @@ public:
     bool GetString(string &ip) const {
         ndAddr a((uint8_t)prefix_len);
         switch (N) {
-        case 32: // AF_INET
+        case _ND_ADDR_BITSv4: // AF_INET
             a.addr.in.sin_addr.s_addr = htonl(addr.to_ulong());
             break;
-        case 128: // AF_INET6
+        case _ND_ADDR_BITSv6: // AF_INET6
             for (auto i = 0; i < 4; i++) {
                 bitset<N> b;
                 for (size_t j = 0; j < N; j++)
@@ -591,8 +594,8 @@ ndRadixNetworkEntry<N> radix_join(
     const ndRadixNetworkEntry<N> &y
 );
 
-typedef radix_tree<ndRadixNetworkEntry<32>, ndAddr::Type> nd_rn4_atype;
-typedef radix_tree<ndRadixNetworkEntry<128>, ndAddr::Type> nd_rn6_atype;
+typedef radix_tree<ndRadixNetworkEntry<_ND_ADDR_BITSv4>, ndAddr::Type> nd_rn4_atype;
+typedef radix_tree<ndRadixNetworkEntry<_ND_ADDR_BITSv6>, ndAddr::Type> nd_rn6_atype;
 
 class ndAddrType
 {
