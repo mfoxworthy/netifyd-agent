@@ -513,35 +513,6 @@ public:
     }
 };
 
-template <size_t N>
-int radix_length(const ndRadixNetworkEntry<N> &entry)
-{
-    return (int)entry.prefix_len;
-}
-
-template <size_t N>
-ndRadixNetworkEntry<N> radix_substr(
-    const ndRadixNetworkEntry<N> &entry, int offset, int length
-) {
-    bitset<N> mask;
-
-    if (length == N)
-        mask = 0;
-    else {
-        mask = 1;
-        mask <<= length;
-    }
-
-    mask -= 1;
-    mask <<= N - length - offset;
-
-    ndRadixNetworkEntry<N> result;
-    result.addr = (entry.addr & mask) << offset;
-    result.prefix_len = length;
-
-    return result;
-}
-
 template<size_t N>
 bitset<N> &operator-=(bitset<N> &x, const size_t y)
 {
@@ -572,6 +543,35 @@ bitset<N> &operator-=(bitset<N> &x, const size_t y)
     }
 
     return x;
+}
+
+template <size_t N>
+int radix_length(const ndRadixNetworkEntry<N> &entry)
+{
+    return (int)entry.prefix_len;
+}
+
+template <size_t N>
+ndRadixNetworkEntry<N> radix_substr(
+    const ndRadixNetworkEntry<N> &entry, int offset, int length
+) {
+    bitset<N> mask;
+
+    if (length == N)
+        mask = 0;
+    else {
+        mask = 1;
+        mask <<= length;
+    }
+
+    mask -= 1;
+    mask <<= N - length - offset;
+
+    ndRadixNetworkEntry<N> result;
+    result.addr = (entry.addr & mask) << offset;
+    result.prefix_len = length;
+
+    return result;
 }
 
 template <size_t N>
