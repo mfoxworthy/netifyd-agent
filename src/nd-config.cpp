@@ -210,9 +210,20 @@ int ndGlobalConfig::Load(const string &filename)
 
     INIReader reader(filename.c_str());
 
-    if (reader.ParseError() != 0) {
-        fprintf(stderr, "Error while parsing configuration file: %s\n",
+    int rc = reader.ParseError();
+
+    switch (rc) {
+    case -1:
+        fprintf(stderr, "Error opening configuration file: %s\n",
             filename.c_str());
+        return -1;
+    case 0:
+        break;
+    default:
+        fprintf(stderr,
+            "Error while parsing line #%d of configuration file: %s\n",
+            rc, filename.c_str()
+        );
         return -1;
     }
 
