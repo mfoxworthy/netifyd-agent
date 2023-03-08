@@ -54,6 +54,7 @@ using namespace std;
 class ndPluginLoader;
 
 #include <netifyd.h>
+#include <nd-config.h>
 #include <nd-ndpi.h>
 #include <nd-risks.h>
 #include <nd-serializer.h>

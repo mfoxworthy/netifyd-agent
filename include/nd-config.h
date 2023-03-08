@@ -35,6 +35,12 @@ enum nd_capture_type {
     ndCT_TPV3,
 };
 
+enum nd_interface_role {
+    ndIR_NONE,
+    ndIR_LAN,
+    ndIR_WAN,
+};
+
 enum nd_tpv3_fanout_mode {
     ndFOM_DISABLED,
     ndFOM_HASH,
@@ -114,6 +120,16 @@ enum nd_global_flags {
     else nd_config.flags &= ~flag; \
 }
 
+typedef struct
+{
+    unsigned fanout_mode;
+    unsigned fanout_flags;
+    unsigned fanout_instances;
+    unsigned rb_block_size;
+    unsigned rb_frame_size;
+    unsigned rb_blocks;
+} nd_config_tpv3;
+
 class ndGlobalConfig
 {
 public:
@@ -136,11 +152,7 @@ public:
     enum nd_fhc_save fhc_save;
     enum nd_capture_type capture_type;
     unsigned capture_read_timeout;
-    unsigned tpv3_fanout_mode;
-    unsigned tpv3_fanout_flags;
-    unsigned tpv3_rb_block_size;
-    unsigned tpv3_rb_frame_size;
-    unsigned tpv3_rb_blocks;
+    nd_config_tpv3 tpv3_defaults;
     FILE *h_flow;
     int16_t ca_capture_base;
     int16_t ca_conntrack;
@@ -174,7 +186,7 @@ public:
     vector<struct sockaddr *> privacy_filter_host;
     vector<uint8_t *> privacy_filter_mac;
     vector<pair<regex *, string> > privacy_regex;
-    nd_device_filter device_filters;
+    nd_interface_filter interface_filters;
 #ifdef _ND_USE_INOTIFY
     nd_inotify_watch inotify_watches;
 #endif
@@ -187,10 +199,35 @@ public:
     map<string, string> custom_headers;
     map<string, string> protocols;
 
+    typedef map<string, pair<nd_capture_type, void *>> nd_config_interfaces;
+    map<nd_interface_role, nd_config_interfaces> interfaces;
+    map<string, set<string>> interface_addrs;
+    map<string, string> interface_peers;
+
     ndGlobalConfig();
     virtual ~ndGlobalConfig();
 
+    void Close(void);
+
     int Load(const string &filename);
+
+    bool AddInterface(const string &iface, nd_interface_role role,
+        nd_capture_type type = ndCT_NONE, void *config = nullptr);
+
+    bool AddInterfaceAddress(const string &iface, const string &addr);
+    bool AddInterfacePeer(const string &iface, const string &peer);
+
+    bool AddInterfaceFilter(const string &iface, const string &filter);
+
+protected:
+    void *reader;
+
+    bool AddInterfaces(void);
+
+    enum nd_capture_type LoadCaptureType(
+        const string &section, const string &key);
+    void LoadCaptureSettings(const string &section,
+        nd_capture_type type, void *config);
 };
 
 #endif // _ND_CONFIG_H

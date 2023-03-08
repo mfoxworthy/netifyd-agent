@@ -904,7 +904,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
 #ifdef _ND_USE_CONNTRACK
-    if (! ndEF->iface.internal && thread_conntrack != NULL) {
+    if (thread_conntrack != NULL &&
+        ndEF->iface.role != ndIR_LAN) {
 
         if ((ndEF->lower_type == ndAddr::atLOCAL &&
             ndEF->upper_type == ndAddr::atOTHER ) ||
@@ -1095,7 +1096,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
 
         j["type"] = "flow";
         j["interface"] = ndEF->iface.ifname;
-        j["internal"] = ndEF->iface.internal;
+        j["internal"] = (ndEF->iface.role == ndIR_LAN);
         j["established"] = false;
 
         json jf;

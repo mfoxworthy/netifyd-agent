@@ -320,9 +320,9 @@ pcap_t *ndCapturePcap::OpenCapture(void)
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
-        nd_device_filter::const_iterator i = nd_config.device_filters.find(tag);
+        nd_interface_filter::const_iterator i = nd_config.interface_filters.find(tag);
 
-        if (i != nd_config.device_filters.end()) {
+        if (i != nd_config.interface_filters.end()) {
 
             if (pcap_compile(pcap_new, &pcap_filter,
                 i->second.c_str(), 1, PCAP_NETMASK_UNKNOWN) < 0) {

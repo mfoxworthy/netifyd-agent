@@ -190,7 +190,7 @@
 
 typedef vector<pair<string, string> > nd_device_addr;
 
-typedef map<string, string> nd_device_filter;
+typedef map<string, string> nd_interface_filter;
 
 typedef map<string, string> nd_netlink_device;
 

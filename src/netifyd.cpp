@@ -84,8 +84,6 @@ using json = nlohmann::json;
 #include <malloc.h>
 #endif
 
-#include "INIReader.h"
-
 #include <radix/radix_tree.hpp>
 
 using namespace std;
@@ -157,7 +155,6 @@ static ndConntrackThread *thread_conntrack = NULL;
 #ifdef _ND_USE_INOTIFY
 static ndInotify *inotify = NULL;
 #endif
-static nd_device_filter device_filters;
 static bool nd_capture_stopped_by_signal = false;
 static ndDNSHintCache *dns_hint_cache = NULL;
 static ndFlowHashCache *flow_hash_cache = NULL;
@@ -230,11 +227,6 @@ static int nd_config_set_option(int option)
 
 static void nd_usage(int rc = 0, bool version = false)
 {
-    if (nd_conf_filename == NULL)
-        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
-    nd_config.Load(nd_conf_filename);
-
     ND_GF_SET_FLAG(ndGF_QUIET, true);
 
     fprintf(stderr,
@@ -391,12 +383,6 @@ static void nd_usage(int rc = 0, bool version = false)
 
 static void nd_force_reset(void)
 {
-    if (nd_conf_filename == NULL)
-        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
-    if (nd_config.Load(nd_conf_filename) < 0)
-        return;
-
     vector<string> files = {
         nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
     };
@@ -501,94 +487,71 @@ static int nd_start_capture_threads(void)
 {
     if (capture_threads.size() > 0) return 1;
 
-    try {
-        uint8_t private_addr = 0;
-        vector<ndCaptureThread *> threads;
+    uint8_t private_addr = 0;
+    vector<ndCaptureThread *> threads;
 
-        int16_t cpu = (
-                nd_config.ca_capture_base > -1 &&
-                nd_config.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
-        ) ? nd_config.ca_capture_base : 0;
+    int16_t cpu = (
+            nd_config.ca_capture_base > -1 &&
+            nd_config.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
+    ) ? nd_config.ca_capture_base : 0;
 
-        for (auto & it : nd_interfaces) {
+    for (auto &it : nd_interfaces) {
 
-            switch (nd_config.capture_type) {
-            case ndCT_PCAP:
-            {
-                if (threads.size() && it.second.instances > 1) {
-                    nd_printf("WARNING: multiple interface"
-                        " instances specified in PCAP"
-                        " mode.\n"
-                    );
-                    nd_printf(
-                        "Skipping additional instances...\n"
-                    );
+        switch (it.second.capture_type) {
+        case ndCT_PCAP:
+        {
+            ndCapturePcap *thread = new ndCapturePcap(
+                (nd_interfaces.size() > 1) ? cpu++ : -1,
+                it.second,
+                thread_socket,
+                detection_threads,
+                dns_hint_cache,
+                (it.second.role == ndIR_LAN) ? 0 : ++private_addr
+            );
 
-                    break;
-                }
+            thread->Create();
+            threads.push_back(thread);
+            break;
+        }
 
-                ndCapturePcap *thread = new ndCapturePcap(
+        case ndCT_TPV3:
+        {
+            unsigned instances = it.second.tpv3.fanout_instances;
+            if (it.second.tpv3.fanout_mode == ndFOM_DISABLED ||
+                it.second.tpv3.fanout_instances < 2)
+                instances = 1;
+
+            for (unsigned i = 0; i < instances; i++) {
+
+                ndCaptureTPv3 *thread = new ndCaptureTPv3(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
                     it.second,
                     thread_socket,
                     detection_threads,
                     dns_hint_cache,
-                    (it.second.internal) ? 0 : ++private_addr
+                    (it.second.role == ndIR_LAN) ? 0 : ++private_addr
                 );
 
                 thread->Create();
                 threads.push_back(thread);
-                break;
+
+                if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
             }
 
-            case ndCT_TPV3:
-            {
-                for (unsigned i = 0; i < it.second.instances; i++) {
-
-                    ndCaptureTPv3 *thread = new ndCaptureTPv3(
-                        (nd_interfaces.size() > 1) ? cpu++ : -1,
-                        it.second,
-                        thread_socket,
-                        detection_threads,
-                        dns_hint_cache,
-                        (it.second.internal) ? 0 : ++private_addr
-                    );
-
-                    thread->Create();
-                    threads.push_back(thread);
-
-                    if (! nd_config.tpv3_fanout_mode &&
-                        it.second.instances > 1) {
-                        nd_printf("WARNING: multiple interface"
-                            " instances specified, but TPv3"
-                            " \"fanout\" mode is disabled.\n"
-                        );
-                        nd_printf(
-                            "Skipping additional instances...\n"
-                        );
-                        break;
-                    }
-                }
-
-                break;
-            }
-
-            default:
-                throw "capture type not set.";
-            }
-
-            if (! threads.size()) continue;
-
-            capture_threads[it.second.ifname] = threads;
-
-            threads.clear();
-
-            if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
+            break;
         }
-    }
-    catch (exception &e) {
-        nd_printf("Runtime error: %s\n", e.what());
-        throw;
+
+        default:
+            throw runtime_error("capture type not set.");
+        }
+
+        if (! threads.size()) continue;
+
+        capture_threads[it.second.ifname] = threads;
+
+        threads.clear();
+
+        if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
     }
 
     return 0;
@@ -1140,7 +1103,7 @@ static void nd_process_flows(
 
                             j["type"] = "flow";
                             j["interface"] = i->second->iface.ifname;
-                            j["internal"] = i->second->iface.internal;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
                             j["established"] = false;
 
                             i->second->encode<json>(
@@ -1166,7 +1129,7 @@ static void nd_process_flows(
                                 i->second->flags.tcp_fin.load()
                             ) ? "closed" : (nd_terminate) ? "terminated" : "expired";
                             j["interface"] = i->second->iface.ifname;
-                            j["internal"] = i->second->iface.internal;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
                             j["established"] = false;
 
                             i->second->encode<json>(
@@ -1218,7 +1181,7 @@ static void nd_process_flows(
 
                             j["type"] = "flow_stats";
                             j["interface"] = i->second->iface.ifname;
-                            j["internal"] = i->second->iface.internal;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
                             j["established"] = false;
 
                             jf.clear();
@@ -1925,15 +1888,6 @@ static void nd_status(void)
     else if (errno == ENOENT)
         nd_pid = 0;
 
-    if (nd_conf_filename == NULL)
-        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
-    if (nd_config.Load(nd_conf_filename) < 0) {
-        fprintf(stderr, "%s%s%s unable to load configuration: %s\n",
-            ND_C_RED, ND_I_FAIL, ND_C_RESET, nd_conf_filename);
-        return;
-    }
-
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
@@ -2108,9 +2062,10 @@ static void nd_status(void)
             catch (...) { }
 
             fprintf(stderr,
-                "%s%s%s %s [%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
-                color, icon, ND_C_RESET,
-                iface.c_str(), j["role"].get<string>().c_str(),
+                "%s%s%s %s [%s/%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
+                color, icon, ND_C_RESET, iface.c_str(),
+                j["role"].get<string>().c_str(),
+                j["capture_type"].get<string>().c_str(),
                 colors[0], state.c_str(), ND_C_RESET,
                 colors[2], dropped, ND_C_RESET,
                 colors[1], pkts, ND_C_RESET
@@ -2347,8 +2302,6 @@ int main(int argc, char *argv[])
     os.imbue(lc);
 #endif
 
-    nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-
     openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
 
     nd_seed_rng();
@@ -2419,9 +2372,41 @@ int main(int argc, char *argv[])
         { NULL, 0, 0, 0 }
     };
 
+    static const char *flags = { "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:stT:Uu:Vv" };
+
     while (true) {
-        if ((rc = getopt_long(argc, argv,
-            "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:stT:Uu:Vv",
+        if ((rc = getopt_long(argc, argv, flags,
+            options, NULL)) == -1) break;
+
+        switch (rc) {
+        case 0:
+            break;
+        case '?':
+            fprintf(stderr, "Try `--help' for more information.\n");
+            return 1;
+        case 'c':
+            nd_conf_filename = strdup(optarg);
+            break;
+        case 'd':
+            nd_config.flags |= ndGF_DEBUG;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (nd_conf_filename == NULL)
+        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
+
+    if (nd_config.Load(nd_conf_filename) < 0)
+        return 1;
+
+    nd_config.Close();
+
+    optind = 1;
+
+    while (true) {
+        if ((rc = getopt_long(argc, argv, flags,
             options, NULL)) == -1) break;
 
         switch (rc) {
@@ -2523,30 +2508,19 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            device_addresses.push_back(make_pair(last_device, optarg));
-            break;
-        case 'c':
-            if (nd_conf_filename != NULL) free(nd_conf_filename);
-            nd_conf_filename = strdup(optarg);
+            nd_config.AddInterfaceAddress(last_device, optarg);
             break;
         case 'd':
-            nd_config.flags |= ndGF_DEBUG;
             break;
         case 'D':
             nd_config.flags |= ndGF_DEBUG_UPLOAD;
             break;
+        case 'c':
+            break;
         case 'E':
-        {
-            auto entry = nd_interfaces.emplace(
-                make_pair(optarg, ndInterface(optarg, false))
-            );
-
-            if (! entry.second)
-                entry.first->second.instances++;
-
+            nd_config.AddInterface(optarg, ndIR_WAN, ndCT_NONE);
             last_device = optarg;
             break;
-        }
         case 'e':
             nd_config.flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
@@ -2555,12 +2529,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            if (nd_config.device_filters
-                .find(last_device) != nd_config.device_filters.end()) {
-                fprintf(stderr, "Only one filter can be applied to a device.\n");
-                exit(1);
-            }
-            nd_config.device_filters[last_device] = optarg;
+            nd_config.AddInterfaceFilter(last_device, optarg);
             break;
         case 'f':
             free(nd_config.path_legacy_config);
@@ -2569,17 +2538,9 @@ int main(int argc, char *argv[])
         case 'h':
             nd_usage();
         case 'I':
-        {
-            auto entry = nd_interfaces.emplace(
-                make_pair(optarg, ndInterface(optarg))
-            );
-
-            if (! entry.second)
-                entry.first->second.instances++;
-
+            nd_config.AddInterface(optarg, ndIR_LAN, ndCT_NONE);
             last_device = optarg;
             break;
-        }
         case 'i':
             nd_config.update_interval = atoi(optarg);
             break;
@@ -2597,26 +2558,12 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            else {
-                auto iface = nd_interfaces.find(last_device);
-                if (iface == nd_interfaces.end()) {
-                    fprintf(stderr, "Last defined interface not found: %s\n",
-                        last_device.c_str()
-                    );
-                    exit(1);
-                }
-
-                iface->second.ifname_peer = optarg;
-            }
+            nd_config.AddInterfacePeer(last_device, optarg);
             break;
         case 'P':
             nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
             exit(0);
         case 'p':
-            if (nd_conf_filename == NULL)
-                nd_conf_filename = strdup(ND_CONF_FILE_NAME);
-            if (nd_config.Load(nd_conf_filename) < 0)
-                return 1;
             if (nd_check_agent_uuid() || nd_config.uuid == NULL) return 1;
             printf("Agent UUID: %s\n", nd_config.uuid);
             return 0;
@@ -2680,11 +2627,52 @@ int main(int argc, char *argv[])
     if (nd_config.path_export_json == NULL)
         nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
 
-    if (nd_conf_filename == NULL)
-        nd_conf_filename = strdup(ND_CONF_FILE_NAME);
+    for (auto &r : nd_config.interfaces) {
+        for (auto &i : r.second) {
+            auto result = nd_interfaces.insert(
+                make_pair(
+                    i.first,
+                    ndInterface(
+                        i.first,
+                        i.second.first,
+                        r.first
+                    )
+                )
+            );
 
-    if (nd_config.Load(nd_conf_filename) < 0)
+            if (result.second) {
+                switch (i.second.first) {
+                case ndCT_PCAP:
+                    break;
+
+                case ndCT_TPV3:
+                    result.first->second.SetTPv3Config(
+                        static_cast<nd_config_tpv3 *>(
+                            i.second.second
+                        )
+                    );
+                    break;
+
+                default:
+                    break;
+                }
+            }
+
+            auto peer = nd_config.interface_peers.find(i.first);
+            if (peer != nd_config.interface_peers.end())
+                result.first->second.ifname_peer = peer->second;
+        }
+    }
+
+    if (nd_interfaces.size() == 0) {
+        fprintf(stderr, "No capture interfaces defined.\n");
         return 1;
+    }
+
+    for (auto &i : nd_config.interface_addrs) {
+        for (auto &a : i.second)
+            device_addresses.push_back(make_pair(i.first, a));
+    }
 
     {
         string url_sink;
@@ -2710,12 +2698,6 @@ int main(int argc, char *argv[])
 #endif
         nd_config.dhc_save = ndDHC_DISABLED;
         nd_config.fhc_save = ndFHC_DISABLED;
-    }
-
-    if (nd_interfaces.size() == 0) {
-        fprintf(stderr,
-            "Required argument, (-I, --internal, or -E, --external) missing.\n");
-        return 1;
     }
 
     CURLcode cc;

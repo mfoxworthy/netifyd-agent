@@ -69,6 +69,7 @@ using json = nlohmann::json;
 using namespace std;
 
 #include "netifyd.h"
+#include "nd-config.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"

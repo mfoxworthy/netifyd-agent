@@ -743,9 +743,11 @@ class ndInterface : public ndSerializer
 public:
     ndInterface(
         const string &ifname,
-        bool internal = true, unsigned instances = 1)
+        nd_capture_type capture_type,
+        nd_interface_role role = ndIR_LAN)
         : ifname(ifname), ifname_peer(ifname),
-        internal(internal), instances(instances), lock(nullptr) {
+        capture_type(capture_type), role(role),
+        lock(nullptr) {
         endpoint_snapshot = false;
         lock = new mutex;
         if (lock == nullptr) {
@@ -753,11 +755,15 @@ public:
                 __PRETTY_FUNCTION__, "new mutex", ENOMEM
             );
         }
+#if defined(_ND_USE_TPACKETV3)
+        memset(&tpv3, 0, sizeof(nd_config_tpv3));
+#endif
     }
 
     ndInterface(const ndInterface &iface) :
         ifname(iface.ifname), ifname_peer(iface.ifname_peer),
-        internal(iface.internal), instances(iface.instances) {
+        capture_type(iface.capture_type), role(iface.role)
+    {
         endpoint_snapshot = false;
         lock = new mutex;
         if (lock == nullptr) {
@@ -765,6 +771,9 @@ public:
                 __PRETTY_FUNCTION__, "new mutex", ENOMEM
             );
         }
+#if defined(_ND_USE_TPACKETV3)
+        memcpy(&tpv3, &iface.tpv3, sizeof(nd_config_tpv3));
+#endif
     }
 
     virtual ~ndInterface() {
@@ -778,7 +787,33 @@ public:
     template <class T>
     void Encode(T &output) const {
 
-        serialize(output, { "role" }, (internal) ? "LAN" : "WAN");
+        switch (role) {
+        case ndIR_LAN:
+            serialize(output, { "role" }, "LAN");
+            break;
+
+        case ndIR_WAN:
+            serialize(output, { "role" }, "WAN");
+            break;
+
+        default:
+            serialize(output, { "role" }, "UNKNOWN");
+            break;
+        }
+
+        switch (capture_type) {
+        case ndCT_PCAP:
+            serialize(output, { "capture_type" }, "PCAP");
+            break;
+
+        case ndCT_TPV3:
+            serialize(output, { "capture_type" }, "TPv3");
+            break;
+
+        default:
+            serialize(output, { "capture_type" }, "UNKNOWN");
+            break;
+        }
 
         ndAddr mac;
         if (addrs.FindFirstOf(AF_PACKET, mac))
@@ -843,12 +878,19 @@ public:
                 output[i.first.GetString()].insert(j);
         }
     }
+#if defined(_ND_USE_TPACKETV3)
+    void SetTPv3Config(nd_config_tpv3 *tpv3) {
+        memcpy(&this->tpv3, tpv3, sizeof(nd_config_tpv3));
+    }
+#endif
 
     string ifname;
     string ifname_peer;
-    bool internal;
-    unsigned instances;
-
+    nd_capture_type capture_type;
+    nd_interface_role role;
+#if defined(_ND_USE_TPACKETV3)
+    nd_config_tpv3 tpv3;
+#endif
 protected:
     ndInterfaceAddr addrs;
     ndInterfaceEndpoints endpoints[2];
