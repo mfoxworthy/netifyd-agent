@@ -134,14 +134,18 @@ class ndGlobalConfig
 {
 public:
     char *napi_vendor;
-    char *path_app_config;
-    char *path_cat_config;
-    char *path_config;
-    char *path_export_json;
-    char *path_legacy_config;
-    char *path_uuid;
-    char *path_uuid_serial;
-    char *path_uuid_site;
+    string path_agent_status;
+    string path_app_config;
+    string path_cat_config;
+    string path_config;
+    string path_export_json;
+    string path_legacy_config;
+    string path_pid_file;
+    string path_state_persistent;
+    string path_state_volatile;
+    string path_uuid;
+    string path_uuid_serial;
+    string path_uuid_site;
     char *url_napi;
     char *url_sink;
     char *url_sink_provision;
@@ -228,6 +232,8 @@ protected:
         const string &section, const string &key);
     void LoadCaptureSettings(const string &section,
         nd_capture_type type, void *config);
+
+    void UpdatePaths(void);
 };
 
 #endif // _ND_CONFIG_H

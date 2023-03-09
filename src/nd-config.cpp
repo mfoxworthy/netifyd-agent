@@ -135,13 +135,18 @@ ndGlobalConfig nd_config;
 
 ndGlobalConfig::ndGlobalConfig() :
     napi_vendor(NULL),
-    path_app_config(strdup(ND_CONF_APP_PATH)),
-    path_cat_config(strdup(ND_CONF_CAT_PATH)),
-    path_config(NULL),
-    path_legacy_config(strdup(ND_CONF_LEGACY_PATH)),
-    path_uuid(NULL),
-    path_uuid_serial(NULL),
-    path_uuid_site(NULL),
+    path_agent_status(ND_AGENT_STATUS_PATH),
+    path_app_config(ND_CONF_APP_PATH),
+    path_cat_config(ND_CONF_CAT_PATH),
+    path_config(ND_CONF_FILE_NAME),
+    path_export_json(ND_JSON_FILE_EXPORT),
+    path_legacy_config(ND_CONF_LEGACY_PATH),
+    path_pid_file(ND_PID_FILE_NAME),
+    path_state_persistent(ND_PERSISTENT_STATEDIR),
+    path_state_volatile(ND_VOLATILE_STATEDIR),
+    path_uuid(ND_AGENT_UUID_PATH),
+    path_uuid_serial(ND_AGENT_SERIAL_PATH),
+    path_uuid_site(ND_SITE_UUID_PATH),
     url_napi(NULL),
     url_sink(NULL),
     url_sink_provision(NULL),
@@ -298,17 +303,25 @@ int ndGlobalConfig::Load(const string &filename)
             this->uuid_site = strdup(uuid_site.c_str());
     }
 
-    string path_uuid = r->Get(
+    path_state_persistent = r->Get(
+        "netifyd", "path_persistent_state", ND_PERSISTENT_STATEDIR);
+
+    path_state_volatile = r->Get(
+        "netifyd", "path_volatile_state", ND_VOLATILE_STATEDIR);
+
+    UpdatePaths();
+
+    path_pid_file = r->Get(
+        "netifyd", "path_pid_file", ND_PID_FILE_NAME);
+
+    path_uuid = r->Get(
         "netifyd", "path_uuid", ND_AGENT_UUID_PATH);
-    this->path_uuid = strdup(path_uuid.c_str());
 
-    string path_uuid_serial = r->Get(
+    path_uuid_serial = r->Get(
         "netifyd", "path_uuid_serial", ND_AGENT_SERIAL_PATH);
-    this->path_uuid_serial = strdup(path_uuid_serial.c_str());
 
-    string path_uuid_site = r->Get(
+    path_uuid_site = r->Get(
         "netifyd", "path_uuid_site", ND_SITE_UUID_PATH);
-    this->path_uuid_site = strdup(path_uuid_site.c_str());
 
     string url_sink_provision = r->Get(
         "netifyd", "url_sink", ND_URL_SINK);
@@ -752,10 +765,11 @@ bool ndGlobalConfig::AddInterfaces(void)
 
         if (strncasecmp(s.c_str(), key, key_len))
             continue;
-        size_t p = s.find_last_of(key);
+
+        size_t p = s.find_last_of("_");
         if (p == string::npos) continue;
 
-        string iface = s.substr(p - 1);
+        string iface = s.substr(p + 1);
 
         string interface_role = r->Get(
             s, "role", "none"
@@ -941,6 +955,21 @@ void ndGlobalConfig::LoadCaptureSettings(
         tpv3->rb_blocks = (unsigned)r->GetInteger(
             section, "rb_blocks", tpv3_defaults.rb_blocks);
     }
+}
+
+void ndGlobalConfig::UpdatePaths(void)
+{
+    path_app_config =
+        path_state_persistent + "/" + ND_CONF_APP_BASE;
+
+    path_cat_config =
+        path_state_persistent + "/" + ND_CONF_CAT_BASE;
+
+    path_legacy_config =
+        path_state_persistent + "/" + ND_CONF_LEGACY_BASE;
+
+    path_agent_status =
+        path_state_volatile + "/" + ND_AGENT_STATUS_BASE;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -112,7 +112,6 @@
 #define ND_JSON_FILE_RESPONSE   ND_VOLATILE_STATEDIR "/sink-response.json"
 #define ND_JSON_FILE_BAD_SEND   ND_VOLATILE_STATEDIR "/sink-bad-request.json"
 #define ND_JSON_FILE_BAD_RECV   ND_VOLATILE_STATEDIR "/sink-bad-response.json"
-#define ND_JSON_FILE_STATUS     ND_VOLATILE_STATEDIR "/status.json"
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 
@@ -123,6 +122,9 @@
 #define ND_TPV3_RB_BLOCK_SIZE   (1 << 22) // Bytes
 #define ND_TPV3_RB_FRAME_SIZE   (1 << 11) // Bytes
 #define ND_TPV3_RB_BLOCKS       64
+
+#define ND_AGENT_STATUS_BASE    "status.json"
+#define ND_AGENT_STATUS_PATH    ND_VOLATILE_STATEDIR "/" ND_AGENT_STATUS_BASE
 
 #ifndef ND_URL_SINK
 #define ND_URL_SINK             "https://sink.netify.ai/provision/"
@@ -137,15 +139,18 @@
 #define ND_SINK_CONNECT_TIMEOUT 30      // Default 30-second connection timeout
 #define ND_SINK_XFER_TIMEOUT    300     // Default 5-minute upload timeout
 
-#define ND_AGENT_UUID_PATH      ND_PERSISTENT_STATEDIR "/agent.uuid"
+#define ND_AGENT_UUID_BASE      "agent.uuid"
+#define ND_AGENT_UUID_PATH      ND_PERSISTENT_STATEDIR "/" ND_AGENT_UUID_BASE
 #define ND_AGENT_UUID_NULL      "00-00-00-00"
 #define ND_AGENT_UUID_LEN       11
 
-#define ND_AGENT_SERIAL_PATH    ND_PERSISTENT_STATEDIR "/serial.uuid"
+#define ND_AGENT_SERIAL_BASE    "serial.uuid"
+#define ND_AGENT_SERIAL_PATH    ND_PERSISTENT_STATEDIR "/" ND_AGENT_SERIAL_BASE
 #define ND_AGENT_SERIAL_NULL    "-"
 #define ND_AGENT_SERIAL_LEN     32
 
-#define ND_SITE_UUID_PATH       ND_PERSISTENT_STATEDIR "/site.uuid"
+#define ND_SITE_UUID_BASE       "site.uuid"
+#define ND_SITE_UUID_PATH       ND_PERSISTENT_STATEDIR "/" ND_SITE_UUID_BASE
 #define ND_SITE_UUID_NULL       "-"
 #define ND_SITE_UUID_LEN        36
 

@@ -374,7 +374,9 @@ static void nd_usage(int rc = 0, bool version = false)
 
             ND_CONF_FILE_NAME,
             ND_CONF_LEGACY_PATH,
-            nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
+            nd_config.path_uuid.c_str(),
+            nd_config.path_uuid_site.c_str(),
+            ND_URL_SINK_PATH
         );
     }
 
@@ -1666,7 +1668,7 @@ static void nd_dump_stats(void)
         if (thread_socket)
             thread_socket->QueueWrite(json_string);
 
-        nd_json_save_to_file(json_string, ND_JSON_FILE_STATUS);
+        nd_json_save_to_file(json_string, nd_config.path_agent_status);
     }
     catch (runtime_error &e) {
         nd_printf("Error saving Agent status to file: %s\n",
@@ -1729,7 +1731,7 @@ static void nd_dump_stats(void)
     }
     catch (runtime_error &e) {
         nd_printf("Error writing JSON export playload to file: %s: %s\n",
-            nd_config.path_export_json, e.what());
+            nd_config.path_export_json.c_str(), e.what());
     }
 
     if (ND_DEBUG)
@@ -1873,20 +1875,8 @@ static void nd_status(void)
         return;
     }
 
-    pid_t nd_pid = -1;
-    FILE *hpid = fopen(ND_PID_FILE_NAME, "r");
-    if (hpid != NULL) {
-        char pid[32];
-        if (fgets(pid, sizeof(pid), hpid)) {
-            nd_pid = nd_is_running(
-                (pid_t)strtol(pid, NULL, 0),
-                "netifyd"
-            );
-        }
-        fclose(hpid);
-    }
-    else if (errno == ENOENT)
-        nd_pid = 0;
+    pid_t nd_pid = nd_load_pid(nd_config.path_pid_file);
+    nd_pid = nd_is_running(nd_pid, "netifyd");
 
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
@@ -1896,29 +1886,34 @@ static void nd_status(void)
         }
     }
 
-    fprintf(stderr, "%s%s%s agent %s.\n",
+    fprintf(stderr, "%s%s%s agent %s: PID %d\n",
         (nd_pid < 0) ? ND_C_YELLOW :
             (nd_pid == 0) ? ND_C_RED : ND_C_GREEN,
         (nd_pid < 0) ? ND_I_WARN :
             (nd_pid == 0) ? ND_I_FAIL : ND_I_OK,
         ND_C_RESET,
         (nd_pid < 0) ? "status could not be determined" :
-            (nd_pid == 0) ? "is not running" : "is running");
+            (nd_pid == 0) ? "is not running" : "is running",
+        nd_pid
+    );
 
     fprintf(stderr, "%s persistent state path: %s\n",
-        ND_I_INFO, ND_PERSISTENT_STATEDIR);
+        ND_I_INFO, nd_config.path_state_persistent.c_str());
     fprintf(stderr, "%s volatile state path: %s\n",
-        ND_I_INFO, ND_VOLATILE_STATEDIR);
+        ND_I_INFO, nd_config.path_state_volatile.c_str());
 
     json jstatus;
 
     try {
         string status;
-        if (nd_file_load(ND_JSON_FILE_STATUS, status) < 0) {
+        if (nd_file_load(nd_config.path_agent_status, status) < 0
+            || status.size() == 0) {
             fprintf(stderr,
                 "%s%s%s agent run-time status could not be determined.\n",
                 ND_C_YELLOW, ND_I_WARN, ND_C_RESET
             );
+
+            return;
         }
 
         jstatus = json::parse(status);
@@ -1943,12 +1938,48 @@ static void nd_status(void)
         nd_uptime(jstatus["uptime"].get<time_t>(), uptime);
         fprintf(stderr, "%s agent uptime: %s\n",
             ND_I_INFO, uptime.c_str());
-        unsigned flows = jstatus["flow_count"].get<unsigned>();
-        fprintf(stderr, "%s%s%s active flows: %u\n",
-            (flows > 0) ? ND_C_GREEN : ND_C_YELLOW,
-            (flows > 0) ? ND_I_OK : ND_I_WARN,
-            ND_C_RESET, flows
+
+        double flows = jstatus["flow_count"].get<double>();
+        double flow_utilization = (nd_config.max_flows > 0) ?
+            flows * 100.0 / (double)nd_config.max_flows : 0;
+        string max_flows = (nd_config.max_flows == 0) ?
+            "unlimited" : to_string(nd_config.max_flows);
+
+        if (flows > 0) {
+            if (nd_config.max_flows) {
+                if (flow_utilization < 75) {
+                    icon = ND_I_OK;
+                    color = ND_C_GREEN;
+                }
+                else if (flow_utilization < 90) {
+                    icon = ND_I_WARN;
+                    color = ND_C_YELLOW;
+                }
+                else {
+                    icon = ND_I_FAIL;
+                    color = ND_C_RED;
+                }
+            }
+            else {
+                icon = ND_I_OK;
+                color = ND_C_GREEN;
+            }
+        }
+        else {
+            icon = ND_I_WARN;
+            color = ND_C_YELLOW;
+        }
+
+        fprintf(stderr,
+            "%s%s%s active flows: %s%u%s / %s (%s%.01lf%%%s)\n",
+            color, icon, ND_C_RESET,
+            color, (unsigned)flows, ND_C_RESET,
+            max_flows.c_str(),
+            color, flow_utilization, ND_C_RESET
         );
+        fprintf(stderr, "%s minimum flow size: %lu\n",
+            ND_I_INFO,
+            sizeof(struct ndFlow) + sizeof(struct ndpi_flow_struct));
 
         fprintf(stderr, "%s CPU cores: %u\n",
             ND_I_INFO, jstatus["cpu_cores"].get<unsigned>());
@@ -2261,17 +2292,20 @@ static int nd_check_agent_uuid(void)
 {
     if (nd_config.uuid == NULL ||
         ! strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+
         string uuid;
-        if (! nd_load_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN) ||
+        if (! nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN) ||
             ! uuid.size() ||
             ! strncmp(uuid.c_str(), ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+
             nd_generate_uuid(uuid);
+
             printf("Generated a new Agent UUID: %s\n", uuid.c_str());
-            if (! nd_save_uuid(uuid, ND_AGENT_UUID_PATH, ND_AGENT_UUID_LEN))
+            if (! nd_save_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN))
                 return 1;
         }
-        if (nd_config.uuid != NULL)
-            free(nd_config.uuid);
+
+        if (nd_config.uuid != NULL) free(nd_config.uuid);
         nd_config.uuid = strdup(uuid.c_str());
     }
 
@@ -2532,8 +2566,7 @@ int main(int argc, char *argv[])
             nd_config.AddInterfaceFilter(last_device, optarg);
             break;
         case 'f':
-            free(nd_config.path_legacy_config);
-            nd_config.path_legacy_config = strdup(optarg);
+            nd_config.path_legacy_config = optarg;
             break;
         case 'h':
             nd_usage();
@@ -2545,7 +2578,7 @@ int main(int argc, char *argv[])
             nd_config.update_interval = atoi(optarg);
             break;
         case 'j':
-            nd_config.path_export_json = strdup(optarg);
+            nd_config.path_export_json = optarg;
             break;
         case 'l':
             nd_config.flags &= ~ndGF_USE_NETLINK;
@@ -2624,8 +2657,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (nd_config.path_export_json == NULL)
-        nd_config.path_export_json = strdup(ND_JSON_FILE_EXPORT);
+    nd_printf("%s\n", nd_get_version_and_features().c_str());
 
     for (auto &r : nd_config.interfaces) {
         for (auto &i : r.second) {
@@ -2719,13 +2751,8 @@ int main(int argc, char *argv[])
     if (ND_USE_FHC)
         flow_hash_cache = new ndFlowHashCache(nd_config.max_fhc);
 
-    nd_printf("%s\n", nd_get_version_and_features().c_str());
-
     nd_check_agent_uuid();
-#ifndef _ND_LEAN_AND_MEAN
-    nd_dprintf("Flow entry size: %lu\n", sizeof(struct ndFlow) +
-        sizeof(struct ndpi_flow_struct));
-#endif
+
 #if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
     bool je_state = false, je_enable = true;
     size_t je_opt_size = sizeof(bool);
@@ -2744,30 +2771,29 @@ int main(int argc, char *argv[])
             (je_enable) ? "yes" : "no", (je_state) ? "yes" : "no");
     }
 #endif
-    if (! ND_DEBUG) {
-        FILE *hpid = fopen(ND_PID_FILE_NAME, "w+");
 
-        do {
-            if (hpid == NULL) {
-                nd_printf("Error opening PID file: %s: %s\n",
-                    ND_PID_FILE_NAME, strerror(errno));
-
-                if (mkdir(ND_VOLATILE_STATEDIR, 0755) == 0)
-                    hpid = fopen(ND_PID_FILE_NAME, "w+");
-                else {
-                    nd_printf("Unable to create volatile state directory: %s: %s\n",
-                        ND_VOLATILE_STATEDIR, strerror(errno));
-                    return 1;
-                }
-            }
-        } while(hpid == NULL);
-
-        fprintf(hpid, "%d\n", getpid());
-        fclose(hpid);
+    if (! nd_dir_exists(nd_config.path_state_volatile)) {
+        if (mkdir(nd_config.path_state_volatile.c_str(), 0755) != 0) {
+            nd_printf("Unable to create volatile state directory: %s: %s\n",
+                nd_config.path_state_volatile.c_str(), strerror(errno));
+            return 1;
+        }
     }
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_epoch) != 0) {
-        nd_printf("Error getting epoch time: %s\n", strerror(errno));
+    pid_t old_pid = nd_load_pid(nd_config.path_pid_file);
+
+    if (old_pid > 0 &&
+        old_pid == nd_is_running(old_pid, "netifyd")) {
+        nd_printf("An agent is already running: PID %d\n", old_pid);
+        return 1;
+    }
+
+    if (nd_save_pid(nd_config.path_pid_file, getpid()) != 0) return 1;
+
+    if (clock_gettime(
+        CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_epoch) != 0) {
+        nd_printf(
+            "Error getting epoch time: %s\n", strerror(errno));
         return 1;
     }
 
@@ -3187,7 +3213,7 @@ int main(int argc, char *argv[])
 
     closelog();
 
-    if (! ND_DEBUG) unlink(ND_PID_FILE_NAME);
+    unlink(nd_config.path_pid_file.c_str());
 
     return 0;
 }

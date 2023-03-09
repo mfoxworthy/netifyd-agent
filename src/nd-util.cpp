@@ -523,32 +523,32 @@ void nd_private_ipaddr(uint8_t index, struct sockaddr_storage &addr)
     }
 }
 
-bool nd_load_uuid(string &uuid, const char *path, size_t length)
+bool nd_load_uuid(string &uuid, const string &path, size_t length)
 {
     struct stat sb;
     char _uuid[length + 1];
 
-    if (stat(path, &sb) == -1) {
+    if (stat(path.c_str(), &sb) == -1) {
         if (errno != ENOENT) {
             nd_printf("Error loading uuid: %s: %s\n",
-                path, strerror(errno));
+                path.c_str(), strerror(errno));
         }
         return false;
     }
 
     if (! S_ISREG(sb.st_mode)) {
         nd_printf("Error loading uuid: %s: %s\n",
-            path, "Not a regular file");
+            path.c_str(), "Not a regular file");
         return false;
     }
 
     if (sb.st_mode & S_IXUSR) {
-        FILE *ph = popen(path, "r");
+        FILE *ph = popen(path.c_str(), "r");
 
         if (ph == NULL) {
             if (ND_DEBUG || errno != ENOENT) {
                 nd_printf("Error loading uuid from pipe: %s: %s\n",
-                    path, strerror(errno));
+                    path.c_str(), strerror(errno));
             }
             return false;
         }
@@ -561,19 +561,19 @@ bool nd_load_uuid(string &uuid, const char *path, size_t length)
 
         if (bytes <= 0 || rc != 0) {
             nd_printf("Error loading uuid from pipe: %s: %s: %d\n",
-                path, "Invalid pipe read", rc);
+                path.c_str(), "Invalid pipe read", rc);
             return false;
         }
 
         _uuid[bytes - 1] = '\0';
     }
     else {
-        FILE *fh = fopen(path, "r");
+        FILE *fh = fopen(path.c_str(), "r");
 
         if (fh == NULL) {
             if (ND_DEBUG || errno != ENOENT) {
                 nd_printf("Error loading uuid from file: %s: %s\n",
-                    path, strerror(errno));
+                    path.c_str(), strerror(errno));
             }
             return false;
         }
@@ -581,7 +581,7 @@ bool nd_load_uuid(string &uuid, const char *path, size_t length)
         if (fread((void *)_uuid, 1, length, fh) != length) {
             fclose(fh);
             nd_printf("Error reading uuid from file: %s: %s\n",
-                path, strerror(errno));
+                path.c_str(), strerror(errno));
             return false;
         }
 
@@ -597,19 +597,19 @@ bool nd_load_uuid(string &uuid, const char *path, size_t length)
     return true;
 }
 
-bool nd_save_uuid(const string &uuid, const char *path, size_t length)
+bool nd_save_uuid(const string &uuid, const string &path, size_t length)
 {
-    FILE *fh = fopen(path, "w");
+    FILE *fh = fopen(path.c_str(), "w");
 
     if (fh == NULL) {
-        nd_printf("Error saving uuid: %s: %s\n", path, strerror(errno));
+        nd_printf("Error saving uuid: %s: %s\n", path.c_str(), strerror(errno));
         return false;
     }
 
     if (fwrite((const void *)uuid.c_str(),
         1, length, fh) != length) {
         fclose(fh);
-        nd_printf("Error writing uuid: %s: %s\n", path, strerror(errno));
+        nd_printf("Error writing uuid: %s: %s\n", path.c_str(), strerror(errno));
         return false;
     }
 
@@ -980,14 +980,62 @@ pid_t nd_is_running(pid_t pid, const char *exe_base)
 #error "Unsupported platform, not Linux or BSD >= 4.4."
 #endif
 
-int nd_file_exists(const char *path)
+int nd_load_pid(const string &pidfile)
+{
+    pid_t pid = -1;
+    FILE *hpid = fopen(pidfile.c_str(), "r");
+
+    if (hpid != NULL) {
+        char _pid[32];
+        if (fgets(_pid, sizeof(_pid), hpid))
+            pid = (pid_t)strtol(_pid, NULL, 0);
+        fclose(hpid);
+    }
+    else if (errno == ENOENT)
+        pid = 0;
+
+    return pid;
+}
+
+int nd_save_pid(const string &pidfile, pid_t pid)
+{
+    FILE *hpid = fopen(pidfile.c_str(), "w+");
+
+    if (hpid == NULL) {
+        nd_printf("Error opening PID file: %s: %s\n",
+            pidfile.c_str(), strerror(errno));
+
+        return -1;
+    }
+
+    fprintf(hpid, "%d\n", pid);
+    fclose(hpid);
+
+    return 0;
+}
+
+int nd_file_exists(const string &path)
 {
     struct stat sb;
 
-    if (stat(path, &sb) == -1) {
+    if (stat(path.c_str(), &sb) == -1) {
         if (errno == ENOENT) return 0;
         return -1;
     }
+
+    return 1;
+}
+
+int nd_dir_exists(const string &path)
+{
+    struct stat sb;
+
+    if (stat(path.c_str(), &sb) == -1) {
+        if (errno == ENOENT) return 0;
+        return -1;
+    }
+
+    if (! S_ISDIR(sb.st_mode)) return 0;
 
     return 1;
 }

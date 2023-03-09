@@ -91,8 +91,8 @@ bool nd_is_ipaddr(const char *ip);
 
 void nd_private_ipaddr(uint8_t index, struct sockaddr_storage &addr);
 
-bool nd_load_uuid(string &uuid, const char *path, size_t length);
-bool nd_save_uuid(const string &uuid, const char *path, size_t length);
+bool nd_load_uuid(string &uuid, const string &path, size_t length);
+bool nd_save_uuid(const string &uuid, const string &path, size_t length);
 
 bool nd_load_sink_url(string &url);
 bool nd_save_sink_url(const string &url);
@@ -120,8 +120,11 @@ int nd_save_response_data(const char *filename, const ndJsonDataChunks &data);
 int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr);
 
 pid_t nd_is_running(pid_t pid, const char *exe_base);
+pid_t nd_load_pid(const string &pidfile);
+int nd_save_pid(const string &pidfile, pid_t pid);
 
-int nd_file_exists(const char *path);
+int nd_file_exists(const string &path);
+int nd_dir_exists(const string &path);
 
 void nd_uptime(time_t ut, string &uptime);
 

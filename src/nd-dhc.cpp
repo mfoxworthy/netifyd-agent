@@ -220,21 +220,21 @@ void ndDNSHintCache::Load(void)
     long ttl;
     char header[1024], *host, *digest;
     size_t loaded = 0, line = 1;
-    const char *filename = NULL;
+    string filename;
     FILE *hf = NULL;
 
     switch (nd_config.dhc_save) {
     case ndDHC_PERSISTENT:
-        filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
+        filename = nd_config.path_state_persistent + ND_DHC_FILE_NAME;
         break;
     case ndDHC_VOLATILE:
-        filename = ND_VOLATILE_STATEDIR ND_DHC_FILE_NAME;
+        filename = nd_config.path_state_volatile + ND_DHC_FILE_NAME;
         break;
     default:
         return;
     }
 
-    if (! (hf = fopen(filename, "r"))) return;
+    if (! (hf = fopen(filename.c_str(), "r"))) return;
 
     if (fgets(header, sizeof(header), hf) == NULL) { fclose(hf); return; }
 
@@ -246,7 +246,7 @@ void ndDNSHintCache::Load(void)
             " \"%m[0-9A-z.-]\" , %m[0-9A-Fa-f] , %ld\n",
             &host, &digest, &ttl)) != 3) {
             nd_printf("%s: parse error at line #%u [%d]\n",
-                filename, line, rc);
+                filename.c_str(), line, rc);
             if (rc >= 1) free(host);
             if (rc >= 2) free(digest);
             break;
@@ -270,21 +270,21 @@ void ndDNSHintCache::Save(void)
 {
     string digest;
     size_t saved = 0;
-    const char *filename = NULL;
+    string filename;
     FILE *hf = NULL;
 
     switch (nd_config.dhc_save) {
     case ndDHC_PERSISTENT:
-        filename = ND_PERSISTENT_STATEDIR ND_DHC_FILE_NAME;
+        filename = nd_config.path_state_persistent + ND_DHC_FILE_NAME;
         break;
     case ndDHC_VOLATILE:
-        filename = ND_VOLATILE_STATEDIR ND_DHC_FILE_NAME;
+        filename = nd_config.path_state_volatile + ND_DHC_FILE_NAME;
         break;
     default:
         return;
     }
 
-    if (! (hf = fopen(filename, "w"))) return;
+    if (! (hf = fopen(filename.c_str(), "w"))) return;
 
     unique_lock<mutex> ul(lock);
 

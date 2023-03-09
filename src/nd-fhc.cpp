@@ -163,20 +163,20 @@ bool ndFlowHashCache::Pop(const string &lower_hash, string &upper_hash)
 
 void ndFlowHashCache::Load(void)
 {
-    ostringstream os;
+    string filename;
 
     switch (nd_config.fhc_save) {
     case ndFHC_PERSISTENT:
-        os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        filename = nd_config.path_state_persistent + ND_FLOW_HC_FILE_NAME;
         break;
     case ndFHC_VOLATILE:
-        os << ND_VOLATILE_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        filename = nd_config.path_state_volatile + ND_FLOW_HC_FILE_NAME;
         break;
     default:
         return;
     }
 
-    FILE *hf = fopen(os.str().c_str(), "rb");
+    FILE *hf = fopen(filename.c_str(), "rb");
     if (hf != NULL) {
         do {
             string digest_lower, digest_mdata;
@@ -201,23 +201,23 @@ void ndFlowHashCache::Load(void)
 
 void ndFlowHashCache::Save(void)
 {
-    ostringstream os;
+    string filename;
 
     switch (nd_config.fhc_save) {
     case ndFHC_PERSISTENT:
-        os << ND_PERSISTENT_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        filename = nd_config.path_state_persistent + ND_FLOW_HC_FILE_NAME;
         break;
     case ndFHC_VOLATILE:
-        os << ND_VOLATILE_STATEDIR << ND_FLOW_HC_FILE_NAME;
+        filename = nd_config.path_state_volatile + ND_FLOW_HC_FILE_NAME;
         break;
     default:
         return;
     }
 
-    FILE *hf = fopen(os.str().c_str(), "wb");
+    FILE *hf = fopen(filename.c_str(), "wb");
     if (hf == NULL) {
         nd_printf("WARNING: Error saving flow hash cache: %s: %s\n",
-            os.str().c_str(), strerror(errno));
+            filename.c_str(), strerror(errno));
         return;
     }
 
