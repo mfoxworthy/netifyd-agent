@@ -263,8 +263,8 @@ int ndGlobalConfig::Load(const string &filename)
 
     switch (rc) {
     case -1:
-        fprintf(stderr, "Error opening configuration file: %s\n",
-            filename.c_str());
+        fprintf(stderr, "Error opening configuration file: %s: %s\n",
+            filename.c_str(), strerror(errno));
         return -1;
     case 0:
         break;
