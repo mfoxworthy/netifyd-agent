@@ -48,14 +48,6 @@ void nd_json_add_stats(json &parent, const ndPacketStats &stats);
 typedef vector<string> ndJsonDataChunks;
 typedef map<string, ndJsonDataChunks> ndJsonData;
 
-#ifdef _ND_USE_PLUGINS
-typedef map<string, string> ndJsonPluginParams;
-typedef ndJsonPluginParams ndJsonPluginReplies;
-
-typedef map<string, string> ndJsonPluginRequest;
-typedef map<string, ndJsonPluginParams> ndJsonPluginDispatch;
-#endif
-
 class ndJsonObject
 {
 public:
@@ -91,19 +83,8 @@ public:
 
     ndJsonData data;
 
-#ifdef _ND_USE_PLUGINS
-    ndJsonPluginRequest plugin_request_service_param;
-    ndJsonPluginRequest plugin_request_task_exec;
-
-    ndJsonPluginDispatch plugin_params;
-#endif
-
 protected:
     void UnserializeData(json &jdata);
-#ifdef _ND_USE_PLUGINS
-    void UnserializePluginRequest(json &jrequest, ndJsonPluginRequest &plugin_request);
-    void UnserializePluginDispatch(json &jdispatch);
-#endif // _ND_USE_PLUGINS
 };
 
 #endif // _ND_JSON_H

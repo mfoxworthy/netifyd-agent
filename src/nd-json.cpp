@@ -285,21 +285,6 @@ void ndJsonResponse::Parse(const string &json_string)
         auto it_data = j.find("data");
         if (it_data != j.end() && (*it_data) != nullptr)
             UnserializeData((*it_data));
-
-#ifdef _ND_USE_PLUGINS
-        auto it_rsp = j.find("plugin_request_service_param");
-        if (it_rsp != j.end() && (*it_rsp) != nullptr) {
-            UnserializePluginRequest((*it_rsp), plugin_request_service_param);
-        }
-
-        auto it_rte = j.find("plugin_request_task_exec");
-        if (it_rte != j.end() && (*it_rte) != nullptr)
-            UnserializePluginRequest((*it_rte), plugin_request_task_exec);
-
-        auto it_pp = j.find("plugin_params");
-        if (it_pp != j.end() && (*it_pp) != nullptr)
-            UnserializePluginDispatch((*it_pp));
-#endif // _ND_USE_PLUGINS
     }
     catch (ndJsonParseException &e) {
         throw;
@@ -320,27 +305,5 @@ void ndJsonResponse::UnserializeData(json &jdata)
         }
     }
 }
-
-#ifdef _ND_USE_PLUGINS
-
-void ndJsonResponse::UnserializePluginRequest(
-    json &jrequest, ndJsonPluginRequest &plugin_request)
-{
-    for (auto it = jrequest.begin(); it != jrequest.end(); it++)
-        plugin_request[it.key()] = (*it).get<string>();
-}
-
-void ndJsonResponse::UnserializePluginDispatch(json &jdispatch)
-{
-    for (auto it = jdispatch.begin(); it != jdispatch.end(); it++) {
-        for (auto it_param = (*it).begin(); it_param != (*it).end(); it_param++) {
-            string encoded = (*it_param).get<string>();
-            plugin_params[it.key()][it_param.key()] =
-                base64_decode(encoded.c_str(), encoded.size());
-        }
-    }
-}
-
-#endif // _ND_USE_PLUGINS
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

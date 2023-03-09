@@ -195,9 +195,8 @@ public:
     nd_inotify_watch inotify_watches;
 #endif
 #ifdef _ND_USE_PLUGINS
-    map<string, string> plugin_services;
-    map<string, string> plugin_tasks;
     map<string, string> plugin_detections;
+    map<string, string> plugin_sinks;
     map<string, string> plugin_stats;
 #endif
     map<string, string> custom_headers;

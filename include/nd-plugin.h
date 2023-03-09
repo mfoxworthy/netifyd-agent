@@ -17,18 +17,14 @@
 #ifndef _ND_PLUGIN_H
 #define _ND_PLUGIN_H
 
-#define _ND_PLUGIN_VER  0x20230117
-
-#define ndStartDetectionThreads() kill(getpid(), SIGUSR1)
-#define ndStopDetectionThreads()  kill(getpid(), SIGUSR2)
+#define _ND_PLUGIN_VER  0x20230309
 
 #define ndPluginInit(class_name) \
     extern "C" { \
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
         if (p == NULL) return NULL; \
-        if (p->GetType() != ndPlugin::TYPE_SINK_TASK && \
-            p->GetType() != ndPlugin::TYPE_SINK_SERVICE && \
+        if (p->GetType() != ndPlugin::TYPE_SINK && \
             p->GetType() != ndPlugin::TYPE_DETECTION && \
             p->GetType() != ndPlugin::TYPE_STATS) { \
                 nd_printf("Invalid plugin type detected during init: %s\n", \
@@ -46,11 +42,6 @@ public:
         const string &where_arg, const string &what_arg) throw()
         : ndException(where_arg, what_arg) { }
 };
-
-typedef map<string, string> ndPluginFiles;
-
-typedef map<string, ndJsonPluginParams> ndPluginParams;
-typedef map<string, ndJsonPluginReplies> ndPluginReplies;
 
 class ndPlugin : public ndThread
 {
@@ -74,8 +65,7 @@ public:
     enum ndPluginType
     {
         TYPE_BASE,
-        TYPE_SINK_SERVICE,
-        TYPE_SINK_TASK,
+        TYPE_SINK,
         TYPE_DETECTION,
         TYPE_STATS,
     };
@@ -92,60 +82,7 @@ public:
     ndPluginSink(const string &tag);
     virtual ~ndPluginSink();
 
-    virtual void SetParams(const string uuid_dispatch, const ndJsonPluginParams &params);
-
-    virtual void GetReplies(
-        ndPluginFiles &files, ndPluginFiles &data, ndPluginReplies &replies);
-
 protected:
-    virtual bool PopParams(string &uuid_dispatch, ndJsonPluginParams &params);
-
-    virtual void PushFile(const string &tag, const string &filename);
-    virtual void PushData(const string &tag, const string &data);
-
-    virtual void PushReply(
-        const string &uuid_dispatch, const string &key, const string &value);
-    inline void PushReplyLock(
-        const string &uuid_dispatch, const string &key, const string &value)
-    {
-        Lock();
-        PushReply(uuid_dispatch, key, value);
-        Unlock();
-    }
-
-    ndPluginFiles files;
-    ndPluginFiles data;
-    ndPluginParams params;
-    ndPluginReplies replies;
-};
-
-class ndPluginService : public ndPluginSink
-{
-public:
-    ndPluginService(const string &tag);
-    virtual ~ndPluginService();
-};
-
-class ndPluginTask : public ndPluginSink
-{
-public:
-    ndPluginTask(const string &tag);
-    virtual ~ndPluginTask();
-
-    virtual void SetParams(const string uuid_dispatch, const ndJsonPluginParams &params);
-
-protected:
-    virtual bool PopParams(ndJsonPluginParams &params);
-
-    virtual void PushReply(const string &key, const string &value);
-    inline void PushReplyLock(const string &key, const string &value)
-    {
-        Lock();
-        PushReply(key, value);
-        Unlock();
-    }
-
-    string uuid_dispatch;
 };
 
 class ndPluginDetection : public ndPlugin

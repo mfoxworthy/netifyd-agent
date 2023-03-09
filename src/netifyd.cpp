@@ -143,9 +143,8 @@ static ndSinkThread *thread_sink = NULL;
 static ndSocketThread *thread_socket = NULL;
 static ndNetifyApiThread *thread_napi = NULL;
 #ifdef _ND_USE_PLUGINS
-static nd_plugins plugin_services;
-static nd_plugins plugin_tasks;
 static nd_plugins plugin_detections;
+static nd_plugins plugin_sinks;
 static nd_plugins plugin_stats;
 #endif
 static char *nd_conf_filename = NULL;
@@ -249,44 +248,27 @@ static void nd_usage(int rc = 0, bool version = false)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (nd_config.plugin_services.size())
-            fprintf(stderr, "\nService plugins:\n");
-
-        for (auto i : nd_config.plugin_services) {
-
-            string plugin_version("?.?.?");
-
-            try {
-                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
-                loader->GetPlugin()->GetVersion(plugin_version);
-            }
-            catch (...) { }
-
-            fprintf(stderr, "  %s: %s: v%s\n",
-                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
-        }
-
-        if (nd_config.plugin_tasks.size())
-            fprintf(stderr, "\nTask plugins:\n");
-
-        for (auto i : nd_config.plugin_tasks) {
-
-            string plugin_version("?.?.?");
-
-            try {
-                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
-                loader->GetPlugin()->GetVersion(plugin_version);
-            }
-            catch (...) { }
-
-            fprintf(stderr, "  %s: %s: v%s\n",
-                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
-        }
-
         if (nd_config.plugin_detections.size())
             fprintf(stderr, "\nDetection plugins:\n");
 
         for (auto i : nd_config.plugin_detections) {
+
+            string plugin_version("?.?.?");
+
+            try {
+                ndPluginLoader *loader = new ndPluginLoader(i.second, i.first);
+                loader->GetPlugin()->GetVersion(plugin_version);
+            }
+            catch (...) { }
+
+            fprintf(stderr, "  %s: %s: v%s\n",
+                i.first.c_str(), i.second.c_str(), plugin_version.c_str());
+        }
+
+        if (nd_config.plugin_sinks.size())
+            fprintf(stderr, "\nStatistics plugins:\n");
+
+        for (auto i : nd_config.plugin_sinks) {
 
             string plugin_version("?.?.?");
 
@@ -696,155 +678,6 @@ static int nd_reload_detection_threads(void)
 #endif // UNUSED
 #ifdef _ND_USE_PLUGINS
 
-static int nd_plugin_start_services(void)
-{
-    for (map<string, string>::const_iterator i = nd_config.plugin_services.begin();
-        i != nd_config.plugin_services.end(); i++) {
-        try {
-            plugin_services[i->first] = new ndPluginLoader(i->second, i->first);
-            plugin_services[i->first]->GetPlugin()->Create();
-        }
-        catch (ndPluginException &e) {
-            nd_printf("Error loading service plugin: %s\n", e.what());
-            return 1;
-        }
-        catch (ndThreadException &e) {
-            nd_printf("Error starting service plugin: %s %s: %s\n",
-                i->first.c_str(), i->second.c_str(), e.what());
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-static void nd_plugin_stop_services(void)
-{
-    for (nd_plugins::iterator i = plugin_services.begin();
-        i != plugin_services.end(); i++) {
-
-        ndPluginService *service = reinterpret_cast<ndPluginService *>(
-            i->second->GetPlugin()
-        );
-        service->Terminate();
-        delete service;
-
-        delete i->second;
-    }
-
-    plugin_services.clear();
-}
-
-static int nd_plugin_dispatch_service_param(
-    const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
-{
-    int rc = 0;
-#if 0
-    if (name == "netifyd.service.capture.start") {
-        nd_printf("Unclassified flow capture started by service parameter request.\n");
-        ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS, true);
-        return 0;
-    }
-    else if (name == "netifyd.service.capture.stop") {
-        nd_printf("Unclassified flow capture stopped by service parameter request.\n");
-        ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS, false);
-        return 0;
-    }
-#endif
-    nd_plugins::iterator plugin_iter = plugin_services.find(name);
-
-    if (plugin_iter == plugin_services.end()) {
-        nd_printf("Unable to dispatch parameters; service not found: %s\n",
-            name.c_str());
-        rc = -1;
-    }
-    else {
-        ndPluginService *service = reinterpret_cast<ndPluginService *>(
-            plugin_iter->second->GetPlugin()
-        );
-
-        service->SetParams(uuid_dispatch, params);
-    }
-
-    return rc;
-}
-
-static int nd_plugin_start_task(
-    const string &name, const string &uuid_dispatch, const ndJsonPluginParams &params)
-{
-    map<string, string>::const_iterator task_iter = nd_config.plugin_tasks.find(name);
-
-    if (task_iter == nd_config.plugin_tasks.end()) {
-        nd_printf("Unable to initialize plugin; task not found: %s\n",
-            name.c_str());
-        return -1;
-    }
-
-    nd_plugins::iterator plugin_iter = plugin_tasks.find(uuid_dispatch);
-
-    if (plugin_iter != plugin_tasks.end()) {
-        nd_printf("Unable to initialize plugin; task exists: %s: %s\n",
-            name.c_str(), uuid_dispatch.c_str());
-        return -1;
-    }
-
-    try {
-        ndPluginLoader *plugin = new ndPluginLoader(
-            task_iter->second, task_iter->first
-        );
-
-        ndPluginTask *task = reinterpret_cast<ndPluginTask *>(
-            plugin->GetPlugin()
-        );
-
-        task->SetParams(uuid_dispatch, params);
-        task->Create();
-
-        plugin_tasks[uuid_dispatch] = plugin;
-    }
-    catch (ndPluginException &e) {
-        nd_printf("Error loading task plugin: %s\n", e.what());
-        return -1;
-    }
-    catch (ndThreadException &e) {
-        nd_printf("Error starting task plugin: %s %s: %s\n",
-            task_iter->first.c_str(), task_iter->second.c_str(), e.what());
-        return -1;
-    }
-
-    return 0;
-}
-
-static void nd_plugin_stop_tasks(void)
-{
-    for (nd_plugins::iterator i = plugin_tasks.begin();
-        i != plugin_tasks.end(); i++) {
-
-        ndPluginTask *task = reinterpret_cast<ndPluginTask *>(
-            i->second->GetPlugin()
-        );
-        task->Terminate();
-        delete task;
-    }
-}
-
-static void nd_plugin_reap_tasks(void)
-{
-    for (nd_plugins::iterator i = plugin_tasks.begin();
-        i != plugin_tasks.end(); i++) {
-        if (! i->second->GetPlugin()->HasTerminated()) continue;
-
-        nd_dprintf("Reaping task plugin: %s: %s\n",
-            i->second->GetPlugin()->GetTag().c_str(),
-            i->first.c_str());
-
-        delete i->second->GetPlugin();
-        delete i->second;
-
-        plugin_tasks.erase(i);
-    }
-}
-
 static int nd_plugin_start_detections(void)
 {
     for (map<string, string>::const_iterator i = nd_config.plugin_detections.begin();
@@ -882,6 +715,15 @@ static void nd_plugin_stop_detections(void)
     }
 
     plugin_detections.clear();
+}
+
+static int nd_plugin_start_sinks(void)
+{
+    return 0;
+}
+
+static void nd_plugin_stop_sinks(void)
+{
 }
 
 static int nd_plugin_start_stats(void)
@@ -926,18 +768,12 @@ static void nd_plugin_stop_stats(void)
 static void nd_plugin_event(
     ndPlugin::ndPluginEvent event, void *param = NULL)
 {
-    for (nd_plugins::iterator i = plugin_services.begin();
-        i != plugin_services.end(); i++)
-        i->second->GetPlugin()->ProcessEvent(event, param);
-    for (nd_plugins::iterator i = plugin_tasks.begin();
-        i != plugin_tasks.end(); i++)
-        i->second->GetPlugin()->ProcessEvent(event, param);
-    for (nd_plugins::iterator i = plugin_detections.begin();
-        i != plugin_detections.end(); i++)
-        i->second->GetPlugin()->ProcessEvent(event, param);
-    for (nd_plugins::iterator i = plugin_stats.begin();
-        i != plugin_stats.end(); i++)
-        i->second->GetPlugin()->ProcessEvent(event, param);
+    for (auto &i : plugin_detections)
+        i.second->GetPlugin()->ProcessEvent(event, param);
+    for (auto &i : plugin_sinks)
+        i.second->GetPlugin()->ProcessEvent(event, param);
+    for (auto &i : plugin_stats)
+        i.second->GetPlugin()->ProcessEvent(event, param);
 }
 
 #endif // _USE_ND_PLUGINS
@@ -973,41 +809,6 @@ static int nd_sink_process_responses(void)
                 nd_json_protocols(json);
                 thread_socket->QueueWrite(json);
             }
-#ifdef _ND_USE_PLUGINS
-            for (ndJsonPluginRequest::const_iterator
-                i = response->plugin_request_service_param.begin();
-                i != response->plugin_request_service_param.end(); i++) {
-
-                ndJsonPluginDispatch::const_iterator iter_params;
-                iter_params = response->plugin_params.find(i->first);
-
-                if (iter_params != response->plugin_params.end()) {
-                    const ndJsonPluginParams &params(iter_params->second);
-                    nd_plugin_dispatch_service_param(i->second, i->first, params);
-                }
-                else {
-                    const ndJsonPluginParams params;
-                    nd_plugin_dispatch_service_param(i->second, i->first, params);
-                }
-            }
-
-            for (ndJsonPluginRequest::const_iterator
-                i = response->plugin_request_task_exec.begin();
-                i != response->plugin_request_task_exec.end(); i++) {
-
-                ndJsonPluginDispatch::const_iterator iter_params;
-                iter_params = response->plugin_params.find(i->first);
-
-                if (iter_params != response->plugin_params.end()) {
-                    const ndJsonPluginParams &params(iter_params->second);
-                    nd_plugin_start_task(i->second, i->first, params);
-                }
-                else {
-                    const ndJsonPluginParams params;
-                    nd_plugin_start_task(i->second, i->first, params);
-                }
-            }
-#endif
         }
 
         nd_json_agent_stats.sink_resp_code = response->resp_code;
@@ -1269,127 +1070,6 @@ static void nd_json_add_file(
     jd["chunks"] = jc;
     parent[tag] = jd;
 }
-
-static void nd_json_add_data(
-    json &parent, const string &tag, const string &data)
-{
-    sha1 ctx;
-    string digest;
-    uint8_t _digest[SHA1_DIGEST_LENGTH];
-
-    sha1_init(&ctx);
-
-    json jd, jc;
-
-    jd["size"] = data.size();
-
-    size_t offset = 0;
-
-    do {
-        const string chunk = data.substr(offset, ND_JSON_DATA_CHUNKSIZ);
-
-        if (! chunk.size()) break;
-
-        sha1_write(&ctx, chunk.c_str(), chunk.size());
-
-        jc.push_back(
-            base64_encode((const unsigned char *)chunk.c_str(),
-            chunk.size())
-        );
-
-        if (chunk.size() != ND_JSON_DATA_CHUNKSIZ) break;
-
-        offset += ND_JSON_DATA_CHUNKSIZ;
-    }
-    while (offset < data.size());
-
-    digest.assign((const char *)sha1_result(&ctx, _digest), SHA1_DIGEST_LENGTH);
-    nd_sha1_to_string(_digest, digest);
-
-    jd["digest"] = digest;
-    jd["chunks"] = jc;
-
-    parent[tag] = jd;
-}
-
-#ifdef _ND_USE_PLUGINS
-
-static void nd_json_add_plugin_replies(
-    json &json_plugin_service_replies,
-    json &json_plugin_task_replies, json &json_data)
-{
-    vector<ndPluginSink *> plugins;
-
-    for (nd_plugins::const_iterator i = plugin_services.begin();
-        i != plugin_services.end(); i++)
-        plugins.push_back(reinterpret_cast<ndPluginSink *>(i->second->GetPlugin()));
-    for (nd_plugins::const_iterator i = plugin_tasks.begin();
-        i != plugin_tasks.end(); i++)
-        plugins.push_back(reinterpret_cast<ndPluginSink *>(i->second->GetPlugin()));
-
-    for (vector<ndPluginSink *>::const_iterator i = plugins.begin();
-        i != plugins.end(); i++) {
-
-        json *parent = NULL;
-
-        switch ((*i)->GetType()) {
-
-        case ndPlugin::TYPE_SINK_SERVICE:
-            parent = &json_plugin_service_replies;
-            break;
-        case ndPlugin::TYPE_SINK_TASK:
-            parent = &json_plugin_task_replies;
-            break;
-
-        default:
-            nd_dprintf("%s: Unsupported plugin type: %d\n",
-                __PRETTY_FUNCTION__, (*i)->GetType());
-        }
-
-        if (parent == NULL) continue;
-
-        ndPluginFiles files, data;
-        ndPluginReplies replies;
-        (*i)->GetReplies(files, data, replies);
-
-        nd_dprintf("%s: files: %ld, data: %ld, replies: %ld\n",
-            __PRETTY_FUNCTION__, files.size(), data.size(), replies.size());
-
-        if (! replies.size()) continue;
-
-        for (ndPluginReplies::const_iterator iter_reply = replies.begin();
-            iter_reply != replies.end(); iter_reply++) {
-
-            json ja;
-
-            for (ndJsonPluginReplies::const_iterator iter_params = iter_reply->second.begin();
-                iter_params != iter_reply->second.end(); iter_params++) {
-
-                json jr;
-
-                jr[iter_params->first] = base64_encode(
-                    (const unsigned char *)iter_params->second.c_str(),
-                    iter_params->second.size()
-                );
-
-                ja.push_back(jr);
-            }
-
-            (*parent)[iter_reply->first.c_str()] = ja;
-        }
-
-        for (ndPluginFiles::const_iterator iter_file = files.begin();
-            iter_file != files.end(); iter_file++) {
-            nd_json_add_file(json_data, iter_file->first, iter_file->second);
-        }
-
-        for (ndPluginFiles::const_iterator iter_file = data.begin();
-            iter_file != data.end(); iter_file++) {
-            nd_json_add_data(json_data, iter_file->first, iter_file->second);
-        }
-    }
-}
-#endif // _ND_USE_PLUGINS
 
 static void nd_print_stats(void)
 {
@@ -1675,22 +1355,10 @@ static void nd_dump_stats(void)
             e.what());
     }
 
-    if (ND_USE_SINK || ND_EXPORT_JSON) j["flows"] = jflows;
-
-#ifdef _ND_USE_PLUGINS
-    if (ND_USE_SINK) {
-        json jsr, jtr, jpd;
-
-        nd_json_add_plugin_replies(jsr, jtr, jpd);
-
-        j["service_replies"] = jsr;
-        j["task_replies"] = jtr;
-        j["data"] = jpd;
-    }
-#endif
-
-    if (ND_USE_SINK || ND_EXPORT_JSON)
+    if (ND_USE_SINK || ND_EXPORT_JSON) {
+        j["flows"] = jflows;
         nd_json_to_string(j, json_string, ND_DEBUG);
+    }
 
     if (ND_USE_SINK && ! nd_terminate) {
         try {
@@ -2723,9 +2391,8 @@ int main(int argc, char *argv[])
 
         nd_config.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        nd_config.plugin_services.clear();
-        nd_config.plugin_tasks.clear();
         nd_config.plugin_detections.clear();
+        nd_config.plugin_sinks.clear();
         nd_config.plugin_stats.clear();
 #endif
         nd_config.dhc_save = ndDHC_DISABLED;
@@ -2931,9 +2598,9 @@ int main(int argc, char *argv[])
     }
 
 #ifdef _ND_USE_PLUGINS
-    if (nd_plugin_start_services() < 0)
-        return 1;
     if (nd_plugin_start_detections() < 0)
+        return 1;
+    if (nd_plugin_start_sinks() < 0)
         return 1;
     if (nd_plugin_start_stats() < 0)
         return 1;
@@ -3048,7 +2715,6 @@ int main(int argc, char *argv[])
             nd_dump_stats();
 #ifdef _ND_USE_PLUGINS
             nd_plugin_event(ndPlugin::EVENT_STATUS_UPDATE);
-            nd_plugin_reap_tasks();
 #endif
             if (dns_hint_cache)
                 dns_hint_cache->Purge();
@@ -3175,12 +2841,9 @@ int main(int argc, char *argv[])
     nd_destroy();
 
 #ifdef _ND_USE_PLUGINS
-    nd_plugin_stop_services();
     nd_plugin_stop_detections();
+    nd_plugin_stop_sinks();
     nd_plugin_stop_stats();
-
-    nd_plugin_stop_tasks();
-    nd_plugin_reap_tasks();
 #endif
 
     if (thread_sink) {

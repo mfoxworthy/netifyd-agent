@@ -607,9 +607,8 @@ int ndGlobalConfig::Load(const string &filename)
 #endif
 #ifdef _ND_USE_PLUGINS
     // Plugins section
-    r->GetSection("plugin_services", this->plugin_services);
-    r->GetSection("plugin_tasks", this->plugin_tasks);
     r->GetSection("plugin_detections", this->plugin_detections);
+    r->GetSection("plugin_sinks", this->plugin_sinks);
     r->GetSection("plugin_stats", this->plugin_stats);
 #endif
 
