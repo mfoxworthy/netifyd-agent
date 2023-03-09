@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <cstring>
 #include <map>
+#include <set>
 #include <list>
 #include <vector>
 #include <unordered_map>
