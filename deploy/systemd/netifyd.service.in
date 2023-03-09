@@ -11,7 +11,6 @@ Documentation=https://netify.ai/
 
 [Service]
 Type=forking
-PIDFile=@volatilestatedir@/@PACKAGE_TARNAME@.pid
 User=root
 EnvironmentFile=@datadir@/@PACKAGE_TARNAME@/env.sh
 ExecStartPre=@datadir@/@PACKAGE_TARNAME@/exec-pre.sh
