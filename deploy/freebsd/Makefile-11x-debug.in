@@ -28,7 +28,7 @@ EXTRA_OPTS=--disable-libtcmalloc
 
 CONFIGURE_ARGS=\
 	CC=clang CXX=clang++ CPPFLAGS=-I/usr/local/include \
-	--disable-conntrack --disable-inotify ${EXTRA_OPTS}
+	--disable-conntrack ${EXTRA_OPTS}
 
 post-install:
 	${MKDIR} ${STAGEDIR}/var/run/netifyd

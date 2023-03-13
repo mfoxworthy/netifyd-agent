@@ -41,12 +41,6 @@ config BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA
 
 endif
 
-config BR2_PACKAGE_NETIFYD_INOTIFY
-	bool "inotify support"
-	default n
-	help
-	  Enable INOTIFY "file-watch" support (rarely used).
-
 config BR2_PACKAGE_NETIFYD_NETLINK
 	bool "netlink support"
 	default y

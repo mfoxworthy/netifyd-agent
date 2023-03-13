@@ -25,7 +25,6 @@ NETIFYD_CONF_OPTS = \
 	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--with-tpacketv3,--without-tpacketv3) \
 	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK),--with-conntrack,--without-conntrack) \
 	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA),--with-conntrack-mdata,--without-conntrack-mdata) \
-	$(if $(BR2_PACKAGE_NETIFYD_INOTIFY),--with-inotify,--without-inotify) \
 	$(if $(BR2_PACKAGE_NETIFYD_NETLINK),--with-netlink,--without-netlink) \
 	$(if $(BR2_PACKAGE_NETIFYD_PLUGINS),--with-plugins,--without-plugins) \
 
