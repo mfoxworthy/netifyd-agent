@@ -496,9 +496,9 @@ static int nd_start_capture_threads(void)
 
         case ndCT_TPV3:
         {
-            unsigned instances = it.second.tpv3.fanout_instances;
-            if (it.second.tpv3.fanout_mode == ndFOM_DISABLED ||
-                it.second.tpv3.fanout_instances < 2)
+            unsigned instances = it.second.config.tpv3->fanout_instances;
+            if (it.second.config.tpv3->fanout_mode == ndFOM_DISABLED ||
+                it.second.config.tpv3->fanout_instances < 2)
                 instances = 1;
 
             for (unsigned i = 0; i < instances; i++) {
@@ -2316,16 +2316,30 @@ int main(int argc, char *argv[])
             if (result.second) {
                 switch (i.second.first) {
                 case ndCT_PCAP:
+                    result.first->second.SetConfig(
+                        static_cast<nd_config_pcap *>(
+                            i.second.second
+                        )
+                    );
                     break;
-
+#if defined(_ND_USE_TPACKETV3)
                 case ndCT_TPV3:
-                    result.first->second.SetTPv3Config(
+                    result.first->second.SetConfig(
                         static_cast<nd_config_tpv3 *>(
                             i.second.second
                         )
                     );
                     break;
-
+#endif
+#if defined(_ND_USE_NFQUEUE)
+                case ndCT_NFQ:
+                    result.first->second.SetConfig(
+                        static_cast<nd_config_nfq *>(
+                            i.second.second
+                        )
+                    );
+                    break;
+#endif
                 default:
                     break;
                 }

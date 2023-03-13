@@ -755,9 +755,23 @@ public:
                 __PRETTY_FUNCTION__, "new mutex", ENOMEM
             );
         }
+        switch (capture_type) {
+        case ndCT_PCAP:
+            memset(&config.pcap, 0, sizeof(nd_config_pcap));
+            break;
 #if defined(_ND_USE_TPACKETV3)
-        memset(&tpv3, 0, sizeof(nd_config_tpv3));
+        case ndCT_TPV3:
+            memset(&config.tpv3, 0, sizeof(nd_config_tpv3));
+            break;
 #endif
+#if defined(_ND_USE_NFQUEUE)
+        case ndCT_NFQ:
+            memset(&config.nfq, 0, sizeof(nd_config_nfq));
+            break;
+#endif
+        default:
+            break;
+        }
     }
 
     ndInterface(const ndInterface &iface) :
@@ -771,9 +785,23 @@ public:
                 __PRETTY_FUNCTION__, "new mutex", ENOMEM
             );
         }
+        switch(capture_type) {
+        case ndCT_PCAP:
+            memcpy(&config.pcap, &iface.config.pcap, sizeof(nd_config_pcap));
+            break;
 #if defined(_ND_USE_TPACKETV3)
-        memcpy(&tpv3, &iface.tpv3, sizeof(nd_config_tpv3));
+        case ndCT_TPV3:
+            memcpy(&config.tpv3, &iface.config.tpv3, sizeof(nd_config_tpv3));
+            break;
 #endif
+#if defined(_ND_USE_NFQUEUE)
+        case ndCT_NFQ:
+            memcpy(&config.nfq, &iface.config.nfq, sizeof(nd_config_nfq));
+            break;
+#endif
+        default:
+            break;
+        }
     }
 
     virtual ~ndInterface() {
@@ -791,11 +819,9 @@ public:
         case ndIR_LAN:
             serialize(output, { "role" }, "LAN");
             break;
-
         case ndIR_WAN:
             serialize(output, { "role" }, "WAN");
             break;
-
         default:
             serialize(output, { "role" }, "UNKNOWN");
             break;
@@ -805,11 +831,12 @@ public:
         case ndCT_PCAP:
             serialize(output, { "capture_type" }, "PCAP");
             break;
-
         case ndCT_TPV3:
             serialize(output, { "capture_type" }, "TPv3");
             break;
-
+        case ndCT_NFQ:
+            serialize(output, { "capture_type" }, "NFQ");
+            break;
         default:
             serialize(output, { "capture_type" }, "UNKNOWN");
             break;
@@ -878,9 +905,17 @@ public:
                 output[i.first.GetString()].insert(j);
         }
     }
+    inline void SetConfig(const nd_config_pcap *pcap) {
+        config.pcap = pcap;
+    }
 #if defined(_ND_USE_TPACKETV3)
-    void SetTPv3Config(nd_config_tpv3 *tpv3) {
-        memcpy(&this->tpv3, tpv3, sizeof(nd_config_tpv3));
+    inline void SetConfig(const nd_config_tpv3 *tpv3) {
+        config.tpv3 = tpv3;
+    }
+#endif
+#if defined(_ND_USE_NFQUEUE)
+    inline void SetConfig(const nd_config_nfq *nfq) {
+        config.nfq = nfq;
     }
 #endif
 
@@ -888,9 +923,17 @@ public:
     string ifname_peer;
     nd_capture_type capture_type;
     nd_interface_role role;
+
+    union {
+        const nd_config_pcap *pcap;
 #if defined(_ND_USE_TPACKETV3)
-    nd_config_tpv3 tpv3;
+        const nd_config_tpv3 *tpv3;
 #endif
+#if defined(_ND_USE_NFQUEUE)
+        const nd_config_nfq *nfq;
+#endif
+    } config;
+
 protected:
     ndInterfaceAddr addrs;
     ndInterfaceEndpoints endpoints[2];

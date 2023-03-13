@@ -123,7 +123,7 @@ enum nd_global_flags {
 
 typedef struct
 {
-    string capture_filename;
+    char *capture_filename;
 } nd_config_pcap;
 
 typedef struct
