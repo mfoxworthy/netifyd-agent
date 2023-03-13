@@ -32,16 +32,13 @@ lib_LTLIBRARIES = libnetifyd.la
 libnetifyd_la_SOURCES = nd-addr.cpp nd-apps.cpp nd-base64.cpp nd-capture.cpp \
 	nd-category.cpp nd-config.cpp nd-detection.cpp nd-dhc.cpp nd-fhc.cpp \
 	nd-flow.cpp nd-flow-criteria.l nd-flow-criteria.tab.yy nd-flow-map.cpp \
-	nd-json.cpp nd-napi.cpp nd-ndpi.cpp nd-protos.cpp nd-risks.cpp nd-sha1.c \
-	nd-sink.cpp nd-socket.cpp nd-thread.cpp nd-util.cpp
+	nd-instance.cpp nd-json.cpp nd-napi.cpp nd-ndpi.cpp nd-protos.cpp \
+	nd-risks.cpp nd-sha1.c nd-sink.cpp nd-socket.cpp nd-thread.cpp \
+	nd-util.cpp
 
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 libnetifyd_la_LDFLAGS = -version-info 2:1:0
 libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.a $(LIBCURL_LIBS) $(ZLIB_LIBS)
-
-if USE_INOTIFY
-libnetifyd_la_SOURCES += nd-inotify.cpp
-endif
 
 if USE_NETLINK
 libnetifyd_la_SOURCES += nd-netlink.cpp
