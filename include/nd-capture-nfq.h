@@ -19,17 +19,17 @@
 
 class ndSocketThread;
 
-class ndCaptureNetfilterQueue : public ndCaptureThread
+class ndCaptureNFQueue : public ndCaptureThread
 {
 public:
-    ndCaptureNetfilterQueue(
+    ndCaptureNFQueue(
         int16_t cpu,
         ndInterface& iface,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);
-    virtual ~ndCaptureNetfilterQueue();
+    virtual ~ndCaptureNFQueue();
 
     virtual void *Entry(void);
 

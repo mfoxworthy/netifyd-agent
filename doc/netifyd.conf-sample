@@ -39,7 +39,7 @@ uuid_serial = <agent serial uuid>
 uuid_site = <site uuid>
 
 [capture_defaults]
-capture_type = <default capture type: pcap/tpv3>
+capture_type = <default capture type: pcap, tpv3, nfqueue>
 read_timeout = <capture timeout in milliseconds>
 
 [capture_defaults_tpv4]
@@ -52,12 +52,15 @@ rb_blocks = <ring buffer block count>
 
 [capture_interface_<if name>]
 role = <interface role: LAN, WAN>
-type = <capture type: pcap, tpv3>
+type = <capture type: pcap, tpv3, nfqueue>
 address[0] = <local address: IPv4/6 CIDR>
 peer = <optional interface peer, ex: software interfaces, pppX>
 filter = <BPF packet filter>
 ...
 <capture type options, override defaults>
+
+[capture_interface_nfq<queue ID>]
+instances = <number of instance threads, starting from queue ID>
 
 [flow_hash_cache]
 enable = <yes/no>

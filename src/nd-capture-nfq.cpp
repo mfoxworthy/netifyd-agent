@@ -112,7 +112,7 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 
-ndCaptureNetfilterQueue::ndCaptureNetfilterQueue(
+ndCaptureNFQueue::ndCaptureNFQueue(
     int16_t cpu,
     ndInterface& iface,
     ndSocketThread *thread_socket,
@@ -127,14 +127,14 @@ ndCaptureNetfilterQueue::ndCaptureNetfilterQueue(
     nd_dprintf("%s: NFQ capture thread created.\n", tag.c_str());
 }
 
-ndCaptureNetfilterQueue::~ndCaptureNetfilterQueue()
+ndCaptureNFQueue::~ndCaptureNFQueue()
 {
     Join();
 
     nd_dprintf("%s: NFQ capture thread destroyed.\n", tag.c_str());
 }
 
-void *ndCaptureNetfilterQueue::Entry(void)
+void *ndCaptureNFQueue::Entry(void)
 {
     int rc = 0;
 
@@ -154,7 +154,7 @@ void *ndCaptureNetfilterQueue::Entry(void)
     return NULL;
 }
 
-void ndCaptureNetfilterQueue::GetCaptureStats(ndPacketStats &stats)
+void ndCaptureNFQueue::GetCaptureStats(ndPacketStats &stats)
 {
     ndCaptureThread::GetCaptureStats(stats);
 }

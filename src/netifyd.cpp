@@ -121,6 +121,9 @@ using namespace std;
 #ifdef _ND_USE_TPACKETV3
 #include "nd-capture-tpv3.h"
 #endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
@@ -504,6 +507,32 @@ static int nd_start_capture_threads(void)
             for (unsigned i = 0; i < instances; i++) {
 
                 ndCaptureTPv3 *thread = new ndCaptureTPv3(
+                    (nd_interfaces.size() > 1) ? cpu++ : -1,
+                    it.second,
+                    thread_socket,
+                    detection_threads,
+                    dns_hint_cache,
+                    (it.second.role == ndIR_LAN) ? 0 : ++private_addr
+                );
+
+                thread->Create();
+                threads.push_back(thread);
+
+                if (cpu == (int16_t)nd_json_agent_stats.cpus) cpu = 0;
+            }
+
+            break;
+        }
+
+        case ndCT_NFQ:
+        {
+            unsigned instances = it.second.config.nfq->instances;
+            if (it.second.config.nfq->instances == 0)
+                instances = 1;
+
+            for (unsigned i = 0; i < instances; i++) {
+
+                ndCaptureNFQueue *thread = new ndCaptureNFQueue(
                     (nd_interfaces.size() > 1) ? cpu++ : -1,
                     it.second,
                     thread_socket,

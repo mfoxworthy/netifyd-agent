@@ -428,6 +428,8 @@ int ndGlobalConfig::Load(const string &filename)
         this->capture_type = ndCT_PCAP;
 #elif defined(_ND_USE_TPACKETV3)
         this->capture_type = ndCT_TPV3;
+#elif defined(_ND_USE_NFQUEUE)
+        this->capture_type = ndCT_TPV3;
 #else
         fprintf(stderr,
             "Not default capture type could be determined.\n");
@@ -847,8 +849,21 @@ bool ndGlobalConfig::AddInterfaces(void)
             LoadCaptureSettings(s, type, config);
             break;
         case ndCT_NFQ:
+            p = iface.find_first_of("0123456789");
+            if (p == string::npos ||
+                strncasecmp(iface.c_str(), "nfq", 3)) {
+                fprintf(stderr, "Invalid NFQUEUE identifier: %s\n",
+                    iface.c_str()
+                );
+                return false;
+            }
             config = static_cast<void *>(new nd_config_nfq);
             LoadCaptureSettings(s, type, config);
+            static_cast<nd_config_nfq *>(
+                config
+            )->queue_id = (unsigned)strtol(
+                iface.substr(p).c_str(), NULL, 0
+            );
             break;
         default:
             break;
@@ -911,8 +926,9 @@ enum nd_capture_type ndGlobalConfig::LoadCaptureType(
 #endif
     else {
         fprintf(stderr, "Invalid capture type: %s\n",
-            capture_type.c_str()
-        );
+            capture_type.c_str());
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "invalid capture type", EINVAL);
     }
 
     return ct;
@@ -992,10 +1008,8 @@ void ndGlobalConfig::LoadCaptureSettings(
     }
     else if (type == ndCT_NFQ) {
         nd_config_nfq *nfq = static_cast<nd_config_nfq *>(config);
-        nfq->queue_id = (unsigned)r->GetInteger(
-            section, "queue_id", 0);
         nfq->instances = (unsigned)r->GetInteger(
-            section, "queue_instances", 0);
+            section, "queue_instances", 1);
     }
 }
 
