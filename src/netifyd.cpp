@@ -1918,7 +1918,7 @@ static int nd_check_agent_uuid(void)
 
     return 0;
 }
-
+#if 0
 static int test_main(bool threaded = false)
 {
     int rc = 0;
@@ -1949,7 +1949,7 @@ static int test_main(bool threaded = false)
 
     return rc;
 }
-
+#endif
 int main(int argc, char *argv[])
 {
     int rc = 0;

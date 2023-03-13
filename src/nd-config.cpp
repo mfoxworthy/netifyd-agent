@@ -212,9 +212,17 @@ ndGlobalConfig::~ndGlobalConfig()
 
                 switch (i.second.first) {
                 case ndCT_PCAP:
+                    delete static_cast<nd_config_pcap *>(
+                        i.second.second
+                    );
                     break;
                 case ndCT_TPV3:
                     delete static_cast<nd_config_tpv3 *>(
+                        i.second.second
+                    );
+                    break;
+                case ndCT_NFQ:
+                    delete static_cast<nd_config_nfq *>(
                         i.second.second
                     );
                     break;
@@ -658,11 +666,35 @@ bool ndGlobalConfig::AddInterface(const string &iface,
         type = capture_type;
     }
 
-    if (type == ndCT_TPV3 && config == nullptr) {
-        config = static_cast<void *>(new nd_config_tpv3);
-        if (config == nullptr)
-            throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
-        memcpy(config, &tpv3_defaults, sizeof(nd_config_tpv3));
+    if (config == nullptr) {
+        switch (type) {
+        case ndCT_PCAP:
+            config = static_cast<void *>(new nd_config_pcap);
+            if (config == nullptr) {
+                throw ndSystemException(__PRETTY_FUNCTION__,
+                    "new nd_config_pcap", ENOMEM
+                );
+            }
+            break;
+        case ndCT_TPV3:
+            config = static_cast<void *>(new nd_config_tpv3);
+            if (config == nullptr) {
+                throw ndSystemException(__PRETTY_FUNCTION__,
+                    "new  nd_config_tpv3", ENOMEM
+                );
+            }
+            memcpy(config, &tpv3_defaults, sizeof(nd_config_tpv3));
+            break;
+        case ndCT_NFQ:
+            config = static_cast<void *>(new nd_config_nfq);
+            if (config == nullptr) {
+                throw ndSystemException(__PRETTY_FUNCTION__,
+                    "new nd_config_nfq", ENOMEM
+                );
+            }
+        default:
+            break;
+        }
     }
 
     auto result = interfaces[role].insert(
@@ -675,12 +707,14 @@ bool ndGlobalConfig::AddInterface(const string &iface,
     if (! result.second) {
         switch (type) {
         case ndCT_PCAP:
+            delete static_cast<nd_config_pcap *>(config);
             break;
-
         case ndCT_TPV3:
             delete static_cast<nd_config_tpv3 *>(config);
             break;
-
+        case ndCT_NFQ:
+            delete static_cast<nd_config_nfq *>(config);
+            break;
         default:
             break;
         }
@@ -804,14 +838,18 @@ bool ndGlobalConfig::AddInterfaces(void)
 
         switch (type) {
         case ndCT_PCAP:
+            config = static_cast<void *>(new nd_config_pcap);
+            LoadCaptureSettings(s, type, config);
             break;
-
         case ndCT_TPV3:
             config = static_cast<void *>(new nd_config_tpv3);
             memcpy(config, &tpv3_defaults, sizeof(nd_config_tpv3));
             LoadCaptureSettings(s, type, config);
             break;
-
+        case ndCT_NFQ:
+            config = static_cast<void *>(new nd_config_nfq);
+            LoadCaptureSettings(s, type, config);
+            break;
         default:
             break;
         }
@@ -867,6 +905,10 @@ enum nd_capture_type ndGlobalConfig::LoadCaptureType(
     else if (capture_type == "tpv3")
         ct = ndCT_TPV3;
 #endif
+#if defined(_ND_USE_NFQUEUE)
+    else if (capture_type == "nfqueue")
+        ct = ndCT_NFQ;
+#endif
     else {
         fprintf(stderr, "Invalid capture type: %s\n",
             capture_type.c_str()
@@ -882,6 +924,7 @@ void ndGlobalConfig::LoadCaptureSettings(
     INIReader *r = static_cast<INIReader *>(reader);
 
     if (type == ndCT_PCAP) {
+        nd_config_pcap *pcap __attribute__((unused)) = static_cast<nd_config_pcap *>(config);
     }
     else if (type == ndCT_TPV3) {
         nd_config_tpv3 *tpv3 = static_cast<nd_config_tpv3 *>(config);
@@ -946,6 +989,13 @@ void ndGlobalConfig::LoadCaptureSettings(
 
         tpv3->rb_blocks = (unsigned)r->GetInteger(
             section, "rb_blocks", tpv3_defaults.rb_blocks);
+    }
+    else if (type == ndCT_NFQ) {
+        nd_config_nfq *nfq = static_cast<nd_config_nfq *>(config);
+        nfq->queue_id = (unsigned)r->GetInteger(
+            section, "queue_id", 0);
+        nfq->instances = (unsigned)r->GetInteger(
+            section, "queue_instances", 0);
     }
 }
 

@@ -270,8 +270,6 @@ public:
 
     void push(const struct pcap_pkthdr *pkt_header, const uint8_t *pkt_data);
 
-    int dump(pcap_t *pcap, const uint8_t *digest);
-
     void reset(bool full_reset = false);
 
     void release(void);

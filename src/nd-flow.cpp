@@ -243,7 +243,8 @@ void ndFlow::push(const struct pcap_pkthdr *pkt_header, const uint8_t *pkt_data)
 
     capture.push_back(make_pair(header, data));
 }
-
+#if 0
+// TODO: Move to capture classes...
 int ndFlow::dump(pcap_t *pcap, const uint8_t *digest)
 {
     char *p = capture_filename;
@@ -270,7 +271,7 @@ int ndFlow::dump(pcap_t *pcap, const uint8_t *digest)
 
     return 0;
 }
-
+#endif
 void ndFlow::reset(bool full_reset)
 {
     ts_first_update = 0;

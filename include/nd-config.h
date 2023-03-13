@@ -33,6 +33,7 @@ enum nd_capture_type {
     ndCT_NONE,
     ndCT_PCAP,
     ndCT_TPV3,
+    ndCT_NFQ,
 };
 
 enum nd_interface_role {
@@ -122,6 +123,11 @@ enum nd_global_flags {
 
 typedef struct
 {
+    string capture_filename;
+} nd_config_pcap;
+
+typedef struct
+{
     unsigned fanout_mode;
     unsigned fanout_flags;
     unsigned fanout_instances;
@@ -129,6 +135,12 @@ typedef struct
     unsigned rb_frame_size;
     unsigned rb_blocks;
 } nd_config_tpv3;
+
+typedef struct
+{
+    unsigned queue_id;
+    unsigned instances;
+} nd_config_nfq;
 
 class ndGlobalConfig
 {

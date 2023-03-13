@@ -64,19 +64,89 @@ case "${host_os}" in
     linux*)
         AC_CHECK_LIB([resolv],
             [ns_initparse], [], [AC_MSG_ERROR([libresolv/ns_initparse() not found.])])
+
+        dnl CONNTRACK support
+
+        AC_ARG_ENABLE([conntrack],
+            [AS_HELP_STRING([--enable-conntrack], [Enable connection tracking support [default=yes]])],
+            [],
+            [enable_conntrack=yes])
+
+        AS_IF([test "x$enable_conntrack" = "xyes"], [
+            AC_DEFINE([_ND_USE_CONNTRACK], [1],
+                [Define to enable connection tracking support.])
+            PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
+            PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.4])
+            ND_DEFINES+=" -D_ND_USE_CONNTRACK=1"
+            AM_CONDITIONAL(USE_CONNTRACK, true)
+        ], [
+            AM_CONDITIONAL(USE_CONNTRACK, false)
+        ])
+
+        dnl CONNTRACK meta-data extraction support
+
+        AC_ARG_ENABLE([conntrack-mdata],
+            [AS_HELP_STRING([--enable-conntrack-mdata], [Enable connection tracking metadata [default=no]])],
+            [],
+            [enable_conntrack=no])
+
+        AS_IF([test "x$enable_conntrack_mdata" = "xyes"], [
+            AC_DEFINE([_ND_WITH_CONNTRACK_MDATA], [1], [Enable to extract conntrack metadata.])
+            ND_DEFINES+=" -D_ND_WITH_CONNTRACK_MDATA=1"
+        ])
+
+        dnl NETLINK support
+
+        AC_ARG_ENABLE([netlink],
+            [AS_HELP_STRING([--enable-netlink], [Enable Netlink socket support [default=yes]])],
+            [],
+            [enable_netlink=yes])
+
+        AS_IF([test "x$enable_netlink" = "xyes"], [
+        case "${host_os}" in
+            linux*)
+                AC_DEFINE([_ND_USE_NETLINK], [1],
+                    [Define to enable Netlink socket support.])
+                AM_CONDITIONAL(USE_NETLINK, true)
+                ND_DEFINES+=" -D_ND_USE_NETLINK=1"
+                ;;
+        esac
+        ])
+
+        dnl TPACKETv3 Capture Support
+
         AC_ARG_ENABLE([tpacketv3],
             [AS_HELP_STRING([--enable-tpacketv3], [Enable TPACKETv3 capture support [default=yes]])],
             [],
             [enable_tpacketv3=yes])
 
         AS_IF([test "x$enable_tpacketv3" = "xyes"], [
-            AC_CHECK_HEADERS([linux/if_packet.h], [], AC_MSG_ERROR([linux/if_packet.h header(s) not found.]))
+            AC_CHECK_HEADERS([linux/if_packet.h], [],
+                AC_MSG_ERROR([linux/if_packet.h header(s) not found.])
+            )
             AC_DEFINE([_ND_USE_TPACKETV3], [1],
                 [Define to enable TPACKETv3 capture support.])
             ND_DEFINES+=" -D_ND_USE_TPACKETV3=1"
             AM_CONDITIONAL(USE_TPACKETV3, true)
         ], [
             AM_CONDITIONAL(USE_TPACKETV3, false)
+        ])
+
+        dnl NFQUEUE Capture Support
+
+        AC_ARG_ENABLE([nfqueue],
+            [AS_HELP_STRING([--enable-nfqueue], [Enable NFQUEUE capture support [default=yes]])],
+            [],
+            [enable_nfqueue=no])
+
+        AS_IF([test "x$enable_nfqueue" = "xyes"], [
+            PKG_CHECK_MODULES([LIBNETFILTER_QUEUE], [libnetfilter_queue >= 1.0.2])
+            AC_DEFINE([_ND_USE_NFQUEUE], [1],
+                [Define to enable NFQUEUE capture support.])
+            ND_DEFINES+=" -D_ND_USE_NFQUEUE=1"
+            AM_CONDITIONAL(USE_NFQUEUE, true)
+        ], [
+            AM_CONDITIONAL(USE_NFQUEUE, false)
         ])
         ;;
 esac
@@ -140,48 +210,6 @@ AS_IF([test "x$with_volatilestatedir" = "xyes" -o "x$with_volatilestatedir" = "x
 )
 
 # Parameters: --enable/disable
-
-AC_ARG_ENABLE([conntrack],
-    [AS_HELP_STRING([--enable-conntrack], [Enable connection tracking support [default=yes]])],
-    [],
-    [enable_conntrack=yes])
-
-AS_IF([test "x$enable_conntrack" = "xyes"], [
-    AC_DEFINE([_ND_USE_CONNTRACK], [1],
-        [Define to enable connection tracking support.])
-    ND_DEFINES+=" -D_ND_USE_CONNTRACK=1"
-    AM_CONDITIONAL(USE_CONNTRACK, true)
-    PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
-    PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.4])
-], [
-    AM_CONDITIONAL(USE_CONNTRACK, false)
-])
-
-AC_ARG_ENABLE([conntrack-mdata],
-    [AS_HELP_STRING([--enable-conntrack-mdata], [Enable connection tracking metadata [default=no]])],
-    [],
-    [enable_conntrack=no])
-
-AS_IF([test "x$enable_conntrack_mdata" = "xyes"], [
-    AC_DEFINE([_ND_WITH_CONNTRACK_MDATA], [1], [Enable to extract conntrack metadata.])
-    ND_DEFINES+=" -D_ND_WITH_CONNTRACK_MDATA=1"
-])
-
-AC_ARG_ENABLE([netlink],
-    [AS_HELP_STRING([--enable-netlink], [Enable Netlink socket support [default=yes]])],
-    [],
-    [enable_netlink=yes])
-
-AS_IF([test "x$enable_netlink" = "xyes"], [
-case "${host_os}" in
-    linux*)
-        AC_DEFINE([_ND_USE_NETLINK], [1],
-            [Define to enable Netlink socket support.])
-        AM_CONDITIONAL(USE_NETLINK, true)
-        ND_DEFINES+=" -D_ND_USE_NETLINK=1"
-        ;;
-esac
-])
 
 AC_ARG_ENABLE([plugins],
     [AS_HELP_STRING([--enable-plugins], [Enable Netify Plugin support [default=yes]])],

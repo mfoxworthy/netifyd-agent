@@ -28,6 +28,10 @@ if USE_CONNTRACK
 AM_CPPFLAGS += $(LIBNETFILTER_CONNTRACK_CFLAGS) $(LIBMNL_CFLAGS)
 endif
 
+if USE_NFQUEUE
+AM_CPPFLAGS += $(LIBNETFILTER_QUEUE_CFLAGS)
+endif
+
 lib_LTLIBRARIES = libnetifyd.la
 libnetifyd_la_SOURCES = nd-addr.cpp nd-apps.cpp nd-base64.cpp nd-capture.cpp \
 	nd-category.cpp nd-config.cpp nd-detection.cpp nd-dhc.cpp nd-fhc.cpp \
@@ -59,6 +63,11 @@ endif
 
 if USE_TPACKETV3
 libnetifyd_la_SOURCES += nd-capture-tpv3.cpp
+endif
+
+if USE_NFQUEUE
+libnetifyd_la_SOURCES += nd-capture-nfq.cpp
+libnetifyd_la_LIBADD += $(LIBNETFILTER_QUEUE_LIBS)
 endif
 
 sbin_PROGRAMS = netifyd
