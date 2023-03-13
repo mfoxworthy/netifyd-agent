@@ -98,9 +98,6 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
-#ifdef _ND_USE_INOTIFY
-#include "nd-inotify.h"
-#endif
 #ifdef _ND_USE_NETLINK
 #include "nd-netlink.h"
 #endif
@@ -133,6 +130,8 @@ using namespace std;
 #include "nd-signal.h"
 #include "nd-napi.h"
 
+#include "nd-instance.h"
+
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
 static nd_capture_threads capture_threads;
@@ -150,9 +149,6 @@ static nd_plugins plugin_stats;
 static char *nd_conf_filename = NULL;
 #ifdef _ND_USE_CONNTRACK
 static ndConntrackThread *thread_conntrack = NULL;
-#endif
-#ifdef _ND_USE_INOTIFY
-static ndInotify *inotify = NULL;
 #endif
 static bool nd_capture_stopped_by_signal = false;
 static ndDNSHintCache *dns_hint_cache = NULL;
@@ -1025,52 +1021,6 @@ static void nd_process_flows(
 #endif
 }
 
-static void nd_json_add_file(
-    json &parent, const string &tag, const string &filename)
-{
-    string digest;
-    uint8_t _digest[SHA1_DIGEST_LENGTH];
-
-    if (nd_sha1_file(filename.c_str(), _digest) < 0) return;
-
-    nd_sha1_to_string(_digest, digest);
-
-    uint8_t buffer[ND_JSON_DATA_CHUNKSIZ];
-    int fd = open(filename.c_str(), O_RDONLY);
-
-    if (fd < 0) {
-        nd_printf("Error opening file for upload: %s: %s\n",
-            filename.c_str(), strerror(errno));
-        return;
-    }
-
-    struct stat file_stat;
-    if (fstat(fd, &file_stat) != 0) {
-        nd_printf("Error reading stats for upload file: %s: %s\n",
-            filename.c_str(), strerror(errno));
-        close(fd);
-        return;
-    }
-
-    json jd, jc;
-
-    jd["digest"] = digest;
-    jd["size"] = file_stat.st_size;
-
-    size_t bytes;
-
-    do {
-        if ((bytes = read(fd, buffer, ND_JSON_DATA_CHUNKSIZ)) > 0)
-            jc.push_back(base64_encode(buffer, bytes));
-    }
-    while (bytes > 0);
-
-    close(fd);
-
-    jd["chunks"] = jc;
-    parent[tag] = jd;
-}
-
 static void nd_print_stats(void)
 {
 #ifndef _ND_LEAN_AND_MEAN
@@ -1362,17 +1312,6 @@ static void nd_dump_stats(void)
 
     if (ND_USE_SINK && ! nd_terminate) {
         try {
-#ifdef _ND_USE_INOTIFY
-            for (nd_inotify_watch::const_iterator i = nd_config.inotify_watches.begin();
-                i != nd_config.inotify_watches.end(); i++) {
-                if (! inotify->EventOccured(i->first)) continue;
-
-                json jd;
-
-                nd_json_add_file(jd, i->first, i->second);
-                j["data"].push_back(jd);
-            }
-#endif
 #ifdef _ND_USE_WATCHDOGS
             nd_touch(ND_WD_UPLOAD);
 #endif
@@ -1980,6 +1919,37 @@ static int nd_check_agent_uuid(void)
     return 0;
 }
 
+static int test_main(bool threaded = false)
+{
+    int rc = 0;
+    sigset_t sigset;
+
+    ndInstance::InitializeSignals(sigset);
+
+    if (! threaded) {
+        ndInstance instance(sigset, "netifyd");
+
+        return instance.Create();
+    }
+    else {
+        ndInstance instance1(sigset, "netifyd1", true);
+        ndInstance instance2(sigset, "netifyd2", true);
+
+        rc = instance1.Create();
+        if (rc != 0) return rc;
+
+        rc = instance2.Create();
+        if (rc != 0) return rc;
+
+        while (! instance1.Terminated() && ! instance2.Terminated()) {
+            nd_dprintf("instances running...\n");
+            sleep(1);
+        }
+    }
+
+    return rc;
+}
+
 int main(int argc, char *argv[])
 {
     int rc = 0;
@@ -1991,6 +1961,7 @@ int main(int argc, char *argv[])
     string last_device;
     nd_device_addr device_addresses;
     uint8_t dump_flags = ndDUMP_NONE;
+
     setlocale(LC_ALL, "");
 
     ostringstream os;
@@ -2096,6 +2067,8 @@ int main(int argc, char *argv[])
             break;
         }
     }
+
+    //return test_main(true);
 
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
@@ -2541,19 +2514,7 @@ int main(int argc, char *argv[])
         nd_printf("Error starting thread: %s\n", e.what());
         return 1;
     }
-#ifdef _ND_USE_INOTIFY
-    try {
-        inotify = new ndInotify();
-        for (nd_inotify_watch::const_iterator i = nd_config.inotify_watches.begin();
-            i != nd_config.inotify_watches.end(); i++)
-            inotify->AddWatch(i->first, i->second);
-        if (nd_config.inotify_watches.size()) inotify->RefreshWatches();
-    }
-    catch (exception &e) {
-        nd_printf("Error creating file watches: %s\n", e.what());
-        return 1;
-    }
-#endif
+
     nd_addrtype = new ndAddrType();
 
     for (auto it : device_addresses) {
@@ -2709,9 +2670,6 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_UPDATE) {
-#ifdef _ND_USE_INOTIFY
-            inotify->RefreshWatches();
-#endif
             nd_dump_stats();
 #ifdef _ND_USE_PLUGINS
             nd_plugin_event(ndPlugin::EVENT_STATUS_UPDATE);
@@ -2738,11 +2696,6 @@ int main(int argc, char *argv[])
         }
 
         if (sig == SIGIO) {
-#ifdef _ND_USE_INOTIFY
-            if (inotify->GetDescriptor() == si.si_fd)
-                inotify->ProcessEvent();
-#endif
-
 #ifdef _ND_USE_NETLINK
             if (ND_USE_NETLINK &&
                 netlink->GetDescriptor() == si.si_fd) {
