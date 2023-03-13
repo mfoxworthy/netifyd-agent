@@ -63,19 +63,10 @@ CONFIGURE_ARGS+= \
 	--without-systemdsystemunitdir \
 	--without-tmpfilesdir
 
-# Disable configuration file-watch support (deprecated feature).
-# Not to be confused with kernel/system-level inotify support.
-CONFIGURE_ARGS+= \
-	--disable-inotify
-
 ifneq ($(CONFIG_LIBCURL_ZLIB),y)
 CONFIGURE_ARGS+= \
 	--without-libcurl-zlib
 endif
-
-define Build/Configure
-	$(call Build/Configure/Default)
-endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/@PACKAGE_TARNAME@
