@@ -167,21 +167,6 @@ AS_IF([test "x$enable_conntrack_mdata" = "xyes"], [
     ND_DEFINES+=" -D_ND_WITH_CONNTRACK_MDATA=1"
 ])
 
-AC_ARG_ENABLE([inotify],
-    [AS_HELP_STRING([--enable-inotify], [Enable inotify file watch support [default=yes]])],
-    [],
-    [enable_inotify=yes])
-
-AS_IF([test "x$enable_inotify" = "xyes"], [
-    AC_DEFINE([_ND_USE_INOTIFY], [1],
-        [Define to enable inotify file watch support.])
-    ND_DEFINES+=" -D_ND_USE_INOTIFY=1"
-    AM_CONDITIONAL(USE_INOTIFY, true)
-    AC_CHECK_HEADERS([sys/inotify.h], [], AC_MSG_ERROR([inotify header(s) not found.]))
-], [
-    AM_CONDITIONAL(USE_INOTIFY, false)
-])
-
 AC_ARG_ENABLE([netlink],
     [AS_HELP_STRING([--enable-netlink], [Enable Netlink socket support [default=yes]])],
     [],

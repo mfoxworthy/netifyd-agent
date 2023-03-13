@@ -94,9 +94,6 @@ using namespace std;
 
 #include "nd-config.h"
 #include "nd-ndpi.h"
-#ifdef _ND_USE_INOTIFY
-#include "nd-inotify.h"
-#endif
 #include "nd-risks.h"
 #include "nd-serializer.h"
 #include "nd-packet.h"
@@ -601,10 +598,6 @@ int ndGlobalConfig::Load(const string &filename)
     ND_GF_SET_FLAG(ndGF_PRIVATE_EXTADDR,
         r->GetBoolean("privacy_filter", "private_external_addresses", false));
 
-#ifdef _ND_USE_INOTIFY
-    // Watches section
-    r->GetSection("watches", this->inotify_watches);
-#endif
 #ifdef _ND_USE_PLUGINS
     // Plugins section
     r->GetSection("plugin_detections", this->plugin_detections);

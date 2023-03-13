@@ -191,9 +191,6 @@ public:
     vector<uint8_t *> privacy_filter_mac;
     vector<pair<regex *, string> > privacy_regex;
     nd_interface_filter interface_filters;
-#ifdef _ND_USE_INOTIFY
-    nd_inotify_watch inotify_watches;
-#endif
 #ifdef _ND_USE_PLUGINS
     map<string, string> plugin_detections;
     map<string, string> plugin_sinks;

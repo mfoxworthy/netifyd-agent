@@ -199,8 +199,6 @@ typedef map<string, string> nd_interface_filter;
 
 typedef map<string, string> nd_netlink_device;
 
-typedef map<string, string> nd_inotify_watch;
-
 #ifdef _ND_USE_PLUGINS
 class ndPluginLoader;
 typedef map<string, ndPluginLoader *> nd_plugins;
