@@ -496,7 +496,7 @@ static int nd_start_capture_threads(void)
             threads.push_back(thread);
             break;
         }
-
+#if defined(_ND_USE_TPACKETV3)
         case ndCT_TPV3:
         {
             unsigned instances = it.second.config.tpv3->fanout_instances;
@@ -523,7 +523,8 @@ static int nd_start_capture_threads(void)
 
             break;
         }
-
+#endif
+#if defined(_ND_USE_NFQUEUE)
         case ndCT_NFQ:
         {
             unsigned instances = it.second.config.nfq->instances;
@@ -550,7 +551,7 @@ static int nd_start_capture_threads(void)
 
             break;
         }
-
+#endif
         default:
             throw runtime_error("capture type not set.");
         }
@@ -1670,14 +1671,14 @@ static void nd_status(void)
         for (auto& i : jstatus["interfaces"].items()) {
             const json& j = i.value();
             const string &iface = i.key();
-            unsigned pkts = 0, dropped = 0;
+            double dropped_percent = 0;
 
             icon = ND_I_FAIL;
             color = ND_C_RED;
             string state = "unknown";
 
-            const char *colors[3] = {
-                ND_C_RED, ND_C_RESET, ND_C_RESET
+            const char *colors[2] = {
+                ND_C_RED, ND_C_RESET
             };
 
             try {
@@ -1704,6 +1705,8 @@ static void nd_status(void)
                     }
                 }
 
+                unsigned pkts = 0, dropped = 0;
+
                 pkts = jstatus["stats"][iface]["raw"].get<unsigned>();
                 dropped = jstatus["stats"][iface]["capture_dropped"].get<unsigned>();
                 dropped += jstatus["stats"][iface]["queue_dropped"].get<unsigned>();
@@ -1713,30 +1716,29 @@ static void nd_status(void)
                     colors[1] = color = ND_C_YELLOW;
                 }
                 else {
-                    double percent =
+                    dropped_percent =
                         (double)dropped * 100 /
                         (double)pkts;
 
-                    if (percent > 0.0) {
+                    if (dropped_percent > 0.0) {
                         icon = ND_I_WARN;
-                        colors[2] = color = ND_C_YELLOW;
+                        colors[1] = color = ND_C_YELLOW;
                     }
-                    else if (percent > 5.0) {
+                    else if (dropped_percent > 5.0) {
                         icon = ND_I_FAIL;
-                        colors[2] = color = ND_C_RED;
+                        colors[1] = color = ND_C_RED;
                     }
                 }
             }
             catch (...) { }
 
             fprintf(stderr,
-                "%s%s%s %s [%s/%s]: %s%s%s: packets (dropped / total): %s%u%s / %s%u%s\n",
+                "%s%s%s %s [%s/%s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
                 color, icon, ND_C_RESET, iface.c_str(),
                 j["role"].get<string>().c_str(),
                 j["capture_type"].get<string>().c_str(),
                 colors[0], state.c_str(), ND_C_RESET,
-                colors[2], dropped, ND_C_RESET,
-                colors[1], pkts, ND_C_RESET
+                colors[1], dropped_percent, ND_C_RESET
             );
         }
 
