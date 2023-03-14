@@ -140,7 +140,7 @@ case "${host_os}" in
             [enable_nfqueue=no])
 
         AS_IF([test "x$enable_nfqueue" = "xyes"], [
-            PKG_CHECK_MODULES([LIBNETFILTER_QUEUE], [libnetfilter_queue >= 1.0.2])
+            PKG_CHECK_MODULES([LIBNETFILTER_QUEUE], [libnetfilter_queue >= 1.0.4])
             AC_DEFINE([_ND_USE_NFQUEUE], [1],
                 [Define to enable NFQUEUE capture support.])
             ND_DEFINES+=" -D_ND_USE_NFQUEUE=1"

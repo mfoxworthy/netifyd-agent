@@ -537,6 +537,7 @@ static int nd_start_capture_threads(void)
                     it.second,
                     thread_socket,
                     detection_threads,
+                    i, // instance_id
                     dns_hint_cache,
                     (it.second.role == ndIR_LAN) ? 0 : ++private_addr
                 );

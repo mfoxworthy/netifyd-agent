@@ -27,8 +27,10 @@ public:
         ndInterface& iface,
         ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
+        unsigned instance_id = 0,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);
+
     virtual ~ndCaptureNFQueue();
 
     virtual void *Entry(void);
@@ -38,6 +40,11 @@ public:
 
 protected:
     //struct bpf_program pcap_filter;
+    unsigned queue_id;
+    struct mnl_socket *nl;
+    unsigned int port_id;
+    size_t buffer_size;
+    uint8_t *buffer;
 };
 
 #endif // _ND_CAPTURE_NFQ_H

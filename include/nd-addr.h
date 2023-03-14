@@ -757,16 +757,16 @@ public:
         }
         switch (capture_type) {
         case ndCT_PCAP:
-            memset(&config.pcap, 0, sizeof(nd_config_pcap));
+            config.pcap = nullptr;
             break;
 #if defined(_ND_USE_TPACKETV3)
         case ndCT_TPV3:
-            memset(&config.tpv3, 0, sizeof(nd_config_tpv3));
+            config.tpv3 = nullptr;
             break;
 #endif
 #if defined(_ND_USE_NFQUEUE)
         case ndCT_NFQ:
-            memset(&config.nfq, 0, sizeof(nd_config_nfq));
+            config.nfq = nullptr;
             break;
 #endif
         default:
@@ -787,16 +787,16 @@ public:
         }
         switch(capture_type) {
         case ndCT_PCAP:
-            memcpy(&config.pcap, &iface.config.pcap, sizeof(nd_config_pcap));
+            config.pcap = iface.config.pcap;
             break;
 #if defined(_ND_USE_TPACKETV3)
         case ndCT_TPV3:
-            memcpy(&config.tpv3, &iface.config.tpv3, sizeof(nd_config_tpv3));
+            config.tpv3 = iface.config.tpv3;
             break;
 #endif
 #if defined(_ND_USE_NFQUEUE)
         case ndCT_NFQ:
-            memcpy(&config.nfq, &iface.config.nfq, sizeof(nd_config_nfq));
+            config.nfq = iface.config.nfq;
             break;
 #endif
         default:

@@ -66,11 +66,7 @@
 #endif
 
 #include <libmnl/libmnl.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nfnetlink.h>
-
-#include <linux/types.h>
-#include <linux/netfilter/nfnetlink_queue.h>
+#include <libnetfilter_queue/libnetfilter_queue.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -112,24 +108,91 @@ using namespace std;
 
 extern ndGlobalConfig nd_config;
 
+static int ndCaptureNFQueue_Callback(
+    const struct nlmsghdr *nlh, void *user)
+{
+    ndCaptureNFQueue *nfq = static_cast<ndCaptureNFQueue *>(user);
+
+    nd_dprintf("%s: packet\n", nfq->GetTag().c_str());
+
+    return MNL_CB_OK;
+}
+
 ndCaptureNFQueue::ndCaptureNFQueue(
     int16_t cpu,
     ndInterface& iface,
     ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
+    unsigned instance_id,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     :
     ndCaptureThread(ndCT_NFQ,
         (long)cpu, iface, thread_socket,
-        threads_dpi, dhc, private_addr)
+        threads_dpi, dhc, private_addr),
+    nl(nullptr), port_id(0),
+    buffer_size(0xffff + (MNL_SOCKET_BUFFER_SIZE / 2)),
+    buffer(nullptr)
 {
+    iface.ifname.append("#" + to_string(instance_id));
+    tag = iface.ifname;
+
+    queue_id = iface.config.nfq->queue_id + instance_id;
+
+    nl = mnl_socket_open(NETLINK_NETFILTER);
+
+    if (nl == nullptr) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "mnl_socket_open", errno
+        );
+    }
+
+    if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "mnl_socket_bind", errno
+        );
+    }
+
+    port_id = mnl_socket_get_portid(nl);
+
+    buffer = new uint8_t[buffer_size];
+
+    if (buffer == nullptr) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "new buffer", errno
+        );
+    }
+
+    struct nlmsghdr *nlh;
+
+    nlh = nfq_nlmsg_put((char *)buffer, NFQNL_MSG_CONFIG, queue_id);
+
+    nfq_nlmsg_cfg_put_params(nlh, NFQNL_COPY_PACKET, 0xffff);
+
+    mnl_attr_put_u32(nlh, NFQA_CFG_FLAGS, htonl(NFQA_CFG_F_GSO));
+    mnl_attr_put_u32(nlh, NFQA_CFG_MASK, htonl(NFQA_CFG_F_GSO));
+
+    if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "mnl_socket_sendto", errno
+        );
+    }
+
+    // ENOBUFS is signalled to userspace when packets were lost
+    // on kernel side.  In most cases, userspace isn't interested
+    // in this information, so turn it off.
+    //int enable = 1;
+    //mnl_socket_setsockopt(nl, NETLINK_NO_ENOBUFS, &enable, sizeof(int));
+
     nd_dprintf("%s: NFQ capture thread created.\n", tag.c_str());
 }
 
 ndCaptureNFQueue::~ndCaptureNFQueue()
 {
     Join();
+
+    if (nl != nullptr) mnl_socket_close(nl);
+    if (buffer != nullptr) delete [] buffer;
 
     nd_dprintf("%s: NFQ capture thread destroyed.\n", tag.c_str());
 }
@@ -138,18 +201,39 @@ void *ndCaptureNFQueue::Entry(void)
 {
     int rc = 0;
 
+    capture_state = STATE_ONLINE;
+
     nd_dprintf("%s: NFQ capture started on CPU: %lu\n",
         tag.c_str(), cpu >= 0 ? cpu : 0);
 
     while (! ShouldTerminate()) {
 
-        sleep(1);
+        rc = mnl_socket_recvfrom(nl, (char *)buffer, buffer_size);
+
+        if (rc == -1) {
+            nd_printf("%s: Error receiving NFQUEUE data: %s\n",
+                tag.c_str(), strerror(errno)
+            );
+            break;
+        }
+
+        rc = mnl_cb_run(
+            (char *)buffer, rc, 0, port_id,
+            ndCaptureNFQueue_Callback, static_cast<void *>(this)
+        );
+
+        if (rc < 0) {
+            nd_printf("%s: Error processing NFQUEUE data: %s\n",
+                tag.c_str(), strerror(errno)
+            );
+            break;
+        }
     }
 
     capture_state = STATE_OFFLINE;
 
-    nd_dprintf(
-        "%s: NFQ capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
+    nd_dprintf("%s: NFQ capture ended on CPU: %lu\n",
+        tag.c_str(), cpu >= 0 ? cpu : 0);
 
     return NULL;
 }
