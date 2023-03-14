@@ -38,6 +38,12 @@ public:
     // XXX: Ensure thread is locked before calling!
     virtual void GetCaptureStats(ndPacketStats &stats);
 
+    inline struct mnl_socket *GetSocket(void) { return nl; }
+
+    inline void PushPacket(ndPacket *pkt) {
+        pkt_queue.push_back(pkt);
+    }
+
 protected:
     //struct bpf_program pcap_filter;
     unsigned queue_id;
@@ -45,6 +51,8 @@ protected:
     unsigned int port_id;
     size_t buffer_size;
     uint8_t *buffer;
+    size_t dropped;
+    vector<ndPacket *> pkt_queue;
 };
 
 #endif // _ND_CAPTURE_NFQ_H

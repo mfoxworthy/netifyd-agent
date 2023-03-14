@@ -250,11 +250,11 @@ void *ndConntrackThread::Entry(void)
 {
     int rc;
     struct timeval tv;
+    fd_set fds_read;
 
     nd_ct_last_flow_purge_ttl = time(NULL) + _ND_CT_FLOW_TTL;
 
     while (! ShouldTerminate()) {
-        fd_set fds_read;
 
         FD_ZERO(&fds_read);
         FD_SET(ctfd, &fds_read);
