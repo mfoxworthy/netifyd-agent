@@ -60,7 +60,11 @@ filter = <BPF packet filter>
 <capture type options, override defaults>
 
 [capture_interface_nfq<queue ID>]
-instances = <number of instance threads, starting from queue ID>
+role = <interface role: LAN, WAN>
+type = <capture type: pcap, tpv3, nfqueue>
+address[0] = <local address: IPv4/6 CIDR>
+filter = <BPF packet filter>
+queue_instances = <number of instance threads, starting from queue ID>
 
 [flow_hash_cache]
 enable = <yes/no>

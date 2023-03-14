@@ -283,8 +283,7 @@ ndCaptureNFQueue::ndCaptureNFQueue(
 {
     dl_type = DLT_EN10MB;
 
-    iface.ifname.append("#" + to_string(instance_id));
-    tag = iface.ifname;
+    tag.append("#" + to_string(instance_id));
 
     queue_id = iface.config.nfq->queue_id + instance_id;
 
