@@ -901,8 +901,16 @@ int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr)
     return rc;
 }
 
+void nd_basename(const string &path, string &base)
+{
+    base = path;
+    size_t p = path.find_last_of("/");
+    if (p == string::npos) return;
+    base = path.substr(p + 1);
+}
+
 #if defined(__linux__)
-pid_t nd_is_running(pid_t pid, const char *exe_base)
+pid_t nd_is_running(pid_t pid, const string &exe_base)
 {
     pid_t rc = -1;
     struct stat sb;
@@ -914,33 +922,39 @@ pid_t nd_is_running(pid_t pid, const char *exe_base)
 
     if (lstat(proc_exe_link.str().c_str(), &sb) == -1) {
         if (errno != ENOENT) {
-            nd_printf("%s: lstat: %s: %s\n",
-                __PRETTY_FUNCTION__, proc_exe_link.str().c_str(), strerror(errno));
+            nd_printf("%s: lstat: %s: %s\n", __PRETTY_FUNCTION__,
+                proc_exe_link.str().c_str(), strerror(errno));
             return rc;
         }
 
         return 0;
     }
 
-    r = readlink(proc_exe_link.str().c_str(), link_path, sizeof(link_path));
+    r = readlink(
+        proc_exe_link.str().c_str(),
+        link_path, sizeof(link_path)
+    );
 
     if (r != -1) {
         link_path[r] = '\0';
 
-        if (strncmp(basename(link_path), exe_base, strlen(exe_base)))
+        if (strncmp(
+            basename(link_path),
+            exe_base.c_str(), exe_base.size())) {
             rc = 0;
+        }
         else
             rc = pid;
     }
     else {
-        nd_printf("%s: readlink: %s: %s\n",
-            __PRETTY_FUNCTION__, proc_exe_link.str().c_str(), strerror(errno));
+        nd_printf("%s: readlink: %s: %s\n", __PRETTY_FUNCTION__,
+            proc_exe_link.str().c_str(), strerror(errno));
     }
 
     return rc;
 }
 #elif defined(BSD4_4)
-pid_t nd_is_running(pid_t pid, const char *exe_base)
+pid_t nd_is_running(pid_t pid, const string &exe_base)
 {
     int mib[4];
     pid_t rc = -1;
@@ -963,10 +977,13 @@ pid_t nd_is_running(pid_t pid, const char *exe_base)
     else if (length > 0) {
         char *pathname_base = basename(pathname);
         length = strlen(pathname_base);
-        if (strlen(exe_base) < length) length = strlen(exe_base);
+        if (exe_base.size() < length)
+            length = exe_base.size();
 
-        if (strncmp(pathname_base, exe_base, length) == 0)
+        if (strncmp(
+            pathname_base, exe_base.c_str(), length) == 0) {
             rc = pid;
+        }
         else
             rc = 0;
     }
@@ -988,8 +1005,9 @@ int nd_load_pid(const string &pidfile)
             pid = (pid_t)strtol(_pid, NULL, 0);
         fclose(hpid);
     }
-    else if (errno == ENOENT)
+    else if (errno == ENOENT) {
         pid = 0;
+    }
 
     return pid;
 }

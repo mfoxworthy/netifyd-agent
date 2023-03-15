@@ -135,6 +135,7 @@ using namespace std;
 
 #include "nd-instance.h"
 
+static string nd_self;
 static bool nd_terminate = false;
 static bool nd_terminate_force = false;
 static nd_capture_threads capture_threads;
@@ -1514,7 +1515,7 @@ static void nd_status(void)
     }
 
     pid_t nd_pid = nd_load_pid(nd_config.path_pid_file);
-    nd_pid = nd_is_running(nd_pid, "netifyd");
+    nd_pid = nd_is_running(nd_pid, nd_self);
 
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
@@ -1994,6 +1995,8 @@ int main(int argc, char *argv[])
     nd_device_addr device_addresses;
     uint8_t dump_flags = ndDUMP_NONE;
 
+    nd_basename(argv[0], nd_self);
+
     setlocale(LC_ALL, "");
 
     ostringstream os;
@@ -2469,7 +2472,7 @@ int main(int argc, char *argv[])
     pid_t old_pid = nd_load_pid(nd_config.path_pid_file);
 
     if (old_pid > 0 &&
-        old_pid == nd_is_running(old_pid, "netifyd")) {
+        old_pid == nd_is_running(old_pid, nd_self)) {
         nd_printf("An agent is already running: PID %d\n", old_pid);
         return 1;
     }

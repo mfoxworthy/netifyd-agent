@@ -119,7 +119,9 @@ int nd_save_response_data(const char *filename, const ndJsonDataChunks &data);
 
 int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr);
 
-pid_t nd_is_running(pid_t pid, const char *exe_base);
+void nd_basename(const string &path, string &base);
+
+pid_t nd_is_running(pid_t pid, const string &exe_base);
 pid_t nd_load_pid(const string &pidfile);
 int nd_save_pid(const string &pidfile, pid_t pid);
 
