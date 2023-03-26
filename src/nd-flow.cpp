@@ -297,7 +297,10 @@ void ndFlow::reset(bool full_reset)
 
 void ndFlow::release(void)
 {
-    if (ndpi_flow != NULL) { ndpi_free_flow(ndpi_flow); ndpi_flow = NULL; }
+    if (ndpi_flow != NULL) {
+        ndpi_free_flow(ndpi_flow);
+        ndpi_flow = NULL;
+    }
 
     for (nd_flow_capture::const_iterator i = capture.begin();
         i != capture.end(); i++) {
@@ -473,13 +476,12 @@ bool ndFlow::has_mdns_domain_name(void) const
 
 void ndFlow::print(void) const
 {
-    const char
-        *lower_name = lower_addr.GetString().c_str();
-    const char
-        *upper_name = upper_addr.GetString().c_str();
-
     string iface_name;
     nd_iface_name(iface.ifname, iface_name);
+
+    const char
+        *lower_name = lower_addr.GetString().c_str(),
+        *upper_name = upper_addr.GetString().c_str();
 
     string digest;
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
@@ -516,19 +518,6 @@ void ndFlow::print(void) const
         (has_bt_info_hash()) ? " BT-IH: " : "",
         (has_bt_info_hash()) ? digest.c_str() : ""
     );
-    nd_dprintf("lower_addr valid: %s, %p (%s/%s)\n",
-        lower_addr.IsValid() ? "yes" : "no",
-        lower_addr.GetString().c_str(),
-        lower_addr.GetString().c_str(),
-        lower_name
-    );
-    nd_dprintf("upper_addr valid: %s, %p (%s/%s)\n",
-        upper_addr.IsValid() ? "yes" : "no",
-        upper_addr.GetString().c_str(),
-        upper_addr.GetString().c_str(),
-        upper_name
-    );
-
 #if 0
     if (ND_DEBUG &&
         detected_protocol == ND_PROTO_TLS &&
