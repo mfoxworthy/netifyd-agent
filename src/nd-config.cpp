@@ -230,9 +230,9 @@ ndGlobalConfig::~ndGlobalConfig()
                     break;
                 }
             }
-
-            interfaces.clear();
         }
+
+        interfaces.clear();
     }
 }
 

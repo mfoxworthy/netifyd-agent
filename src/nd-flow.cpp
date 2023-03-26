@@ -473,7 +473,7 @@ bool ndFlow::has_mdns_domain_name(void) const
 
 void ndFlow::print(void) const
 {
-    const char
+    volatile const char
         *lower_name = lower_addr.GetString().c_str(),
         *upper_name = upper_addr.GetString().c_str();
 
