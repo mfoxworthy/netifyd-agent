@@ -478,19 +478,6 @@ void ndFlow::print(void) const
     const char
         *upper_name = upper_addr.GetString().c_str();
 
-    nd_dprintf("lower_addr valid: %s, %p (%s/%s)\n",
-        lower_addr.IsValid() ? "yes" : "no",
-        lower_addr.GetString().c_str(),
-        lower_addr.GetString().c_str(),
-        lower_name
-    );
-    nd_dprintf("upper_addr valid: %s, %p (%s/%s)\n",
-        upper_addr.IsValid() ? "yes" : "no",
-        upper_addr.GetString().c_str(),
-        upper_addr.GetString().c_str(),
-        upper_name
-    );
-
     string iface_name;
     nd_iface_name(iface.ifname, iface_name);
 
@@ -529,6 +516,19 @@ void ndFlow::print(void) const
         (has_bt_info_hash()) ? " BT-IH: " : "",
         (has_bt_info_hash()) ? digest.c_str() : ""
     );
+    nd_dprintf("lower_addr valid: %s, %p (%s/%s)\n",
+        lower_addr.IsValid() ? "yes" : "no",
+        lower_addr.GetString().c_str(),
+        lower_addr.GetString().c_str(),
+        lower_name
+    );
+    nd_dprintf("upper_addr valid: %s, %p (%s/%s)\n",
+        upper_addr.IsValid() ? "yes" : "no",
+        upper_addr.GetString().c_str(),
+        upper_addr.GetString().c_str(),
+        upper_name
+    );
+
 #if 0
     if (ND_DEBUG &&
         detected_protocol == ND_PROTO_TLS &&
