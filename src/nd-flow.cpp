@@ -473,9 +473,23 @@ bool ndFlow::has_mdns_domain_name(void) const
 
 void ndFlow::print(void) const
 {
-    volatile const char
-        *lower_name = lower_addr.GetString().c_str(),
+    const char
+        *lower_name = lower_addr.GetString().c_str();
+    const char
         *upper_name = upper_addr.GetString().c_str();
+
+    nd_dprintf("lower_addr valid: %s, %p (%s/%s)\n",
+        lower_addr.IsValid() ? "yes" : "no",
+        lower_addr.GetString().c_str(),
+        lower_addr.GetString().c_str(),
+        lower_name
+    );
+    nd_dprintf("upper_addr valid: %s, %p (%s/%s)\n",
+        upper_addr.IsValid() ? "yes" : "no",
+        upper_addr.GetString().c_str(),
+        upper_addr.GetString().c_str(),
+        upper_name
+    );
 
     string iface_name;
     nd_iface_name(iface.ifname, iface_name);
