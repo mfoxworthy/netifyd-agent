@@ -565,7 +565,11 @@ void ndSinkThread::Upload(void)
         curl_easy_getinfo(ch, CURLINFO_CONTENT_TYPE, &content_type);
 
         double content_length = 0.0f;
+#if (LIBCURL_VERSION_NUM < 0x075500)
         curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
+#else
+        curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_length);
+#endif
 
         if (content_type == NULL) {
             nd_dprintf("%s: Missing content type.\n", tag.c_str());
