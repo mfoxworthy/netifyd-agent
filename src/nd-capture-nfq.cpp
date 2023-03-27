@@ -157,7 +157,7 @@ static int ndCaptureNFQueue_Callback(
             mnl_attr_get_payload(attr[NFQA_HWADDR])
         );
         if (pkt_hwaddr != nullptr) {
-            nd_dprintf("%s: hwaddr[%hu]: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx", tag,
+            nd_dprintf("%s: hwaddr[%hu]: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n", tag,
                 pkt_hwaddr->hw_addrlen,
                 pkt_hwaddr->hw_addr[0],
                 pkt_hwaddr->hw_addr[1],
