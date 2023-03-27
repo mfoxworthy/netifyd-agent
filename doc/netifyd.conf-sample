@@ -52,7 +52,7 @@ rb_blocks = <ring buffer block count>
 
 [capture_interface_<if name>]
 role = <interface role: LAN, WAN>
-type = <capture type: pcap, tpv3, nfqueue>
+capture_type = <capture type: pcap, tpv3, nfqueue>
 address[0] = <local address: IPv4/6 CIDR>
 peer = <optional interface peer, ex: software interfaces, pppX>
 filter = <BPF packet filter>
@@ -61,7 +61,7 @@ filter = <BPF packet filter>
 
 [capture_interface_nfq<queue ID>]
 role = <interface role: LAN, WAN>
-type = <capture type: pcap, tpv3, nfqueue>
+capture_type = <capture type: nfqueue>
 address[0] = <local address: IPv4/6 CIDR>
 filter = <BPF packet filter>
 queue_instances = <number of instance threads, starting from queue ID>

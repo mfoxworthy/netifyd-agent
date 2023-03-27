@@ -22,11 +22,12 @@ NETIFYD_CONF_OPTS = \
 	--disable-ndpi-debug \
 	--disable-libtcmalloc \
 	--disable-jemalloc \
-	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--with-tpacketv3,--without-tpacketv3) \
-	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK),--with-conntrack,--without-conntrack) \
-	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA),--with-conntrack-mdata,--without-conntrack-mdata) \
-	$(if $(BR2_PACKAGE_NETIFYD_NETLINK),--with-netlink,--without-netlink) \
-	$(if $(BR2_PACKAGE_NETIFYD_PLUGINS),--with-plugins,--without-plugins) \
+	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--enable-tpacketv3,--disable-tpacketv3) \
+	$(if $(BR2_PACKAGE_NETIFYD_NFQUEUE),--enable-nfqueue ,--disable-nfqueue) \
+	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK),--enable-conntrack,--disable-conntrack) \
+	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA),--enable-conntrack-mdata,--disable-conntrack-mdata) \
+	$(if $(BR2_PACKAGE_NETIFYD_NETLINK),--enable-netlink,--disable-netlink) \
+	$(if $(BR2_PACKAGE_NETIFYD_PLUGINS),--enable-plugins,--disable-plugins) \
 
 define NETIFYD_INSTALL_INIT_SYSTEMD
 	$(INSTALL) -D -m 644 $(@D)/deploy/systemd/netifyd.service \

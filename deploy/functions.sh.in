@@ -243,6 +243,8 @@ detect_os()
         echo "centos"
     elif [ -f /etc/redhat-release ]; then
         echo "redhat"
+    elif [ -f /etc/lxc-release ]; then
+        echo "lxc"
     else
         echo "unknown"
     fi

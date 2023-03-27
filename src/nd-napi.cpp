@@ -439,7 +439,11 @@ unsigned ndNetifyApiThread::Get(const string &url)
     curl_easy_getinfo(ch, CURLINFO_CONTENT_TYPE, &content_type);
 
     double content_length = 0.0f;
+#if (LIBCURL_VERSION_NUM < 0x075500)
     curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
+#else
+    curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_length);
+#endif
 
     if (http_rc == 200) {
         if (content_type == NULL) throw string("Content-type is NULL");
