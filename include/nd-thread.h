@@ -40,7 +40,7 @@ public:
     ndThread(const string &tag, long cpu = -1, bool ipc = false);
     virtual ~ndThread();
 
-    string GetTag(void) { return tag; }
+    const string& GetTag(void) { return tag; }
     pthread_t GetId(void) { return id; }
 
     void SetProcName(void);

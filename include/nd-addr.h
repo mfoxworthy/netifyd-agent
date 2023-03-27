@@ -161,7 +161,7 @@ public:
 
     static bool MakeString(const ndAddr &a, string &result, uint8_t flags = mfALL);
 
-    inline const string GetString() const { return cached_addr; }
+    inline const string& GetString() const { return cached_addr; }
 
     enum ComparisonFlags {
         cfADDR = 0x1,
