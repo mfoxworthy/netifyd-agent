@@ -157,16 +157,15 @@ static int ndCaptureNFQueue_Callback(
             mnl_attr_get_payload(attr[NFQA_HWADDR])
         );
         if (pkt_hwaddr != nullptr) {
-            nd_dprintf("%s: hwaddr[%hu]: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n", tag,
+            nd_dprintf("%s: hwaddr[%hu]: %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
+                tag,
                 pkt_hwaddr->hw_addrlen,
                 pkt_hwaddr->hw_addr[0],
                 pkt_hwaddr->hw_addr[1],
                 pkt_hwaddr->hw_addr[2],
                 pkt_hwaddr->hw_addr[3],
                 pkt_hwaddr->hw_addr[4],
-                pkt_hwaddr->hw_addr[5],
-                pkt_hwaddr->hw_addr[6],
-                pkt_hwaddr->hw_addr[7]
+                pkt_hwaddr->hw_addr[5]
             );
         }
     }
@@ -209,6 +208,12 @@ static int ndCaptureNFQueue_Callback(
     struct ether_header *hdr_eth = (struct ether_header *)pkt_data;
     memset(hdr_eth, 0, sizeof(struct ether_addr));
     hdr_eth->ether_type = pkt_hdr->hw_protocol;
+    if (pkt_hwaddr != nullptr) {
+        memcpy(
+	    &hdr_eth->ether_shost[0], &pkt_hwaddr->hw_addr[0],
+	    ETH_ALEN
+	);
+    }
 
     struct timeval tv;
 
