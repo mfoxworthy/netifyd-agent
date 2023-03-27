@@ -2,7 +2,9 @@ config BR2_PACKAGE_NETIFYD
 	bool "netifyd"
 	depends on BR2_USE_MMU
 	depends on BR2_INSTALL_LIBSTDCPP
+	select BR2_PACKAGE_OPENSSL
 	select BR2_PACKAGE_LIBCURL
+	select BR2_PACKAGE_LIBCURL_OPENSSL
 	select BR2_PACKAGE_LIBPCAP
 	select BR2_PACKAGE_ZLIB
 	help
@@ -16,6 +18,10 @@ config BR2_PACKAGE_NETIFYD
 comment "The Netify Agent is a C++11 application, please enable C++ under Toolchain"
 	depends on !BR2_INSTALL_LIBSTDCPP
 
+comment "The Netify Agent requires libCURL with TLS support enabled"
+	depends on BR2_PACKAGE_OPENSSL
+	depends on !BR2_PACKAGE_LIBCURL_TLS_NONE
+
 if BR2_PACKAGE_NETIFYD
 
 config BR2_PACKAGE_NETIFYD_TPACKETV3
@@ -23,6 +29,14 @@ config BR2_PACKAGE_NETIFYD_TPACKETV3
 	default y
 	help
 	  Enable TPACKETv3 capture support.
+
+config BR2_PACKAGE_NETIFYD_NFQUEUE
+	bool "NFQUEUE support"
+	default n
+	select BR2_PACKAGE_LIBNETFILTER_QUEUE
+	select BR2_PACKAGE_LIBNETFILTER_CONNTRACK
+	help
+	  Enable NFQUEUE capture support.
 
 config BR2_PACKAGE_NETIFYD_CONNTRACK
 	bool "conntrack support"

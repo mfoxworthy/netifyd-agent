@@ -23,6 +23,7 @@ NETIFYD_CONF_OPTS = \
 	--disable-libtcmalloc \
 	--disable-jemalloc \
 	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--with-tpacketv3,--without-tpacketv3) \
+	$(if $(BR2_PACKAGE_NETIFYD_TPACKETV3),--with-nfqueue ,--without-nfqueue) \
 	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK),--with-conntrack,--without-conntrack) \
 	$(if $(BR2_PACKAGE_NETIFYD_CONNTRACK_MDATA),--with-conntrack-mdata,--without-conntrack-mdata) \
 	$(if $(BR2_PACKAGE_NETIFYD_NETLINK),--with-netlink,--without-netlink) \
