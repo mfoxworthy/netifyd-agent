@@ -642,6 +642,90 @@ int ndGlobalConfig::Load(const string &filename)
     return 0;
 }
 
+bool ndGlobalConfig::SetOption(const string &filename, const string &func)
+{
+    if (func == "config_enable_sink")
+        fprintf(stdout, "Enabling Netify Cloud Sink.\n");
+    else if (func == "config_disable_sink")
+        fprintf(stdout, "Disabling Netify Cloud Sink.\n");
+    else {
+        fprintf(stderr,
+            "Unrecognized configuration option: %s\n", func.c_str()
+        );
+        return false;
+    }
+
+    string result;
+    int rc = nd_functions_exec(func, result);
+
+    if (rc != 0) {
+        fprintf(stderr,
+            "Error while modifying configuration file.\n"
+            "Manually edit configuration file: %s\n",
+            filename.c_str()
+        );
+
+        if (ND_DEBUG) fprintf(stderr, "%s", result.c_str());
+
+        return false;
+    }
+
+    fprintf(stderr,
+        "Configuration modified: %s\n", filename.c_str()
+    );
+
+    return true;
+}
+
+bool ndGlobalConfig::ForceReset(void)
+{
+    vector<string> files = {
+        path_uuid, path_uuid_site, ND_URL_SINK_PATH
+    };
+
+    int seconds = 3;
+    fprintf(stdout,
+        "%sWARNING%s: Resetting Agent state files in %s%d%s seconds...\n",
+        ND_C_RED, ND_C_RESET, ND_C_RED, seconds, ND_C_RESET);
+    for ( ; seconds >= 0; seconds--) {
+        fprintf(stdout, "%sWARNING%s: Press CTRL-C to abort: %s%d%s\r",
+            ND_C_RED, ND_C_RESET, ND_C_RED, seconds, ND_C_RESET);
+        fflush(stdout);
+        sleep(1);
+    }
+    fputc('\n', stdout);
+    sleep(2);
+
+    bool success = true;
+
+    for (vector<string>::const_iterator i = files.begin();
+        i != files.end(); i++) {
+        fprintf(stdout, "Deleting file: %s\n", (*i).c_str());
+        if (unlink((*i).c_str()) != 0 && errno != ENOENT) {
+            success = false;
+            fprintf(stderr, "Error while removing file: %s: %s\n",
+                (*i).c_str(), strerror(errno));
+        }
+    }
+
+    string result;
+    int rc = nd_functions_exec("restart_netifyd", result);
+
+    if (rc != 0) {
+        success = false;
+        fprintf(stderr, "Error while restarting service.\n"
+            "Manual restart is required for the reset to be completed.\n");
+    }
+
+    if (result.size())
+        fprintf(stdout, "%s", result.c_str());
+
+    if (rc == 0)
+        fprintf(stdout, "Reset successful.\n");
+
+    return success;
+}
+
 bool ndGlobalConfig::AddInterface(const string &iface,
     nd_interface_role role, nd_capture_type type, void *config)
 {

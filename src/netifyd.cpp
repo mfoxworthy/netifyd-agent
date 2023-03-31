@@ -1952,7 +1952,7 @@ static int nd_check_agent_uuid(void)
     return 0;
 }
 #if 0
-static int test_main(bool threaded = false)
+static int test_main(int argc, char * const argv[], bool threaded = false)
 {
     int rc = 0;
     sigset_t sigset;
@@ -1962,11 +1962,16 @@ static int test_main(bool threaded = false)
     if (! threaded) {
         ndInstance instance(sigset, "netifyd");
 
+        if (! instance.LoadConfig(argc, argv)) return 1;
+
         return instance.Create();
     }
     else {
         ndInstance instance1(sigset, "netifyd1", true);
         ndInstance instance2(sigset, "netifyd2", true);
+
+        //if (! instance1.LoadConfig(argc, argv)) return 1;
+        //if (! instance2.LoadConfig(argc, argv)) return 1;
 
         rc = instance1.Create();
         if (rc != 0) return rc;
@@ -2018,6 +2023,8 @@ int main(int argc, char *argv[])
 
     memset(&nd_json_agent_stats, 0, sizeof(nd_agent_stats));
     nd_json_agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
+
+//    return test_main(argc, argv, true);
 
     static struct option options[] =
     {
@@ -2102,8 +2109,6 @@ int main(int argc, char *argv[])
             break;
         }
     }
-
-    //return test_main(true);
 
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);

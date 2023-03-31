@@ -43,8 +43,8 @@ public:
     static void InitializeSignals(
         sigset_t &sigset, bool minimal = false);
 
-    bool LoadConfig(const string &filename = "");
-    bool ParseArguments(int argc, char *argv[]);
+    bool LoadConfig(
+        int argc, char * const argv[], const string &filename = "");
 
     inline void Terminate(void) {
         if (terminate.load())
@@ -64,6 +64,8 @@ public:
 
     int exit_code;
 
+    ndApplications apps;
+
 protected:
     friend class ndInstanceThread;
 
@@ -72,6 +74,7 @@ protected:
     sigset_t sigset;
 
     string tag;
+    string self;
 
     atomic_bool terminate;
     atomic_bool terminate_force;
@@ -81,6 +84,10 @@ protected:
 
     string conf_filename;
     ndGlobalConfig config;
+
+    atomic<uint64_t> flows;
+
+    nd_agent_stats agent_stats;
 };
 
 #endif // _ND_INSTANCE_H

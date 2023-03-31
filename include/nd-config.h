@@ -223,6 +223,10 @@ public:
 
     int Load(const string &filename);
 
+    bool SetOption(const string &filename, const string &func);
+
+    bool ForceReset(void);
+
     bool AddInterface(const string &iface, nd_interface_role role,
         nd_capture_type type = ndCT_NONE, void *config = nullptr);
 
