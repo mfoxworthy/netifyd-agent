@@ -208,6 +208,20 @@ almalinux 8 build:
     RPMOS_ARCH: "x86_64"
     RPMOS_REPOS: "--enablerepo=powertools,epel"
 
+almalinux 9 build:
+  extends: .rpmos_build
+  tags:
+    - docker
+  only:
+    - tags
+    - web
+  variables:
+    RPMOS_IMAGE: "almalinux:9"
+    RPMOS_OS: "almalinux"
+    RPMOS_VERSION: "9"
+    RPMOS_ARCH: "x86_64"
+    RPMOS_REPOS: "--enablerepo=crb"
+
 # -------------------------------------------------------------------------
 # Test stage
 # -------------------------------------------------------------------------
