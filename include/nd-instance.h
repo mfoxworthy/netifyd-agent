@@ -52,15 +52,22 @@ public:
 
     enum ndConfigResult {
         ndCR_OK,
+        ndCR_AGENT_STATUS,
         ndCR_DISABLED_OPTION,
+        ndCR_DUMP_LIST,
+        ndCR_EXPORT_APPS,
+        ndCR_FORCE_RESULT,
+        ndCR_GENERATE_UUID,
+        ndCR_HASH_FILE,
+        ndCR_INVALID_INTERFACES,
         ndCR_INVALID_OPTION,
         ndCR_INVALID_VALUE,
         ndCR_LOAD_FAILURE,
-        ndCR_SETOPT_SINK_ENABLE,
+        ndCR_LOOKUP_ADDR,
+        ndCR_PROVISION_UUID,
         ndCR_SETOPT_SINK_DISABLE,
-        ndCR_FORCE_RESULT,
-        ndCR_EXPORT_APPS,
-        ndCR_DUMP_LIST,
+        ndCR_SETOPT_SINK_ENABLE,
+        ndCR_USAGE_OR_VERSION,
     };
 
 #define ndCR_Pack(r, c) ((c << 16) + (r & 0x0000ffff))
@@ -89,6 +96,14 @@ public:
 
     bool DumpList(uint8_t type = ndDUMP_TYPE_ALL);
 
+    bool LookupAddress(const string &ip);
+
+    void CommandLineHelp(bool version_only = false);
+
+    bool CheckAgentUUID(void);
+
+    bool AgentStatus(void);
+
     int Run(void);
 
     inline void Terminate(void) {
@@ -105,11 +120,14 @@ public:
         return terminate.load();
     }
 
+    inline const string& GetVersion() const { return version; }
+
     int exit_code;
 
     ndApplications apps;
     ndCategories categories;
     ndDomains domains;
+    ndInterfaces interfaces;
 
 protected:
     friend class ndInstanceThread;
@@ -124,6 +142,7 @@ protected:
 
     string tag;
     string self;
+    string version;
 
     atomic_bool terminate;
     atomic_bool terminate_force;

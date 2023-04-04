@@ -61,7 +61,7 @@ enum nd_tpv3_fanout_flags {
 enum nd_global_flags {
     ndGF_DEBUG = 0x1,
     ndGF_DEBUG_UPLOAD = 0x2,
-    ndGF_DEBUG_WITH_ETHERS = 0x4,
+    ndGF_UNUSED0x4 = 0x4,
     ndGF_DEBUG_NDPI= 0x8,
     ndGF_QUIET = 0x10,
     ndGF_CAPTURE_UNKNOWN_FLOWS = 0x20,
@@ -89,7 +89,6 @@ enum nd_global_flags {
 
 #define ndGC_DEBUG (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG)
 #define ndGC_DEBUG_UPLOAD (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_UPLOAD)
-#define ndGC_DEBUG_WITH_ETHERS (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_WITH_ETHERS)
 #define ndGC_DEBUG_NDPI (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_NDPI)
 #define ndGC_QUIET (ndGlobalConfig::GetInstance().flags & ndGF_QUIET)
 #define ndGC_OVERRIDE_LEGACY_CONFIG (ndGlobalConfig::GetInstance().flags & ndGF_OVERRIDE_LEGACY_CONFIG)

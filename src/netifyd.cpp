@@ -2030,7 +2030,6 @@ int main(int argc, char *argv[])
     {
         { "config", 1, 0, 'c' },
         { "debug", 0, 0, 'd' },
-        { "debug-ether-names", 0, 0, 'e' },
         { "debug-ndpi", 0, 0, 'n' },
         { "debug-uploads", 0, 0, 'D' },
         { "device-address", 1, 0, 'A' },
@@ -2087,7 +2086,7 @@ int main(int argc, char *argv[])
         { NULL, 0, 0, 0 }
     };
 
-    static const char *flags = { "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:stT:Uu:Vv" };
+    static const char *flags = { "?A:c:DdE:F:f:hI:i:j:lN:nPpRrS:stT:Uu:Vv" };
 
     while (true) {
         if ((rc = getopt_long(argc, argv, flags,
@@ -2233,11 +2232,8 @@ int main(int argc, char *argv[])
         case 'c':
             break;
         case 'E':
-            ndGC.AddInterface(optarg, ndIR_WAN, ndCT_NONE);
+            ndGC.AddInterface(optarg, ndIR_WAN, ndCT_PCAP);
             last_device = optarg;
-            break;
-        case 'e':
-            ndGC.flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
         case 'F':
             if (last_device.size() == 0) {
@@ -2252,7 +2248,7 @@ int main(int argc, char *argv[])
         case 'h':
             nd_usage();
         case 'I':
-            ndGC.AddInterface(optarg, ndIR_LAN, ndCT_NONE);
+            ndGC.AddInterface(optarg, ndIR_LAN, ndCT_PCAP);
             last_device = optarg;
             break;
         case 'i':
