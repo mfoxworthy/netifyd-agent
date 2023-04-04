@@ -1949,7 +1949,7 @@ static int nd_check_agent_uuid(void)
 
     return 0;
 }
-#if 1
+#if 0
 static int test_main(int argc, char * const argv[], bool threaded = false)
 {
     int rc = 0;
@@ -2024,7 +2024,7 @@ int main(int argc, char *argv[])
     memset(&nd_json_agent_stats, 0, sizeof(nd_agent_stats));
     nd_json_agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
-    return test_main(argc, argv, true);
+//    return test_main(argc, argv, true);
 
     static struct option options[] =
     {
