@@ -128,8 +128,6 @@ using namespace std;
 
 extern ndInterfaces nd_interfaces;
 
-ndGlobalConfig nd_config;
-
 ndGlobalConfig::ndGlobalConfig() :
     napi_vendor(NULL),
     path_agent_status(ND_AGENT_STATUS_PATH),

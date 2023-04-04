@@ -74,8 +74,6 @@ using namespace std;
 #include "nd-napi.h"
 #include "nd-signal.h"
 
-extern ndGlobalConfig nd_config;
-
 #define _ND_DEBUG_CURL     1
 
 static int ndNetifyApiThread_curl_debug(CURL *ch __attribute__((unused)),
@@ -216,27 +214,27 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     header.str("");
 
-    if (strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
-        header << "X-UUID: " << nd_config.uuid;
+    if (strncmp(ND_GCI.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
+        header << "X-UUID: " << ND_GCI.uuid;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN))
+        if (nd_load_uuid(uuid, ND_GCI.path_uuid, ND_AGENT_UUID_LEN))
             header << "X-UUID: " << uuid;
         else
-            header << "X-UUID: " << nd_config.uuid;
+            header << "X-UUID: " << ND_GCI.uuid;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
-    if (strncmp(nd_config.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
-        header << "X-UUID-Serial: " << nd_config.uuid_serial;
+    if (strncmp(ND_GCI.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
+        header << "X-UUID-Serial: " << ND_GCI.uuid_serial;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN))
+        if (nd_load_uuid(uuid, ND_GCI.path_uuid_serial, ND_AGENT_SERIAL_LEN))
             header << "X-UUID-Serial: " << uuid;
         else
-            header << "X-UUID-Serial: " << nd_config.uuid_serial;
+            header << "X-UUID-Serial: " << ND_GCI.uuid_serial;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
@@ -289,8 +287,8 @@ void *ndNetifyApiThread::Entry(void)
         }
 
         ostringstream url;
-        url << nd_config.url_napi << requests[cid];
-        url << "?vendor=" << nd_config.napi_vendor;
+        url << ND_GCI.url_napi << requests[cid];
+        url << "?vendor=" << ND_GCI.napi_vendor;
         url << "&settings_limit=100";
 
         if (page > 0) url << "&page=" << page;

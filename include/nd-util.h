@@ -105,9 +105,7 @@ string nd_get_version_and_features(void);
 
 bool nd_parse_app_tag(const string &tag, unsigned &id, string &name);
 
-#ifdef _ND_USE_WATCHDOGS
 int nd_touch(const string &filename);
-#endif
 
 int nd_file_load(const string &filename, string &data);
 

@@ -125,7 +125,6 @@ using namespace std;
 // Enable to log custom domain category lookups
 //#define _ND_LOG_DOMAIN_LOOKUPS  1
 
-extern ndGlobalConfig nd_config;
 extern ndApplications *nd_apps;
 extern ndCategories *nd_categories;
 extern ndDomains *nd_domains;
@@ -299,7 +298,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ndEF->flags.detection_complete.load() == false &&
                 (ndEF->flags.expiring.load() == false ||
                     ndEF->tickets.load() > 1) &&
-                ndEF->detection_packets.load() < nd_config.max_detection_pkts
+                ndEF->detection_packets.load() < ND_GCI.max_detection_pkts
             )) {
 
                 ndEF->detection_packets++;
@@ -307,7 +306,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ProcessPacket(entry);
             }
 
-            if (ndEF->detection_packets.load() == nd_config.max_detection_pkts ||
+            if (ndEF->detection_packets.load() == ND_GCI.max_detection_pkts ||
                 (ndEF->flags.expiring.load() &&
                     ndEF->flags.expired.load() == false)) {
 
@@ -942,8 +941,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     ndEF->update_lower_maps();
 
     for (vector<uint8_t *>::const_iterator i =
-        nd_config.privacy_filter_mac.begin();
-        i != nd_config.privacy_filter_mac.end() &&
+        ND_GCI.privacy_filter_mac.begin();
+        i != ND_GCI.privacy_filter_mac.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
         if (! memcmp((*i), ndEF->lower_mac.addr.ll.sll_addr, ETH_ALEN))
@@ -953,8 +952,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
     for (vector<struct sockaddr *>::const_iterator i =
-        nd_config.privacy_filter_host.begin();
-        i != nd_config.privacy_filter_host.end() &&
+        ND_GCI.privacy_filter_host.begin();
+        i != ND_GCI.privacy_filter_host.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
 
@@ -1071,7 +1070,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         }
     }
 
-    if ((ND_DEBUG && ND_VERBOSE) || nd_config.h_flow != stderr)
+    if ((ND_DEBUG && ND_VERBOSE) || ND_GCI.h_flow != stderr)
         ndEF->print();
 
 #ifdef _ND_USE_PLUGINS

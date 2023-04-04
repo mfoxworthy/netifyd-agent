@@ -105,8 +105,6 @@ using namespace std;
 #include "nd-capture.h"
 #include "nd-capture-pcap.h"
 
-extern ndGlobalConfig nd_config;
-
 ndCapturePcap::ndCapturePcap(
     int16_t cpu,
     ndInterface& iface,
@@ -278,8 +276,8 @@ pcap_t *ndCapturePcap::OpenCapture(void)
     else {
         pcap_new = pcap_open_live(
             tag.c_str(),
-            nd_config.max_capture_length,
-            1, nd_config.capture_read_timeout, pcap_errbuf
+            ND_GCI.max_capture_length,
+            1, ND_GCI.capture_read_timeout, pcap_errbuf
         );
 
 #if 0
@@ -320,9 +318,9 @@ pcap_t *ndCapturePcap::OpenCapture(void)
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
-        nd_interface_filter::const_iterator i = nd_config.interface_filters.find(tag);
+        nd_interface_filter::const_iterator i = ND_GCI.interface_filters.find(tag);
 
-        if (i != nd_config.interface_filters.end()) {
+        if (i != ND_GCI.interface_filters.end()) {
 
             if (pcap_compile(pcap_new, &pcap_filter,
                 i->second.c_str(), 1, PCAP_NETMASK_UNKNOWN) < 0) {

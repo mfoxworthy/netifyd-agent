@@ -318,20 +318,6 @@ AS_IF([test "x$enable_lean_and_mean" = "xyes"], [
     AM_CONDITIONAL(ENABLE_LEAN_AND_MEAN, false)
 ])
 
-AC_ARG_ENABLE([watchdogs],
-    [AS_HELP_STRING([--enable-watchdogs], [Enable run-time watchdogs [default=no]])],
-    [],
-    [enable_watchdogs=no])
-
-AS_IF([test "x$enable_watchdogs" = "xyes"], [
-    AC_DEFINE([_ND_USE_WATCHDOGS], [1],
-        [Define to enable run-time watchdogs support.])
-    ND_DEFINES+=" -D_ND_USE_WATCHDOGS=1"
-    AM_CONDITIONAL(USE_WATCHDOGS, true)
-], [
-    AM_CONDITIONAL(USE_WATCHDOGS, false)
-])
-
 AC_ARG_ENABLE([ndpi-debug],
     [AS_HELP_STRING([--enable-ndpi-debug], [Enable nDPI debug messages [default=no]])],
     [],

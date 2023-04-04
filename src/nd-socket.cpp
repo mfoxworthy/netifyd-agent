@@ -114,8 +114,6 @@ using namespace std;
 
 #define _ND_SOCKET_PROC_NET_UNIX    "/proc/net/unix"
 
-extern ndGlobalConfig nd_config;
-
 ndSocketLocal::ndSocketLocal(ndSocket *base, const string &node)
     : base(base), valid(false)
 {
@@ -698,16 +696,16 @@ ndSocketThread::ndSocketThread(int16_t cpu)
     : ndThread("nd-socket", (long)cpu)
 {
     vector<pair<string, string> >::const_iterator i;
-    for (i = nd_config.socket_host.begin();
-        i != nd_config.socket_host.end(); i++) {
+    for (i = ND_GCI.socket_host.begin();
+        i != ND_GCI.socket_host.end(); i++) {
         ndSocketServerRemote *skt;
         skt = new ndSocketServerRemote((*i).first, (*i).second);
         skt->SetBlockingMode(false);
         servers[skt->GetDescriptor()] = skt;
     }
     vector<string>::const_iterator j;
-    for (j = nd_config.socket_path.begin();
-        j != nd_config.socket_path.end(); j++) {
+    for (j = ND_GCI.socket_path.begin();
+        j != ND_GCI.socket_path.end(); j++) {
         ndSocketServerLocal *skt;
         skt = new ndSocketServerLocal((*j));
         skt->SetBlockingMode(false);

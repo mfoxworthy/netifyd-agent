@@ -61,9 +61,6 @@
 #include <syslog.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifdef _ND_USE_WATCHDOGS
-#include <time.h>
-#endif
 #include <pwd.h>
 #include <grp.h>
 #include <libgen.h>
@@ -92,8 +89,6 @@ using namespace std;
 #include "nd-sha1.h"
 #include "nd-json.h"
 #include "nd-util.h"
-
-extern ndGlobalConfig nd_config;
 
 static mutex nd_printf_mutex;
 
@@ -189,7 +184,7 @@ void nd_flow_printf(const char *format, ...)
 
     va_list ap;
     va_start(ap, format);
-    vfprintf(nd_config.h_flow, format, ap);
+    vfprintf(ND_GCI.h_flow, format, ap);
     va_end(ap);
 }
 
@@ -759,7 +754,6 @@ bool nd_parse_app_tag(const string &tag, unsigned &id, string &name)
     return false;
 }
 
-#ifdef _ND_USE_WATCHDOGS
 int nd_touch(const string &filename)
 {
     int fd;
@@ -779,7 +773,6 @@ int nd_touch(const string &filename)
 
     return 0;
 }
-#endif
 
 int nd_file_load(const string &filename, string &data)
 {

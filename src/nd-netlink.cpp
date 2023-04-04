@@ -67,8 +67,6 @@ using namespace std;
 #include "nd-addr.h"
 #include "nd-netlink.h"
 
-extern ndGlobalConfig nd_config;
-
 extern ndAddrType *nd_addrtype;
 
 ndNetlink *netlink = NULL;

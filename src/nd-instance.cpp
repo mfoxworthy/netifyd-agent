@@ -131,6 +131,8 @@ using namespace std;
 #include "nd-napi.h"
 #include "nd-instance.h"
 
+ndInstance *ndInstance::instance = nullptr;
+
 void *ndInstanceThread::Entry(void)
 {
     if (! ShouldTerminate()) return instance->Entry();
@@ -149,11 +151,14 @@ ndInstance::ndInstance(
     terminate = false;
     terminate_force = false;
 
-    if (threaded)
+    if (threaded) {
         thread = new ndInstanceThread(tag, this);
-// TODO:
-//        if (thread == nullptr)
-//            throw...
+        if (thread == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new ndInstanceThread", ENOMEM
+            );
+        }
+    }
 
     flows = 0;
 
@@ -166,6 +171,28 @@ ndInstance::~ndInstance()
         thread->Terminate();
         delete thread;
     }
+
+    if (this == instance) instance = nullptr;
+}
+
+ndInstance& ndInstance::Create(const sigset_t &sigset,
+    const string &tag, bool threaded) {
+    if (instance != nullptr) {
+        fprintf(stderr, "Instance already created.\n");
+        throw ndSystemException(__PRETTY_FUNCTION__,
+            "instance exists", EINVAL
+        );
+    }
+
+    instance = new ndInstance(sigset, tag, threaded);
+
+    if (instance == nullptr) {
+        throw ndSystemException(__PRETTY_FUNCTION__,
+            "new ndInstance", ENOMEM
+        );
+    }
+
+    return *instance;
 }
 
 void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
@@ -198,7 +225,7 @@ void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
     }
 }
 
-bool ndInstance::LoadConfig(int argc, char * const argv[],
+bool ndInstance::InitializeConfig(int argc, char * const argv[],
     const string &filename)
 {
     nd_basename(argv[0], self);
@@ -293,22 +320,25 @@ bool ndInstance::LoadConfig(int argc, char * const argv[],
             conf_filename = optarg;
             break;
         case 'd':
-            config.flags |= ndGF_DEBUG;
+            ND_GF_SET_FLAG(ndGF_DEBUG, true);
             break;
         default:
             break;
         }
     }
 
-    if (! filename.empty()) conf_filename = filename;
+    if (! filename.empty()) {
+        conf_filename = filename;
 
-    if (config.Load(conf_filename) < 0)
-        return false;
+        if (ND_GCI.Load(conf_filename) < 0)
+            return false;
+    }
 
-    config.Close();
+    ND_GCI.Close();
+
+    Reload();
 
     optind = 1;
-
     while (true) {
         if ((rc = getopt_long(argc, argv, flags,
             options, NULL)) == -1) break;
@@ -318,72 +348,71 @@ bool ndInstance::LoadConfig(int argc, char * const argv[],
             break;
         case _ND_LO_ENABLE_SINK:
             exit(
-                config.SetOption(
+                ND_GCI.SetOption(
                     conf_filename, "config_enable_sink"
                 ) ? 0 : 1
             );
         case _ND_LO_DISABLE_SINK:
             exit(
-                config.SetOption(
+                ND_GCI.SetOption(
                     conf_filename, "config_disable_sink"
                 ) ? 0 : 1
             );
         case _ND_LO_FORCE_RESET:
             exit(
-                config.ForceReset() ? 0 : 1
+                ND_GCI.ForceReset() ? 0 : 1
             );
         case _ND_LO_CA_CAPTURE_BASE:
-            config.ca_capture_base = (int16_t)atoi(optarg);
-            if (config.ca_capture_base > agent_stats.cpus) {
+            ND_GCI.ca_capture_base = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_capture_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Capture thread base greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_CONNTRACK:
-            config.ca_conntrack = (int16_t)atoi(optarg);
-            if (config.ca_conntrack > agent_stats.cpus) {
+            ND_GCI.ca_conntrack = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_conntrack > agent_stats.cpus) {
                 fprintf(stderr,
                     "Conntrack thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
-            config.ca_detection_base = (int16_t)atoi(optarg);
-            if (config.ca_detection_base > agent_stats.cpus) {
+            ND_GCI.ca_detection_base = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_detection_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection thread base greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
-            config.ca_detection_cores = (int16_t)atoi(optarg);
-            if (config.ca_detection_cores > agent_stats.cpus) {
+            ND_GCI.ca_detection_cores = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_detection_cores > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection cores greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_SINK:
-            config.ca_sink = (int16_t)atoi(optarg);
-            if (config.ca_sink > agent_stats.cpus) {
+            ND_GCI.ca_sink = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_sink > agent_stats.cpus) {
                 fprintf(stderr,
                     "Sink thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_SOCKET:
-            config.ca_socket = (int16_t)atoi(optarg);
-            if (config.ca_socket > agent_stats.cpus) {
+            ND_GCI.ca_socket = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_socket > agent_stats.cpus) {
                 fprintf(stderr,
                     "Socket thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
-            config.flags |= ndGF_WAIT_FOR_CLIENT;
+            ND_GF_SET_FLAG(ndGF_WAIT_FOR_CLIENT, true);
             break;
-        }
 #if 0
         case _ND_LO_EXPORT_APPS:
 #ifndef _ND_LEAN_AND_MEAN
@@ -393,12 +422,13 @@ bool ndInstance::LoadConfig(int argc, char * const argv[],
             exit(1);
 #endif
 #endif
+        }
     }
 
     return true;
 }
 
-int ndInstance::Create(void)
+int ndInstance::Run(void)
 {
     if (threaded) {
         if (thread == nullptr) {
@@ -447,6 +477,27 @@ void *ndInstance::ndInstance::Entry(void)
     while (! terminate.load());
 
     return nullptr;
+}
+
+bool ndInstance::Reload(void)
+{
+    bool result = true;
+
+    nd_dprintf("Reloading configuration...\n");
+    if (! (result = apps.Load(ND_GCI.path_app_config)))
+        result = apps.LoadLegacy(ND_GCI.path_legacy_config);
+
+    result = categories.Load();
+
+    //if (ND_LOAD_DOMAINS) result = domains.Load();
+    result = domains.Load();
+#ifdef _ND_USE_PLUGINS
+    //nd_plugin_event(ndPlugin::EVENT_RELOAD);
+#endif
+    nd_dprintf("Configuration reloaded %s.\n",
+        (result) ? "successfully" : "with errors");
+
+    return result;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

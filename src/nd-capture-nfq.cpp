@@ -112,8 +112,6 @@ using namespace std;
 #include "nd-capture.h"
 #include "nd-capture-nfq.h"
 
-extern ndGlobalConfig nd_config;
-
 static int ndCaptureNFQueue_Callback(
     const struct nlmsghdr *nlh, void *user)
 {
@@ -210,9 +208,9 @@ static int ndCaptureNFQueue_Callback(
     hdr_eth->ether_type = pkt_hdr->hw_protocol;
     if (pkt_hwaddr != nullptr) {
         memcpy(
-	    &hdr_eth->ether_shost[0], &pkt_hwaddr->hw_addr[0],
-	    ETH_ALEN
-	);
+            &hdr_eth->ether_shost[0], &pkt_hwaddr->hw_addr[0],
+            ETH_ALEN
+        );
     }
 
     struct timeval tv;

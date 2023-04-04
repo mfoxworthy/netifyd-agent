@@ -74,8 +74,6 @@ using namespace std;
 
 //#define _ND_LOG_DOMAINS   1
 
-extern ndGlobalConfig nd_config;
-
 ndCategories *nd_categories = NULL;
 ndDomains *nd_domains = NULL;
 
@@ -85,10 +83,10 @@ bool ndCategories::Load(void)
 
     json jdata;
 
-    ifstream ifs(nd_config.path_cat_config);
+    ifstream ifs(ND_GCI.path_cat_config);
     if (! ifs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            nd_config.path_cat_config.c_str(), strerror(ENOENT));
+            ND_GCI.path_cat_config.c_str(), strerror(ENOENT));
         return false;
     }
 
@@ -97,8 +95,8 @@ bool ndCategories::Load(void)
     }
     catch (exception &e) {
         nd_printf("Error loading categories: %s: JSON parse error\n",
-            nd_config.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", nd_config.path_cat_config.c_str(), e.what());
+            ND_GCI.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
 
         return false;
     }
@@ -134,7 +132,7 @@ bool ndCategories::Load(void)
 
 bool ndCategories::LoadLegacy(json &jdata) {
     nd_printf("Legacy category format detected: %s\n",
-        nd_config.path_cat_config.c_str());
+        ND_GCI.path_cat_config.c_str());
 
     for (auto &ci : categories) {
         string key;
@@ -242,17 +240,17 @@ bool ndCategories::Save(void)
         }
     } catch (exception &e) {
         nd_printf("Error JSON encoding categories: %s\n",
-            nd_config.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", nd_config.path_cat_config.c_str(), e.what());
+            ND_GCI.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
 
         return false;
     }
 
-    ofstream ofs(nd_config.path_cat_config);
+    ofstream ofs(ND_GCI.path_cat_config);
 
     if (! ofs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            nd_config.path_cat_config.c_str(), strerror(ENOENT));
+            ND_GCI.path_cat_config.c_str(), strerror(ENOENT));
         return false;
     }
 
@@ -261,8 +259,8 @@ bool ndCategories::Save(void)
     }
     catch (exception &e) {
         nd_printf("Error saving categories: %s: JSON parse error\n",
-            nd_config.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", nd_config.path_cat_config.c_str(), e.what());
+            ND_GCI.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
 
         return false;
     }
@@ -370,7 +368,7 @@ nd_cat_id_t ndCategories::LookupTag(ndCategoryType type, const string &tag)
 
 ndDomains::ndDomains()
 {
-    path_domains = nd_config.path_state_persistent + "/domains.d";
+    path_domains = ND_GCI.path_state_persistent + "/domains.d";
 }
 
 bool ndDomains::Load(void)
@@ -383,7 +381,7 @@ bool ndDomains::Load(void)
     if (! categories.GetTagIndex(ndCAT_TYPE_APP, index_tag)) return false;
 
     vector<string> files;
-    if (! nd_scan_dotd(path_domains, files)) return false;
+    if (! nd_scan_dotd(path_domains, files)) return true;
 
     domains.clear();
 

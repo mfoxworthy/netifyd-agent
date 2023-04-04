@@ -199,7 +199,6 @@ using namespace std;
 // Enable GTP tunnel dissection
 #define _ND_DISSECT_GTP         1
 
-extern ndGlobalConfig nd_config;
 extern ndFlowMap *nd_flow_buckets;
 
 atomic_uint nd_flow_count;
@@ -930,13 +929,13 @@ nd_process_ip:
         }
     }
     else {
-        if (nd_config.max_flows > 0 && nd_flow_count + 1 > nd_config.max_flows) {
+        if (ND_GCI.max_flows > 0 && nd_flow_count + 1 > ND_GCI.max_flows) {
             stats.pkt.discard++;
             stats.pkt.discard_bytes += packet->length;
             stats.flow.dropped++;
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
-                tag.c_str(), nd_config.max_flows);
+                tag.c_str(), ND_GCI.max_flows);
 #endif
             nd_flow_buckets->Release(flow_digest);
             return packet;
@@ -1096,7 +1095,7 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.expired.load() == false &&
-        nf->detection_packets.load() <= nd_config.max_detection_pkts) {
+        nf->detection_packets.load() <= ND_GCI.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

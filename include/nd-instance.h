@@ -36,15 +36,23 @@ protected:
 class ndInstance
 {
 public:
-    ndInstance(const sigset_t &sigset,
+    static ndInstance& Create(const sigset_t &sigset,
         const string &tag = "", bool threaded = false);
-    virtual ~ndInstance();
+
+    ndInstance(const ndInstance&) = delete;
+    ndInstance& operator=(const ndInstance&) = delete;
+
+    static inline ndInstance& GetInstance() {
+        return *instance;
+    }
 
     static void InitializeSignals(
         sigset_t &sigset, bool minimal = false);
 
-    bool LoadConfig(
+    bool InitializeConfig(
         int argc, char * const argv[], const string &filename = "");
+
+    int Run(void);
 
     inline void Terminate(void) {
         if (terminate.load())
@@ -60,16 +68,20 @@ public:
         return terminate.load();
     }
 
-    int Create(void);
-
     int exit_code;
 
     ndApplications apps;
+    ndCategories categories;
+    ndDomains domains;
 
 protected:
     friend class ndInstanceThread;
 
+    static ndInstance *instance;
+
     void *Entry(void);
+
+    bool Reload(void);
 
     sigset_t sigset;
 
@@ -83,11 +95,15 @@ protected:
     ndInstanceThread *thread;
 
     string conf_filename;
-    ndGlobalConfig config;
 
     atomic<uint64_t> flows;
 
     nd_agent_stats agent_stats;
+
+private:
+    ndInstance(const sigset_t &sigset,
+        const string &tag = "", bool threaded = false);
+    virtual ~ndInstance();
 };
 
 #endif // _ND_INSTANCE_H

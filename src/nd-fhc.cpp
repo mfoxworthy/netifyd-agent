@@ -75,8 +75,6 @@ using namespace std;
 
 #include "nd-fhc.h"
 
-extern ndGlobalConfig nd_config;
-
 ndFlowHashCache::ndFlowHashCache(size_t cache_size)
     : cache_size(cache_size)
 {
@@ -109,7 +107,7 @@ void ndFlowHashCache::Push(const string &lower_hash, const string &upper_hash)
             nd_dprintf("Purging flow hash cache entries, size: %lu\n",
                 lookup.size());
 #endif
-            for (size_t n = 0; n < cache_size / nd_config.fhc_purge_divisor; n++) {
+            for (size_t n = 0; n < cache_size / ND_GCI.fhc_purge_divisor; n++) {
                 pair<string, string> j = index.back();
 
                 nd_fhc_map::iterator k = lookup.find(j.first);
@@ -165,12 +163,12 @@ void ndFlowHashCache::Load(void)
 {
     string filename;
 
-    switch (nd_config.fhc_save) {
+    switch (ND_GCI.fhc_save) {
     case ndFHC_PERSISTENT:
-        filename = nd_config.path_state_persistent + ND_FLOW_HC_FILE_NAME;
+        filename = ND_GCI.path_state_persistent + ND_FLOW_HC_FILE_NAME;
         break;
     case ndFHC_VOLATILE:
-        filename = nd_config.path_state_volatile + ND_FLOW_HC_FILE_NAME;
+        filename = ND_GCI.path_state_volatile + ND_FLOW_HC_FILE_NAME;
         break;
     default:
         return;
@@ -203,12 +201,12 @@ void ndFlowHashCache::Save(void)
 {
     string filename;
 
-    switch (nd_config.fhc_save) {
+    switch (ND_GCI.fhc_save) {
     case ndFHC_PERSISTENT:
-        filename = nd_config.path_state_persistent + ND_FLOW_HC_FILE_NAME;
+        filename = ND_GCI.path_state_persistent + ND_FLOW_HC_FILE_NAME;
         break;
     case ndFHC_VOLATILE:
-        filename = nd_config.path_state_volatile + ND_FLOW_HC_FILE_NAME;
+        filename = ND_GCI.path_state_volatile + ND_FLOW_HC_FILE_NAME;
         break;
     default:
         return;

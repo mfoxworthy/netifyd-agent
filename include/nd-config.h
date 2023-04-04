@@ -87,38 +87,40 @@ enum nd_global_flags {
     ndGF_LOAD_DOMAINS = 0x2000000,
 };
 
-#define ND_DEBUG (nd_config.flags & ndGF_DEBUG)
-#define ND_DEBUG_UPLOAD (nd_config.flags & ndGF_DEBUG_UPLOAD)
-#define ND_DEBUG_WITH_ETHERS (nd_config.flags & ndGF_DEBUG_WITH_ETHERS)
-#define ND_DEBUG_NDPI (nd_config.flags & ndGF_DEBUG_NDPI)
-#define ND_QUIET (nd_config.flags & ndGF_QUIET)
-#define ND_OVERRIDE_LEGACY_CONFIG (nd_config.flags & ndGF_OVERRIDE_LEGACY_CONFIG)
-#define ND_CAPTURE_UNKNOWN_FLOWS (nd_config.flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
-#define ND_PRIVATE_EXTADDR (nd_config.flags & ndGF_PRIVATE_EXTADDR)
-#define ND_SSL_USE_TLSv1 (nd_config.flags & ndGF_SSL_USE_TLSv1)
-#define ND_SSL_VERIFY (nd_config.flags & ndGF_SSL_VERIFY)
-#define ND_USE_CONNTRACK (nd_config.flags & ndGF_USE_CONNTRACK)
-#define ND_USE_NETLINK (nd_config.flags & ndGF_USE_NETLINK)
-#define ND_USE_NAPI (nd_config.flags & ndGF_USE_NAPI)
-#define ND_USE_SINK (nd_config.flags & ndGF_USE_SINK)
-#define ND_USE_DHC (nd_config.flags & ndGF_USE_DHC)
-#define ND_USE_FHC (nd_config.flags & ndGF_USE_FHC)
-#define ND_EXPORT_JSON (nd_config.flags & ndGF_EXPORT_JSON)
-#define ND_VERBOSE (nd_config.flags & ndGF_VERBOSE)
-#define ND_REPLAY_DELAY (nd_config.flags & ndGF_REPLAY_DELAY)
-#define ND_REMAIN_IN_FOREGROUND (nd_config.flags & ndGF_REMAIN_IN_FOREGROUND)
-#define ND_FLOW_DUMP_ESTABLISHED (nd_config.flags & ndGF_FLOW_DUMP_ESTABLISHED)
-#define ND_FLOW_DUMP_UNKNOWN (nd_config.flags & ndGF_FLOW_DUMP_UNKNOWN)
-#define ND_UPLOAD_ENABLED (nd_config.flags & ndGF_UPLOAD_ENABLED)
-#define ND_UPLOAD_NAT_FLOWS (nd_config.flags & ndGF_UPLOAD_NAT_FLOWS)
-#define ND_WAIT_FOR_CLIENT (nd_config.flags & ndGF_WAIT_FOR_CLIENT)
-#define ND_SOFT_DISSECTORS (nd_config.flags & ndGF_SOFT_DISSECTORS)
-#define ND_LOAD_DOMAINS (nd_config.flags & ndGF_LOAD_DOMAINS)
+#define ndGC_DEBUG (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG)
+#define ndGC_DEBUG_UPLOAD (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_UPLOAD)
+#define ndGC_DEBUG_WITH_ETHERS (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_WITH_ETHERS)
+#define ndGC_DEBUG_NDPI (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_NDPI)
+#define ndGC_QUIET (ndGlobalConfig::GetInstance().flags & ndGF_QUIET)
+#define ndGC_OVERRIDE_LEGACY_CONFIG (ndGlobalConfig::GetInstance().flags & ndGF_OVERRIDE_LEGACY_CONFIG)
+#define ndGC_CAPTURE_UNKNOWN_FLOWS (ndGlobalConfig::GetInstance().flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
+#define ndGC_PRIVATE_EXTADDR (ndGlobalConfig::GetInstance().flags & ndGF_PRIVATE_EXTADDR)
+#define ndGC_SSL_USE_TLSv1 (ndGlobalConfig::GetInstance().flags & ndGF_SSL_USE_TLSv1)
+#define ndGC_SSL_VERIFY (ndGlobalConfig::GetInstance().flags & ndGF_SSL_VERIFY)
+#define ndGC_USE_CONNTRACK (ndGlobalConfig::GetInstance().flags & ndGF_USE_CONNTRACK)
+#define ndGC_USE_NETLINK (ndGlobalConfig::GetInstance().flags & ndGF_USE_NETLINK)
+#define ndGC_USE_NAPI (ndGlobalConfig::GetInstance().flags & ndGF_USE_NAPI)
+#define ndGC_USE_SINK (ndGlobalConfig::GetInstance().flags & ndGF_USE_SINK)
+#define ndGC_USE_DHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_DHC)
+#define ndGC_USE_FHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_FHC)
+#define ndGC_EXPORT_JSON (ndGlobalConfig::GetInstance().flags & ndGF_EXPORT_JSON)
+#define ndGC_VERBOSE (ndGlobalConfig::GetInstance().flags & ndGF_VERBOSE)
+#define ndGC_REPLAY_DELAY (ndGlobalConfig::GetInstance().flags & ndGF_REPLAY_DELAY)
+#define ndGC_REMAIN_IN_FOREGROUND (ndGlobalConfig::GetInstance().flags & ndGF_REMAIN_IN_FOREGROUND)
+#define ndGC_FLOW_DUMP_ESTABLISHED (ndGlobalConfig::GetInstance().flags & ndGF_FLOW_DUMP_ESTABLISHED)
+#define ndGC_FLOW_DUMP_UNKNOWN (ndGlobalConfig::GetInstance().flags & ndGF_FLOW_DUMP_UNKNOWN)
+#define ndGC_UPLOAD_ENABLED (ndGlobalConfig::GetInstance().flags & ndGF_UPLOAD_ENABLED)
+#define ndGC_UPLOAD_NAT_FLOWS (ndGlobalConfig::GetInstance().flags & ndGF_UPLOAD_NAT_FLOWS)
+#define ndGC_WAIT_FOR_CLIENT (ndGlobalConfig::GetInstance().flags & ndGF_WAIT_FOR_CLIENT)
+#define ndGC_SOFT_DISSECTORS (ndGlobalConfig::GetInstance().flags & ndGF_SOFT_DISSECTORS)
+#define ndGC_LOAD_DOMAINS (ndGlobalConfig::GetInstance().flags & ndGF_LOAD_DOMAINS)
 
-#define ND_GF_SET_FLAG(flag, value) \
+#define ndGC ndGlobalConfig::GetInstance()
+
+#define ndGC_SetFlag(flag, value) \
 { \
-    if (value) nd_config.flags |= flag; \
-    else nd_config.flags &= ~flag; \
+    if (value) ndGlobalConfig::GetInstance().flags |= flag; \
+    else ndGlobalConfig::GetInstance().flags &= ~flag; \
 }
 
 typedef struct
@@ -216,8 +218,13 @@ public:
     map<string, set<string>> interface_addrs;
     map<string, string> interface_peers;
 
-    ndGlobalConfig();
-    virtual ~ndGlobalConfig();
+    ndGlobalConfig(const ndGlobalConfig&) = delete;
+    ndGlobalConfig& operator=(const ndGlobalConfig&) = delete;
+
+    static inline ndGlobalConfig& GetInstance() {
+        static ndGlobalConfig config;
+        return config;
+    }
 
     void Close(void);
 
@@ -246,6 +253,10 @@ protected:
         const string &section, nd_capture_type type, void *config);
 
     void UpdatePaths(void);
+
+private:
+    ndGlobalConfig();
+    virtual ~ndGlobalConfig();
 };
 
 #endif // _ND_CONFIG_H

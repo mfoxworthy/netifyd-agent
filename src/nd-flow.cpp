@@ -78,8 +78,6 @@ using namespace std;
 // Enable flow hash cache debug logging
 //#define _ND_DEBUG_FHC 1
 
-extern ndGlobalConfig nd_config;
-
 ndFlow::ndFlow(ndInterface &iface)
     : iface(iface), dpi_thread_id(-1),
     ip_version(0), ip_protocol(0), vlan_id(0), tcp_last_seq(0),

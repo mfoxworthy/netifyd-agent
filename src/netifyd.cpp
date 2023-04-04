@@ -158,7 +158,6 @@ static bool nd_capture_stopped_by_signal = false;
 static ndDNSHintCache *dns_hint_cache = NULL;
 static ndFlowHashCache *flow_hash_cache = NULL;
 
-extern ndGlobalConfig nd_config;
 extern ndInterfaces nd_interfaces;
 extern ndFlowMap *nd_flow_buckets;
 extern ndApplications *nd_apps;
@@ -248,10 +247,10 @@ static void nd_usage(int rc = 0, bool version = false)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (nd_config.plugin_detections.size())
+        if (ND_GCI.plugin_detections.size())
             fprintf(stderr, "\nDetection plugins:\n");
 
-        for (auto i : nd_config.plugin_detections) {
+        for (auto i : ND_GCI.plugin_detections) {
 
             string plugin_version("?.?.?");
 
@@ -265,10 +264,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config.plugin_sinks.size())
+        if (ND_GCI.plugin_sinks.size())
             fprintf(stderr, "\nStatistics plugins:\n");
 
-        for (auto i : nd_config.plugin_sinks) {
+        for (auto i : ND_GCI.plugin_sinks) {
 
             string plugin_version("?.?.?");
 
@@ -282,10 +281,10 @@ static void nd_usage(int rc = 0, bool version = false)
                 i.first.c_str(), i.second.c_str(), plugin_version.c_str());
         }
 
-        if (nd_config.plugin_stats.size())
+        if (ND_GCI.plugin_stats.size())
             fprintf(stderr, "\nStatistics plugins:\n");
 
-        for (auto i : nd_config.plugin_stats) {
+        for (auto i : ND_GCI.plugin_stats) {
 
             string plugin_version("?.?.?");
 
@@ -356,8 +355,8 @@ static void nd_usage(int rc = 0, bool version = false)
 
             ND_CONF_FILE_NAME,
             ND_CONF_LEGACY_PATH,
-            nd_config.path_uuid.c_str(),
-            nd_config.path_uuid_site.c_str(),
+            ND_GCI.path_uuid.c_str(),
+            ND_GCI.path_uuid_site.c_str(),
             ND_URL_SINK_PATH
         );
     }
@@ -368,7 +367,7 @@ static void nd_usage(int rc = 0, bool version = false)
 static void nd_force_reset(void)
 {
     vector<string> files = {
-        nd_config.path_uuid, nd_config.path_uuid_site, ND_URL_SINK_PATH
+        ND_GCI.path_uuid, ND_GCI.path_uuid_site, ND_URL_SINK_PATH
     };
 
     int seconds = 3;
@@ -414,8 +413,8 @@ static void nd_init(void)
     if (nd_apps == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_apps", ENOMEM);
 
-    if (! nd_apps->Load(nd_config.path_app_config))
-        nd_apps->LoadLegacy(nd_config.path_legacy_config);
+    if (! nd_apps->Load(ND_GCI.path_app_config))
+        nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
 
     nd_categories = new ndCategories();
     if (nd_categories == nullptr)
@@ -429,7 +428,7 @@ static void nd_init(void)
 
     if (ND_LOAD_DOMAINS) nd_domains->Load();
 
-    nd_flow_buckets = new ndFlowMap(nd_config.fm_buckets);
+    nd_flow_buckets = new ndFlowMap(ND_GCI.fm_buckets);
     if (nd_flow_buckets == nullptr)
         throw ndSystemException(__PRETTY_FUNCTION__, "new nd_flow_buckets", ENOMEM);
 
@@ -475,9 +474,9 @@ static int nd_start_capture_threads(void)
     vector<ndCaptureThread *> threads;
 
     int16_t cpu = (
-            nd_config.ca_capture_base > -1 &&
-            nd_config.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
-    ) ? nd_config.ca_capture_base : 0;
+            ND_GCI.ca_capture_base > -1 &&
+            ND_GCI.ca_capture_base < (int16_t)nd_json_agent_stats.cpus
+    ) ? ND_GCI.ca_capture_base : 0;
 
     for (auto &it : nd_interfaces) {
 
@@ -634,13 +633,13 @@ static int nd_start_detection_threads(void)
 
     try {
         int16_t cpu = (
-                nd_config.ca_detection_base > -1 &&
-                nd_config.ca_detection_base < (int16_t)nd_json_agent_stats.cpus
-            ) ? nd_config.ca_detection_base : 0;
+                ND_GCI.ca_detection_base > -1 &&
+                ND_GCI.ca_detection_base < (int16_t)nd_json_agent_stats.cpus
+            ) ? ND_GCI.ca_detection_base : 0;
         int16_t cpus = (
-                nd_config.ca_detection_cores > (int16_t)nd_json_agent_stats.cpus ||
-                nd_config.ca_detection_cores <= 0
-            ) ? (int16_t)nd_json_agent_stats.cpus : nd_config.ca_detection_cores;
+                ND_GCI.ca_detection_cores > (int16_t)nd_json_agent_stats.cpus ||
+                ND_GCI.ca_detection_cores <= 0
+            ) ? (int16_t)nd_json_agent_stats.cpus : ND_GCI.ca_detection_cores;
 
         nd_dprintf("Creating %hd detection threads at offset: %hd\n", cpus, cpu);
 
@@ -708,8 +707,8 @@ static int nd_reload_detection_threads(void)
 
 static int nd_plugin_start_detections(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.plugin_detections.begin();
-        i != nd_config.plugin_detections.end(); i++) {
+    for (map<string, string>::const_iterator i = ND_GCI.plugin_detections.begin();
+        i != ND_GCI.plugin_detections.end(); i++) {
         try {
             plugin_detections[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_detections[i->first]->GetPlugin()->Create();
@@ -756,8 +755,8 @@ static void nd_plugin_stop_sinks(void)
 
 static int nd_plugin_start_stats(void)
 {
-    for (map<string, string>::const_iterator i = nd_config.plugin_stats.begin();
-        i != nd_config.plugin_stats.end(); i++) {
+    for (map<string, string>::const_iterator i = ND_GCI.plugin_stats.begin();
+        i != ND_GCI.plugin_stats.end(); i++) {
         try {
             plugin_stats[i->first] = new ndPluginLoader(i->second, i->first);
             plugin_stats[i->first]->GetPlugin()->Create();
@@ -824,11 +823,11 @@ static int nd_sink_process_responses(void)
                 i != response->data.end(); i++) {
 
                 if (! reloaded && i->first == ND_CONF_APP_BASE) {
-                    reloaded = nd_apps->Load(nd_config.path_app_config);
+                    reloaded = nd_apps->Load(ND_GCI.path_app_config);
                 }
 
                 if (! reloaded && i->first == ND_CONF_LEGACY_BASE) {
-                    reloaded = nd_apps->LoadLegacy(nd_config.path_legacy_config);
+                    reloaded = nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
                 }
             }
 
@@ -882,9 +881,9 @@ static void nd_process_flows(
             if (i->second->flags.expired.load() == false) {
 
                 uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
-                    nd_config.ttl_idle_flow : (
+                    ND_GCI.ttl_idle_flow : (
                         (i->second->flags.tcp_fin_ack.load() >= 2) ?
-                            nd_config.ttl_idle_flow : nd_config.ttl_idle_tcp_flow
+                            ND_GCI.ttl_idle_flow : ND_GCI.ttl_idle_tcp_flow
                     )
                 );
 
@@ -1313,7 +1312,9 @@ static void nd_dump_stats(void)
         p->ProcessStats(ndPluginStats::COMPLETE);
     }
 #endif
-    nd_process_flows(jflows, (ND_USE_SINK || ND_EXPORT_JSON));
+    nd_process_flows(jflows,
+        (ND_USE_SINK || ND_EXPORT_JSON)
+    );
 
     jstatus["flow_count"] = nd_json_agent_stats.flows;
     jstatus["flow_count_prev"] = nd_json_agent_stats.flows_prev;
@@ -1330,7 +1331,7 @@ static void nd_dump_stats(void)
         if (thread_socket)
             thread_socket->QueueWrite(json_string);
 
-        nd_json_save_to_file(json_string, nd_config.path_agent_status);
+        nd_json_save_to_file(json_string, ND_GCI.path_agent_status);
     }
     catch (runtime_error &e) {
         nd_printf("Error saving Agent status to file: %s\n",
@@ -1344,9 +1345,6 @@ static void nd_dump_stats(void)
 
     if (ND_USE_SINK && ! nd_terminate) {
         try {
-#ifdef _ND_USE_WATCHDOGS
-            nd_touch(ND_WD_UPLOAD);
-#endif
             if (ND_UPLOAD_ENABLED)
                 thread_sink->QueuePush(json_string);
             else {
@@ -1366,11 +1364,11 @@ static void nd_dump_stats(void)
 
     try {
         if (ND_EXPORT_JSON)
-            nd_json_save_to_file(json_string, nd_config.path_export_json);
+            nd_json_save_to_file(json_string, ND_GCI.path_export_json);
     }
     catch (runtime_error &e) {
         nd_printf("Error writing JSON export playload to file: %s: %s\n",
-            nd_config.path_export_json.c_str(), e.what());
+            ND_GCI.path_export_json.c_str(), e.what());
     }
 
     if (ND_DEBUG)
@@ -1431,8 +1429,8 @@ static void nd_dump_protocols(uint8_t type = ndDUMP_TYPE_ALL)
 
         if (nd_apps == NULL) {
             nd_apps = new ndApplications();
-            if (! nd_apps->Load(nd_config.path_app_config))
-                nd_apps->LoadLegacy(nd_config.path_legacy_config);
+            if (! nd_apps->Load(ND_GCI.path_app_config))
+                nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
         }
 
         nd_apps_t apps;
@@ -1475,8 +1473,8 @@ int static nd_lookup_ip(const char *ip)
 
     if (nd_apps == NULL) {
         nd_apps = new ndApplications();
-        if (! nd_apps->Load(nd_config.path_app_config))
-            nd_apps->LoadLegacy(nd_config.path_legacy_config);
+        if (! nd_apps->Load(ND_GCI.path_app_config))
+            nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
     }
 
     nd_app_id_t id = nd_apps->Find(addr);
@@ -1490,8 +1488,8 @@ int static nd_export_applications(void)
 {
     if (nd_apps == NULL) {
         nd_apps = new ndApplications();
-        if (! nd_apps->Load(nd_config.path_app_config))
-            nd_apps->LoadLegacy(nd_config.path_legacy_config);
+        if (! nd_apps->Load(ND_GCI.path_app_config))
+            nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
     }
 
     if (! nd_apps->Save("/dev/stdout")) return 1;
@@ -1514,14 +1512,14 @@ static void nd_status(void)
         return;
     }
 
-    pid_t nd_pid = nd_load_pid(nd_config.path_pid_file);
+    pid_t nd_pid = nd_load_pid(ND_GCI.path_pid_file);
     nd_pid = nd_is_running(nd_pid, nd_self);
 
     if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config.url_sink);
-            nd_config.url_sink = strdup(url_sink.c_str());
+            free(ND_GCI.url_sink);
+            ND_GCI.url_sink = strdup(url_sink.c_str());
         }
     }
 
@@ -1537,15 +1535,15 @@ static void nd_status(void)
     );
 
     fprintf(stderr, "%s persistent state path: %s\n",
-        ND_I_INFO, nd_config.path_state_persistent.c_str());
+        ND_I_INFO, ND_GCI.path_state_persistent.c_str());
     fprintf(stderr, "%s volatile state path: %s\n",
-        ND_I_INFO, nd_config.path_state_volatile.c_str());
+        ND_I_INFO, ND_GCI.path_state_volatile.c_str());
 
     json jstatus;
 
     try {
         string status;
-        if (nd_file_load(nd_config.path_agent_status, status) < 0
+        if (nd_file_load(ND_GCI.path_agent_status, status) < 0
             || status.size() == 0) {
             fprintf(stderr,
                 "%s%s%s agent run-time status could not be determined.\n",
@@ -1579,13 +1577,13 @@ static void nd_status(void)
             ND_I_INFO, uptime.c_str());
 
         double flows = jstatus["flow_count"].get<double>();
-        double flow_utilization = (nd_config.max_flows > 0) ?
-            flows * 100.0 / (double)nd_config.max_flows : 0;
-        string max_flows = (nd_config.max_flows == 0) ?
-            "unlimited" : to_string(nd_config.max_flows);
+        double flow_utilization = (ND_GCI.max_flows > 0) ?
+            flows * 100.0 / (double)ND_GCI.max_flows : 0;
+        string max_flows = (ND_GCI.max_flows == 0) ?
+            "unlimited" : to_string(ND_GCI.max_flows);
 
         if (flows > 0) {
-            if (nd_config.max_flows) {
+            if (ND_GCI.max_flows) {
                 if (flow_utilization < 75) {
                     icon = ND_I_OK;
                     color = ND_C_GREEN;
@@ -1761,7 +1759,7 @@ static void nd_status(void)
         }
 
         fprintf(stderr, "%s%s%s sink URL: %s\n",
-            ND_C_GREEN, ND_I_INFO, ND_C_RESET, nd_config.url_sink);
+            ND_C_GREEN, ND_I_INFO, ND_C_RESET, ND_GCI.url_sink);
         fprintf(stderr, "%s%s%s sink services are %s.\n",
             (ND_USE_SINK) ? ND_C_GREEN : ND_C_RED,
             (ND_USE_SINK) ? ND_I_OK : ND_I_FAIL,
@@ -1787,9 +1785,9 @@ static void nd_status(void)
 
         string uuid;
 
-        uuid = (nd_config.uuid != NULL) ? nd_config.uuid : "00-00-00-00";
-        if (nd_file_exists(nd_config.path_uuid) > 0)
-            nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN);
+        uuid = (ND_GCI.uuid != NULL) ? ND_GCI.uuid : "00-00-00-00";
+        if (nd_file_exists(ND_GCI.path_uuid) > 0)
+            nd_load_uuid(uuid, ND_GCI.path_uuid, ND_AGENT_UUID_LEN);
 
         if (uuid.size() != ND_AGENT_UUID_LEN || uuid == "00-00-00-00") {
             fprintf(stderr, "%s%s%s sink agent UUID is not set.\n",
@@ -1802,18 +1800,18 @@ static void nd_status(void)
                 ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (nd_config.uuid_serial != NULL) ? nd_config.uuid_serial : "-";
-        if (nd_file_exists(nd_config.path_uuid_serial) > 0)
-            nd_load_uuid(uuid, nd_config.path_uuid_serial, ND_AGENT_SERIAL_LEN);
+        uuid = (ND_GCI.uuid_serial != NULL) ? ND_GCI.uuid_serial : "-";
+        if (nd_file_exists(ND_GCI.path_uuid_serial) > 0)
+            nd_load_uuid(uuid, ND_GCI.path_uuid_serial, ND_AGENT_SERIAL_LEN);
 
         if (uuid.size() && uuid != "-") {
             fprintf(stderr, "%s%s%s sink serial UUID: %s\n",
                 ND_C_GREEN, ND_I_INFO, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (nd_config.uuid_site != NULL) ? nd_config.uuid_site : "-";
-        if (nd_file_exists(nd_config.path_uuid_site) > 0)
-            nd_load_uuid(uuid, nd_config.path_uuid_site, ND_SITE_UUID_LEN);
+        uuid = (ND_GCI.uuid_site != NULL) ? ND_GCI.uuid_site : "-";
+        if (nd_file_exists(ND_GCI.path_uuid_site) > 0)
+            nd_load_uuid(uuid, ND_GCI.path_uuid_site, ND_SITE_UUID_LEN);
 
         if (! uuid.size() || uuid == "-") {
             fprintf(stderr, "%s%s%s sink site UUID is not set.\n",
@@ -1930,28 +1928,28 @@ static void nd_status(void)
 
 static int nd_check_agent_uuid(void)
 {
-    if (nd_config.uuid == NULL ||
-        ! strncmp(nd_config.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+    if (ND_GCI.uuid == NULL ||
+        ! strncmp(ND_GCI.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
 
         string uuid;
-        if (! nd_load_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN) ||
+        if (! nd_load_uuid(uuid, ND_GCI.path_uuid, ND_AGENT_UUID_LEN) ||
             ! uuid.size() ||
             ! strncmp(uuid.c_str(), ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
 
             nd_generate_uuid(uuid);
 
             printf("Generated a new Agent UUID: %s\n", uuid.c_str());
-            if (! nd_save_uuid(uuid, nd_config.path_uuid, ND_AGENT_UUID_LEN))
+            if (! nd_save_uuid(uuid, ND_GCI.path_uuid, ND_AGENT_UUID_LEN))
                 return 1;
         }
 
-        if (nd_config.uuid != NULL) free(nd_config.uuid);
-        nd_config.uuid = strdup(uuid.c_str());
+        if (ND_GCI.uuid != NULL) free(ND_GCI.uuid);
+        ND_GCI.uuid = strdup(uuid.c_str());
     }
 
     return 0;
 }
-#if 0
+#if 1
 static int test_main(int argc, char * const argv[], bool threaded = false)
 {
     int rc = 0;
@@ -1960,27 +1958,22 @@ static int test_main(int argc, char * const argv[], bool threaded = false)
     ndInstance::InitializeSignals(sigset);
 
     if (! threaded) {
-        ndInstance instance(sigset, "netifyd");
+        ndInstance& instance = ndInstance::Create(sigset, "netifyd");
 
-        if (! instance.LoadConfig(argc, argv)) return 1;
+        if (! instance.InitializeConfig(argc, argv)) return 1;
 
-        return instance.Create();
+        return instance.Run();
     }
     else {
-        ndInstance instance1(sigset, "netifyd1", true);
-        ndInstance instance2(sigset, "netifyd2", true);
+        ndInstance& instance = ndInstance::Create(sigset, "netifyd", true);
 
-        //if (! instance1.LoadConfig(argc, argv)) return 1;
-        //if (! instance2.LoadConfig(argc, argv)) return 1;
+        if (! instance.InitializeConfig(argc, argv)) return 1;
 
-        rc = instance1.Create();
+        rc = instance.Run();
         if (rc != 0) return rc;
 
-        rc = instance2.Create();
-        if (rc != 0) return rc;
-
-        while (! instance1.Terminated() && ! instance2.Terminated()) {
-            nd_dprintf("instances running...\n");
+        while (! instance.Terminated()) {
+            nd_dprintf("instance running...\n");
             sleep(1);
         }
     }
@@ -2024,7 +2017,7 @@ int main(int argc, char *argv[])
     memset(&nd_json_agent_stats, 0, sizeof(nd_agent_stats));
     nd_json_agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
 
-//    return test_main(argc, argv, true);
+    return test_main(argc, argv, true);
 
     static struct option options[] =
     {
@@ -2103,7 +2096,7 @@ int main(int argc, char *argv[])
             nd_conf_filename = strdup(optarg);
             break;
         case 'd':
-            nd_config.flags |= ndGF_DEBUG;
+            ND_GCI.flags |= ndGF_DEBUG;
             break;
         default:
             break;
@@ -2113,10 +2106,10 @@ int main(int argc, char *argv[])
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (nd_config.Load(nd_conf_filename) < 0)
+    if (ND_GCI.Load(nd_conf_filename) < 0)
         return 1;
 
-    nd_config.Close();
+    ND_GCI.Close();
 
     optind = 1;
 
@@ -2134,49 +2127,49 @@ int main(int argc, char *argv[])
             nd_force_reset();
             exit(0);
         case _ND_LO_CA_CAPTURE_BASE:
-            nd_config.ca_capture_base = (int16_t)atoi(optarg);
-            if (nd_config.ca_capture_base > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_capture_base = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_capture_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Capture thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_CONNTRACK:
-            nd_config.ca_conntrack = (int16_t)atoi(optarg);
-            if (nd_config.ca_conntrack > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_conntrack = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_conntrack > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Conntrack thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
-            nd_config.ca_detection_base = (int16_t)atoi(optarg);
-            if (nd_config.ca_detection_base > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_detection_base = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_detection_base > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection thread base greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
-            nd_config.ca_detection_cores = (int16_t)atoi(optarg);
-            if (nd_config.ca_detection_cores > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_detection_cores = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_detection_cores > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Detection cores greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SINK:
-            nd_config.ca_sink = (int16_t)atoi(optarg);
-            if (nd_config.ca_sink > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_sink = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_sink > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Sink thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_CA_SOCKET:
-            nd_config.ca_socket = (int16_t)atoi(optarg);
-            if (nd_config.ca_socket > nd_json_agent_stats.cpus) {
+            ND_GCI.ca_socket = (int16_t)atoi(optarg);
+            if (ND_GCI.ca_socket > nd_json_agent_stats.cpus) {
                 fprintf(stderr, "Socket thread ID greater than online cores.\n");
                 exit(1);
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
-            nd_config.flags |= ndGF_WAIT_FOR_CLIENT;
+            ND_GCI.flags |= ndGF_WAIT_FOR_CLIENT;
             break;
 
         case _ND_LO_EXPORT_APPS:
@@ -2223,69 +2216,69 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            nd_config.AddInterfaceAddress(last_device, optarg);
+            ND_GCI.AddInterfaceAddress(last_device, optarg);
             break;
         case 'd':
             break;
         case 'D':
-            nd_config.flags |= ndGF_DEBUG_UPLOAD;
+            ND_GCI.flags |= ndGF_DEBUG_UPLOAD;
             break;
         case 'c':
             break;
         case 'E':
-            nd_config.AddInterface(optarg, ndIR_WAN, ndCT_NONE);
+            ND_GCI.AddInterface(optarg, ndIR_WAN, ndCT_NONE);
             last_device = optarg;
             break;
         case 'e':
-            nd_config.flags |= ndGF_DEBUG_WITH_ETHERS;
+            ND_GCI.flags |= ndGF_DEBUG_WITH_ETHERS;
             break;
         case 'F':
             if (last_device.size() == 0) {
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            nd_config.AddInterfaceFilter(last_device, optarg);
+            ND_GCI.AddInterfaceFilter(last_device, optarg);
             break;
         case 'f':
-            nd_config.path_legacy_config = optarg;
+            ND_GCI.path_legacy_config = optarg;
             break;
         case 'h':
             nd_usage();
         case 'I':
-            nd_config.AddInterface(optarg, ndIR_LAN, ndCT_NONE);
+            ND_GCI.AddInterface(optarg, ndIR_LAN, ndCT_NONE);
             last_device = optarg;
             break;
         case 'i':
-            nd_config.update_interval = atoi(optarg);
+            ND_GCI.update_interval = atoi(optarg);
             break;
         case 'j':
-            nd_config.path_export_json = optarg;
+            ND_GCI.path_export_json = optarg;
             break;
         case 'l':
-            nd_config.flags &= ~ndGF_USE_NETLINK;
+            ND_GCI.flags &= ~ndGF_USE_NETLINK;
             break;
         case 'n':
-            nd_config.flags |= ndGF_DEBUG_NDPI;
+            ND_GCI.flags |= ndGF_DEBUG_NDPI;
             break;
         case 'N':
             if (last_device.size() == 0) {
                 fprintf(stderr, "You must specify an interface first (-I/E).\n");
                 exit(1);
             }
-            nd_config.AddInterfacePeer(last_device, optarg);
+            ND_GCI.AddInterfacePeer(last_device, optarg);
             break;
         case 'P':
             nd_dump_protocols(ndDUMP_TYPE_ALL | dump_flags);
             exit(0);
         case 'p':
-            if (nd_check_agent_uuid() || nd_config.uuid == NULL) return 1;
-            printf("Agent UUID: %s\n", nd_config.uuid);
+            if (nd_check_agent_uuid() || ND_GCI.uuid == NULL) return 1;
+            printf("Agent UUID: %s\n", ND_GCI.uuid);
             return 0;
         case 'R':
-            nd_config.flags |= ndGF_REMAIN_IN_FOREGROUND;
+            ND_GCI.flags |= ndGF_REMAIN_IN_FOREGROUND;
             break;
         case 'r':
-            nd_config.flags |= ndGF_REPLAY_DELAY;
+            ND_GCI.flags |= ndGF_REPLAY_DELAY;
             break;
         case 'S':
 #ifndef _ND_LEAN_AND_MEAN
@@ -2308,10 +2301,10 @@ int main(int argc, char *argv[])
             nd_status();
             exit(0);
         case 't':
-            nd_config.flags &= ~ndGF_USE_CONNTRACK;
+            ND_GCI.flags &= ~ndGF_USE_CONNTRACK;
             break;
         case 'T':
-            if ((nd_config.h_flow = fopen(optarg, "w")) == NULL) {
+            if ((ND_GCI.h_flow = fopen(optarg, "w")) == NULL) {
                 fprintf(stderr, "Error while opening test output log: %s: %s\n",
                     optarg, strerror(errno));
                 exit(1);
@@ -2325,13 +2318,13 @@ int main(int argc, char *argv[])
             }
             exit(0);
         case 'u':
-            nd_config.uuid = strdup(optarg);
+            ND_GCI.uuid = strdup(optarg);
             break;
         case 'V':
             nd_usage(0, true);
             break;
         case 'v':
-            nd_config.flags |= ndGF_VERBOSE;
+            ND_GCI.flags |= ndGF_VERBOSE;
             break;
         default:
             nd_usage(1);
@@ -2340,7 +2333,7 @@ int main(int argc, char *argv[])
 
     nd_printf("%s\n", nd_get_version_and_features().c_str());
 
-    for (auto &r : nd_config.interfaces) {
+    for (auto &r : ND_GCI.interfaces) {
         for (auto &i : r.second) {
             auto result = nd_interfaces.insert(
                 make_pair(
@@ -2385,8 +2378,8 @@ int main(int argc, char *argv[])
                 }
             }
 
-            auto peer = nd_config.interface_peers.find(i.first);
-            if (peer != nd_config.interface_peers.end())
+            auto peer = ND_GCI.interface_peers.find(i.first);
+            if (peer != ND_GCI.interface_peers.end())
                 result.first->second.ifname_peer = peer->second;
         }
     }
@@ -2396,7 +2389,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    for (auto &i : nd_config.interface_addrs) {
+    for (auto &i : ND_GCI.interface_addrs) {
         for (auto &a : i.second)
             device_addresses.push_back(make_pair(i.first, a));
     }
@@ -2404,26 +2397,26 @@ int main(int argc, char *argv[])
     {
         string url_sink;
         if (nd_load_sink_url(url_sink)) {
-            free(nd_config.url_sink);
-            nd_config.url_sink = strdup(url_sink.c_str());
+            free(ND_GCI.url_sink);
+            ND_GCI.url_sink = strdup(url_sink.c_str());
         }
     }
 
-    if (nd_config.h_flow != stderr) {
+    if (ND_GCI.h_flow != stderr) {
         // Test mode enabled, disable/set certain config parameters
         ND_GF_SET_FLAG(ndGF_USE_FHC, true);
         ND_GF_SET_FLAG(ndGF_USE_SINK, false);
         ND_GF_SET_FLAG(ndGF_EXPORT_JSON, false);
         ND_GF_SET_FLAG(ndGF_REMAIN_IN_FOREGROUND, true);
 
-        nd_config.update_interval = 1;
+        ND_GCI.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        nd_config.plugin_detections.clear();
-        nd_config.plugin_sinks.clear();
-        nd_config.plugin_stats.clear();
+        ND_GCI.plugin_detections.clear();
+        ND_GCI.plugin_sinks.clear();
+        ND_GCI.plugin_stats.clear();
 #endif
-        nd_config.dhc_save = ndDHC_DISABLED;
-        nd_config.fhc_save = ndFHC_DISABLED;
+        ND_GCI.dhc_save = ndDHC_DISABLED;
+        ND_GCI.fhc_save = ndFHC_DISABLED;
     }
 
     CURLcode cc;
@@ -2443,7 +2436,7 @@ int main(int argc, char *argv[])
         dns_hint_cache = new ndDNSHintCache();
 
     if (ND_USE_FHC)
-        flow_hash_cache = new ndFlowHashCache(nd_config.max_fhc);
+        flow_hash_cache = new ndFlowHashCache(ND_GCI.max_fhc);
 
     nd_check_agent_uuid();
 
@@ -2466,15 +2459,15 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if (! nd_dir_exists(nd_config.path_state_volatile)) {
-        if (mkdir(nd_config.path_state_volatile.c_str(), 0755) != 0) {
+    if (! nd_dir_exists(ND_GCI.path_state_volatile)) {
+        if (mkdir(ND_GCI.path_state_volatile.c_str(), 0755) != 0) {
             nd_printf("Unable to create volatile state directory: %s: %s\n",
-                nd_config.path_state_volatile.c_str(), strerror(errno));
+                ND_GCI.path_state_volatile.c_str(), strerror(errno));
             return 1;
         }
     }
 
-    pid_t old_pid = nd_load_pid(nd_config.path_pid_file);
+    pid_t old_pid = nd_load_pid(ND_GCI.path_pid_file);
 
     if (old_pid > 0 &&
         old_pid == nd_is_running(old_pid, nd_self)) {
@@ -2482,7 +2475,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (nd_save_pid(nd_config.path_pid_file, getpid()) != 0) return 1;
+    if (nd_save_pid(ND_GCI.path_pid_file, getpid()) != 0) return 1;
 
     if (clock_gettime(
         CLOCK_MONOTONIC_RAW, &nd_json_agent_stats.ts_epoch) != 0) {
@@ -2495,10 +2488,10 @@ int main(int argc, char *argv[])
     if (flow_hash_cache) flow_hash_cache->Load();
 
     nd_sha1_file(
-        nd_config.path_app_config, nd_config.digest_app_config
+        ND_GCI.path_app_config, ND_GCI.digest_app_config
     );
     nd_sha1_file(
-        nd_config.path_legacy_config, nd_config.digest_legacy_config
+        ND_GCI.path_legacy_config, ND_GCI.digest_legacy_config
     );
 
     sigfillset(&sigset);
@@ -2526,15 +2519,15 @@ int main(int argc, char *argv[])
     try {
 #ifdef _ND_USE_CONNTRACK
         if (ND_USE_CONNTRACK) {
-            thread_conntrack = new ndConntrackThread(nd_config.ca_conntrack);
+            thread_conntrack = new ndConntrackThread(ND_GCI.ca_conntrack);
             thread_conntrack->Create();
         }
 #endif
-        if (nd_config.socket_host.size() || nd_config.socket_path.size())
-            thread_socket = new ndSocketThread(nd_config.ca_socket);
+        if (ND_GCI.socket_host.size() || ND_GCI.socket_path.size())
+            thread_socket = new ndSocketThread(ND_GCI.ca_socket);
 
         if (ND_USE_SINK) {
-            thread_sink = new ndSinkThread(nd_config.ca_sink);
+            thread_sink = new ndSinkThread(ND_GCI.ca_sink);
             thread_sink->Create();
         }
     }
@@ -2633,9 +2626,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    itspec_update.it_value.tv_sec = nd_config.update_interval;
+    itspec_update.it_value.tv_sec = ND_GCI.update_interval;
     itspec_update.it_value.tv_nsec = 0;
-    itspec_update.it_interval.tv_sec = nd_config.update_interval;
+    itspec_update.it_interval.tv_sec = ND_GCI.update_interval;
     itspec_update.it_interval.tv_nsec = 0;
 
     timer_settime(timer_update, 0, &itspec_update, NULL);
@@ -2653,15 +2646,15 @@ int main(int argc, char *argv[])
         time_t ttl = 3;
         if (nd_categories->GetLastUpdate() > 0) {
             time_t age = time(NULL) - nd_categories->GetLastUpdate();
-            if (age < nd_config.ttl_napi_update)
-                ttl = nd_config.ttl_napi_update - age;
-            else if (age == nd_config.ttl_napi_update)
-                ttl = nd_config.ttl_napi_update;
+            if (age < ND_GCI.ttl_napi_update)
+                ttl = ND_GCI.ttl_napi_update - age;
+            else if (age == ND_GCI.ttl_napi_update)
+                ttl = ND_GCI.ttl_napi_update;
         }
 
         itspec_update.it_value.tv_sec = ttl;
         itspec_update.it_value.tv_nsec = 0;
-        itspec_update.it_interval.tv_sec = nd_config.ttl_napi_update;
+        itspec_update.it_interval.tv_sec = ND_GCI.ttl_napi_update;
         itspec_update.it_interval.tv_nsec = 0;
 
         timer_settime(timer_napi, 0, &itspec_update, NULL);
@@ -2804,8 +2797,8 @@ int main(int argc, char *argv[])
 
         if (sig == SIGHUP) {
             nd_printf("Reloading configuration...\n");
-            if (! nd_apps->Load(nd_config.path_app_config))
-                nd_apps->LoadLegacy(nd_config.path_legacy_config);
+            if (! nd_apps->Load(ND_GCI.path_app_config))
+                nd_apps->LoadLegacy(ND_GCI.path_legacy_config);
 
             if (nd_domains != NULL && ND_LOAD_DOMAINS)
                 nd_domains->Load();
@@ -2883,7 +2876,7 @@ int main(int argc, char *argv[])
 
     closelog();
 
-    unlink(nd_config.path_pid_file.c_str());
+    unlink(ND_GCI.path_pid_file.c_str());
 
     return 0;
 }

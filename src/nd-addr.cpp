@@ -74,8 +74,6 @@ using namespace std;
 #include "nd-util.h"
 #include "nd-addr.h"
 
-extern ndGlobalConfig nd_config;
-
 ndInterfaces nd_interfaces;
 
 ndAddrType *nd_addrtype = NULL;

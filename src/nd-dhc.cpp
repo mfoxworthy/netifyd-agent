@@ -76,8 +76,6 @@ using namespace std;
 #include "nd-sha1.h"
 #include "nd-dhc.h"
 
-extern ndGlobalConfig nd_config;
-
 extern ndAddrType *nd_addrtype;
 
 ndDNSHintCache::ndDNSHintCache()
@@ -120,11 +118,11 @@ void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
 
     unique_lock<mutex> ul(lock);
 
-    nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
+    nd_dns_tuple ar(time_t(time(NULL) + ND_GCI.ttl_dns_entry), hostname);
     nd_dhc_insert i = map_ar.insert(nd_dhc_insert_pair(digest, ar));
 
     if (! i.second)
-        i.first->second.first = time(NULL) + nd_config.ttl_dns_entry;
+        i.first->second.first = time(NULL) + ND_GCI.ttl_dns_entry;
 }
 
 void ndDNSHintCache::Insert(const string &digest, const string &hostname)
@@ -145,7 +143,7 @@ void ndDNSHintCache::Insert(const string &digest, const string &hostname)
 
     if (_digest.size() != SHA1_DIGEST_LENGTH) return;
 
-    nd_dns_tuple ar(time_t(time(NULL) + nd_config.ttl_dns_entry), hostname);
+    nd_dns_tuple ar(time_t(time(NULL) + ND_GCI.ttl_dns_entry), hostname);
     map_ar.insert(nd_dhc_insert_pair(_digest, ar));
 }
 
@@ -185,7 +183,7 @@ bool ndDNSHintCache::Lookup(const string &digest, string &hostname)
     if (i != map_ar.end()) {
         found = true;
         hostname = i->second.second;
-        i->second.first = time(NULL) + nd_config.ttl_dns_entry;
+        i->second.first = time(NULL) + ND_GCI.ttl_dns_entry;
     }
 
     return found;
@@ -223,12 +221,12 @@ void ndDNSHintCache::Load(void)
     string filename;
     FILE *hf = NULL;
 
-    switch (nd_config.dhc_save) {
+    switch (ND_GCI.dhc_save) {
     case ndDHC_PERSISTENT:
-        filename = nd_config.path_state_persistent + ND_DHC_FILE_NAME;
+        filename = ND_GCI.path_state_persistent + ND_DHC_FILE_NAME;
         break;
     case ndDHC_VOLATILE:
-        filename = nd_config.path_state_volatile + ND_DHC_FILE_NAME;
+        filename = ND_GCI.path_state_volatile + ND_DHC_FILE_NAME;
         break;
     default:
         return;
@@ -273,12 +271,12 @@ void ndDNSHintCache::Save(void)
     string filename;
     FILE *hf = NULL;
 
-    switch (nd_config.dhc_save) {
+    switch (ND_GCI.dhc_save) {
     case ndDHC_PERSISTENT:
-        filename = nd_config.path_state_persistent + ND_DHC_FILE_NAME;
+        filename = ND_GCI.path_state_persistent + ND_DHC_FILE_NAME;
         break;
     case ndDHC_VOLATILE:
-        filename = nd_config.path_state_volatile + ND_DHC_FILE_NAME;
+        filename = ND_GCI.path_state_volatile + ND_DHC_FILE_NAME;
         break;
     default:
         return;
