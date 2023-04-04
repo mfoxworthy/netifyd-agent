@@ -39,6 +39,7 @@ public:
     static ndInstance& Create(const sigset_t &sigset,
         const string &tag = "", bool threaded = false);
 
+    ndInstance() = delete;
     ndInstance(const ndInstance&) = delete;
     ndInstance& operator=(const ndInstance&) = delete;
 
@@ -49,8 +50,44 @@ public:
     static void InitializeSignals(
         sigset_t &sigset, bool minimal = false);
 
-    bool InitializeConfig(
+    enum ndConfigResult {
+        ndCR_OK,
+        ndCR_DISABLED_OPTION,
+        ndCR_INVALID_OPTION,
+        ndCR_INVALID_VALUE,
+        ndCR_LOAD_FAILURE,
+        ndCR_SETOPT_SINK_ENABLE,
+        ndCR_SETOPT_SINK_DISABLE,
+        ndCR_FORCE_RESULT,
+        ndCR_EXPORT_APPS,
+        ndCR_DUMP_LIST,
+    };
+
+#define ndCR_Pack(r, c) ((c << 16) + (r & 0x0000ffff))
+#define ndCR_Code(c) ((c & 0xffff0000) >> 16)
+#define ndCR_Result(r) (r & 0x0000ffff)
+
+    uint32_t InitializeConfig(
         int argc, char * const argv[], const string &filename = "");
+
+    enum ndDumpFlags {
+        ndDUMP_NONE = 0x00,
+        ndDUMP_TYPE_PROTOS = 0x01,
+        ndDUMP_TYPE_APPS = 0x02,
+        ndDUMP_TYPE_CAT_APP = 0x04,
+        ndDUMP_TYPE_CAT_PROTO = 0x08,
+        ndDUMP_TYPE_RISKS = 0x10,
+        ndDUMP_TYPE_VALID = 0x20,
+        ndDUMP_SORT_BY_TAG = 0x40,
+        ndDUMP_TYPE_CATS = (
+            ndDUMP_TYPE_CAT_APP | ndDUMP_TYPE_CAT_PROTO
+        ),
+        ndDUMP_TYPE_ALL = (
+            ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS
+        )
+    };
+
+    bool DumpList(uint8_t type = ndDUMP_TYPE_ALL);
 
     int Run(void);
 

@@ -1953,6 +1953,7 @@ static int nd_check_agent_uuid(void)
 static int test_main(int argc, char * const argv[], bool threaded = false)
 {
     int rc = 0;
+    uint32_t result;
     sigset_t sigset;
 
     ndInstance::InitializeSignals(sigset);
@@ -1960,14 +1961,20 @@ static int test_main(int argc, char * const argv[], bool threaded = false)
     if (! threaded) {
         ndInstance& instance = ndInstance::Create(sigset, "netifyd");
 
-        if (! instance.InitializeConfig(argc, argv)) return 1;
+        result = instance.InitializeConfig(argc, argv);
+
+        if (ndCR_Result(result) != ndInstance::ndCR_OK)
+            return ndCR_Code(result);
 
         return instance.Run();
     }
     else {
         ndInstance& instance = ndInstance::Create(sigset, "netifyd", true);
 
-        if (! instance.InitializeConfig(argc, argv)) return 1;
+        result = instance.InitializeConfig(argc, argv);
+
+        if (ndCR_Result(result) != ndInstance::ndCR_OK)
+            return ndCR_Code(result);
 
         rc = instance.Run();
         if (rc != 0) return rc;

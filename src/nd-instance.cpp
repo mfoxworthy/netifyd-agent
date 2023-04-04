@@ -225,9 +225,11 @@ void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
     }
 }
 
-bool ndInstance::InitializeConfig(int argc, char * const argv[],
-    const string &filename)
+uint32_t ndInstance::InitializeConfig(
+    int argc, char * const argv[], const string &filename)
 {
+    uint8_t dump_flags = ndDUMP_NONE;
+
     nd_basename(argv[0], self);
 
     static struct option options[] =
@@ -315,7 +317,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             break;
         case '?':
             fprintf(stderr, "Try `--help' for more information.\n");
-            return 1;
+            return ndCR_INVALID_OPTION;
         case 'c':
             conf_filename = optarg;
             break;
@@ -331,7 +333,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
         conf_filename = filename;
 
         if (ndGC.Load(conf_filename) < 0)
-            return false;
+            return ndCR_LOAD_FAILURE;
     }
 
     ndGC.Close();
@@ -347,27 +349,30 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
         case 0:
             break;
         case _ND_LO_ENABLE_SINK:
-            exit(
-                ndGC.SetOption(
-                    conf_filename, "config_enable_sink"
-                ) ? 0 : 1
+            rc = ndGC.SetOption(
+                conf_filename, "config_enable_sink"
+            );
+            return ndCR_Pack(
+                ndCR_SETOPT_SINK_ENABLE, (rc) ? 0 : 1
             );
         case _ND_LO_DISABLE_SINK:
-            exit(
-                ndGC.SetOption(
-                    conf_filename, "config_disable_sink"
-                ) ? 0 : 1
+            rc = ndGC.SetOption(
+                conf_filename, "config_disable_sink"
+            );
+            return ndCR_Pack(
+                ndCR_SETOPT_SINK_DISABLE, (rc) ? 0 : 1
             );
         case _ND_LO_FORCE_RESET:
-            exit(
-                ndGC.ForceReset() ? 0 : 1
+            rc = ndGC.ForceReset();
+            return ndCR_Pack(
+                ndCR_FORCE_RESULT, (rc) ? 0 : 1
             );
         case _ND_LO_CA_CAPTURE_BASE:
             ndGC.ca_capture_base = (int16_t)atoi(optarg);
             if (ndGC.ca_capture_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Capture thread base greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_CONNTRACK:
@@ -375,7 +380,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             if (ndGC.ca_conntrack > agent_stats.cpus) {
                 fprintf(stderr,
                     "Conntrack thread ID greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
@@ -383,7 +388,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             if (ndGC.ca_detection_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection thread base greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
@@ -391,7 +396,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             if (ndGC.ca_detection_cores > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection cores greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_SINK:
@@ -399,7 +404,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             if (ndGC.ca_sink > agent_stats.cpus) {
                 fprintf(stderr,
                     "Sink thread ID greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_SOCKET:
@@ -407,23 +412,138 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             if (ndGC.ca_socket > agent_stats.cpus) {
                 fprintf(stderr,
                     "Socket thread ID greater than online cores.\n");
-                return false;
+                return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
             ndGC_SetFlag(ndGF_WAIT_FOR_CLIENT, true);
             break;
-#if 0
         case _ND_LO_EXPORT_APPS:
 #ifndef _ND_LEAN_AND_MEAN
-            exit(nd_export_applications());
+            rc = apps.Save("/dev/stdout");
+            return ndCR_Pack(
+                ndCR_EXPORT_APPS, (rc) ? 0 : 1
+            );
 #else
             fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
-            exit(1);
+            return ndCR_DISABLED_OPTION;
 #endif
-#endif
+        case _ND_LO_DUMP_SORT_BY_TAG:
+            dump_flags |= ndDUMP_SORT_BY_TAG;
+            break;
+
+        case _ND_LO_DUMP_PROTOS:
+            rc = DumpList(ndDUMP_TYPE_PROTOS | dump_flags);
+            return ndCR_Pack(
+                ndCR_DUMP_LIST, (rc) ? 0 : 1
+            );
+        case _ND_LO_DUMP_APPS:
+            rc = DumpList(ndDUMP_TYPE_APPS | dump_flags);
+            return ndCR_Pack(
+                ndCR_DUMP_LIST, (rc) ? 0 : 1
+            );
+        case _ND_LO_DUMP_CAT:
+            if (strncasecmp("application", optarg, 11) == 0)
+                rc = DumpList(ndDUMP_TYPE_CAT_APP | dump_flags);
+            else if (strncasecmp("protocol", optarg, 8) == 0)
+                rc = DumpList(ndDUMP_TYPE_CAT_PROTO | dump_flags);
+            else {
+                fprintf(stderr,
+                    "Invalid catetory type \"%s\", valid types: "
+                    "applications, protocols\n", optarg
+                );
+                rc = 0;
+            }
+            return ndCR_Pack(
+                ndCR_DUMP_LIST, (rc) ? 0 : 1
+            );
+        case _ND_LO_DUMP_CATS:
+            rc = DumpList(ndDUMP_TYPE_CATS | dump_flags);
+            return ndCR_Pack(
+                ndCR_DUMP_LIST, (rc) ? 0 : 1
+            );
+        case _ND_LO_DUMP_RISKS:
+            rc = DumpList(ndDUMP_TYPE_RISKS | dump_flags);
+            return ndCR_Pack(
+                ndCR_DUMP_LIST, (rc) ? 0 : 1
+            );
+        case '?':
+            fprintf(stderr, "Try `--help' for more information.\n");
+            return ndCR_INVALID_OPTION;
         }
     }
+
+    return ndCR_OK;
+}
+
+bool ndInstance::DumpList(uint8_t type)
+{
+    if (! (type & ndDUMP_TYPE_PROTOS)
+        && ! (type & ndDUMP_TYPE_APPS)
+        && ! (type & ndDUMP_TYPE_CATS)
+        && ! (type & ndDUMP_TYPE_RISKS)) {
+        fprintf(stderr,
+            "No filter type specified (application, protocol).\n"
+        );
+        return false;
+    }
+
+    if (type & ndDUMP_TYPE_CATS && ! (type & ndDUMP_TYPE_PROTOS)
+        && ! (type & ndDUMP_TYPE_APPS)) {
+
+        if (type & ndDUMP_TYPE_CAT_APP
+            && ! (type & ndDUMP_TYPE_CAT_PROTO))
+            categories.Dump(ndCAT_TYPE_APP);
+        else if (! (type & ndDUMP_TYPE_CAT_APP)
+            && type & ndDUMP_TYPE_CAT_PROTO)
+            categories.Dump(ndCAT_TYPE_PROTO);
+        else
+            categories.Dump();
+    }
+
+    map<unsigned, string> entries_by_id;
+    map<string, unsigned> entries_by_tag;
+
+    if (type & ndDUMP_TYPE_PROTOS) {
+        for (auto &proto : nd_protos) {
+
+            if (proto.first == ND_PROTO_TODO) continue;
+
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                entries_by_id[proto.first] = proto.second;
+            else
+                entries_by_tag[proto.second] = proto.first;
+        }
+    }
+
+    if (type & ndDUMP_TYPE_APPS) {
+        nd_apps_t applist;
+        apps.Get(applist);
+        for (auto &app : applist) {
+
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                entries_by_id[app.second] = app.first;
+            else
+                entries_by_tag[app.first] = app.second;
+        }
+    }
+
+    if (type & ndDUMP_TYPE_RISKS) {
+        for (auto &risk : nd_risks) {
+
+            if (risk.first == ND_RISK_TODO) continue;
+
+            if (! (type & ndDUMP_SORT_BY_TAG))
+                entries_by_id[risk.first] = risk.second;
+            else
+                entries_by_tag[risk.second] = risk.first;
+        }
+    }
+
+    for (auto &entry : entries_by_id)
+        printf("%6u: %s\n", entry.first, entry.second.c_str());
+    for (auto &entry : entries_by_tag)
+        printf("%6u: %s\n", entry.second, entry.first.c_str());
 
     return true;
 }
@@ -488,12 +608,12 @@ bool ndInstance::Reload(void)
         result = apps.LoadLegacy(ndGC.path_legacy_config);
 
     result = categories.Load();
+    if (ndGC_LOAD_DOMAINS) result = domains.Load();
 
-    //if (ndGC_LOAD_DOMAINS) result = domains.Load();
-    result = domains.Load();
 #ifdef _ND_USE_PLUGINS
     //nd_plugin_event(ndPlugin::EVENT_RELOAD);
 #endif
+
     nd_dprintf("Configuration reloaded %s.\n",
         (result) ? "successfully" : "with errors");
 
