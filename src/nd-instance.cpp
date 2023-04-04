@@ -320,7 +320,7 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             conf_filename = optarg;
             break;
         case 'd':
-            ND_GF_SET_FLAG(ndGF_DEBUG, true);
+            ndGC_SetFlag(ndGF_DEBUG, true);
             break;
         default:
             break;
@@ -330,11 +330,11 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
     if (! filename.empty()) {
         conf_filename = filename;
 
-        if (ND_GCI.Load(conf_filename) < 0)
+        if (ndGC.Load(conf_filename) < 0)
             return false;
     }
 
-    ND_GCI.Close();
+    ndGC.Close();
 
     Reload();
 
@@ -348,70 +348,70 @@ bool ndInstance::InitializeConfig(int argc, char * const argv[],
             break;
         case _ND_LO_ENABLE_SINK:
             exit(
-                ND_GCI.SetOption(
+                ndGC.SetOption(
                     conf_filename, "config_enable_sink"
                 ) ? 0 : 1
             );
         case _ND_LO_DISABLE_SINK:
             exit(
-                ND_GCI.SetOption(
+                ndGC.SetOption(
                     conf_filename, "config_disable_sink"
                 ) ? 0 : 1
             );
         case _ND_LO_FORCE_RESET:
             exit(
-                ND_GCI.ForceReset() ? 0 : 1
+                ndGC.ForceReset() ? 0 : 1
             );
         case _ND_LO_CA_CAPTURE_BASE:
-            ND_GCI.ca_capture_base = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_capture_base > agent_stats.cpus) {
+            ndGC.ca_capture_base = (int16_t)atoi(optarg);
+            if (ndGC.ca_capture_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Capture thread base greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_CONNTRACK:
-            ND_GCI.ca_conntrack = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_conntrack > agent_stats.cpus) {
+            ndGC.ca_conntrack = (int16_t)atoi(optarg);
+            if (ndGC.ca_conntrack > agent_stats.cpus) {
                 fprintf(stderr,
                     "Conntrack thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
-            ND_GCI.ca_detection_base = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_detection_base > agent_stats.cpus) {
+            ndGC.ca_detection_base = (int16_t)atoi(optarg);
+            if (ndGC.ca_detection_base > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection thread base greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
-            ND_GCI.ca_detection_cores = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_detection_cores > agent_stats.cpus) {
+            ndGC.ca_detection_cores = (int16_t)atoi(optarg);
+            if (ndGC.ca_detection_cores > agent_stats.cpus) {
                 fprintf(stderr,
                     "Detection cores greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_SINK:
-            ND_GCI.ca_sink = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_sink > agent_stats.cpus) {
+            ndGC.ca_sink = (int16_t)atoi(optarg);
+            if (ndGC.ca_sink > agent_stats.cpus) {
                 fprintf(stderr,
                     "Sink thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_CA_SOCKET:
-            ND_GCI.ca_socket = (int16_t)atoi(optarg);
-            if (ND_GCI.ca_socket > agent_stats.cpus) {
+            ndGC.ca_socket = (int16_t)atoi(optarg);
+            if (ndGC.ca_socket > agent_stats.cpus) {
                 fprintf(stderr,
                     "Socket thread ID greater than online cores.\n");
                 return false;
             }
             break;
         case _ND_LO_WAIT_FOR_CLIENT:
-            ND_GF_SET_FLAG(ndGF_WAIT_FOR_CLIENT, true);
+            ndGC_SetFlag(ndGF_WAIT_FOR_CLIENT, true);
             break;
 #if 0
         case _ND_LO_EXPORT_APPS:
@@ -484,12 +484,12 @@ bool ndInstance::Reload(void)
     bool result = true;
 
     nd_dprintf("Reloading configuration...\n");
-    if (! (result = apps.Load(ND_GCI.path_app_config)))
-        result = apps.LoadLegacy(ND_GCI.path_legacy_config);
+    if (! (result = apps.Load(ndGC.path_app_config)))
+        result = apps.LoadLegacy(ndGC.path_legacy_config);
 
     result = categories.Load();
 
-    //if (ND_LOAD_DOMAINS) result = domains.Load();
+    //if (ndGC_LOAD_DOMAINS) result = domains.Load();
     result = domains.Load();
 #ifdef _ND_USE_PLUGINS
     //nd_plugin_event(ndPlugin::EVENT_RELOAD);

@@ -80,8 +80,8 @@ void nd_json_to_string(const json &j, string &output, bool pretty)
     );
 
     vector<pair<regex *, string> >::const_iterator i;
-    for (i = ND_GCI.privacy_regex.begin();
-        i != ND_GCI.privacy_regex.end(); i++) {
+    for (i = ndGC.privacy_regex.begin();
+        i != ndGC.privacy_regex.end(); i++) {
 
         string result = regex_replace(output, *((*i).first), (*i).second);
         if (result.size()) output = result;
@@ -118,8 +118,8 @@ void nd_json_agent_status(json &j)
 {
     j["version"] = (double)ND_JSON_VERSION;
     j["timestamp"] = time(NULL);
-    j["update_interval"] = ND_GCI.update_interval;
-    j["update_imf"] = ND_GCI.update_imf;
+    j["update_interval"] = ndGC.update_interval;
+    j["update_imf"] = ndGC.update_imf;
     j["uptime"] =
         unsigned(nd_json_agent_stats.ts_now.tv_sec - nd_json_agent_stats.ts_epoch.tv_sec);
     j["cpu_cores"] = (unsigned)nd_json_agent_stats.cpus;
@@ -141,10 +141,10 @@ void nd_json_agent_status(json &j)
         j["dhc_size"] = nd_json_agent_stats.dhc_size;
 
     j["sink_status"] = nd_json_agent_stats.sink_status;
-    j["sink_uploads"] = (ND_UPLOAD_ENABLED) ? true : false;
+    j["sink_uploads"] = (ndGC_UPLOAD_ENABLED) ? true : false;
     if (nd_json_agent_stats.sink_status) {
         j["sink_queue_size_kb"] = nd_json_agent_stats.sink_queue_size / 1024;
-        j["sink_queue_max_size_kb"] = ND_GCI.max_backlog / 1024;
+        j["sink_queue_max_size_kb"] = ndGC.max_backlog / 1024;
         j["sink_resp_code"] = nd_json_agent_stats.sink_resp_code;
     }
 }
@@ -237,7 +237,7 @@ void nd_json_add_stats(json &parent, const ndPacketStats &stats)
 void ndJsonResponse::Parse(const string &json_string)
 {
     try {
-        if (ND_EXPORT_JSON)
+        if (ndGC_EXPORT_JSON)
             nd_json_save_to_file(json_string, ND_JSON_FILE_RESPONSE);
 
         json j = json::parse(json_string);

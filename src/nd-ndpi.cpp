@@ -96,14 +96,14 @@ void ndpi_global_init(void)
 
     NDPI_BITMASK_RESET(ndpi_protos);
 
-    auto it = ND_GCI.protocols.find("ALL");
-    if (it == ND_GCI.protocols.end()) {
-        it = ND_GCI.protocols.find("all");
-        if (it == ND_GCI.protocols.end())
-            it = ND_GCI.protocols.find("All");
+    auto it = ndGC.protocols.find("ALL");
+    if (it == ndGC.protocols.end()) {
+        it = ndGC.protocols.find("all");
+        if (it == ndGC.protocols.end())
+            it = ndGC.protocols.find("All");
     }
 
-    if (it != ND_GCI.protocols.end()) {
+    if (it != ndGC.protocols.end()) {
         if (strcasecmp(it->second.c_str(), "include") == 0) {
             NDPI_BITMASK_SET_ALL(ndpi_protos);
             nd_dprintf("Enabled all protocols.\n");
@@ -113,7 +113,7 @@ void ndpi_global_init(void)
         }
     }
 
-    for (auto it : ND_GCI.protocols) {
+    for (auto it : ndGC.protocols) {
         signed action = -1;
         if (strcasecmp(it.second.c_str(), "include") == 0)
             action = 0;
@@ -145,7 +145,7 @@ void ndpi_global_init(void)
         }
     }
 
-    if (ND_GCI.protocols.empty()) {
+    if (ndGC.protocols.empty()) {
         NDPI_BITMASK_SET_ALL(ndpi_protos);
         nd_dprintf("Enabled all protocols.\n");
     }
@@ -165,11 +165,11 @@ struct ndpi_detection_module_struct *nd_ndpi_init(void)
         throw ndThreadException("nDPI initialization failure");
 
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
-    if (ND_DEBUG) {
+    if (ndGC_DEBUG) {
         ndpi->ndpi_log_level = NDPI_LOG_ERROR;
-        if (! ND_QUIET)
+        if (! ndGC_QUIET)
             ndpi->ndpi_log_level = NDPI_LOG_DEBUG;
-        if (ND_DEBUG_NDPI)
+        if (ndGC_DEBUG_NDPI)
             ndpi->ndpi_log_level = NDPI_LOG_DEBUG_EXTRA;
         set_ndpi_debug_function(ndpi, nd_ndpi_debug_printf);
     }

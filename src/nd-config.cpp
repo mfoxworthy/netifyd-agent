@@ -338,13 +338,13 @@ int ndGlobalConfig::Load(const string &filename)
         "netifyd", "upload_connect_timeout", ND_SINK_CONNECT_TIMEOUT);
     this->sink_xfer_timeout = (unsigned)r->GetInteger(
         "netifyd", "upload_timeout", ND_SINK_XFER_TIMEOUT);
-    ND_GF_SET_FLAG(ndGF_UPLOAD_NAT_FLOWS, r->GetBoolean(
+    ndGC_SetFlag(ndGF_UPLOAD_NAT_FLOWS, r->GetBoolean(
         "netifyd", "upload_nat_flows", false));
 
-    ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
+    ndGC_SetFlag(ndGF_EXPORT_JSON,
         r->GetBoolean("netifyd", "export_json", false));
-    if (! ND_EXPORT_JSON) {
-        ND_GF_SET_FLAG(ndGF_EXPORT_JSON,
+    if (! ndGC_EXPORT_JSON) {
+        ndGC_SetFlag(ndGF_EXPORT_JSON,
             r->GetBoolean("netifyd", "json_save", false));
     }
 
@@ -354,19 +354,19 @@ int ndGlobalConfig::Load(const string &filename)
     this->max_packet_queue = r->GetInteger(
         "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
 
-    ND_GF_SET_FLAG(ndGF_USE_SINK,
+    ndGC_SetFlag(ndGF_USE_SINK,
         r->GetBoolean("netifyd", "enable_sink", false));
 
     if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
-        ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
+        ndGC_SetFlag(ndGF_SSL_VERIFY,
             r->GetBoolean("netifyd", "ssl_verify", true));
     }
     else if (netifyd_section.find("ssl_verify_peer") != netifyd_section.end()) {
-        ND_GF_SET_FLAG(ndGF_SSL_VERIFY,
+        ndGC_SetFlag(ndGF_SSL_VERIFY,
             r->GetBoolean("netifyd", "ssl_verify_peer", true));
     }
 
-    ND_GF_SET_FLAG(ndGF_SSL_USE_TLSv1,
+    ndGC_SetFlag(ndGF_SSL_USE_TLSv1,
         r->GetBoolean("netifyd", "ssl_use_tlsv1", false));
 
     this->max_capture_length = (uint16_t)r->GetInteger(
@@ -385,16 +385,16 @@ int ndGlobalConfig::Load(const string &filename)
     this->ttl_idle_tcp_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
 
-    ND_GF_SET_FLAG(ndGF_CAPTURE_UNKNOWN_FLOWS,
+    ndGC_SetFlag(ndGF_CAPTURE_UNKNOWN_FLOWS,
         r->GetBoolean("netifyd", "capture_unknown_flows", false));
 
     this->max_flows = (size_t)r->GetInteger(
         "netifyd", "max_flows", 0);
 
-    ND_GF_SET_FLAG(ndGF_SOFT_DISSECTORS,
+    ndGC_SetFlag(ndGF_SOFT_DISSECTORS,
         r->GetBoolean("netifyd", "soft_dissectors", true));
 
-    ND_GF_SET_FLAG(ndGF_LOAD_DOMAINS,
+    ndGC_SetFlag(ndGF_LOAD_DOMAINS,
         r->GetBoolean("netifyd", "load_domains", true));
 
     this->fm_buckets = (unsigned)r->GetInteger(
@@ -441,7 +441,7 @@ int ndGlobalConfig::Load(const string &filename)
     );
 
     // Flow Hash Cache section
-    ND_GF_SET_FLAG(ndGF_USE_FHC,
+    ndGC_SetFlag(ndGF_USE_FHC,
         r->GetBoolean("flow_hash_cache", "enable", true));
 
     string fhc_save_mode = r->Get(
@@ -461,7 +461,7 @@ int ndGlobalConfig::Load(const string &filename)
         "flow_hash_cache", "purge_divisor", ND_FHC_PURGE_DIVISOR);
 
     // DNS Cache section
-    ND_GF_SET_FLAG(ndGF_USE_DHC,
+    ndGC_SetFlag(ndGF_USE_DHC,
         r->GetBoolean("dns_hint_cache", "enable", true));
 
     string dhc_save_mode = r->Get(
@@ -482,9 +482,9 @@ int ndGlobalConfig::Load(const string &filename)
         "dns_hint_cache", "ttl", ND_TTL_IDLE_DHC_ENTRY);
 
     // Socket section
-    ND_GF_SET_FLAG(ndGF_FLOW_DUMP_ESTABLISHED,
+    ndGC_SetFlag(ndGF_FLOW_DUMP_ESTABLISHED,
         r->GetBoolean("socket", "dump_established_flows", false));
-    ND_GF_SET_FLAG(ndGF_FLOW_DUMP_UNKNOWN,
+    ndGC_SetFlag(ndGF_FLOW_DUMP_UNKNOWN,
         r->GetBoolean("socket", "dump_unknown_flows", false));
 
     for (int i = 0; ; i++) {
@@ -603,7 +603,7 @@ int ndGlobalConfig::Load(const string &filename)
         }
     }
 
-    ND_GF_SET_FLAG(ndGF_PRIVATE_EXTADDR,
+    ndGC_SetFlag(ndGF_PRIVATE_EXTADDR,
         r->GetBoolean("privacy_filter", "private_external_addresses", false));
 
 #ifdef _ND_USE_PLUGINS
@@ -617,7 +617,7 @@ int ndGlobalConfig::Load(const string &filename)
     r->GetSection("sink_headers", this->custom_headers);
 
     // Netify API section
-    ND_GF_SET_FLAG(ndGF_USE_NAPI,
+    ndGC_SetFlag(ndGF_USE_NAPI,
         r->GetBoolean("netify_api", "enable_updates", true));
 
     this->ttl_napi_update = r->GetInteger(
@@ -663,7 +663,7 @@ bool ndGlobalConfig::SetOption(const string &filename, const string &func)
             filename.c_str()
         );
 
-        if (ND_DEBUG) fprintf(stderr, "%s", result.c_str());
+        if (ndGC_DEBUG) fprintf(stderr, "%s", result.c_str());
 
         return false;
     }

@@ -285,7 +285,7 @@ ndCaptureThread::ndCaptureThread(
     : ndThread(iface.ifname, (long)cpu, /* IPC? */ false),
     dl_type(0), cs_type(cs_type),
     iface(iface), thread_socket(thread_socket),
-/*    capture_unknown_flows(ND_CAPTURE_UNKNOWN_FLOWS), */
+/*    capture_unknown_flows(ndGC_CAPTURE_UNKNOWN_FLOWS), */
     ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
@@ -336,7 +336,7 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
 
         if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
-        if (ND_REPLAY_DELAY && ts_pkt_last) {
+        if (ndGC_REPLAY_DELAY && ts_pkt_last) {
             useconds_t delay = useconds_t(ts_pkt - ts_pkt_last) * 1000;
             //nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
             if (delay) {
@@ -929,13 +929,13 @@ nd_process_ip:
         }
     }
     else {
-        if (ND_GCI.max_flows > 0 && nd_flow_count + 1 > ND_GCI.max_flows) {
+        if (ndGC.max_flows > 0 && nd_flow_count + 1 > ndGC.max_flows) {
             stats.pkt.discard++;
             stats.pkt.discard_bytes += packet->length;
             stats.flow.dropped++;
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
-                tag.c_str(), ND_GCI.max_flows);
+                tag.c_str(), ndGC.max_flows);
 #endif
             nd_flow_buckets->Release(flow_digest);
             return packet;
@@ -1095,7 +1095,7 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.expired.load() == false &&
-        nf->detection_packets.load() <= ND_GCI.max_detection_pkts) {
+        nf->detection_packets.load() <= ndGC.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

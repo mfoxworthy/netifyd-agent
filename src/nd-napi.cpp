@@ -214,27 +214,27 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     header.str("");
 
-    if (strncmp(ND_GCI.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
-        header << "X-UUID: " << ND_GCI.uuid;
+    if (strncmp(ndGC.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
+        header << "X-UUID: " << ndGC.uuid;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, ND_GCI.path_uuid, ND_AGENT_UUID_LEN))
+        if (nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN))
             header << "X-UUID: " << uuid;
         else
-            header << "X-UUID: " << ND_GCI.uuid;
+            header << "X-UUID: " << ndGC.uuid;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
-    if (strncmp(ND_GCI.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
-        header << "X-UUID-Serial: " << ND_GCI.uuid_serial;
+    if (strncmp(ndGC.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
+        header << "X-UUID-Serial: " << ndGC.uuid_serial;
     else {
         string uuid;
-        if (nd_load_uuid(uuid, ND_GCI.path_uuid_serial, ND_AGENT_SERIAL_LEN))
+        if (nd_load_uuid(uuid, ndGC.path_uuid_serial, ND_AGENT_SERIAL_LEN))
             header << "X-UUID-Serial: " << uuid;
         else
-            header << "X-UUID-Serial: " << ND_GCI.uuid_serial;
+            header << "X-UUID-Serial: " << ndGC.uuid_serial;
     }
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
@@ -287,8 +287,8 @@ void *ndNetifyApiThread::Entry(void)
         }
 
         ostringstream url;
-        url << ND_GCI.url_napi << requests[cid];
-        url << "?vendor=" << ND_GCI.napi_vendor;
+        url << ndGC.url_napi << requests[cid];
+        url << "?vendor=" << ndGC.napi_vendor;
         url << "&settings_limit=100";
 
         if (page > 0) url << "&page=" << page;

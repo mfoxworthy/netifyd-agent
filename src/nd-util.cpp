@@ -142,7 +142,7 @@ void nd_mem_free(void *ptr)
 
 void nd_printf(const char *format, ...)
 {
-    if (ND_QUIET) return;
+    if (ndGC_QUIET) return;
 
     va_list ap;
     va_start(ap, format);
@@ -152,7 +152,7 @@ void nd_printf(const char *format, ...)
 
 void nd_printf(const char *format, va_list ap)
 {
-    if (ND_QUIET) return;
+    if (ndGC_QUIET) return;
 
     unique_lock<mutex> lock(nd_printf_mutex);
 
@@ -161,7 +161,7 @@ void nd_printf(const char *format, va_list ap)
 
 void nd_dprintf(const char *format, ...)
 {
-    if (! ND_DEBUG) return;
+    if (! ndGC_DEBUG) return;
 
     va_list ap;
     va_start(ap, format);
@@ -171,7 +171,7 @@ void nd_dprintf(const char *format, ...)
 
 void nd_dprintf(const char *format, va_list ap)
 {
-    if (! ND_DEBUG) return;
+    if (! ndGC_DEBUG) return;
 
     unique_lock<mutex> lock(nd_printf_mutex);
 
@@ -184,7 +184,7 @@ void nd_flow_printf(const char *format, ...)
 
     va_list ap;
     va_start(ap, format);
-    vfprintf(ND_GCI.h_flow, format, ap);
+    vfprintf(ndGC.h_flow, format, ap);
     va_end(ap);
 }
 
@@ -193,7 +193,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
     ndpi_log_level_t level, const char *file, const char *func, unsigned line,
     const char *format, ...)
 {
-    if (ND_DEBUG && (ND_DEBUG_NDPI || level == NDPI_LOG_ERROR)) {
+    if (ndGC_DEBUG && (ndGC_DEBUG_NDPI || level == NDPI_LOG_ERROR)) {
 
         unique_lock<mutex> lock(nd_printf_mutex);
 
@@ -541,7 +541,7 @@ bool nd_load_uuid(string &uuid, const string &path, size_t length)
         FILE *ph = popen(path.c_str(), "r");
 
         if (ph == NULL) {
-            if (ND_DEBUG || errno != ENOENT) {
+            if (ndGC_DEBUG || errno != ENOENT) {
                 nd_printf("Error loading uuid from pipe: %s: %s\n",
                     path.c_str(), strerror(errno));
             }
@@ -566,7 +566,7 @@ bool nd_load_uuid(string &uuid, const string &path, size_t length)
         FILE *fh = fopen(path.c_str(), "r");
 
         if (fh == NULL) {
-            if (ND_DEBUG || errno != ENOENT) {
+            if (ndGC_DEBUG || errno != ENOENT) {
                 nd_printf("Error loading uuid from file: %s: %s\n",
                     path.c_str(), strerror(errno));
             }
@@ -618,7 +618,7 @@ bool nd_load_sink_url(string &url)
     FILE *fh = fopen(ND_URL_SINK_PATH, "r");
 
     if (fh == NULL) {
-        if (ND_DEBUG || errno != ENOENT)
+        if (ndGC_DEBUG || errno != ENOENT)
             nd_printf("Error loading URL: %s: %s\n", ND_URL_SINK_PATH, strerror(errno));
         return false;
     }
@@ -710,9 +710,9 @@ string nd_get_version_and_features(void)
     ident <<
         PACKAGE_NAME << "/" << GIT_RELEASE << " (" << os << "; " << _ND_HOST_CPU;
 
-    if (ND_USE_CONNTRACK) ident << "; conntrack";
-    if (ND_USE_NETLINK) ident << "; netlink";
-    if (ND_USE_DHC) ident << "; dns-cache";
+    if (ndGC_USE_CONNTRACK) ident << "; conntrack";
+    if (ndGC_USE_NETLINK) ident << "; netlink";
+    if (ndGC_USE_DHC) ident << "; dns-cache";
 #ifdef _ND_USE_TPACKETV3
     ident << "; tpv3";
 #endif
@@ -728,8 +728,8 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_LIBJEMALLOC
     ident << "; jemalloc";
 #endif
-    if (ND_SSL_USE_TLSv1) ident << "; ssl-tlsv1";
-    if (! ND_SSL_VERIFY) ident << "; ssl-no-verify";
+    if (ndGC_SSL_USE_TLSv1) ident << "; ssl-tlsv1";
+    if (! ndGC_SSL_VERIFY) ident << "; ssl-no-verify";
 #ifdef HAVE_WORKING_REGEX
     ident << "; regex";
 #endif

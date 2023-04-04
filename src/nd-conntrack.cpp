@@ -373,7 +373,7 @@ void ndConntrackThread::ProcessConntrackEvent(
             tag.c_str(), type);
     }
 #ifdef _ND_DEBUG_CONNTRACK
-    if (ND_DEBUG) {
+    if (ndGC_DEBUG) {
 #if 0
         char buffer[1024];
         nfct_snprintf(buffer, sizeof(buffer), ct, type, NFCT_O_PLAIN, NFCT_OF_TIME);

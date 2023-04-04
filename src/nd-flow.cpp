@@ -517,7 +517,7 @@ void ndFlow::print(void) const
         (has_bt_info_hash()) ? digest.c_str() : ""
     );
 #if 0
-    if (ND_DEBUG &&
+    if (ndGC_DEBUG &&
         detected_protocol == ND_PROTO_TLS &&
         flags.detection_guessed.load() == false && ssl.version == 0x0000) {
         nd_dprintf("%s: SSL with no SSL/TLS verison.\n", iface.ifname.c_str());

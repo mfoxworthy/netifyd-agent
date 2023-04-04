@@ -209,7 +209,7 @@ bool ndNetlink::ProcessEvent(void)
         }
     }
 #ifndef _ND_LEAN_AND_MEAN
-    if (ND_DEBUG) {
+    if (ndGC_DEBUG) {
         if (added_net || removed_net) {
             nd_dprintf("Networks added: %d, removed: %d\n", added_net, removed_net);
         }

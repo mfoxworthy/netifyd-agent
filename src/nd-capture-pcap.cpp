@@ -276,8 +276,8 @@ pcap_t *ndCapturePcap::OpenCapture(void)
     else {
         pcap_new = pcap_open_live(
             tag.c_str(),
-            ND_GCI.max_capture_length,
-            1, ND_GCI.capture_read_timeout, pcap_errbuf
+            ndGC.max_capture_length,
+            1, ndGC.capture_read_timeout, pcap_errbuf
         );
 
 #if 0
@@ -318,9 +318,9 @@ pcap_t *ndCapturePcap::OpenCapture(void)
         if ((pcap_fd = pcap_get_selectable_fd(pcap_new)) < 0)
             nd_dprintf("%s: pcap_get_selectable_fd: -1\n", tag.c_str());
 
-        nd_interface_filter::const_iterator i = ND_GCI.interface_filters.find(tag);
+        nd_interface_filter::const_iterator i = ndGC.interface_filters.find(tag);
 
-        if (i != ND_GCI.interface_filters.end()) {
+        if (i != ndGC.interface_filters.end()) {
 
             if (pcap_compile(pcap_new, &pcap_filter,
                 i->second.c_str(), 1, PCAP_NETMASK_UNKNOWN) < 0) {

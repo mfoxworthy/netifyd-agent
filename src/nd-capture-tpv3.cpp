@@ -415,7 +415,7 @@ ndPacketRing::ndPacketRing(const string &ifname,
     tp_req.tp_frame_nr =
         (tp_req.tp_block_size * tp_req.tp_block_nr) /
             tp_req.tp_frame_size;
-    tp_req.tp_retire_blk_tov = ND_GCI.capture_read_timeout;
+    tp_req.tp_retire_blk_tov = ndGC.capture_read_timeout;
     //tp_req.tp_feature_req_word = // TODO: Features?
 
     nd_dprintf("%s: block size: %u\n", ifname.c_str(), tp_req.tp_block_size);
@@ -642,9 +642,9 @@ void *ndCaptureTPv3::Entry(void)
     ring = static_cast<void *>(_ring);
 
     nd_interface_filter::const_iterator it_filter;
-    it_filter = ND_GCI.interface_filters.find(tag);
+    it_filter = ndGC.interface_filters.find(tag);
 
-    if (it_filter != ND_GCI.interface_filters.end())
+    if (it_filter != ndGC.interface_filters.end())
         _ring->SetFilter(it_filter->second);
 
     int sd_max = _ring->GetDescriptor();

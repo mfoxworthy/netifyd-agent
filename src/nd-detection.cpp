@@ -298,7 +298,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ndEF->flags.detection_complete.load() == false &&
                 (ndEF->flags.expiring.load() == false ||
                     ndEF->tickets.load() > 1) &&
-                ndEF->detection_packets.load() < ND_GCI.max_detection_pkts
+                ndEF->detection_packets.load() < ndGC.max_detection_pkts
             )) {
 
                 ndEF->detection_packets++;
@@ -306,7 +306,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
                 ProcessPacket(entry);
             }
 
-            if (ndEF->detection_packets.load() == ND_GCI.max_detection_pkts ||
+            if (ndEF->detection_packets.load() == ndGC.max_detection_pkts ||
                 (ndEF->flags.expiring.load() &&
                     ndEF->flags.expired.load() == false)) {
 
@@ -941,8 +941,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     ndEF->update_lower_maps();
 
     for (vector<uint8_t *>::const_iterator i =
-        ND_GCI.privacy_filter_mac.begin();
-        i != ND_GCI.privacy_filter_mac.end() &&
+        ndGC.privacy_filter_mac.begin();
+        i != ndGC.privacy_filter_mac.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
         if (! memcmp((*i), ndEF->lower_mac.addr.ll.sll_addr, ETH_ALEN))
@@ -952,8 +952,8 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
     for (vector<struct sockaddr *>::const_iterator i =
-        ND_GCI.privacy_filter_host.begin();
-        i != ND_GCI.privacy_filter_host.end() &&
+        ndGC.privacy_filter_host.begin();
+        i != ndGC.privacy_filter_host.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
 
@@ -1035,7 +1035,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         );
     }
 
-    if (ND_SOFT_DISSECTORS) {
+    if (ndGC_SOFT_DISSECTORS) {
 
         ndSoftDissector nsd;
         if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
@@ -1070,7 +1070,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         }
     }
 
-    if ((ND_DEBUG && ND_VERBOSE) || ND_GCI.h_flow != stderr)
+    if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
         ndEF->print();
 
 #ifdef _ND_USE_PLUGINS
@@ -1089,7 +1089,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         );
     }
 #endif
-    if (thread_socket && (ND_FLOW_DUMP_UNKNOWN ||
+    if (thread_socket && (ndGC_FLOW_DUMP_UNKNOWN ||
         ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
         json j;
 

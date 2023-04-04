@@ -83,10 +83,10 @@ bool ndCategories::Load(void)
 
     json jdata;
 
-    ifstream ifs(ND_GCI.path_cat_config);
+    ifstream ifs(ndGC.path_cat_config);
     if (! ifs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            ND_GCI.path_cat_config.c_str(), strerror(ENOENT));
+            ndGC.path_cat_config.c_str(), strerror(ENOENT));
         return false;
     }
 
@@ -95,8 +95,8 @@ bool ndCategories::Load(void)
     }
     catch (exception &e) {
         nd_printf("Error loading categories: %s: JSON parse error\n",
-            ND_GCI.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
+            ndGC.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ndGC.path_cat_config.c_str(), e.what());
 
         return false;
     }
@@ -132,7 +132,7 @@ bool ndCategories::Load(void)
 
 bool ndCategories::LoadLegacy(json &jdata) {
     nd_printf("Legacy category format detected: %s\n",
-        ND_GCI.path_cat_config.c_str());
+        ndGC.path_cat_config.c_str());
 
     for (auto &ci : categories) {
         string key;
@@ -240,17 +240,17 @@ bool ndCategories::Save(void)
         }
     } catch (exception &e) {
         nd_printf("Error JSON encoding categories: %s\n",
-            ND_GCI.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
+            ndGC.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ndGC.path_cat_config.c_str(), e.what());
 
         return false;
     }
 
-    ofstream ofs(ND_GCI.path_cat_config);
+    ofstream ofs(ndGC.path_cat_config);
 
     if (! ofs.is_open()) {
         nd_printf("Error opening categories: %s: %s\n",
-            ND_GCI.path_cat_config.c_str(), strerror(ENOENT));
+            ndGC.path_cat_config.c_str(), strerror(ENOENT));
         return false;
     }
 
@@ -259,8 +259,8 @@ bool ndCategories::Save(void)
     }
     catch (exception &e) {
         nd_printf("Error saving categories: %s: JSON parse error\n",
-            ND_GCI.path_cat_config.c_str());
-        nd_dprintf("%s: %s\n", ND_GCI.path_cat_config.c_str(), e.what());
+            ndGC.path_cat_config.c_str());
+        nd_dprintf("%s: %s\n", ndGC.path_cat_config.c_str(), e.what());
 
         return false;
     }
@@ -368,7 +368,7 @@ nd_cat_id_t ndCategories::LookupTag(ndCategoryType type, const string &tag)
 
 ndDomains::ndDomains()
 {
-    path_domains = ND_GCI.path_state_persistent + "/domains.d";
+    path_domains = ndGC.path_state_persistent + "/domains.d";
 }
 
 bool ndDomains::Load(void)
