@@ -495,14 +495,16 @@ public:
     bool GetString(string &ip) const {
         ndAddr a((uint8_t)prefix_len);
         switch (N) {
-        case _ND_ADDR_BITSv4: // AF_INET
+        case _ND_ADDR_BITSv4:
+            a.addr.ss.ss_family = AF_INET;
             a.addr.in.sin_addr.s_addr = htonl(addr.to_ulong());
             break;
-        case _ND_ADDR_BITSv6: // AF_INET6
+        case _ND_ADDR_BITSv6:
+            a.addr.ss.ss_family = AF_INET6;
             for (auto i = 0; i < 4; i++) {
                 bitset<N> b;
-                for (size_t j = 0; j < N; j++)
-                    b[j] = addr[i * N + j];
+                for (size_t j = 0; j < 32; j++)
+                    b[j] = addr[i * 32 + j];
                 a.addr.in6.sin6_addr.s6_addr32[3 - i] = htonl(b.to_ulong());
             }
             break;
