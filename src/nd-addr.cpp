@@ -457,7 +457,7 @@ ndAddrType::ndAddrType()
 }
 
 bool ndAddrType::AddAddress(
-    ndAddr::Type type, const ndAddr &addr, const char *ifname)
+    ndAddr::Type type, const ndAddr &addr, const string &ifname)
 {
     if (! addr.IsValid()) {
         nd_printf("Invalid address: %s\n",
@@ -466,7 +466,8 @@ bool ndAddrType::AddAddress(
     }
 #if 0
     nd_dprintf("%s: %d: %s: %s\n", __PRETTY_FUNCTION__, type,
-        (ifname) ? ifname : "(global)", addr.GetString().c_str()
+        (! ifname.empty()) ?
+            ifname.c_str() : "(global)", addr.GetString().c_str()
     );
 #endif
     unique_lock<mutex> ul(lock);
@@ -488,7 +489,7 @@ bool ndAddrType::AddAddress(
         if (type == ndAddr::atLOCAL && addr.IsNetwork())
             type = ndAddr::atLOCALNET;
 
-        if (addr.IsIPv4() && ifname == nullptr) {
+        if (addr.IsIPv4() && ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 ipv4_reserved[entry] = type;
@@ -496,7 +497,7 @@ bool ndAddrType::AddAddress(
             }
         }
 
-        if (addr.IsIPv6() && ifname == nullptr) {
+        if (addr.IsIPv6() && ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 ipv6_reserved[entry] = type;
@@ -504,7 +505,7 @@ bool ndAddrType::AddAddress(
             }
         }
 
-        if (addr.IsIPv4() && ifname != nullptr) {
+        if (addr.IsIPv4() && ! ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 ipv4_iface[ifname][entry] = type;
@@ -512,7 +513,7 @@ bool ndAddrType::AddAddress(
             }
         }
 
-        if (addr.IsIPv6() && ifname != nullptr) {
+        if (addr.IsIPv6() && ! ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 ipv6_iface[ifname][entry] = type;
@@ -529,7 +530,7 @@ bool ndAddrType::AddAddress(
 }
 
 bool ndAddrType::RemoveAddress(
-    const ndAddr &addr, const char *ifname)
+    const ndAddr &addr, const string &ifname)
 {
     if (! addr.IsValid()) {
         nd_printf("Invalid address: %s\n",
@@ -538,7 +539,8 @@ bool ndAddrType::RemoveAddress(
     }
 #if 0
     nd_dprintf("%s: %s: %s\n", __PRETTY_FUNCTION__,
-        (ifname) ? ifname : "(global)", addr.GetString().c_str()
+        (! ifname.empty()) ?
+            ifname.c_str() : "(global)", addr.GetString().c_str()
     );
 #endif
     unique_lock<mutex> ul(lock);
@@ -554,21 +556,21 @@ bool ndAddrType::RemoveAddress(
             return false;
         }
 
-        if (addr.IsIPv4() && ifname == nullptr) {
+        if (addr.IsIPv4() && ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 return ipv4_reserved.erase(entry);
             }
         }
 
-        if (addr.IsIPv6() && ifname == nullptr) {
+        if (addr.IsIPv6() && ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 return ipv6_reserved.erase(entry);
             }
         }
 
-        if (addr.IsIPv4() && ifname != nullptr) {
+        if (addr.IsIPv4() && ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv4> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv4>::Create(entry, addr)) {
                 auto it = ipv4_iface.find(ifname);
@@ -578,7 +580,7 @@ bool ndAddrType::RemoveAddress(
             }
         }
 
-        if (addr.IsIPv6() && ifname != nullptr) {
+        if (addr.IsIPv6() && ! ifname.empty()) {
             ndRadixNetworkEntry<_ND_ADDR_BITSv6> entry;
             if (ndRadixNetworkEntry<_ND_ADDR_BITSv6>::Create(entry, addr)) {
                 auto it = ipv6_iface.find(ifname);

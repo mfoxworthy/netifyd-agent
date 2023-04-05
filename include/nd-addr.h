@@ -605,16 +605,16 @@ public:
     ndAddrType();
 
     bool AddAddress(ndAddr::Type type,
-        const ndAddr &addr, const char *ifname = nullptr);
+        const ndAddr &addr, const string &ifname = "");
     inline bool AddAddress(ndAddr::Type type,
-        const string &addr, const char *ifname = nullptr) {
+        const string &addr, const string &ifname = "") {
         return AddAddress(type, ndAddr(addr), ifname);
     }
 
     bool RemoveAddress(
-        const ndAddr &addr, const char *ifname = nullptr);
+        const ndAddr &addr, const string &ifname = "");
     inline bool RemoveAddress(
-        const string &addr, const char *ifname = nullptr) {
+        const string &addr, const string &ifname = "") {
         return RemoveAddress(ndAddr(addr), ifname);
     }
 
