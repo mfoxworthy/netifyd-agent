@@ -141,9 +141,22 @@ void *ndInstanceThread::Entry(void)
 
 ndInstance::ndInstance(
     const sigset_t &sigset, const string &tag, bool threaded)
-    : exit_code(EXIT_SUCCESS), sigset(sigset),
+    : exit_code(EXIT_FAILURE),
+    dns_hint_cache(nullptr),
+    flow_hash_cache(nullptr),
+    flow_buckets(nullptr),
+#ifdef _ND_USE_NETLINK
+    netlink(nullptr),
+#endif
+    thread_sink(nullptr),
+    thread_socket(nullptr),
+    thread_napi(nullptr),
+#ifdef _ND_USE_CONNTRACK
+    thread_conntrack(nullptr),
+#endif
+    sigset(sigset),
     tag(tag.empty() ? PACKAGE_TARNAME : tag),
-    self(PACKAGE_TARNAME),
+    self(PACKAGE_TARNAME), self_pid(-1),
     threaded(threaded), thread(nullptr),
     conf_filename(ND_CONF_FILE_NAME),
     agent_stats{0}
@@ -172,15 +185,78 @@ ndInstance::~ndInstance()
         delete thread;
     }
 
-    if (this == instance) instance = nullptr;
+    if (thread_socket) {
+        thread_socket->Terminate();
+        delete thread_socket;
+        thread_socket = nullptr;
+    }
+
+    if (thread_sink) {
+        thread_sink->Terminate();
+        delete thread_sink;
+        thread_sink = nullptr;
+    }
+
+#ifdef _ND_USE_CONNTRACK
+    if (ndGC_USE_CONNTRACK && thread_conntrack) {
+        thread_conntrack->Terminate();
+        delete thread_conntrack;
+        thread_conntrack = nullptr;
+    }
+#endif
+
+    if (dns_hint_cache != nullptr) {
+        delete dns_hint_cache;
+        dns_hint_cache = nullptr;
+    }
+
+    if (flow_hash_cache != nullptr) {
+        delete flow_hash_cache;
+        flow_hash_cache = nullptr;
+    }
+
+    if (flow_buckets != nullptr) {
+        delete flow_buckets;
+        flow_buckets = nullptr;
+    }
+
+#ifdef _ND_USE_NETLINK
+    if (netlink != nullptr) {
+        delete netlink;
+        netlink = nullptr;
+    }
+#endif
+
+    for (auto i : thread_detection) {
+        i.second->Terminate();
+        delete i.second;
+    }
+
+    thread_detection.clear();
+
+    if (this == instance) {
+        instance = nullptr;
+
+        curl_global_cleanup();
+    }
+
+    if (self_pid > 0 &&
+        self_pid == nd_is_running(self_pid, self)) {
+        if (unlink(ndGC.path_pid_file.c_str()) != 0) {
+            nd_dprintf("unlink: %s: %s\n",
+                ndGC.path_pid_file.c_str(), strerror(errno)
+            );
+        }
+    }
 }
 
 ndInstance& ndInstance::Create(const sigset_t &sigset,
     const string &tag, bool threaded) {
+
     if (instance != nullptr) {
         fprintf(stderr, "Instance already created.\n");
         throw ndSystemException(__PRETTY_FUNCTION__,
-            "instance exists", EINVAL
+            "instance exists", EEXIST
         );
     }
 
@@ -193,6 +269,18 @@ ndInstance& ndInstance::Create(const sigset_t &sigset,
     }
 
     return *instance;
+}
+
+void ndInstance::Destroy(void)
+{
+    if (instance == nullptr) {
+        fprintf(stderr, "Instance not found.\n");
+        throw ndSystemException(__PRETTY_FUNCTION__,
+            "instance not found", ENOENT
+        );
+    }
+
+    delete instance;
 }
 
 void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
@@ -225,8 +313,7 @@ void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
     }
 }
 
-uint32_t ndInstance::InitializeConfig(
-    int argc, char * const argv[], const string &filename)
+uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 {
     string last_iface;
     uint8_t dump_flags = ndDUMP_NONE;
@@ -330,14 +417,12 @@ uint32_t ndInstance::InitializeConfig(
         }
     }
 
-    if (! filename.empty()) {
-        conf_filename = filename;
-
-        if (ndGC.Load(conf_filename) < 0)
+    if (conf_filename != "/dev/null") {
+        if (ndGC.Load(conf_filename) == false)
             return ndCR_LOAD_FAILURE;
-    }
 
-    ndGC.Close();
+        ndGC.Close();
+    }
 
     Reload();
 
@@ -674,9 +759,82 @@ uint32_t ndInstance::InitializeConfig(
         return ndCR_INVALID_INTERFACES;
     }
 
+    for (auto &i : ndGC.interface_addrs) {
+        for (auto &a : i.second) {
+            addr_types.AddAddress(
+                ndAddr::atLOCAL, a, i.first
+            );
+        }
+    }
+
+    ndGC.LoadSinkURL();
+
+    if (ndGC.h_flow != stderr) {
+        // Test mode enabled, disable/set certain config parameters
+        ndGC_SetFlag(ndGF_USE_FHC, true);
+        ndGC_SetFlag(ndGF_USE_SINK, false);
+        ndGC_SetFlag(ndGF_EXPORT_JSON, false);
+        ndGC_SetFlag(ndGF_REMAIN_IN_FOREGROUND, true);
+
+        ndGC.update_interval = 1;
+#ifdef _ND_USE_PLUGINS
+        ndGC.plugin_detections.clear();
+        ndGC.plugin_sinks.clear();
+        ndGC.plugin_stats.clear();
+#endif
+        ndGC.dhc_save = ndDHC_DISABLED;
+        ndGC.fhc_save = ndFHC_DISABLED;
+    }
+
+    // Global libCURL initialization
+    CURLcode cc;
+    if ((cc = curl_global_init(CURL_GLOBAL_ALL)) != 0) {
+        fprintf(stderr, "Unable to initialize libCURL: %d\n", cc);
+        return 1;
+    }
+
+    nd_sha1_file(
+        ndGC.path_app_config, ndGC.digest_app_config
+    );
+    nd_sha1_file(
+        ndGC.path_legacy_config, ndGC.digest_legacy_config
+    );
+
     version = nd_get_version_and_features();
 
     return ndCR_OK;
+}
+
+bool ndInstance::Daemonize(void)
+{
+    if (! ndGC_DEBUG && ! ndGC_REMAIN_IN_FOREGROUND) {
+        if (daemon(1, 0) != 0) {
+            nd_printf("daemon: %s\n", strerror(errno));
+            return false;
+        }
+    }
+
+    if (! nd_dir_exists(ndGC.path_state_volatile)) {
+        if (mkdir(ndGC.path_state_volatile.c_str(), 0755) != 0) {
+            nd_printf("Unable to create volatile state path: %s: %s\n",
+                ndGC.path_state_volatile.c_str(), strerror(errno));
+            return false;
+        }
+    }
+
+    pid_t old_pid = nd_load_pid(ndGC.path_pid_file);
+
+    if (old_pid > 0 &&
+        old_pid == nd_is_running(old_pid, self)) {
+        nd_printf("An agent is already running: PID %d\n", old_pid);
+        return false;
+    }
+
+    self_pid = getpid();
+    if (nd_save_pid(ndGC.path_pid_file, self_pid) != 0)
+        return false;
+
+    return true;
 }
 
 bool ndInstance::DumpList(uint8_t type)
@@ -1393,35 +1551,177 @@ bool ndInstance::AgentStatus(void)
 
 int ndInstance::Run(void)
 {
+    void *rc __attribute__((unused)) = nullptr;
+
     if (version.empty()) {
         nd_printf(
             "%s: Instance configuration not initialized.\n",
             tag.c_str()
         );
-        exit_code = EXIT_FAILURE;
-        return exit_code;
+        goto ndInstance_RunReturn;
     }
 
     nd_printf("%s\n", version.c_str());
 
-    if (threaded) {
-        if (thread == nullptr) {
-            exit_code = EXIT_FAILURE;
-            return exit_code;
-        }
+    nd_dprintf("Online CPU cores: %ld\n", agent_stats.cpus);
 
-        try {
-            thread->Create();
-        }
-        catch (ndThreadException &e) {
-            exit_code = EXIT_FAILURE;
-        }
+    CheckAgentUUID();
 
-        return exit_code;
+    if (ndGC_USE_DHC) {
+        dns_hint_cache = new ndDNSHintCache();
+        if (dns_hint_cache == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new ndDNSHintCache", ENOMEM
+            );
+        }
     }
 
-    void *rc __attribute__((unused)) = Entry();
+    if (ndGC_USE_FHC) {
+        flow_hash_cache = new ndFlowHashCache(ndGC.max_fhc);
+        if (flow_hash_cache == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new ndFlowHashCache", ENOMEM
+            );
+        }
+    }
 
+    flow_buckets = new ndFlowMap(ndGC.fm_buckets);
+    if (flow_buckets == nullptr) {
+        throw ndSystemException(__PRETTY_FUNCTION__,
+            "new ndFlowMap", ENOMEM
+        );
+    }
+
+    if (ndGC_USE_NETLINK) {
+        netlink = new ndNetlink();
+        if (netlink == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new ndNetlink", ENOMEM
+            );
+        }
+    }
+
+    ndpi_global_init();
+
+    ndInterface::UpdateAddrs(interfaces);
+
+    try {
+#ifdef _ND_USE_CONNTRACK
+        if (ndGC_USE_CONNTRACK) {
+            thread_conntrack = new ndConntrackThread(ndGC.ca_conntrack);
+            thread_conntrack->Create();
+        }
+#endif
+        if (ndGC_USE_SINK) {
+            thread_sink = new ndSinkThread(ndGC.ca_sink);
+            thread_sink->Create();
+        }
+
+        if (ndGC.socket_host.size() || ndGC.socket_path.size()) {
+            thread_socket = new ndSocketThread(ndGC.ca_socket);
+            thread_socket->Create();
+        }
+
+        int16_t cpu = (
+                ndGC.ca_detection_base > -1 &&
+                ndGC.ca_detection_base < (int16_t)agent_stats.cpus
+        ) ? ndGC.ca_detection_base : 0;
+        int16_t cpus = (
+                ndGC.ca_detection_cores > (int16_t)agent_stats.cpus
+                || ndGC.ca_detection_cores <= 0
+        ) ? (int16_t)agent_stats.cpus : ndGC.ca_detection_cores;
+
+        nd_dprintf(
+            "Creating %hd detection threads (CPU offset: %hd)\n",
+            cpus, cpu
+        );
+
+        for (int16_t i = 0; i < cpus; i++) {
+
+            thread_detection[i] = new ndDetectionThread(
+                cpu,
+                string("dpi") + to_string(cpu),
+#ifdef _ND_USE_NETLINK
+                netlink,
+#endif
+                thread_socket,
+#ifdef _ND_USE_CONNTRACK
+                (! ndGC_USE_CONNTRACK) ? nullptr : thread_conntrack,
+#endif
+#ifdef _ND_USE_PLUGINS
+                nullptr, // &plugin_detections,
+#endif
+                dns_hint_cache,
+                flow_hash_cache,
+                (uint8_t)cpu
+            );
+
+            thread_detection[i]->Create();
+
+            if (++cpu == cpus) cpu = 0;
+        }
+    }
+    catch (ndSinkThreadException &e) {
+        nd_printf("Error starting upload thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+    catch (ndSocketException &e) {
+        nd_printf("Error starting socket thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+    catch (ndSocketSystemException &e) {
+        nd_printf("Error starting socket thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+    catch (ndSocketThreadException &e) {
+        nd_printf("Error starting socket thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+#ifdef _ND_USE_CONNTRACK
+    catch (ndConntrackThreadException &e) {
+        nd_printf("Error starting conntrack thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+#endif
+    catch (ndThreadException &e) {
+        nd_printf("Error starting thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+    catch (exception &e) {
+        nd_printf("Error starting thread: %s\n", e.what());
+        goto ndInstance_RunReturn;
+    }
+
+    if (clock_gettime(
+        CLOCK_MONOTONIC_RAW, &agent_stats.ts_epoch) != 0) {
+        nd_printf(
+            "Error getting epoch time: %s\n", strerror(errno));
+        goto ndInstance_RunReturn;
+    }
+
+    if (threaded) {
+        if (thread == nullptr)
+            goto ndInstance_RunReturn;
+
+        try {
+            exit_code = EXIT_SUCCESS;
+
+            thread->Create();
+        }
+        catch (exception &e) {
+            exit_code = EXIT_FAILURE;
+
+            nd_dprintf("%s: Exception: %s\n",
+                tag.c_str(), e.what()
+            );
+        }
+
+        goto ndInstance_RunReturn;
+    }
+
+    rc = Entry();
+
+ndInstance_RunReturn:
     return exit_code;
 }
 
@@ -1438,7 +1738,6 @@ void *ndInstance::ndInstance::Entry(void)
 
         if ((sig = sigtimedwait(&sigset, &si, &tspec_sigwait)) < 0) {
             if (errno == EAGAIN || errno == EINTR) continue;
-            exit_code = -1;
             terminate = true;
             nd_printf("sigwaitinfo: %s\n", strerror(errno));
             continue;
@@ -1446,6 +1745,7 @@ void *ndInstance::ndInstance::Entry(void)
 
         if (sig == SIGINT || sig == SIGTERM) {
             terminate = true;
+            exit_code = EXIT_SUCCESS;
         }
     }
     while (! terminate.load());

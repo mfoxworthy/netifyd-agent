@@ -39,6 +39,8 @@ public:
     static ndInstance& Create(const sigset_t &sigset,
         const string &tag = "", bool threaded = false);
 
+    static void Destroy(void);
+
     ndInstance() = delete;
     ndInstance(const ndInstance&) = delete;
     ndInstance& operator=(const ndInstance&) = delete;
@@ -74,8 +76,9 @@ public:
 #define ndCR_Code(c) ((c & 0xffff0000) >> 16)
 #define ndCR_Result(r) (r & 0x0000ffff)
 
-    uint32_t InitializeConfig(
-        int argc, char * const argv[], const string &filename = "");
+    uint32_t InitializeConfig(int argc, char * const argv[]);
+
+    bool Daemonize(void);
 
     enum ndDumpFlags {
         ndDUMP_NONE = 0x00,
@@ -128,6 +131,21 @@ public:
     ndCategories categories;
     ndDomains domains;
     ndInterfaces interfaces;
+    ndAddrType addr_types;
+    ndDNSHintCache *dns_hint_cache;
+    ndFlowHashCache *flow_hash_cache;
+    ndFlowMap *flow_buckets;
+#ifdef _ND_USE_NETLINK
+    ndNetlink *netlink;
+#endif
+
+    ndSinkThread *thread_sink;
+    ndSocketThread *thread_socket;
+    ndNetifyApiThread *thread_napi;
+#ifdef _ND_USE_CONNTRACK
+    ndConntrackThread *thread_conntrack;
+#endif
+    nd_detection_threads thread_detection;
 
 protected:
     friend class ndInstanceThread;
@@ -142,6 +160,7 @@ protected:
 
     string tag;
     string self;
+    pid_t self_pid;
     string version;
 
     atomic_bool terminate;

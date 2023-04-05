@@ -1950,11 +1950,18 @@ static int nd_check_agent_uuid(void)
     return 0;
 }
 #if 0
-static int test_main(int argc, char * const argv[], bool threaded = false)
+int main(int argc, char *argv[])
 {
     int rc = 0;
     uint32_t result;
     sigset_t sigset;
+    bool threaded = true;
+
+    setlocale(LC_ALL, "");
+
+    openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
+
+    nd_seed_rng();
 
     ndInstance::InitializeSignals(sigset);
 
@@ -1966,7 +1973,11 @@ static int test_main(int argc, char * const argv[], bool threaded = false)
         if (ndCR_Result(result) != ndInstance::ndCR_OK)
             return ndCR_Code(result);
 
-        return instance.Run();
+        instance.Daemonize();
+
+        rc = instance.Run();
+
+        ndInstance::Destroy();
     }
     else {
         ndInstance& instance = ndInstance::Create(sigset, "netifyd", true);
@@ -1976,18 +1987,23 @@ static int test_main(int argc, char * const argv[], bool threaded = false)
         if (ndCR_Result(result) != ndInstance::ndCR_OK)
             return ndCR_Code(result);
 
-        rc = instance.Run();
-        if (rc != 0) return rc;
+        instance.Daemonize();
 
-        while (! instance.Terminated()) {
-            nd_dprintf("instance running...\n");
-            sleep(1);
+        rc = instance.Run();
+
+        if (rc == 0) {
+            while (! instance.Terminated()) {
+                nd_dprintf("instance running...\n");
+                sleep(1);
+            }
         }
+
+        ndInstance::Destroy();
     }
 
     return rc;
 }
-#endif
+#else
 int main(int argc, char *argv[])
 {
     int rc = 0;
@@ -2023,8 +2039,6 @@ int main(int argc, char *argv[])
 
     memset(&nd_json_agent_stats, 0, sizeof(nd_agent_stats));
     nd_json_agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
-
-//    return test_main(argc, argv, true);
 
     static struct option options[] =
     {
@@ -2112,7 +2126,7 @@ int main(int argc, char *argv[])
     if (nd_conf_filename == NULL)
         nd_conf_filename = strdup(ND_CONF_FILE_NAME);
 
-    if (ndGC.Load(nd_conf_filename) < 0)
+    if (ndGC.Load(nd_conf_filename) == false)
         return 1;
 
     ndGC.Close();
@@ -2883,5 +2897,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
+#endif
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
