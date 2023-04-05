@@ -242,7 +242,7 @@ void ndGlobalConfig::Close(void)
     }
 }
 
-int ndGlobalConfig::Load(const string &filename)
+bool ndGlobalConfig::Load(const string &filename)
 {
     typedef map<string, string> nd_config_section;
 
@@ -250,7 +250,7 @@ int ndGlobalConfig::Load(const string &filename)
     if (stat(filename.c_str(), &extern_config_stat) < 0) {
         fprintf(stderr, "Can not stat configuration file: %s: %s\n",
             filename.c_str(), strerror(errno));
-        return -1;
+        return false;
     }
 
     if (reader != nullptr)
@@ -262,7 +262,7 @@ int ndGlobalConfig::Load(const string &filename)
             stderr,
             "Can not allocated reader: %s\n", strerror(ENOMEM)
         );
-        return -1;
+        return false;
     }
 
     INIReader *r = static_cast<INIReader *>(reader);
@@ -273,7 +273,7 @@ int ndGlobalConfig::Load(const string &filename)
     case -1:
         fprintf(stderr, "Error opening configuration file: %s: %s\n",
             filename.c_str(), strerror(errno));
-        return -1;
+        return false;
     case 0:
         break;
     default:
@@ -281,7 +281,7 @@ int ndGlobalConfig::Load(const string &filename)
             "Error while parsing line #%d of configuration file: %s\n",
             rc, filename.c_str()
         );
-        return -1;
+        return false;
     }
 
     // Netify section
@@ -431,7 +431,7 @@ int ndGlobalConfig::Load(const string &filename)
 #else
         fprintf(stderr,
             "Not default capture type could be determined.\n");
-        return -1;
+        return false;
 #endif
     }
 
@@ -637,7 +637,20 @@ int ndGlobalConfig::Load(const string &filename)
     // Added static (non-command-line) capture interfaces
     AddInterfaces();
 
-    return 0;
+    return true;
+}
+
+bool ndGlobalConfig::LoadSinkURL(void)
+{
+    string url_sink;
+    if (nd_load_sink_url(url_sink)) {
+        free(this->url_sink);
+        this->url_sink = strdup(url_sink.c_str());
+
+        return true;
+    }
+
+    return false;
 }
 
 bool ndGlobalConfig::SetOption(const string &filename, const string &func)

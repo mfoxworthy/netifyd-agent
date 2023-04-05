@@ -227,7 +227,9 @@ public:
 
     void Close(void);
 
-    int Load(const string &filename);
+    bool Load(const string &filename);
+
+    bool LoadSinkURL();
 
     bool SetOption(const string &filename, const string &func);
 
