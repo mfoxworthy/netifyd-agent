@@ -783,7 +783,7 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
         string json_string;
         nd_json_agent_hello(json_string);
         buffer->Push(json_string);
-#if _ND_USE_TEST_MAIN
+#if _ND_INSTANCE_SUPPORT
         json js_status;
         js_status["type"] = "agent_status";
         ndInstance::GetInstance().GetStatus().Encode(js_status);

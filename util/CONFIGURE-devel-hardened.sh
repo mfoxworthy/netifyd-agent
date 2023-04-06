@@ -5,7 +5,7 @@
 : ${OPTION_PLUGINS:=enable}
 : ${OPTION_LIBTCMALLOC:=enable}
 : ${OPTION_NFQUEUE:=enable}
-: ${OPTION_TEST_MAIN:=disable}
+: ${OPTION_INSTANCE_SUPPORT:=disable}
 
 echo "Options:"
 echo " - CONNTRACK: ${OPTION_CONNTRACK}"
@@ -13,7 +13,7 @@ echo " - NETLINK: ${OPTION_NETLINK}"
 echo " - PLUGINS: ${OPTION_PLUGINS}"
 echo " - LIBTCMALLOC: ${OPTION_LIBTCMALLOC}"
 echo " - NFQUEUE: ${OPTION_NFQUEUE}"
-echo " - TEST_MAIN: ${OPTION_TEST_MAIN}"
+echo " - INSTANCE_SUPPORT: ${OPTION_INSTANCE_SUPPORT}"
 
 export CFLAGS="-fasynchronous-unwind-tables -fexceptions -fstack-clash-protection -fstack-protector-strong -g -grecord-gcc-switches -m64 -mtune=generic -O2 -pipe -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS"
 export CXXFLAGS=${CFLAGS}
@@ -42,5 +42,5 @@ export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
     --${OPTION_PLUGINS}-plugins \
     --${OPTION_LIBTCMALLOC}-libtcmalloc \
     --${OPTION_NFQUEUE}-nfqueue \
-    --${OPTION_TEST_MAIN}-test-main \
+    --${OPTION_INSTANCE_SUPPORT}-instance-support \
     build_alias=x86_64-redhat-linux-gnu host_alias=x86_64-redhat-linux-gnu

@@ -1926,7 +1926,7 @@ static int nd_check_agent_uuid(void)
 
     return 0;
 }
-#if _ND_USE_TEST_MAIN
+#if _ND_INSTANCE_SUPPORT
 int main(int argc, char *argv[])
 {
     int rc = 0;

@@ -149,18 +149,18 @@ case "${host_os}" in
         ;;
 esac
 
-AC_ARG_ENABLE([test-main],
-    [AS_HELP_STRING([--enable-test-main], [Enable test main() [default=no]])],
+AC_ARG_ENABLE([instance-support],
+    [AS_HELP_STRING([--enable-instance-support], [Enable instance support [default=no]])],
     [],
-    [enable_test_main=no])
+    [enable_instance_support=no])
 
-AS_IF([test "x$enable_test_main" = "xyes"], [
-    AC_DEFINE([_ND_USE_TEST_MAIN], [1],
-        [Define to enable test main().])
-    ND_DEFINES+=" -D_ND_USE_TEST_MAIN=1"
-    AM_CONDITIONAL(USE_TEST_MAIN, true)
+AS_IF([test "x$enable_instance_support" = "xyes"], [
+    AC_DEFINE([_ND_INSTANCE_SUPPORT], [1],
+        [Define to enable instance support.])
+    ND_DEFINES+=" -D_ND_INSTANCE_SUPPORT=1"
+    AM_CONDITIONAL(ENALBE_INSTANCE_SUPPORT, true)
 ], [
-    AM_CONDITIONAL(USE_TEST_MAIN, false)
+    AM_CONDITIONAL(ENALBE_INSTANCE_SUPPORT, false)
 ])
 
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
