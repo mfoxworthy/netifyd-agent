@@ -78,8 +78,6 @@ using json = nlohmann::json;
 
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
 #include <gperftools/malloc_extension.h>
-#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-#include <jemalloc/jemalloc.h>
 #elif defined(HAVE_MALLOC_TRIM)
 #include <malloc.h>
 #endif
@@ -121,6 +119,9 @@ using namespace std;
 #ifdef _ND_USE_TPACKETV3
 #include "nd-capture-tpv3.h"
 #endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
@@ -132,6 +133,32 @@ using namespace std;
 #include "nd-instance.h"
 
 ndInstance *ndInstance::instance = nullptr;
+
+ndInstanceStatus::ndInstanceStatus() :
+    cpus(0),
+    ts_epoch{ 0, 0 },
+    ts_now{ 0, 0 },
+    flows(0),
+    flows_prev(0),
+    cpu_user(0),
+    cpu_user_prev(0),
+    cpu_system(0),
+    cpu_system_prev(0),
+    maxrss_kb(0),
+    maxrss_kb_prev(0),
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
+    tcm_alloc_kb(0),
+    tcm_alloc_kb_prev(0),
+#endif
+    dhc_status(false),
+    dhc_size(0),
+    sink_uploads(false),
+    sink_status(false),
+    sink_queue_size(0),
+    sink_resp_code(ndJSON_RESP_NULL)
+{
+    cpus = sysconf(_SC_NPROCESSORS_ONLN);
+}
 
 void *ndInstanceThread::Entry(void)
 {
@@ -158,8 +185,7 @@ ndInstance::ndInstance(
     tag(tag.empty() ? PACKAGE_TARNAME : tag),
     self(PACKAGE_TARNAME), self_pid(-1),
     threaded(threaded), thread(nullptr),
-    conf_filename(ND_CONF_FILE_NAME),
-    agent_stats{0}
+    conf_filename(ND_CONF_FILE_NAME)
 {
     terminate = false;
     terminate_force = false;
@@ -174,8 +200,6 @@ ndInstance::ndInstance(
     }
 
     flows = 0;
-
-    agent_stats.cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 ndInstance::~ndInstance()
@@ -185,25 +209,46 @@ ndInstance::~ndInstance()
         delete thread;
     }
 
-    if (thread_socket) {
-        thread_socket->Terminate();
-        delete thread_socket;
-        thread_socket = nullptr;
-    }
+    for (unsigned p = 0; p < 2; p++) {
+        if (thread_socket) {
+            if (p == 0)
+                thread_socket->Terminate();
+            else {
+                delete thread_socket;
+                thread_socket = nullptr;
+            }
+        }
 
-    if (thread_sink) {
-        thread_sink->Terminate();
-        delete thread_sink;
-        thread_sink = nullptr;
-    }
+        if (thread_sink) {
+            if (p == 0)
+                thread_sink->Terminate();
+            else {
+                delete thread_sink;
+                thread_sink = nullptr;
+            }
+        }
 
 #ifdef _ND_USE_CONNTRACK
-    if (ndGC_USE_CONNTRACK && thread_conntrack) {
-        thread_conntrack->Terminate();
-        delete thread_conntrack;
-        thread_conntrack = nullptr;
-    }
+        if (ndGC_USE_CONNTRACK && thread_conntrack) {
+            if (p == 0)
+                thread_conntrack->Terminate();
+            else {
+                delete thread_conntrack;
+                thread_conntrack = nullptr;
+            }
+        }
 #endif
+
+        for (auto i : thread_detection) {
+            if (p == 0)
+                i.second->Terminate();
+            else
+                delete i.second;
+        }
+
+        if (p > 0 && thread_detection.size())
+            thread_detection.clear();
+    }
 
     if (dns_hint_cache != nullptr) {
         delete dns_hint_cache;
@@ -226,13 +271,6 @@ ndInstance::~ndInstance()
         netlink = nullptr;
     }
 #endif
-
-    for (auto i : thread_detection) {
-        i.second->Terminate();
-        delete i.second;
-    }
-
-    thread_detection.clear();
 
     if (this == instance) {
         instance = nullptr;
@@ -455,49 +493,55 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             );
         case _ND_LO_CA_CAPTURE_BASE:
             ndGC.ca_capture_base = (int16_t)atoi(optarg);
-            if (ndGC.ca_capture_base > agent_stats.cpus) {
+            if (ndGC.ca_capture_base > status.cpus) {
                 fprintf(stderr,
-                    "Capture thread base greater than online cores.\n");
+                    "Capture thread base greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_CONNTRACK:
             ndGC.ca_conntrack = (int16_t)atoi(optarg);
-            if (ndGC.ca_conntrack > agent_stats.cpus) {
+            if (ndGC.ca_conntrack > status.cpus) {
                 fprintf(stderr,
-                    "Conntrack thread ID greater than online cores.\n");
+                    "Conntrack thread ID greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_DETECTION_BASE:
             ndGC.ca_detection_base = (int16_t)atoi(optarg);
-            if (ndGC.ca_detection_base > agent_stats.cpus) {
+            if (ndGC.ca_detection_base > status.cpus) {
                 fprintf(stderr,
-                    "Detection thread base greater than online cores.\n");
+                    "Detection thread base greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_DETECTION_CORES:
             ndGC.ca_detection_cores = (int16_t)atoi(optarg);
-            if (ndGC.ca_detection_cores > agent_stats.cpus) {
+            if (ndGC.ca_detection_cores > status.cpus) {
                 fprintf(stderr,
-                    "Detection cores greater than online cores.\n");
+                    "Detection cores greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_SINK:
             ndGC.ca_sink = (int16_t)atoi(optarg);
-            if (ndGC.ca_sink > agent_stats.cpus) {
+            if (ndGC.ca_sink > status.cpus) {
                 fprintf(stderr,
-                    "Sink thread ID greater than online cores.\n");
+                    "Sink thread ID greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
         case _ND_LO_CA_SOCKET:
             ndGC.ca_socket = (int16_t)atoi(optarg);
-            if (ndGC.ca_socket > agent_stats.cpus) {
+            if (ndGC.ca_socket > status.cpus) {
                 fprintf(stderr,
-                    "Socket thread ID greater than online cores.\n");
+                    "Socket thread ID greater than online cores.\n"
+                );
                 return ndCR_INVALID_VALUE;
             }
             break;
@@ -511,7 +555,9 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 ndCR_EXPORT_APPS, (rc) ? 0 : 1
             );
 #else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
+            fprintf(stderr,
+                "Sorry, this feature was disabled (embedded).\n"
+            );
             return ndCR_DISABLED_OPTION;
 #endif
         case _ND_LO_DUMP_SORT_BY_TAG:
@@ -560,7 +606,9 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 ndCR_LOOKUP_ADDR, (rc) ? 0 : 1
             );
 #else
-            fprintf(stderr, "Sorry, this feature was disabled (embedded).\n");
+            fprintf(stderr,
+                "Sorry, this feature was disabled (embedded).\n"
+            );
             exit(1);
 #endif
         case '?':
@@ -655,7 +703,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                         sha1.c_str(), optarg
                     );
                 }
-                return ndCR_Pack(ndCR_HASH_FILE, rc);
+                return ndCR_Pack(ndCR_HASH_TEST, rc);
             }
 #else
             fprintf(stderr,
@@ -703,6 +751,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         }
     }
 
+    // Prepare packet capture interfaces
     for (auto &r : ndGC.interfaces) {
         for (auto &i : r.second) {
             auto result = interfaces.insert(
@@ -760,17 +809,12 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     }
 
     for (auto &i : ndGC.interface_addrs) {
-        for (auto &a : i.second) {
-            addr_types.AddAddress(
-                ndAddr::atLOCAL, a, i.first
-            );
-        }
+        for (auto &a : i.second)
+            addr_types.AddAddress(ndAddr::atLOCAL, a, i.first);
     }
 
-    ndGC.LoadSinkURL();
-
+    // Test mode enabled?  Disable/set certain config parameters
     if (ndGC.h_flow != stderr) {
-        // Test mode enabled, disable/set certain config parameters
         ndGC_SetFlag(ndGF_USE_FHC, true);
         ndGC_SetFlag(ndGF_USE_SINK, false);
         ndGC_SetFlag(ndGF_EXPORT_JSON, false);
@@ -790,9 +834,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     CURLcode cc;
     if ((cc = curl_global_init(CURL_GLOBAL_ALL)) != 0) {
         fprintf(stderr, "Unable to initialize libCURL: %d\n", cc);
-        return 1;
+        return ndCR_LIBCURL_FAILURE;
     }
 
+    // Hash config file
     nd_sha1_file(
         ndGC.path_app_config, ndGC.digest_app_config
     );
@@ -800,6 +845,9 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         ndGC.path_legacy_config, ndGC.digest_legacy_config
     );
 
+    ndGC.LoadSinkURL();
+
+    // Configuration is valid when version is set
     version = nd_get_version_and_features();
 
     return ndCR_OK;
@@ -1269,13 +1317,12 @@ bool ndInstance::AgentStatus(void)
             "%s%s%s CPU time (user / system): %.1fs / %.1fs\n",
             color, icon, ND_C_RESET, cpu_user_delta, cpu_system_delta);
 
-#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
         fprintf(stderr, "%s%s%s current memory usage: %u kB\n",
             ND_C_GREEN, ND_I_INFO, ND_C_RESET,
             jstatus["tcm_kb"].get<unsigned>()
         );
-#endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
+#endif // _ND_USE_LIBTCMALLOC
         fprintf(stderr, "%s%s%s maximum memory usage: %u kB\n",
             ND_C_GREEN, ND_I_INFO, ND_C_RESET,
             jstatus["maxrss_kb"].get<unsigned>()
@@ -1538,15 +1585,25 @@ bool ndInstance::AgentStatus(void)
 
             fprintf(stderr,
                 "%s%s%s sink queue utilization: %s%.1lf%%%s\n",
-                color, icon, ND_C_RESET, color, sink_util, ND_C_RESET);
+                color, icon, ND_C_RESET,
+                color, sink_util, ND_C_RESET
+            );
         }
     }
     catch (runtime_error &e) {
-        fprintf(stderr, "%s%s%s agent run-time status exception: %s%s%s\n",
-            ND_C_RED, ND_I_FAIL, ND_C_RESET, ND_C_RED, e.what(), ND_C_RESET);
+        fprintf(stderr,
+            "%s%s%s agent run-time status exception: %s%s%s\n",
+            ND_C_RED, ND_I_FAIL, ND_C_RESET, ND_C_RED,
+            e.what(), ND_C_RESET
+        );
     }
 
     return true;
+}
+
+void ndInstance::ProcessUpdate(void)
+{
+    nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
 }
 
 int ndInstance::Run(void)
@@ -1562,10 +1619,13 @@ int ndInstance::Run(void)
     }
 
     nd_printf("%s\n", version.c_str());
-
-    nd_dprintf("Online CPU cores: %ld\n", agent_stats.cpus);
+    nd_dprintf("Online CPU cores: %ld\n", status.cpus);
 
     CheckAgentUUID();
+
+    ndpi_global_init();
+
+    ndInterface::UpdateAddrs(interfaces);
 
     if (ndGC_USE_DHC) {
         dns_hint_cache = new ndDNSHintCache();
@@ -1592,6 +1652,7 @@ int ndInstance::Run(void)
         );
     }
 
+#ifdef _ND_USE_NETLINK
     if (ndGC_USE_NETLINK) {
         netlink = new ndNetlink();
         if (netlink == nullptr) {
@@ -1600,10 +1661,7 @@ int ndInstance::Run(void)
             );
         }
     }
-
-    ndpi_global_init();
-
-    ndInterface::UpdateAddrs(interfaces);
+#endif
 
     try {
 #ifdef _ND_USE_CONNTRACK
@@ -1624,12 +1682,12 @@ int ndInstance::Run(void)
 
         int16_t cpu = (
                 ndGC.ca_detection_base > -1 &&
-                ndGC.ca_detection_base < (int16_t)agent_stats.cpus
+                ndGC.ca_detection_base < (int16_t)status.cpus
         ) ? ndGC.ca_detection_base : 0;
         int16_t cpus = (
-                ndGC.ca_detection_cores > (int16_t)agent_stats.cpus
+                ndGC.ca_detection_cores > (int16_t)status.cpus
                 || ndGC.ca_detection_cores <= 0
-        ) ? (int16_t)agent_stats.cpus : ndGC.ca_detection_cores;
+        ) ? (int16_t)status.cpus : ndGC.ca_detection_cores;
 
         nd_dprintf(
             "Creating %hd detection threads (CPU offset: %hd)\n",
@@ -1649,7 +1707,7 @@ int ndInstance::Run(void)
                 (! ndGC_USE_CONNTRACK) ? nullptr : thread_conntrack,
 #endif
 #ifdef _ND_USE_PLUGINS
-                nullptr, // &plugin_detections,
+                nullptr, // TODO: &plugin_detections,
 #endif
                 dns_hint_cache,
                 flow_hash_cache,
@@ -1693,7 +1751,7 @@ int ndInstance::Run(void)
     }
 
     if (clock_gettime(
-        CLOCK_MONOTONIC_RAW, &agent_stats.ts_epoch) != 0) {
+        CLOCK_MONOTONIC_RAW, &status.ts_epoch) != 0) {
         nd_printf(
             "Error getting epoch time: %s\n", strerror(errno));
         goto ndInstance_RunReturn;
@@ -1727,14 +1785,91 @@ ndInstance_RunReturn:
 
 void *ndInstance::ndInstance::Entry(void)
 {
-    int c = 0;
-    struct timespec tspec_sigwait = { 1, 0 };
+    nd_capture_threads thread_capture;
+    timer_t timer_update = nullptr, timer_napi = nullptr;
+
+    // Process an initial update on start-up
+    ProcessUpdate();
+
+    if (ndGC_USE_NETLINK) {
+        try {
+#ifdef _ND_USE_NETLINK
+        netlink->Refresh();
+#endif
+        }
+        catch (exception &e) {
+            nd_printf("Exception while refreshing Netlink: %s\n",
+                e.what()
+            );
+            exit_code = EXIT_FAILURE;
+            goto ndInstance_EntryReturn;
+        }
+    }
+
+    try {
+        // Create and start capture threads
+        if (! CreateCaptureThreads(thread_capture))
+            return nullptr;
+    }
+    catch (exception &e) {
+        nd_printf("Exception while starting capture threads: %s\n",
+            e.what()
+        );
+        exit_code = EXIT_FAILURE;
+        goto ndInstance_EntryReturn;
+    }
+
+    struct sigevent sigev;
+    memset(&sigev, 0, sizeof(struct sigevent));
+    sigev.sigev_notify = SIGEV_SIGNAL;
+    sigev.sigev_signo = ND_SIG_UPDATE;
+
+    if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
+        nd_printf("timer_create: %s\n", strerror(errno));
+        exit_code = EXIT_FAILURE;
+        goto ndInstance_EntryReturn;
+    }
+
+    struct itimerspec itspec;
+    itspec.it_value.tv_sec = ndGC.update_interval;
+    itspec.it_value.tv_nsec = 0;
+    itspec.it_interval.tv_sec = ndGC.update_interval;
+    itspec.it_interval.tv_nsec = 0;
+
+    timer_settime(timer_update, 0, &itspec, NULL);
+
+    if (ndGC_USE_NAPI) {
+        memset(&sigev, 0, sizeof(struct sigevent));
+        sigev.sigev_notify = SIGEV_SIGNAL;
+        sigev.sigev_signo = ND_SIG_NAPI_UPDATE;
+
+        if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_napi) < 0) {
+            nd_printf("timer_create: %s\n", strerror(errno));
+            exit_code = EXIT_FAILURE;
+            goto ndInstance_EntryReturn;
+        }
+
+        time_t ttl = 3;
+        if (categories.GetLastUpdate() > 0) {
+            time_t age = time(NULL) - categories.GetLastUpdate();
+            if (age < ndGC.ttl_napi_update)
+                ttl = ndGC.ttl_napi_update - age;
+            else if (age == ndGC.ttl_napi_update)
+                ttl = ndGC.ttl_napi_update;
+        }
+
+        itspec.it_value.tv_sec = ttl;
+        itspec.it_value.tv_nsec = 0;
+        itspec.it_interval.tv_sec = ndGC.ttl_napi_update;
+        itspec.it_interval.tv_nsec = 0;
+
+        timer_settime(timer_napi, 0, &itspec, NULL);
+    }
 
     do {
         int sig;
         siginfo_t si;
-
-        nd_dprintf("%s: tick: %d\n", tag.c_str(), ++c);
+        struct timespec tspec_sigwait = { 1, 0 };
 
         if ((sig = sigtimedwait(&sigset, &si, &tspec_sigwait)) < 0) {
             if (errno == EAGAIN || errno == EINTR) continue;
@@ -1747,8 +1882,20 @@ void *ndInstance::ndInstance::Entry(void)
             terminate = true;
             exit_code = EXIT_SUCCESS;
         }
+
+        nd_dprintf("%s: tick\n", tag.c_str());
     }
     while (! terminate.load());
+
+ndInstance_EntryReturn:
+    terminate = true;
+
+    if (timer_update != nullptr)
+        timer_delete(timer_update);
+    if (ndGC_USE_NAPI && timer_napi != nullptr)
+        timer_delete(timer_napi);
+
+    DestroyCaptureThreads(thread_capture);
 
     return nullptr;
 }
@@ -1772,6 +1919,171 @@ bool ndInstance::Reload(void)
         (result) ? "successfully" : "with errors");
 
     return result;
+}
+
+bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
+{
+    if (threads.size() != 0) {
+        nd_printf("Capture threads already created.\n");
+        return false;
+    }
+
+    uint8_t private_addr = 0;
+    vector<ndCaptureThread *> thread_group;
+
+    int16_t cpu = (
+            ndGC.ca_capture_base > -1 &&
+            ndGC.ca_capture_base < (int16_t)status.cpus
+    ) ? ndGC.ca_capture_base : 0;
+
+    for (auto &it : interfaces) {
+
+        switch (it.second.capture_type) {
+        case ndCT_PCAP:
+        {
+            ndCapturePcap *thread = new ndCapturePcap(
+                (interfaces.size() > 1) ? cpu++ : -1,
+                it.second,
+                thread_socket,
+                thread_detection,
+                dns_hint_cache,
+                (it.second.role == ndIR_LAN) ? 0 : ++private_addr
+            );
+
+            thread_group.push_back(thread);
+            break;
+        }
+#if defined(_ND_USE_TPACKETV3)
+        case ndCT_TPV3:
+        {
+            unsigned instances = it.second.config.tpv3->fanout_instances;
+            if (it.second.config.tpv3->fanout_mode == ndFOM_DISABLED ||
+                it.second.config.tpv3->fanout_instances < 2)
+                instances = 1;
+
+            for (unsigned i = 0; i < instances; i++) {
+
+                ndCaptureTPv3 *thread = new ndCaptureTPv3(
+                    (instances > 1) ? cpu++ : -1,
+                    it.second,
+                    thread_socket,
+                    thread_detection,
+                    dns_hint_cache,
+                    (it.second.role == ndIR_LAN) ? 0 : ++private_addr
+                );
+
+                thread_group.push_back(thread);
+
+                if (cpu == (int16_t)status.cpus) cpu = 0;
+            }
+
+            break;
+        }
+#endif
+#if defined(_ND_USE_NFQUEUE)
+        case ndCT_NFQ:
+        {
+            unsigned instances = it.second.config.nfq->instances;
+            if (it.second.config.nfq->instances == 0)
+                instances = 1;
+
+            for (unsigned i = 0; i < instances; i++) {
+
+                ndCaptureNFQueue *thread = new ndCaptureNFQueue(
+                    (instances > 1) ? cpu++ : -1,
+                    it.second,
+                    thread_socket,
+                    thread_detection,
+                    i, // instance_id
+                    dns_hint_cache,
+                    (it.second.role == ndIR_LAN) ? 0 : ++private_addr
+                );
+
+                thread_group.push_back(thread);
+
+                if (cpu == (int16_t)status.cpus) cpu = 0;
+            }
+
+            break;
+        }
+#endif
+        default:
+            nd_printf("WARNING: Unsupported capture type: %s: %hu",
+                it.second.ifname.c_str(), it.second.capture_type
+            );
+        }
+
+        if (! thread_group.size()) continue;
+
+        threads[it.second.ifname] = thread_group;
+
+        thread_group.clear();
+
+        if (cpu == (int16_t)status.cpus) cpu = 0;
+    }
+
+    if (thread_socket != nullptr && ndGC_WAIT_FOR_CLIENT) {
+        do {
+            int sig;
+            siginfo_t si;
+            struct timespec tspec_sigwait = { 1, 0 };
+
+            nd_dprintf("Waiting for a client to connect...\n");
+
+            if ((sig = sigtimedwait(
+                &sigset, &si, &tspec_sigwait)) < 0) {
+                if (errno == EAGAIN || errno == EINTR) continue;
+                terminate = true;
+                nd_printf("sigwaitinfo: %s\n", strerror(errno));
+                continue;
+            }
+
+            if (sig == SIGINT || sig == SIGTERM) {
+                terminate = true;
+                exit_code = EXIT_SUCCESS;
+                return false;
+            }
+        }
+        while (
+            ! terminate.load() && ! thread_socket->GetClientCount()
+        );
+    }
+
+    for (auto &it : threads) {
+        for (auto &it_instance : it.second)
+            it_instance->Create();
+    }
+
+    return true;
+}
+
+void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
+{
+    for (auto &it : threads) {
+        for (auto &it_instance : it.second) {
+            it_instance->Terminate();
+            delete it_instance;
+        }
+    }
+
+    threads.clear();
+
+    size_t buckets = flow_buckets->GetBuckets();
+
+    for (size_t b = 0; b < buckets; b++) {
+        nd_flow_map *fm = flow_buckets->Acquire(b);
+
+        for (auto it = fm->begin(); it != fm->end(); it++) {
+            if (it->second->flags.expiring.load() == false) {
+                it->second->flags.expiring = true;
+                // TODO: nd_expire_flow(it->second);
+                thread_detection[it->second->dpi_thread_id]->
+                    QueuePacket(it->second);
+            }
+        }
+
+        flow_buckets->Release(b);
+    }
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

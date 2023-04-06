@@ -17,6 +17,87 @@
 #ifndef _ND_INSTANCE_H
 #define _ND_INSTANCE_H
 
+class ndInstanceStatus : public ndSerializer
+{
+public:
+    ndInstanceStatus();
+
+    long cpus;
+    struct timespec ts_epoch;
+    struct timespec ts_now;
+    uint32_t flows;
+    uint32_t flows_prev;
+    double cpu_user;
+    double cpu_user_prev;
+    double cpu_system;
+    double cpu_system_prev;
+#if (SIZEOF_LONG == 4)
+    uint32_t maxrss_kb;
+    uint32_t maxrss_kb_prev;
+#elif (SIZEOF_LONG == 8)
+    uint64_t maxrss_kb;
+    uint64_t maxrss_kb_prev;
+#endif
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
+    size_t tcm_alloc_kb;
+    size_t tcm_alloc_kb_prev;
+#endif
+    bool dhc_status;
+    size_t dhc_size;
+    bool sink_uploads;
+    bool sink_status;
+    size_t sink_queue_size;
+    ndJsonResponseCode sink_resp_code;
+
+    template <class T>
+    void Encode(T &output) const {
+        serialize(output, { "version" }, (double)ND_JSON_VERSION);
+        serialize(output, { "timestamp" }, time(NULL));
+        serialize(output, { "update_interval" },
+            ndGC.update_interval
+        );
+        serialize(output, { "update_imf" }, ndGC.update_imf);
+        serialize(output, { "uptime" }, unsigned(
+            ts_now.tv_sec - ts_epoch.tv_sec
+        ));
+        serialize(output, { "cpu_cores" }, (unsigned)cpus);
+        serialize(output, { "cpu_user" }, cpu_user);
+        serialize(output, { "cpu_user_prev" }, cpu_user_prev);
+        serialize(output, { "cpu_system" }, cpu_system);
+        serialize(output, { "cpu_system_prev" }, cpu_system_prev);
+        serialize(output, { "flow_count" }, flows);
+        serialize(output, { "flow_count_prev" }, flows_prev);
+        serialize(output, { "maxrss_kb" }, maxrss_kb);
+        serialize(output, { "maxrss_kb_prev" }, maxrss_kb_prev);
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
+        serialize(output, { "tcm_kb" },(unsigned)tcm_alloc_kb);
+        serialize(output, { "tcm_kb_prev" },
+            (unsigned)tcm_alloc_kb_prev
+        );
+#endif // _ND_USE_LIBTCMALLOC
+        serialize(output, { "dhc_status" }, dhc_status);
+        if (dhc_status)
+            serialize(output, { "dhc_size" }, dhc_size);
+
+        serialize(output, { "sink_status" }, sink_status);
+        serialize(output, { "sink_uploads" },
+            (ndGC_UPLOAD_ENABLED) ? true : false
+        );
+
+        if (sink_status) {
+            serialize(output, { "sink_queue_size_kb" },
+                sink_queue_size / 1024
+            );
+            serialize(output, { "sink_queue_max_size_kb" },
+                ndGC.max_backlog / 1024
+            );
+            serialize(output, { "sink_resp_code" },
+                (unsigned)sink_resp_code
+            );
+        }
+    }
+};
+
 class ndInstance;
 class ndInstanceThread : public ndThread
 {
@@ -60,10 +141,11 @@ public:
         ndCR_EXPORT_APPS,
         ndCR_FORCE_RESULT,
         ndCR_GENERATE_UUID,
-        ndCR_HASH_FILE,
+        ndCR_HASH_TEST,
         ndCR_INVALID_INTERFACES,
         ndCR_INVALID_OPTION,
         ndCR_INVALID_VALUE,
+        ndCR_LIBCURL_FAILURE,
         ndCR_LOAD_FAILURE,
         ndCR_LOOKUP_ADDR,
         ndCR_PROVISION_UUID,
@@ -107,6 +189,8 @@ public:
 
     bool AgentStatus(void);
 
+    void ProcessUpdate(void);
+
     int Run(void);
 
     inline void Terminate(void) {
@@ -124,6 +208,32 @@ public:
     }
 
     inline const string& GetVersion() const { return version; }
+    inline const ndInstanceStatus& GetStatus() const { return status; }
+
+    template <class T>
+    void EncodeApplications(T &output) {
+        nd_apps_t entries;
+        apps.Get(entries);
+        for (auto &app : entries) {
+            T jo;
+
+            jo["id"] = app.second;
+            jo["tag"] = app.first;
+
+            output.push_back(jo);
+        }
+    };
+    template <class T>
+    void EncodeProtocols(T &output) const {
+        for (auto &proto : nd_protos) {
+            T jo;
+
+            jo["id"] = proto.first;
+            jo["tag"] = proto.second;
+
+            output.push_back(jo);
+        }
+    };
 
     int exit_code;
 
@@ -156,6 +266,9 @@ protected:
 
     bool Reload(void);
 
+    bool CreateCaptureThreads(nd_capture_threads &threads);
+    void DestroyCaptureThreads(nd_capture_threads &threads);
+
     sigset_t sigset;
 
     string tag;
@@ -173,7 +286,7 @@ protected:
 
     atomic<uint64_t> flows;
 
-    nd_agent_stats agent_stats;
+    ndInstanceStatus status;
 
 private:
     ndInstance(const sigset_t &sigset,
