@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <resolv.h>
 
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -75,6 +76,7 @@
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
+#include <curl/curl.h>
 #include <pcap/pcap.h>
 
 #ifdef _ND_USE_CONNTRACK
@@ -105,12 +107,21 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-category.h"
 #include "nd-flow.h"
+#include "nd-flow-map.h"
+#include "nd-flow-parser.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
+#include "nd-dhc.h"
+#include "nd-fhc.h"
+#include "nd-detection.h"
+#include "nd-capture.h"
 #include "nd-signal.h"
+#include "nd-napi.h"
 #include "nd-socket.h"
+#include "nd-sink.h"
+#include "nd-instance.h"
 
 #define _ND_SOCKET_PROC_NET_UNIX    "/proc/net/unix"
 
@@ -769,20 +780,40 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
     clients[client->GetDescriptor()] = client;
 
     try {
-        json js;
         string json_string;
-
         nd_json_agent_hello(json_string);
         buffer->Push(json_string);
+#if _ND_USE_TEST_MAIN
+        json js_status;
+        js_status["type"] = "agent_status";
+        ndInstance::GetInstance().GetStatus().Encode(js_status);
 
+        nd_json_to_string(js_status, json_string);
+        json_string.append("\n");
+        buffer->Push(json_string);
+
+        json js_defs;
+        js_defs["type"] = "definitions";
+        json js_apps;
+        ndInstance::GetInstance().EncodeApplications(js_apps);
+        js_defs["applications"] = js_apps;
+        json js_protos;
+        ndInstance::GetInstance().EncodeProtocols(js_protos);
+        js_defs["protocols"] = js_protos;
+
+        nd_json_to_string(js_defs, json_string);
+        json_string.append("\n");
+        buffer->Push(json_string);
+#else
+        json js;
         js["type"] = "agent_status";
         nd_json_agent_status(js);
         nd_json_to_string(js, json_string);
         json_string.append("\n");
         buffer->Push(json_string);
-
         nd_json_protocols(json_string);
         buffer->Push(json_string);
+#endif
     }
     catch (exception &e) {
         Unlock();
@@ -837,7 +868,6 @@ size_t ndSocketThread::GetClientCount(void)
 
 void *ndSocketThread::Entry(void)
 {
-    struct timeval tv;
     fd_set fds_read, fds_write;
     ndSocketClientMap::iterator ci;
     ndSocketServerMap::iterator si;
@@ -875,9 +905,7 @@ void *ndSocketThread::Entry(void)
             if (si->first > max_read_fd) max_read_fd = si->first;
         }
 
-        memset(&tv, 0, sizeof(struct timeval));
-        tv.tv_sec = 1;
-
+        struct timeval tv = { 1, 0 };
         rc_read = select(max_read_fd + 1, &fds_read, NULL, NULL, &tv);
 
         if (rc_read == -1 && errno != EINTR) {
