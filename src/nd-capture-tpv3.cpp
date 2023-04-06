@@ -651,7 +651,6 @@ void *ndCaptureTPv3::Entry(void)
 //    int sd_max = max(fd_ipc[0], _ring->GetDescriptor());
 
     int rc = 0;
-    struct timeval tv;
 #if 0
     size_t max_queued = 0;
     size_t packets = 0, total_packets = 0;
@@ -661,17 +660,36 @@ void *ndCaptureTPv3::Entry(void)
 
     capture_state = STATE_ONLINE;
 
+    bool warnings = true;
+
     while (! ShouldTerminate() && rc >= 0) {
 
         ndPacketRingBlock *entry = _ring->Next();
 
         if (entry == nullptr) {
 
+            if (rc == 1) {
+                struct ifreq ifr;
+                if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
+                    ! (ifr.ifr_flags & IFF_UP)) {
+
+                    if (warnings) {
+                        nd_printf(
+                            "%s: WARNING: interface not available.\n",
+                            tag.c_str()
+                        );
+                        warnings = false;
+                    }
+                }
+
+                sleep(1);
+            }
+
             FD_ZERO(&fds_read);
 //            FD_SET(fd_ipc[0], &fds_read);
             FD_SET(_ring->GetDescriptor(), &fds_read);
 
-            tv.tv_sec = 1; tv.tv_usec = 0;
+            struct timeval tv = { 1, 0 };
             rc = select(sd_max + 1, &fds_read, NULL, NULL, &tv);
 
             if (rc == -1)
@@ -683,6 +701,10 @@ void *ndCaptureTPv3::Entry(void)
             }
 #endif
             continue;
+        }
+        else if (warnings == false && rc == 1) {
+            rc = 0;
+            warnings = true;
         }
 
         entry->ProcessPackets(_ring, pkt_queue);
