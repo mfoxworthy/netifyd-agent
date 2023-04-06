@@ -247,7 +247,6 @@ void ndConntrackThread::DumpConntrackTable(void)
 void *ndConntrackThread::Entry(void)
 {
     int rc;
-    struct timeval tv;
     fd_set fds_read;
 
     nd_ct_last_flow_purge_ttl = time(NULL) + _ND_CT_FLOW_TTL;
@@ -257,8 +256,7 @@ void *ndConntrackThread::Entry(void)
         FD_ZERO(&fds_read);
         FD_SET(ctfd, &fds_read);
 
-        memset(&tv, 0, sizeof(struct timeval));
-        tv.tv_sec = 1;
+        struct timeval tv = { 1, 0 };
 
         rc = select(ctfd + 1, &fds_read, NULL, NULL, &tv);
 
