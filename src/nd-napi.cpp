@@ -18,45 +18,71 @@
 #include "config.h"
 #endif
 
-#include <stdexcept>
-#include <vector>
+#include <iomanip>
+#include <iostream>
 #include <set>
 #include <map>
 #include <queue>
+#include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include <string>
-#include <fstream>
-#include <sstream>
+#include <list>
+#include <vector>
+#include <locale>
 #include <atomic>
 #include <regex>
-#include <iomanip>
-#include <algorithm>
-#include <cctype>
 #include <mutex>
 
-#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/resource.h>
+
 #include <stdlib.h>
-#include <signal.h>
-#include <pthread.h>
-#include <dlfcn.h>
 #include <string.h>
 #include <errno.h>
+#include <getopt.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+#include <locale.h>
+#include <syslog.h>
+#include <fcntl.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+#include <netdb.h>
+#include <netinet/in.h>
+
+#include <net/if.h>
+#include <net/if_arp.h>
+#include <linux/if_packet.h>
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
 #undef __FAVOR_BSD
 
-#include <pcap/pcap.h>
-
 #include <curl/curl.h>
+#include <pcap/pcap.h>
+#include <pthread.h>
+#include <resolv.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#ifdef _ND_USE_CONNTRACK
+#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
+#endif
+
+#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#include <gperftools/malloc_extension.h>
+#elif defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
+#endif
+
+#include <radix/radix_tree.hpp>
 
 using namespace std;
 
@@ -68,11 +94,43 @@ using namespace std;
 #include "nd-serializer.h"
 #include "nd-packet.h"
 #include "nd-json.h"
-#include "nd-thread.h"
 #include "nd-util.h"
+#include "nd-addr.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
+#include "nd-apps.h"
+#include "nd-protos.h"
 #include "nd-category.h"
-#include "nd-napi.h"
+#include "nd-flow.h"
+#include "nd-flow-map.h"
+#include "nd-flow-parser.h"
+#include "nd-thread.h"
+#ifdef _ND_USE_CONNTRACK
+#include "nd-conntrack.h"
+#endif
+#include "nd-dhc.h"
+#include "nd-fhc.h"
+#include "nd-detection.h"
+#include "nd-capture.h"
+#ifdef _ND_USE_LIBPCAP
+#include "nd-capture-pcap.h"
+#endif
+#ifdef _ND_USE_TPACKETV3
+#include "nd-capture-tpv3.h"
+#endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
+#include "nd-socket.h"
+#include "nd-sink.h"
+#include "nd-base64.h"
+#ifdef _ND_USE_PLUGINS
+#include "nd-plugin.h"
+#endif
 #include "nd-signal.h"
+#include "nd-napi.h"
+#include "nd-instance.h"
 
 #define _ND_DEBUG_CURL     1
 
@@ -280,9 +338,15 @@ void *ndNetifyApiThread::Entry(void)
 
         // Done?
         if (cid == ndCAT_TYPE_MAX || cqueue.size() == 0) {
+            if (categories.Save()) {
+#if _ND_INSTANCE_SUPPORT
+                ndInstance::GetInstance()
+                    .SendIPC(ndInstance::ndIPC_UPDATE_NAPI_DONE);
+#else
             if (categories.Save())
                 kill(getpid(), ND_SIG_NAPI_UPDATED);
-
+#endif
+            }
             break;
         }
 

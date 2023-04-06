@@ -98,27 +98,10 @@ public:
     }
 };
 
-class ndInstance;
-class ndInstanceThread : public ndThread
+class ndInstance : protected ndThread
 {
 public:
-    ndInstanceThread(const string &tag, ndInstance *instance)
-        : ndThread(tag), instance(instance) { }
-    virtual ~ndInstanceThread() { Join(); }
-
-    virtual void *Entry(void);
-
-protected:
-    friend class ndInstance;
-
-    ndInstance *instance;
-};
-
-class ndInstance
-{
-public:
-    static ndInstance& Create(const sigset_t &sigset,
-        const string &tag = "", bool threaded = false);
+    static ndInstance& Create(const string &tag = "nd-instance");
 
     static void Destroy(void);
 
@@ -160,6 +143,11 @@ public:
 
     uint32_t InitializeConfig(int argc, char * const argv[]);
 
+    bool InitializeTimers(
+        int sig_update = ND_SIG_UPDATE,
+        int sig_update_napi = ND_SIG_UPDATE_NAPI
+    );
+
     bool Daemonize(void);
 
     enum ndDumpFlags {
@@ -194,17 +182,13 @@ public:
     int Run(void);
 
     inline void Terminate(void) {
-        if (terminate.load())
+        if (ShouldTerminate())
             terminate_force = true;
-        else
-            terminate = true;
-        if (threaded && thread != nullptr) thread->Terminate();
+        ndThread::Terminate();
     }
 
     inline bool Terminated(void) {
-        if (threaded && thread != nullptr)
-            return thread->HasTerminated();
-        return terminate.load();
+        return ndThread::HasTerminated();
     }
 
     inline const string& GetVersion() const { return version; }
@@ -234,6 +218,43 @@ public:
             output.push_back(jo);
         }
     };
+
+    enum ndIPCMessage {
+        ndIPC_NONE,
+        ndIPC_NETLINK_IO,
+        ndIPC_RELOAD,
+        ndIPC_TERMINATE,
+        ndIPC_UPDATE,
+        ndIPC_UPDATE_NAPI,
+        ndIPC_UPDATE_NAPI_DONE,
+    };
+
+    inline void SendIPC(enum ndIPCMessage id) {
+        ndThread::SendIPC((uint32_t)id);
+    }
+    inline void SendSignal(int sig) {
+        switch (sig) {
+        case SIGIO:
+            ndThread::SendIPC((uint32_t)ndIPC_NETLINK_IO);
+            break;
+        case SIGHUP:
+            ndThread::SendIPC((uint32_t)ndIPC_RELOAD);
+            break;
+        case SIGINT:
+        case SIGTERM:
+#ifdef SIGPWR
+        case SIGPWR:
+#endif
+            ndThread::SendIPC((uint32_t)ndIPC_TERMINATE);
+            break;
+        default:
+            if (sig_update >= 0 && sig == sig_update)
+                ndThread::SendIPC((uint32_t)ndIPC_UPDATE);
+            else if (sig_update_napi >= 0 && sig == sig_update_napi)
+                ndThread::SendIPC((uint32_t)ndIPC_UPDATE_NAPI);
+            break;
+        }
+    }
 
     int exit_code;
 
@@ -269,18 +290,17 @@ protected:
     bool CreateCaptureThreads(nd_capture_threads &threads);
     void DestroyCaptureThreads(nd_capture_threads &threads);
 
-    sigset_t sigset;
+    int WaitForIPC(int timeout = -1);
+
+    int sig_update, sig_update_napi;
+    timer_t timer_update, timer_update_napi;
 
     string tag;
     string self;
     pid_t self_pid;
     string version;
 
-    atomic_bool terminate;
     atomic_bool terminate_force;
-
-    bool threaded;
-    ndInstanceThread *thread;
 
     string conf_filename;
 
@@ -289,8 +309,7 @@ protected:
     ndInstanceStatus status;
 
 private:
-    ndInstance(const sigset_t &sigset,
-        const string &tag = "", bool threaded = false);
+    ndInstance(const string &tag = "nd-instance");
     virtual ~ndInstance();
 };
 

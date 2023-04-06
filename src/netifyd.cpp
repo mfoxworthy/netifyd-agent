@@ -1931,52 +1931,79 @@ int main(int argc, char *argv[])
 {
     int rc = 0;
     uint32_t result;
-    sigset_t sigset;
-    bool threaded = true;
 
     setlocale(LC_ALL, "");
 
-    openlog(PACKAGE_TARNAME, LOG_NDELAY | LOG_PID | LOG_PERROR, LOG_DAEMON);
+    openlog(
+        PACKAGE_TARNAME,
+        LOG_NDELAY | LOG_PID | LOG_PERROR,
+        LOG_DAEMON
+    );
 
     nd_seed_rng();
 
-    ndInstance::InitializeSignals(sigset);
+    sigset_t sigset;
+    sigfillset(&sigset);
 
-    if (! threaded) {
-        ndInstance& instance = ndInstance::Create(sigset, "netifyd");
+    //sigdelset(&sigset, SIGPROF);
+    //sigdelset(&sigset, SIGINT);
+    sigdelset(&sigset, SIGQUIT);
 
-        result = instance.InitializeConfig(argc, argv);
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
 
-        if (ndCR_Result(result) != ndInstance::ndCR_OK)
-            return ndCR_Code(result);
+    sigemptyset(&sigset);
+    sigaddset(&sigset, ND_SIG_UPDATE);
+    sigaddset(&sigset, ND_SIG_UPDATE_NAPI);
+    sigaddset(&sigset, ND_SIG_SINK_REPLY);
+    sigaddset(&sigset, ND_SIG_NAPI_UPDATED);
+    sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGIO);
+#ifdef SIGPWR
+    sigaddset(&sigset, SIGPWR);
+#endif
+    sigaddset(&sigset, SIGTERM);
+    sigaddset(&sigset, SIGUSR1);
+    sigaddset(&sigset, SIGUSR2);
 
-        instance.Daemonize();
+    ndInstance& instance = ndInstance::Create();
 
-        rc = instance.Run();
+    result = instance.InitializeConfig(argc, argv);
 
-        ndInstance::Destroy();
-    }
-    else {
-        ndInstance& instance = ndInstance::Create(sigset, "netifyd", true);
+    if (ndCR_Result(result) != ndInstance::ndCR_OK)
+        return ndCR_Code(result);
 
-        result = instance.InitializeConfig(argc, argv);
+    if (instance.InitializeTimers() == false)
+        return 1;
 
-        if (ndCR_Result(result) != ndInstance::ndCR_OK)
-            return ndCR_Code(result);
+    instance.Daemonize();
 
-        instance.Daemonize();
+    rc = instance.Run();
 
-        rc = instance.Run();
+    if (rc == 0) {
+        struct timespec tspec_sigwait = { 1, 0 };
 
-        if (rc == 0) {
-            while (! instance.Terminated()) {
-                nd_dprintf("instance running...\n");
-                sleep(1);
+        while (! instance.Terminated()) {
+            int sig;
+            siginfo_t si;
+
+            nd_dprintf("instance running...\n");
+
+            if ((sig = sigtimedwait(&sigset, &si, &tspec_sigwait)) < 0) {
+                if (errno == EAGAIN || errno == EINTR) continue;
+
+                nd_printf("sigwaitinfo: %s\n", strerror(errno));
+
+                rc = -1;
+                instance.Terminate();
+                continue;
             }
-        }
 
-        ndInstance::Destroy();
+            instance.SendSignal(sig);
+        }
     }
+
+    ndInstance::Destroy();
 
     return rc;
 }
@@ -2476,10 +2503,9 @@ int main(int argc, char *argv[])
     sigprocmask(SIG_BLOCK, &sigset, NULL);
 
     sigemptyset(&sigset);
-    sigaddset(&sigset, ND_SIG_SINK_REPLY);
     sigaddset(&sigset, ND_SIG_UPDATE);
-    sigaddset(&sigset, ND_SIG_CONNECT);
-    sigaddset(&sigset, ND_SIG_NAPI_UPDATE);
+    sigaddset(&sigset, ND_SIG_UPDATE_NAPI);
+    sigaddset(&sigset, ND_SIG_SINK_REPLY);
     sigaddset(&sigset, ND_SIG_NAPI_UPDATED);
     sigaddset(&sigset, SIGHUP);
     sigaddset(&sigset, SIGINT);
@@ -2611,7 +2637,7 @@ int main(int argc, char *argv[])
     if (ndGC_USE_NAPI) {
         memset(&sigev, 0, sizeof(struct sigevent));
         sigev.sigev_notify = SIGEV_SIGNAL;
-        sigev.sigev_signo = ND_SIG_NAPI_UPDATE;
+        sigev.sigev_signo = ND_SIG_UPDATE_NAPI;
 
         if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_napi) < 0) {
             nd_printf("timer_create: %s\n", strerror(errno));
@@ -2657,10 +2683,7 @@ int main(int argc, char *argv[])
         else if (sig == ND_SIG_SINK_REPLY) {
             nd_dprintf("Caught signal: [%d] %s: Process sink reply\n", sig, strsignal(sig));
         }
-        else if (sig == ND_SIG_CONNECT) {
-            nd_dprintf("Caught signal: [%d] %s: Client connected\n", sig, strsignal(sig));
-        }
-        else if (sig == ND_SIG_NAPI_UPDATE) {
+        else if (sig == ND_SIG_UPDATE_NAPI) {
             nd_dprintf("Caught signal: [%d] %s: Netify API update\n", sig, strsignal(sig));
         }
         else {
@@ -2742,7 +2765,7 @@ int main(int argc, char *argv[])
             continue;
         }
 #endif
-        if (sig == ND_SIG_NAPI_UPDATE) {
+        if (sig == ND_SIG_UPDATE_NAPI) {
             if (thread_napi == NULL) {
                 thread_napi = new ndNetifyApiThread();
                 thread_napi->Create();

@@ -160,15 +160,9 @@ ndInstanceStatus::ndInstanceStatus() :
     cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-void *ndInstanceThread::Entry(void)
-{
-    if (! ShouldTerminate()) return instance->Entry();
-    return nullptr;
-}
-
-ndInstance::ndInstance(
-    const sigset_t &sigset, const string &tag, bool threaded)
-    : exit_code(EXIT_FAILURE),
+ndInstance::ndInstance(const string &tag)
+    : ndThread(tag, -1, true),
+    exit_code(EXIT_FAILURE),
     dns_hint_cache(nullptr),
     flow_hash_cache(nullptr),
     flow_buckets(nullptr),
@@ -181,33 +175,26 @@ ndInstance::ndInstance(
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(nullptr),
 #endif
-    sigset(sigset),
+    sig_update(-1), sig_update_napi(-1),
+    timer_update(nullptr), timer_update_napi(nullptr),
     tag(tag.empty() ? PACKAGE_TARNAME : tag),
     self(PACKAGE_TARNAME), self_pid(-1),
-    threaded(threaded), thread(nullptr),
     conf_filename(ND_CONF_FILE_NAME)
 {
-    terminate = false;
     terminate_force = false;
-
-    if (threaded) {
-        thread = new ndInstanceThread(tag, this);
-        if (thread == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new ndInstanceThread", ENOMEM
-            );
-        }
-    }
-
     flows = 0;
 }
 
 ndInstance::~ndInstance()
 {
-    if (threaded && thread != nullptr) {
-        thread->Terminate();
-        delete thread;
-    }
+    Terminate();
+
+    Join();
+
+    if (timer_update != nullptr)
+        timer_delete(timer_update);
+    if (ndGC_USE_NAPI && timer_update_napi != nullptr)
+        timer_delete(timer_update_napi);
 
     for (unsigned p = 0; p < 2; p++) {
         if (thread_socket) {
@@ -281,24 +268,22 @@ ndInstance::~ndInstance()
     if (self_pid > 0 &&
         self_pid == nd_is_running(self_pid, self)) {
         if (unlink(ndGC.path_pid_file.c_str()) != 0) {
-            nd_dprintf("unlink: %s: %s\n",
+            nd_dprintf("%s: unlink: %s: %s\n", tag.c_str(),
                 ndGC.path_pid_file.c_str(), strerror(errno)
             );
         }
     }
 }
 
-ndInstance& ndInstance::Create(const sigset_t &sigset,
-    const string &tag, bool threaded) {
+ndInstance& ndInstance::Create(const string &tag) {
 
     if (instance != nullptr) {
-        fprintf(stderr, "Instance already created.\n");
         throw ndSystemException(__PRETTY_FUNCTION__,
             "instance exists", EEXIST
         );
     }
 
-    instance = new ndInstance(sigset, tag, threaded);
+    instance = new ndInstance(tag);
 
     if (instance == nullptr) {
         throw ndSystemException(__PRETTY_FUNCTION__,
@@ -312,43 +297,12 @@ ndInstance& ndInstance::Create(const sigset_t &sigset,
 void ndInstance::Destroy(void)
 {
     if (instance == nullptr) {
-        fprintf(stderr, "Instance not found.\n");
         throw ndSystemException(__PRETTY_FUNCTION__,
             "instance not found", ENOENT
         );
     }
 
     delete instance;
-}
-
-void ndInstance::InitializeSignals(sigset_t &sigset, bool minimal)
-{
-    if (! minimal) {
-        sigfillset(&sigset);
-        //sigdelset(&sigset, SIGPROF);
-        //sigdelset(&sigset, SIGINT);
-        sigdelset(&sigset, SIGQUIT);
-        sigprocmask(SIG_BLOCK, &sigset, NULL);
-    }
-
-    sigemptyset(&sigset);
-    sigaddset(&sigset, ND_SIG_SINK_REPLY);
-    sigaddset(&sigset, ND_SIG_UPDATE);
-    sigaddset(&sigset, ND_SIG_CONNECT);
-    sigaddset(&sigset, ND_SIG_NAPI_UPDATE);
-    sigaddset(&sigset, ND_SIG_NAPI_UPDATED);
-    sigaddset(&sigset, SIGIO);
-
-    if (! minimal) {
-        sigaddset(&sigset, SIGHUP);
-        sigaddset(&sigset, SIGINT);
-#ifdef SIGPWR
-        sigaddset(&sigset, SIGPWR);
-#endif
-        sigaddset(&sigset, SIGTERM);
-        sigaddset(&sigset, SIGUSR1);
-        sigaddset(&sigset, SIGUSR2);
-    }
 }
 
 uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
@@ -804,7 +758,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     }
 
     if (interfaces.size() == 0) {
-        fprintf(stderr, "No packet capture sources configured.\n");
+        fprintf(stderr,
+            "%s: no packet capture sources configured.\n",
+            tag.c_str()
+        );
         return ndCR_INVALID_INTERFACES;
     }
 
@@ -833,7 +790,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     // Global libCURL initialization
     CURLcode cc;
     if ((cc = curl_global_init(CURL_GLOBAL_ALL)) != 0) {
-        fprintf(stderr, "Unable to initialize libCURL: %d\n", cc);
+        fprintf(stderr,
+            "%s: Unable to initialize libCURL: %d\n",
+            tag.c_str(), cc
+        );
         return ndCR_LIBCURL_FAILURE;
     }
 
@@ -853,19 +813,63 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     return ndCR_OK;
 }
 
+bool ndInstance::InitializeTimers(
+    int sig_update, int sig_update_napi)
+{
+    this->sig_update = sig_update;
+    this->sig_update_napi = sig_update_napi;
+
+    struct sigevent sigev;
+    memset(&sigev, 0, sizeof(struct sigevent));
+    sigev.sigev_notify = SIGEV_SIGNAL;
+    sigev.sigev_signo = sig_update;
+
+    if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
+        nd_printf("%s: timer_create: %s\n",
+            tag.c_str(), strerror(errno)
+        );
+        return false;
+    }
+
+    if (ndGC_USE_NAPI) {
+        memset(&sigev, 0, sizeof(struct sigevent));
+        sigev.sigev_notify = SIGEV_SIGNAL;
+        sigev.sigev_signo = sig_update_napi;
+
+        if (timer_create(
+            CLOCK_MONOTONIC, &sigev, &timer_update_napi) < 0) {
+            nd_printf("%s: timer_create: %s\n",
+                tag.c_str(), strerror(errno)
+            );
+            exit_code = EXIT_FAILURE;
+
+            timer_delete(timer_update);
+            timer_update = nullptr;
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool ndInstance::Daemonize(void)
 {
     if (! ndGC_DEBUG && ! ndGC_REMAIN_IN_FOREGROUND) {
         if (daemon(1, 0) != 0) {
-            nd_printf("daemon: %s\n", strerror(errno));
+            nd_printf("%s: daemon: %s\n",
+                tag.c_str(), strerror(errno)
+            );
             return false;
         }
     }
 
     if (! nd_dir_exists(ndGC.path_state_volatile)) {
         if (mkdir(ndGC.path_state_volatile.c_str(), 0755) != 0) {
-            nd_printf("Unable to create volatile state path: %s: %s\n",
-                ndGC.path_state_volatile.c_str(), strerror(errno));
+            nd_printf("%s: error creating volatile state path: %s: %s\n",
+                tag.c_str(),
+                ndGC.path_state_volatile.c_str(), strerror(errno)
+            );
             return false;
         }
     }
@@ -874,7 +878,9 @@ bool ndInstance::Daemonize(void)
 
     if (old_pid > 0 &&
         old_pid == nd_is_running(old_pid, self)) {
-        nd_printf("An agent is already running: PID %d\n", old_pid);
+        nd_printf("%s: an instance is already running: PID %d\n",
+            tag.c_str(), old_pid
+        );
         return false;
     }
 
@@ -1604,12 +1610,15 @@ bool ndInstance::AgentStatus(void)
 void ndInstance::ProcessUpdate(void)
 {
     nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
+
+#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
+    // Attempt to release heap back to OS when supported
+    malloc_trim(0);
+#endif
 }
 
 int ndInstance::Run(void)
 {
-    void *rc __attribute__((unused)) = nullptr;
-
     if (version.empty()) {
         nd_printf(
             "%s: Instance configuration not initialized.\n",
@@ -1618,8 +1627,10 @@ int ndInstance::Run(void)
         goto ndInstance_RunReturn;
     }
 
-    nd_printf("%s\n", version.c_str());
-    nd_dprintf("Online CPU cores: %ld\n", status.cpus);
+    nd_printf("%s: %s\n", tag.c_str(), version.c_str());
+    nd_dprintf("%s: online CPU cores: %ld\n",
+        tag.c_str(), status.cpus
+    );
 
     CheckAgentUUID();
 
@@ -1689,11 +1700,6 @@ int ndInstance::Run(void)
                 || ndGC.ca_detection_cores <= 0
         ) ? (int16_t)status.cpus : ndGC.ca_detection_cores;
 
-        nd_dprintf(
-            "Creating %hd detection threads (CPU offset: %hd)\n",
-            cpus, cpu
-        );
-
         for (int16_t i = 0; i < cpus; i++) {
 
             thread_detection[i] = new ndDetectionThread(
@@ -1720,64 +1726,67 @@ int ndInstance::Run(void)
         }
     }
     catch (ndSinkThreadException &e) {
-        nd_printf("Error starting upload thread: %s\n", e.what());
+        nd_printf("%s: error starting upload thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
     catch (ndSocketException &e) {
-        nd_printf("Error starting socket thread: %s\n", e.what());
+        nd_printf("%s: error starting socket thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
     catch (ndSocketSystemException &e) {
-        nd_printf("Error starting socket thread: %s\n", e.what());
+        nd_printf("%s: error starting socket thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
     catch (ndSocketThreadException &e) {
-        nd_printf("Error starting socket thread: %s\n", e.what());
+        nd_printf("%s: error starting socket thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
 #ifdef _ND_USE_CONNTRACK
     catch (ndConntrackThreadException &e) {
-        nd_printf("Error starting conntrack thread: %s\n", e.what());
+        nd_printf("%s: error starting conntrack thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
 #endif
     catch (ndThreadException &e) {
-        nd_printf("Error starting thread: %s\n", e.what());
+        nd_printf("%s: error starting thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
     catch (exception &e) {
-        nd_printf("Error starting thread: %s\n", e.what());
+        nd_printf("%s: error starting thread: %s\n",
+            tag.c_str(), e.what()
+        );
         goto ndInstance_RunReturn;
     }
 
     if (clock_gettime(
         CLOCK_MONOTONIC_RAW, &status.ts_epoch) != 0) {
         nd_printf(
-            "Error getting epoch time: %s\n", strerror(errno));
+            "%s: error getting epoch time: %s\n",
+            tag.c_str(), strerror(errno)
+        );
         goto ndInstance_RunReturn;
     }
 
-    if (threaded) {
-        if (thread == nullptr)
-            goto ndInstance_RunReturn;
-
-        try {
-            exit_code = EXIT_SUCCESS;
-
-            thread->Create();
-        }
-        catch (exception &e) {
-            exit_code = EXIT_FAILURE;
-
-            nd_dprintf("%s: Exception: %s\n",
-                tag.c_str(), e.what()
-            );
-        }
-
-        goto ndInstance_RunReturn;
+    try {
+        ndThread::Create();
+        exit_code = EXIT_SUCCESS;
     }
-
-    rc = Entry();
+    catch (exception &e) {
+        exit_code = EXIT_FAILURE;
+        nd_dprintf("%s: exception: %s\n", tag.c_str(), e.what());
+    }
 
 ndInstance_RunReturn:
     return exit_code;
@@ -1786,7 +1795,6 @@ ndInstance_RunReturn:
 void *ndInstance::ndInstance::Entry(void)
 {
     nd_capture_threads thread_capture;
-    timer_t timer_update = nullptr, timer_napi = nullptr;
 
     // Process an initial update on start-up
     ProcessUpdate();
@@ -1798,8 +1806,8 @@ void *ndInstance::ndInstance::Entry(void)
 #endif
         }
         catch (exception &e) {
-            nd_printf("Exception while refreshing Netlink: %s\n",
-                e.what()
+            nd_printf("%s: exception while refreshing Netlink: %s\n",
+                tag.c_str(), e.what()
             );
             exit_code = EXIT_FAILURE;
             goto ndInstance_EntryReturn;
@@ -1812,44 +1820,25 @@ void *ndInstance::ndInstance::Entry(void)
             return nullptr;
     }
     catch (exception &e) {
-        nd_printf("Exception while starting capture threads: %s\n",
-            e.what()
+        nd_printf("%s: exception while starting capture threads: %s\n",
+            tag.c_str(), e.what()
         );
         exit_code = EXIT_FAILURE;
         goto ndInstance_EntryReturn;
     }
 
-    struct sigevent sigev;
-    memset(&sigev, 0, sizeof(struct sigevent));
-    sigev.sigev_notify = SIGEV_SIGNAL;
-    sigev.sigev_signo = ND_SIG_UPDATE;
+    if (timer_update != nullptr) {
+        struct itimerspec itspec;
+        itspec.it_value.tv_sec = ndGC.update_interval;
+        itspec.it_value.tv_nsec = 0;
+        itspec.it_interval.tv_sec = ndGC.update_interval;
+        itspec.it_interval.tv_nsec = 0;
 
-    if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
-        nd_printf("timer_create: %s\n", strerror(errno));
-        exit_code = EXIT_FAILURE;
-        goto ndInstance_EntryReturn;
+        timer_settime(timer_update, 0, &itspec, nullptr);
     }
 
-    struct itimerspec itspec;
-    itspec.it_value.tv_sec = ndGC.update_interval;
-    itspec.it_value.tv_nsec = 0;
-    itspec.it_interval.tv_sec = ndGC.update_interval;
-    itspec.it_interval.tv_nsec = 0;
-
-    timer_settime(timer_update, 0, &itspec, NULL);
-
-    if (ndGC_USE_NAPI) {
-        memset(&sigev, 0, sizeof(struct sigevent));
-        sigev.sigev_notify = SIGEV_SIGNAL;
-        sigev.sigev_signo = ND_SIG_NAPI_UPDATE;
-
-        if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_napi) < 0) {
-            nd_printf("timer_create: %s\n", strerror(errno));
-            exit_code = EXIT_FAILURE;
-            goto ndInstance_EntryReturn;
-        }
-
-        time_t ttl = 3;
+    if (ndGC_USE_NAPI && timer_update_napi != nullptr) {
+        time_t ttl = 3; // Delay first signal...
         if (categories.GetLastUpdate() > 0) {
             time_t age = time(NULL) - categories.GetLastUpdate();
             if (age < ndGC.ttl_napi_update)
@@ -1858,44 +1847,78 @@ void *ndInstance::ndInstance::Entry(void)
                 ttl = ndGC.ttl_napi_update;
         }
 
+        struct itimerspec itspec;
         itspec.it_value.tv_sec = ttl;
         itspec.it_value.tv_nsec = 0;
         itspec.it_interval.tv_sec = ndGC.ttl_napi_update;
         itspec.it_interval.tv_nsec = 0;
 
-        timer_settime(timer_napi, 0, &itspec, NULL);
+        timer_settime(timer_update_napi, 0, &itspec, nullptr);
     }
 
     do {
-        int sig;
-        siginfo_t si;
-        struct timespec tspec_sigwait = { 1, 0 };
+        int ipc = WaitForIPC(1);
 
-        if ((sig = sigtimedwait(&sigset, &si, &tspec_sigwait)) < 0) {
-            if (errno == EAGAIN || errno == EINTR) continue;
-            terminate = true;
-            nd_printf("sigwaitinfo: %s\n", strerror(errno));
-            continue;
-        }
-
-        if (sig == SIGINT || sig == SIGTERM) {
-            terminate = true;
+        switch (ipc) {
+        case ndIPC_NONE:
+            break;
+        case ndIPC_NETLINK_IO:
+            nd_dprintf(
+                "%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Netlink data available"
+            );
+            break;
+        case ndIPC_RELOAD:
+            nd_dprintf(
+                "%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Reload run-time configuration"
+            );
+            Reload();
+            break;
+        case ndIPC_TERMINATE:
+            Terminate();
             exit_code = EXIT_SUCCESS;
+            break;
+        case ndIPC_UPDATE:
+            nd_dprintf("%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Update");
+            ProcessUpdate();
+            break;
+        case ndIPC_UPDATE_NAPI:
+            nd_dprintf(
+                "%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Netify API update"
+            );
+            break;
+        case ndIPC_UPDATE_NAPI_DONE:
+            nd_dprintf(
+                "%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Netify API update complete"
+            );
+            break;
+        default:
+            nd_dprintf(
+                "%s: received IPC: [%d] %s\n",
+                tag.c_str(), ipc, "Ignored"
+            );
         }
 
         nd_dprintf("%s: tick\n", tag.c_str());
     }
-    while (! terminate.load());
+    while (! ShouldTerminate());
 
 ndInstance_EntryReturn:
-    terminate = true;
-
-    if (timer_update != nullptr)
-        timer_delete(timer_update);
-    if (ndGC_USE_NAPI && timer_napi != nullptr)
-        timer_delete(timer_napi);
+    Terminate();
 
     DestroyCaptureThreads(thread_capture);
+
+    if (exit_code == 0)
+        nd_dprintf("%s: normal exit.\n", tag.c_str());
+    else {
+        nd_dprintf("%s: exit on error: %d\n",
+            tag.c_str(), exit_code
+        );
+    }
 
     return nullptr;
 }
@@ -1904,7 +1927,8 @@ bool ndInstance::Reload(void)
 {
     bool result = true;
 
-    nd_dprintf("Reloading configuration...\n");
+    nd_dprintf("%s: reloading configuration...\n", tag.c_str());
+
     if (! (result = apps.Load(ndGC.path_app_config)))
         result = apps.LoadLegacy(ndGC.path_legacy_config);
 
@@ -1915,7 +1939,7 @@ bool ndInstance::Reload(void)
     //nd_plugin_event(ndPlugin::EVENT_RELOAD);
 #endif
 
-    nd_dprintf("Configuration reloaded %s.\n",
+    nd_dprintf("%s: configuration reloaded %s.\n", tag.c_str(),
         (result) ? "successfully" : "with errors");
 
     return result;
@@ -1924,7 +1948,9 @@ bool ndInstance::Reload(void)
 bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
 {
     if (threads.size() != 0) {
-        nd_printf("Capture threads already created.\n");
+        nd_printf("%s: capture threads already created.\n",
+            tag.c_str()
+        );
         return false;
     }
 
@@ -2008,7 +2034,8 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
         }
 #endif
         default:
-            nd_printf("WARNING: Unsupported capture type: %s: %hu",
+            nd_printf("%s: WARNING: Unsupported capture type: %s: %hu",
+                tag.c_str(),
                 it.second.ifname.c_str(), it.second.capture_type
             );
         }
@@ -2023,29 +2050,20 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
     }
 
     if (thread_socket != nullptr && ndGC_WAIT_FOR_CLIENT) {
+        nd_dprintf("%s: waiting for a client to connect...\n",
+            tag.c_str()
+        );
         do {
-            int sig;
-            siginfo_t si;
-            struct timespec tspec_sigwait = { 1, 0 };
-
-            nd_dprintf("Waiting for a client to connect...\n");
-
-            if ((sig = sigtimedwait(
-                &sigset, &si, &tspec_sigwait)) < 0) {
-                if (errno == EAGAIN || errno == EINTR) continue;
-                terminate = true;
-                nd_printf("sigwaitinfo: %s\n", strerror(errno));
-                continue;
-            }
-
-            if (sig == SIGINT || sig == SIGTERM) {
-                terminate = true;
+            if (WaitForIPC(1) == ndIPC_TERMINATE) {
+                Terminate();
                 exit_code = EXIT_SUCCESS;
                 return false;
             }
+
+            sleep(1);
         }
         while (
-            ! terminate.load() && ! thread_socket->GetClientCount()
+            ! ShouldTerminate() && ! thread_socket->GetClientCount()
         );
     }
 
@@ -2084,6 +2102,44 @@ void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
 
         flow_buckets->Release(b);
     }
+}
+
+int ndInstance::WaitForIPC(int timeout)
+{
+    int rc;
+    int ipc = 0;
+    fd_set fds_read;
+
+    do {
+        FD_ZERO(&fds_read);
+        FD_SET(fd_ipc[IPC_PE_READ], &fds_read);
+
+        struct timeval tv = { 1, 0 };
+
+        rc = select(
+            fd_ipc[IPC_PE_READ] + 1, &fds_read, NULL, NULL, &tv
+        );
+
+        if (rc == -1) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "select", errno
+            );
+        }
+
+        if (rc > 0) {
+            if (! FD_ISSET(fd_ipc[IPC_PE_READ], &fds_read)) {
+                throw ndSystemException(__PRETTY_FUNCTION__,
+                    "select returned invalid descriptor", EINVAL
+                );
+            }
+
+            ipc = (int)RecvIPC();
+            break;
+        }
+    }
+    while (! ShouldTerminate() && timeout < 0 && --timeout != 0);
+
+    return ipc;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

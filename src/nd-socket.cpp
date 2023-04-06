@@ -827,8 +827,6 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
     }
 
     Unlock();
-
-    kill(getpid(), ND_SIG_CONNECT);
 }
 
 void ndSocketThread::ClientHangup(ndSocketClientMap::iterator &ci)
