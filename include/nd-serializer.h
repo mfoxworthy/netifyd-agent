@@ -76,6 +76,22 @@ public:
             j[keys[0]] = value;
     }
 
+    inline void serialize(json &j, const vector<string> &keys, double value) const {
+        if (keys.empty()) return;
+        if (keys.size() == 2)
+            j[keys[0]][keys[1]] = value;
+        if (keys.size() == 1)
+            j[keys[0]] = value;
+    }
+
+    inline void serialize(json &j, const vector<string> &keys, time_t value) const {
+        if (keys.empty()) return;
+        if (keys.size() == 2)
+            j[keys[0]][keys[1]] = value;
+        if (keys.size() == 1)
+            j[keys[0]] = value;
+    }
+
     inline void serialize(json &j, const vector<string> &keys, const vector<nd_risk_id_t> &values) const {
         if (keys.empty() || values.empty()) return;
         if (keys.size() == 2)
