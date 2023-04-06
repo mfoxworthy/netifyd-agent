@@ -214,9 +214,9 @@ public:
     nd_flow_capture capture;
     char capture_filename[sizeof(ND_FLOW_CAPTURE_TEMPLATE)];
 
-    // Start of conditional members.  These must be at the end or else access
-    // from plugins compiled without various options will have incorrect
-    // addresses
+    // Start of conditional members.  These must be at the end or
+    // else access from plugins compiled without various options
+    // will have incorrect addresses
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     uint32_t ct_id;
     uint32_t ct_mark;
