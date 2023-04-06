@@ -131,11 +131,10 @@ void nd_json_agent_status(json &j)
     j["flow_count_prev"] = nd_json_agent_stats.flows_prev;
     j["maxrss_kb"] = nd_json_agent_stats.maxrss_kb;
     j["maxrss_kb_prev"] = nd_json_agent_stats.maxrss_kb_prev;
-#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
     j["tcm_kb"] = (unsigned)nd_json_agent_stats.tcm_alloc_kb;
     j["tcm_kb_prev"] = (unsigned)nd_json_agent_stats.tcm_alloc_kb_prev;
-#endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
+#endif // _ND_USE_LIBTCMALLOC
     j["dhc_status"] = nd_json_agent_stats.dhc_status;
     if (nd_json_agent_stats.dhc_status)
         j["dhc_size"] = nd_json_agent_stats.dhc_size;

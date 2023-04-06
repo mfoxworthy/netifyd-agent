@@ -725,9 +725,6 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_LIBTCMALLOC
     ident << "; tcmalloc";
 #endif
-#ifdef _ND_USE_LIBJEMALLOC
-    ident << "; jemalloc";
-#endif
     if (ndGC_SSL_USE_TLSv1) ident << "; ssl-tlsv1";
     if (! ndGC_SSL_VERIFY) ident << "; ssl-no-verify";
 #ifdef HAVE_WORKING_REGEX

@@ -13,9 +13,6 @@
 [submodule "libs/json-c"]
 	path = libs/json-c
 	url = https://github.com/json-c/json-c.git
-[submodule "libs/jemalloc"]
-	path = libs/jemalloc
-	url = https://gitlab.com/netify.ai/public/netify-agent-libs/jemalloc.git
 [submodule "doc/wiki"]
 	path = doc/wiki
 	url = git@gitlab.com:netify.ai/public/netify-agent.wiki.git

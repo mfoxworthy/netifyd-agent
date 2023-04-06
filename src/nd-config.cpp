@@ -80,8 +80,6 @@ using json = nlohmann::json;
 
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
 #include <gperftools/malloc_extension.h>
-#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-#include <jemalloc/jemalloc.h>
 #elif defined(HAVE_MALLOC_TRIM)
 #include <malloc.h>
 #endif

@@ -81,12 +81,5 @@ AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fn
 netifyd_LDADD += $(LIBTCMALLOC_LIBS)
 endif
 
-if USE_LIBJEMALLOC
-# XXX: Recommended compiler flags
-AM_CPPFLAGS += $(LIBJEMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free
-# XXX: It's important that this library be linked after all others.
-netifyd_LDADD += $(LIBJEMALLOC_LIBS)
-endif
-
 # For debugging ns_initparse
 #netifyd_SOURCES += ns-parse.c

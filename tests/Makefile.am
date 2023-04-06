@@ -42,13 +42,6 @@ AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fn
 check_protocols_LDADD += $(LIBTCMALLOC_LIBS)
 endif
 
-if USE_LIBJEMALLOC
-# XXX: Recommended compiler flags
-AM_CPPFLAGS += $(LIBJEMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free
-# XXX: It's important that this library be linked after all others.
-check_protocols_LDADD += $(LIBJEMALLOC_LIBS)
-endif
-
 test:
 	sudo WITH_VALGRIND="no" TESTDIR="$(abs_srcdir)" ./test-pcap-regression.sh
 

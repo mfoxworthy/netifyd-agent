@@ -103,14 +103,12 @@ case "${host_os}" in
             [enable_netlink=yes])
 
         AS_IF([test "x$enable_netlink" = "xyes"], [
-        case "${host_os}" in
-            linux*)
-                AC_DEFINE([_ND_USE_NETLINK], [1],
-                    [Define to enable Netlink socket support.])
-                AM_CONDITIONAL(USE_NETLINK, true)
-                ND_DEFINES+=" -D_ND_USE_NETLINK=1"
-                ;;
-        esac
+            AC_DEFINE([_ND_USE_NETLINK], [1],
+                [Define to enable Netlink socket support.])
+            AM_CONDITIONAL(USE_NETLINK, true)
+            ND_DEFINES+=" -D_ND_USE_NETLINK=1"
+        ], [
+            AM_CONDITIONAL(USE_NETLINK, false)
         ])
 
         dnl TPACKETv3 Capture Support
@@ -150,6 +148,20 @@ case "${host_os}" in
         ])
         ;;
 esac
+
+AC_ARG_ENABLE([test-main],
+    [AS_HELP_STRING([--enable-test-main], [Enable test main() [default=no]])],
+    [],
+    [enable_test_main=no])
+
+AS_IF([test "x$enable_test_main" = "xyes"], [
+    AC_DEFINE([_ND_USE_TEST_MAIN], [1],
+        [Define to enable test main().])
+    ND_DEFINES+=" -D_ND_USE_TEST_MAIN=1"
+    AM_CONDITIONAL(USE_TEST_MAIN, true)
+], [
+    AM_CONDITIONAL(USE_TEST_MAIN, false)
+])
 
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
 PKG_CHECK_MODULES([ZLIB], [zlib])
@@ -265,42 +277,6 @@ AS_IF([test "x$enable_libtcmalloc" = "xyes"], [
         AC_MSG_NOTICE([using tcmalloc (gperftools) from bundled libs...])
         AC_DEFINE([HAVE_GPERFTOOLS_MALLOC_EXTENSION_H], [1],
             [Define to 1 if you have the <gperftools/malloc_extension.h> header file.])
-    ])
-])
-
-AC_ARG_ENABLE([jemalloc],
-    [AS_HELP_STRING([--enable-jemalloc], [Enable jemalloc support [default=no]])],
-    [],
-    [enable_jemalloc=no])
-
-AM_CONDITIONAL(USE_LIBJEMALLOC, false)
-AM_CONDITIONAL(USE_LIBJEMALLOC_BUNDLED, false)
-
-AS_IF([test "x$enable_jemalloc" = "xyes"], [
-
-    AC_DEFINE([_ND_USE_LIBJEMALLOC], [1],
-        [Define to enable jemalloc support.])
-    ND_DEFINES+=" -D_ND_USE_LIBJEMALLOC=1"
-
-    PKG_CHECK_MODULES([LIBJEMALLOC], [jemalloc], [
-        AM_CONDITIONAL(USE_LIBJEMALLOC, true)
-
-        AC_LANG_PUSH([C++])
-        AC_CHECK_HEADERS([jemalloc/jemalloc.h])
-        AC_LANG_POP([C++])
-    ], [
-        AM_CONDITIONAL(USE_LIBJEMALLOC, true)
-        AM_CONDITIONAL(USE_LIBJEMALLOC_BUNDLED, true)
-
-        LIBJEMALLOC_LIBS="${ac_abs_confdir}/libs/jemalloc/lib/libjemalloc.a"
-        LIBJEMALLOC_CFLAGS="-I ${ac_abs_confdir}/libs/jemalloc/include"
-    ])
-
-    AM_COND_IF([USE_LIBJEMALLOC_BUNDLED], [
-        AC_CONFIG_SUBDIRS([libs/jemalloc])
-        AC_MSG_NOTICE([using jemalloc from bundled libs...])
-        AC_DEFINE([HAVE_JEMALLOC_JEMALLOC_H], [1],
-            [Define to 1 if you have the <jemalloc/jemalloc.h> header file.])
     ])
 ])
 

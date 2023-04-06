@@ -78,8 +78,6 @@ using json = nlohmann::json;
 
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
 #include <gperftools/malloc_extension.h>
-#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-#include <jemalloc/jemalloc.h>
 #elif defined(HAVE_MALLOC_TRIM)
 #include <malloc.h>
 #endif
@@ -1156,26 +1154,6 @@ static void nd_dump_stats(void)
         GetNumericProperty("generic.current_allocated_bytes", &tcm_alloc_bytes);
     nd_json_agent_stats.tcm_alloc_kb_prev = nd_json_agent_stats.tcm_alloc_kb;
     nd_json_agent_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
-#elif defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-    size_t tcm_alloc_bytes = 0;
-    size_t je_opt_size = sizeof(size_t);
-
-    const char *je_opt = "stats.allocated";
-
-    mallctl("thread.tcache.flush", NULL, NULL, NULL, 0);
-
-    int rc = mallctl(
-        je_opt,
-        (void *)&tcm_alloc_bytes, &je_opt_size,
-        NULL, 0
-    );
-
-    nd_dprintf("JEMALLOC: %s: %d: %ld\n", je_opt, rc, tcm_alloc_bytes);
-
-    if (rc == 0) {
-        nd_json_agent_stats.tcm_alloc_kb_prev = nd_json_agent_stats.tcm_alloc_kb;
-        nd_json_agent_stats.tcm_alloc_kb = tcm_alloc_bytes / 1024;
-    }
 #endif
     struct rusage rusage_data;
     getrusage(RUSAGE_SELF, &rusage_data);
@@ -1655,13 +1633,12 @@ static void nd_status(void)
             "%s%s%s CPU time (user / system): %.1fs / %.1fs\n",
             color, icon, ND_C_RESET, cpu_user_delta, cpu_system_delta);
 
-    #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)) || \
-    (defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H))
+#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
         fprintf(stderr, "%s%s%s current memory usage: %u kB\n",
             ND_C_GREEN, ND_I_INFO, ND_C_RESET,
             jstatus["tcm_kb"].get<unsigned>()
         );
-    #endif // _ND_USE_LIBTCMALLOC || _ND_USE_LIBJEMALLOC
+#endif // _ND_USE_LIBTCMALLOC
         fprintf(stderr, "%s%s%s maximum memory usage: %u kB\n",
             ND_C_GREEN, ND_I_INFO, ND_C_RESET,
             jstatus["maxrss_kb"].get<unsigned>()
@@ -1949,7 +1926,7 @@ static int nd_check_agent_uuid(void)
 
     return 0;
 }
-#if 0
+#if _ND_USE_TEST_MAIN
 int main(int argc, char *argv[])
 {
     int rc = 0;
@@ -2457,25 +2434,6 @@ int main(int argc, char *argv[])
 
     nd_check_agent_uuid();
 
-#if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-    bool je_state = false, je_enable = true;
-    size_t je_opt_size = sizeof(bool);
-    const char *je_opt = "thread.tcache.enabled";
-
-    rc = mallctl(
-        je_opt,
-        (void *)&je_state, &je_opt_size,
-        (void *)&je_enable, je_opt_size
-    );
-
-    if (rc != 0)
-        nd_printf("JEMALLOC::mallctl: %s: %d\n", je_opt, rc);
-    else {
-        nd_dprintf("JEMALLOC:mallctl: %s: enabled: %s (%s)\n", je_opt,
-            (je_enable) ? "yes" : "no", (je_state) ? "yes" : "no");
-    }
-#endif
-
     if (! nd_dir_exists(ndGC.path_state_volatile)) {
         if (mkdir(ndGC.path_state_volatile.c_str(), 0755) != 0) {
             nd_printf("Unable to create volatile state directory: %s: %s\n",
@@ -2740,12 +2698,9 @@ int main(int argc, char *argv[])
 #endif
             if (dns_hint_cache)
                 dns_hint_cache->Purge();
-#if !defined(_ND_USE_LIBTCMALLOC) && !defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_MALLOC_TRIM)
+#if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
             // Attempt to release heap back to OS when supported
             malloc_trim(0);
-#endif
-#if defined(_ND_USE_LIBJEMALLOC) && defined(HAVE_JEMALLOC_JEMALLOC_H)
-            malloc_stats_print(NULL, NULL, "");
 #endif
             if (nd_reap_capture_threads() == 0) {
                 nd_stop_capture_threads(true);
