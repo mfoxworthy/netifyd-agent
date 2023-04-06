@@ -225,6 +225,9 @@ void *ndCapturePcap::Entry(void)
         else if (! ShouldTerminate()) {
             if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
                 ! (ifr.ifr_flags & IFF_UP)) {
+
+                capture_state = STATE_OFFLINE;
+
                 if (warnings) {
                     nd_printf("%s: WARNING: interface not available.\n",
                         tag.c_str());

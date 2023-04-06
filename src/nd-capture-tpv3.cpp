@@ -673,6 +673,8 @@ void *ndCaptureTPv3::Entry(void)
                 if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
                     ! (ifr.ifr_flags & IFF_UP)) {
 
+                    capture_state = STATE_OFFLINE;
+
                     if (warnings) {
                         nd_printf(
                             "%s: WARNING: interface not available.\n",
@@ -705,6 +707,7 @@ void *ndCaptureTPv3::Entry(void)
         else if (warnings == false && rc == 1) {
             rc = 0;
             warnings = true;
+            capture_state = STATE_ONLINE;
         }
 
         entry->ProcessPackets(_ring, pkt_queue);
