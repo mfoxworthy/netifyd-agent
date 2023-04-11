@@ -42,7 +42,7 @@ uuid_site = <site uuid>
 capture_type = <default capture type: pcap, tpv3, nfqueue>
 read_timeout = <capture timeout in milliseconds>
 
-[capture_defaults_tpv4]
+[capture_defaults_tpv3]
 fanout_mode = <fanout mode: hash, lb, cpu, rollover, random>
 fanout_flags = <fanout flags: defrag, rollover>
 fanout_instances = <number of fanout instances>
