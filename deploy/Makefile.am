@@ -28,3 +28,6 @@ EXTRA_DIST = $(TEMPLATEFILES_IN) freebsd netifyd.default netify-apps.conf netify
 		-e 's|[@]sysconfdir@|$(sysconfdir)|g' \
 		-e 's|[@]volatilestatedir@|$(volatilestatedir)|g' \
 		< "$<" > "$@"
+
+install-data-hook:
+	-chmod a+x $(DESTDIR)$(sharedatadir)/*.sh

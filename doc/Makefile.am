@@ -16,3 +16,6 @@ dist_man_MANS = netifyd.8 netifyd.conf.5
 	man -t "./$<" | ps2pdf - "$@"
 .8.pdf:
 	man -t "./$<" | ps2pdf - "$@"
+
+install-data-hook:
+	-chmod a+x $(DESTDIR)$(sharedatadir)/*.sh

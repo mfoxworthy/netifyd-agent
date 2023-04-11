@@ -27,3 +27,6 @@ EXTRA_DIST = $(SYSTEMDFILES_IN)
 		-e 's|[@]sbindir@|$(sbindir)|g' \
 		-e 's|[@]volatilestatedir@|$(volatilestatedir)|g' \
 		< "$<" > "$@"
+
+install-data-hook:
+	-chmod a+x $(DESTDIR)$(sharedatadir)/*.sh
