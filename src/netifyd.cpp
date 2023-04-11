@@ -1954,8 +1954,6 @@ int main(int argc, char *argv[])
     sigemptyset(&sigset);
     sigaddset(&sigset, ND_SIG_UPDATE);
     sigaddset(&sigset, ND_SIG_UPDATE_NAPI);
-    sigaddset(&sigset, ND_SIG_SINK_REPLY);
-    sigaddset(&sigset, ND_SIG_NAPI_UPDATED);
     sigaddset(&sigset, SIGHUP);
     sigaddset(&sigset, SIGINT);
     sigaddset(&sigset, SIGIO);
