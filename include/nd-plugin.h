@@ -70,6 +70,7 @@ public:
         TYPE_STATS,
     };
 
+    static const map<ndPlugin::ndPluginType, string> types;
     ndPluginType GetType(void) { return type; };
 
 protected:
@@ -134,11 +135,40 @@ public:
     virtual ~ndPluginLoader();
 
     inline ndPlugin *GetPlugin(void) { return plugin; };
+    inline const string& GetObjectName(void) { return so_name; };
 
 protected:
     string so_name;
     void *so_handle;
     ndPlugin *plugin;
+};
+
+class ndPluginManager
+{
+public:
+    virtual ~ndPluginManager();
+
+    void Load(
+        ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE,
+        bool create = true);
+
+    bool Create(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+
+    void Reap(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+
+    void BroadcastEvent(ndPlugin::ndPluginType type,
+        ndPlugin::ndPluginEvent event, void *param = nullptr);
+
+    void BroadcastDetectionEvent(
+        ndPluginDetection::ndDetectionEvent event, ndFlow *flow);
+
+    void GetStatus(json &status);
+
+    void DumpVersions(
+        ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+
+protected:
+    map<ndPlugin::ndPluginType, vector<ndPluginLoader *>> plugins;
 };
 
 #endif // _ND_INTERNAL

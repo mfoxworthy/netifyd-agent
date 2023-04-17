@@ -26,7 +26,7 @@ public:
 
 typedef deque<ndJsonResponse *> ndResponseQueue;
 
-class ndSinkThread : public ndThread
+class ndSinkThread : public ndThread, public ndInstanceClient
 {
 public:
     ndSinkThread(int16_t cpu = -1);

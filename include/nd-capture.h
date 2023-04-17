@@ -26,7 +26,7 @@ public:
 
 class ndSocketThread;
 
-class ndCaptureThread : public ndThread
+class ndCaptureThread : public ndThread, public ndInstanceClient
 {
 public:
     ndCaptureThread(
@@ -83,8 +83,6 @@ protected:
     bool ProcessDNSPacket(ndFlow *flow,
         const uint8_t *pkt, uint16_t pkt_len, uint16_t proto);
 };
-
-typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
 
 #endif // _ND_CAPTURE_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

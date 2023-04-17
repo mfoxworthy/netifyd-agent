@@ -76,8 +76,6 @@ class ndFlowMap;
 #endif
 #include <nd-flow-map.h>
 
-extern ndApplications *nd_apps;
-
 int main(int argc, char *argv[])
 {
     int rc = 0;

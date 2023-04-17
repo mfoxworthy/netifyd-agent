@@ -18,45 +18,69 @@
 #include "config.h"
 #endif
 
-#include <string>
-#include <sstream>
+#include <iomanip>
 #include <iostream>
-#include <map>
 #include <set>
+#include <map>
+#include <queue>
+#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include <list>
 #include <vector>
+#include <locale>
 #include <atomic>
 #include <regex>
 #include <mutex>
-#include <bitset>
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
+#include <sys/resource.h>
 
-#include <stdio.h>
-#include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <getopt.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+#include <locale.h>
+#include <syslog.h>
+#include <fcntl.h>
 
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
 
-#define __FAVOR_BSD 1
+#include <netdb.h>
 #include <netinet/in.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
-#include <net/if.h>
+#define __FAVOR_BSD 1
+#include <netinet/tcp.h>
+#undef __FAVOR_BSD
 
+#include <curl/curl.h>
 #include <pcap/pcap.h>
+#include <pthread.h>
+#include <resolv.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#ifdef _ND_USE_CONNTRACK
+#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
+#endif
+
+#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#include <gperftools/malloc_extension.h>
+#elif defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
+#endif
 
 #include <radix/radix_tree.hpp>
 
@@ -65,6 +89,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
@@ -72,11 +97,44 @@ using namespace std;
 #include "nd-json.h"
 #include "nd-util.h"
 #include "nd-addr.h"
-#include "nd-ndpi.h"
-#include "nd-sha1.h"
+#ifdef _ND_USE_NETLINK
+#include "nd-netlink.h"
+#endif
+#include "nd-apps.h"
+#include "nd-protos.h"
+#include "nd-category.h"
+#include "nd-flow.h"
+#include "nd-flow-map.h"
+#include "nd-flow-parser.h"
 #include "nd-dhc.h"
+#include "nd-fhc.h"
+#include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
+#include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
+#ifdef _ND_USE_CONNTRACK
+#include "nd-conntrack.h"
+#endif
+#include "nd-detection.h"
+#include "nd-capture.h"
+#ifdef _ND_USE_LIBPCAP
+#include "nd-capture-pcap.h"
+#endif
+#ifdef _ND_USE_TPACKETV3
+#include "nd-capture-tpv3.h"
+#endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
+#include "nd-socket.h"
+#include "nd-sink.h"
+#include "nd-base64.h"
+#include "nd-napi.h"
 
+#ifndef _ND_INSTANCE_SUPPORT
 extern ndAddrType *nd_addrtype;
+#endif
 
 ndDNSHintCache::ndDNSHintCache()
 {
@@ -93,8 +151,11 @@ void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
     }
 
     ndAddr::Type type;
+#ifdef _ND_INSTANCE_SUPPORT
+    ndInstance::GetInstance().addr_types.Classify(type, addr);
+#else
     nd_addrtype->Classify(type, addr);
-
+#endif
     if (type != ndAddr::atOTHER) {
         nd_dprintf("Invalid DHC address type: %d: %s\n",
             type, addr.GetString().c_str());

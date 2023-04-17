@@ -19,7 +19,7 @@
 
 #define _ND_NAPI_RETRY_TTL  5
 
-class ndNetifyApiThread : public ndThread
+class ndNetifyApiThread : public ndThread, public ndInstanceClient
 {
 public:
     ndNetifyApiThread();

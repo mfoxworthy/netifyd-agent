@@ -98,6 +98,18 @@ public:
     }
 };
 
+#ifdef _ND_USE_CONNTRACK
+class ndConntrackThread;
+#endif
+class ndNetifyApiThread;
+class ndSinkThread;
+class ndSocketThread;
+class ndDetectionThread;
+class ndCaptureThread;
+
+typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
+typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
+
 class ndInstance : protected ndThread
 {
 public:
@@ -110,6 +122,11 @@ public:
     ndInstance& operator=(const ndInstance&) = delete;
 
     static inline ndInstance& GetInstance() {
+        if (instance == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "instance not found", ENOENT
+            );
+        }
         return *instance;
     }
 
@@ -178,6 +195,7 @@ public:
     bool AgentStatus(void);
 
     void ProcessUpdate(void);
+    void ProcessFlows(void);
 
     int Run(void);
 
@@ -193,6 +211,15 @@ public:
 
     inline const string& GetVersion() const { return version; }
     inline const ndInstanceStatus& GetStatus() const { return status; }
+
+    inline bool IsNetlinkDescriptor(int fd) {
+#ifdef _ND_USE_NETLINK
+        if (ndGC_USE_NETLINK && netlink != nullptr &&
+            netlink->GetDescriptor() == fd)
+            return true;
+#endif
+        return false;
+    }
 
     template <class T>
     void EncodeApplications(T &output) {
@@ -278,6 +305,10 @@ public:
 #endif
     nd_detection_threads thread_detection;
 
+#ifdef _ND_USE_PLUGINS
+    ndPluginManager plugins;
+#endif
+
 protected:
     friend class ndInstanceThread;
 
@@ -291,6 +322,12 @@ protected:
     void DestroyCaptureThreads(nd_capture_threads &threads);
 
     int WaitForIPC(int timeout = -1);
+
+    void UpdateStatus(void);
+
+    void DisplayDebugScoreboard(void);
+
+    void ExpireFlow(ndFlow *flow);
 
     int sig_update, sig_update_napi;
     timer_t timer_update, timer_update_napi;
@@ -311,6 +348,15 @@ protected:
 private:
     ndInstance(const string &tag = "nd-instance");
     virtual ~ndInstance();
+};
+
+class ndInstanceClient
+{
+public:
+    ndInstanceClient() : ndi(ndInstance::GetInstance()) { }
+
+protected:
+    ndInstance& ndi;
 };
 
 #endif // _ND_INSTANCE_H

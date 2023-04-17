@@ -32,6 +32,13 @@ bin_PROGRAMS = check-protocols check-risks
 check_protocols_SOURCES = check-protocols.cpp
 check_protocols_LDADD = $(top_srcdir)/src/libnetifyd.la $(top_srcdir)/libs/inih/libini.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
+if USE_LIBTCMALLOC
+# XXX: Recommended compiler flags
+AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free
+# XXX: It's important that this library be linked after all others.
+check_protocols_LDADD += $(LIBTCMALLOC_LIBS)
+endif
+
 check_risks_SOURCES = check-risks.cpp
 check_risks_LDADD = $(top_srcdir)/src/libnetifyd.la $(top_srcdir)/libs/inih/libini.la $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
@@ -39,7 +46,7 @@ if USE_LIBTCMALLOC
 # XXX: Recommended compiler flags
 AM_CPPFLAGS += $(LIBTCMALLOC_CFLAGS) -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free
 # XXX: It's important that this library be linked after all others.
-check_protocols_LDADD += $(LIBTCMALLOC_LIBS)
+check_risks_LDADD += $(LIBTCMALLOC_LIBS)
 endif
 
 test:

@@ -90,6 +90,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
@@ -106,12 +107,16 @@ using namespace std;
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
+#include "nd-dhc.h"
+#include "nd-fhc.h"
 #include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
+#include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-dhc.h"
-#include "nd-fhc.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #ifdef _ND_USE_LIBPCAP
@@ -126,12 +131,7 @@ using namespace std;
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
-#ifdef _ND_USE_PLUGINS
-#include "nd-plugin.h"
-#endif
-#include "nd-signal.h"
 #include "nd-napi.h"
-#include "nd-instance.h"
 
 static int nd_curl_debug(CURL *ch __attribute__((unused)),
     curl_infotype type, char *data, size_t size, void *param)
@@ -836,8 +836,7 @@ void ndSinkThread::ProcessResponse(void)
             }
 #if _ND_INSTANCE_SUPPORT
             if (reload_config) {
-                ndInstance::GetInstance()
-                    .SendIPC(ndInstance::ndIPC_RELOAD);
+                ndi.SendIPC(ndInstance::ndIPC_RELOAD);
             }
 #endif
             if (create_headers) CreateHeaders();

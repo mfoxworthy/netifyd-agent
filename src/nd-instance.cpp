@@ -89,6 +89,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
@@ -105,12 +106,16 @@ using namespace std;
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
+#include "nd-dhc.h"
+#include "nd-fhc.h"
 #include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
+#include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-dhc.h"
-#include "nd-fhc.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #ifdef _ND_USE_LIBPCAP
@@ -125,12 +130,7 @@ using namespace std;
 #include "nd-socket.h"
 #include "nd-sink.h"
 #include "nd-base64.h"
-#ifdef _ND_USE_PLUGINS
-#include "nd-plugin.h"
-#endif
-#include "nd-signal.h"
 #include "nd-napi.h"
-#include "nd-instance.h"
 
 ndInstance *ndInstance::instance = nullptr;
 
@@ -197,6 +197,15 @@ ndInstance::~ndInstance()
         timer_delete(timer_update_napi);
 
     for (unsigned p = 0; p < 2; p++) {
+        if (thread_napi) {
+            if (p == 0)
+                thread_napi->Terminate();
+            else {
+                delete thread_napi;
+                thread_napi= nullptr;
+            }
+        }
+
         if (thread_socket) {
             if (p == 0)
                 thread_socket->Terminate();
@@ -554,17 +563,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 ndCR_DUMP_LIST, (rc) ? 0 : 1
             );
         case _ND_LO_LOOKUP_IP:
-#ifndef _ND_LEAN_AND_MEAN
             rc = LookupAddress(optarg);
             return ndCR_Pack(
                 ndCR_LOOKUP_ADDR, (rc) ? 0 : 1
             );
-#else
-            fprintf(stderr,
-                "Sorry, this feature was disabled (embedded).\n"
-            );
-            exit(1);
-#endif
         case '?':
             fprintf(stderr, "Try `--help' for more information.\n");
             return ndCR_INVALID_OPTION;
@@ -981,7 +983,8 @@ bool ndInstance::LookupAddress(const string &ip)
 
 void ndInstance::CommandLineHelp(bool version_only)
 {
-    ndGC_SetFlag(ndGF_QUIET, true);
+    if (! ndGC_DEBUG)
+        ndGC_SetFlag(ndGF_QUIET, true);
 
     fprintf(stderr,
         "%s\n%s\n", nd_get_version_and_features().c_str(), PACKAGE_URL);
@@ -1003,66 +1006,27 @@ void ndInstance::CommandLineHelp(bool version_only)
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
 #ifdef _ND_USE_PLUGINS
-        if (ndGC.plugin_detections.size())
-            fprintf(stderr, "\nDetection plugins:\n");
+        try {
+            plugins.Load();
 
-        for (auto i : ndGC.plugin_detections) {
-
-            string plugin_version("?.?.?");
-
-            try {
-                ndPluginLoader *loader = new ndPluginLoader(
-                    i.second, i.first
-                );
-                loader->GetPlugin()->GetVersion(plugin_version);
+            if (ndGC.plugin_detections.size()) {
+                fprintf(stderr, "\nDetection plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_DETECTION);
             }
-            catch (...) { }
 
-            fprintf(stderr, "  %s: %s: v%s\n",
-                i.first.c_str(), i.second.c_str(),
-                plugin_version.c_str()
-            );
+            if (ndGC.plugin_stats.size()) {
+                fprintf(stderr, "\nStatistics plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_STATS);
+            }
+
+            if (ndGC.plugin_sinks.size()) {
+                fprintf(stderr, "\nSink plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_SINK);
+            }
         }
-
-        if (ndGC.plugin_sinks.size())
-            fprintf(stderr, "\nStatistics plugins:\n");
-
-        for (auto i : ndGC.plugin_sinks) {
-
-            string plugin_version("?.?.?");
-
-            try {
-                ndPluginLoader *loader = new ndPluginLoader(
-                    i.second, i.first
-                );
-                loader->GetPlugin()->GetVersion(plugin_version);
-            }
-            catch (...) { }
-
-            fprintf(stderr, "  %s: %s: v%s\n",
-                i.first.c_str(), i.second.c_str(),
-                plugin_version.c_str()
-            );
-        }
-
-        if (ndGC.plugin_stats.size())
-            fprintf(stderr, "\nStatistics plugins:\n");
-
-        for (auto i : ndGC.plugin_stats) {
-
-            string plugin_version("?.?.?");
-
-            try {
-                ndPluginLoader *loader = new ndPluginLoader(
-                    i.second, i.first
-                );
-                loader->GetPlugin()->GetVersion(plugin_version);
-            }
-            catch (...) { }
-
-            fprintf(stderr, "  %s: %s: v%s\n",
-                i.first.c_str(), i.second.c_str(),
-                plugin_version.c_str()
+        catch (exception &e) {
+            fprintf(stderr,
+                "\nError while loading plugins: %s\n", e.what()
             );
         }
 #endif
@@ -1101,6 +1065,7 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  --dump-categories\n    Dump application and protocol categories.\n"
             "  --dump-category <type>\n    Dump categories by type: application or protocol\n"
             "  --dump-risks\n    Dump flow security risks.\n"
+            "  --lookup-ip <addr>\n    Perform application query by IP address.\n"
             "\nCapture options:\n"
             "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
             "  -E, --external <interface>\n    Specify an external (WAN) interface to capture from.\n"
@@ -1611,9 +1576,221 @@ void ndInstance::ProcessUpdate(void)
 {
     nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
 
+    UpdateStatus();
+
+    if (ndGC_USE_DHC && dns_hint_cache != nullptr)
+        dns_hint_cache->Purge();
 #if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
     // Attempt to release heap back to OS when supported
     malloc_trim(0);
+#endif
+}
+
+void ndInstance::ProcessFlows(void)
+{
+    nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
+
+    uint32_t now = time(NULL);
+    size_t purged = 0, expiring = 0, expired = 0, active = 0, total = 0, blocked = 0;
+#ifdef _ND_PROCESS_FLOW_DEBUG
+    size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
+#endif
+    bool add_flows = (ndGC_USE_SINK || ndGC_EXPORT_JSON);
+    bool socket_queue = (thread_socket && thread_socket->GetClientCount());
+
+    //flow_buckets->DumpBucketStats();
+
+    size_t buckets = flow_buckets->GetBuckets();
+
+    for (size_t b = 0; b < buckets; b++) {
+        nd_flow_map *fm = flow_buckets->Acquire(b);
+        nd_flow_map::const_iterator i = fm->begin();
+
+        total += fm->size();
+        status.flows += fm->size();
+
+        while (i != fm->end()) {
+#ifdef _ND_PROCESS_FLOW_DEBUG
+            if (i->second->ip_protocol == IPPROTO_TCP) tcp++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load()) tcp_fin++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() == 1) tcp_fin_ack_1++;
+            if (i->second->ip_protocol == IPPROTO_TCP &&
+                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
+            if (i->second->tickets.load() > 0) tickets++;
+#endif
+            if (i->second->flags.expired.load() == false) {
+
+                uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
+                    ndGC.ttl_idle_flow : (
+                        (i->second->flags.tcp_fin_ack.load() >= 2) ?
+                            ndGC.ttl_idle_flow : ndGC.ttl_idle_tcp_flow
+                    )
+                );
+
+                if ((i->second->ts_last_seen / 1000) + ttl < now) {
+
+                    if (i->second->flags.detection_complete.load() == true)
+                        i->second->flags.expired = true;
+                    else if (i->second->flags.expiring.load() == false) {
+
+                        expiring++;
+
+                        ExpireFlow(i->second);
+
+                        auto it = thread_detection.find(i->second->dpi_thread_id);
+                        if (it != thread_detection.end())
+                            it->second->QueuePacket(i->second);
+                        else
+                            i->second->flags.expired = true;
+                    }
+                }
+            }
+
+            if (i->second->flags.expired.load() == true) {
+
+                expired++;
+
+                if (i->second->tickets.load() == 0) {
+
+                    if (add_flows &&
+                        (ndGC_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
+
+                        json jf;
+                        i->second->encode<json>(jf);
+
+                        string iface_name;
+                        nd_iface_name(i->second->iface.ifname, iface_name);
+
+                        // TODO: jflows[iface_name].push_back(jf);
+                    }
+
+                    if (socket_queue) {
+
+                        if (ndGC_FLOW_DUMP_UNKNOWN &&
+                            i->second->detected_protocol == ND_PROTO_UNKNOWN) {
+
+                            json j, jf;
+
+                            j["type"] = "flow";
+                            j["interface"] = i->second->iface.ifname;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
+                            j["established"] = false;
+
+                            i->second->encode<json>(
+                                jf, ndFlow::ENCODE_METADATA
+                            );
+                            j["flow"] = jf;
+
+                            string json_string;
+                            nd_json_to_string(j, json_string, false);
+                            json_string.append("\n");
+
+                            thread_socket->QueueWrite(json_string);
+                        }
+
+                        if (ndGC_FLOW_DUMP_UNKNOWN ||
+                            i->second->detected_protocol != ND_PROTO_UNKNOWN) {
+
+                            json j, jf;
+
+                            j["type"] = "flow_purge";
+                            j["reason"] = (
+                                i->second->ip_protocol == IPPROTO_TCP &&
+                                i->second->flags.tcp_fin.load()
+                            ) ? "closed" : (ShouldTerminate()) ? "terminated" : "expired";
+                            j["interface"] = i->second->iface.ifname;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
+                            j["established"] = false;
+
+                            i->second->encode<json>(
+                                jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
+                            );
+                            j["flow"] = jf;
+
+                            string json_string;
+                            nd_json_to_string(j, json_string, false);
+                            json_string.append("\n");
+
+                            thread_socket->QueueWrite(json_string);
+                        }
+                    }
+
+                    delete i->second;
+                    i = fm->erase(i);
+
+                    purged++;
+                    flows--;
+
+                    continue;
+                }
+                else {
+                    if (blocked == 0) {
+                        nd_dprintf("%s: flow purge blocked by %lu tickets.\n",
+                            i->second->iface.ifname.c_str(), i->second->tickets.load());
+                    }
+
+                    blocked++;
+                }
+            }
+            else {
+                if (i->second->flags.detection_init.load()) {
+
+                    if (add_flows && i->second->ts_first_update &&
+                        (ndGC_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
+
+                        json jf;
+                        i->second->encode<json>(jf);
+
+                        string iface_name;
+                        nd_iface_name(i->second->iface.ifname, iface_name);
+
+                        // TODO: jflows[iface_name].push_back(jf);
+
+                        if (socket_queue) {
+                            json j;
+
+                            j["type"] = "flow_stats";
+                            j["interface"] = i->second->iface.ifname;
+                            j["internal"] = (i->second->iface.role == ndIR_LAN);
+                            j["established"] = false;
+
+                            jf.clear();
+                            i->second->encode<json>(
+                                jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
+                            );
+                            j["flow"] = jf;
+
+                            string json_string;
+                            nd_json_to_string(j, json_string, false);
+                            json_string.append("\n");
+
+                            thread_socket->QueueWrite(json_string);
+                        }
+                    }
+
+                    i->second->reset();
+
+                    active++;
+                }
+            }
+
+            i++;
+        }
+
+        flow_buckets->Release(b);
+    }
+
+    nd_dprintf(
+        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
+        "idle: %lu, blocked: %lu\n",
+        purged, total, active, expiring, expired, total - active, blocked
+    );
+#ifdef _ND_PROCESS_FLOW_DEBUG
+    nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu, tickets: %lu\n",
+        tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2, tickets
+    );
 #endif
 }
 
@@ -1681,6 +1858,9 @@ int ndInstance::Run(void)
             thread_conntrack->Create();
         }
 #endif
+#ifdef _ND_USE_PLUGINS
+        plugins.Load();
+#endif
         if (ndGC_USE_SINK) {
             thread_sink = new ndSinkThread(ndGC.ca_sink);
             thread_sink->Create();
@@ -1726,45 +1906,53 @@ int ndInstance::Run(void)
         }
     }
     catch (ndSinkThreadException &e) {
-        nd_printf("%s: error starting upload thread: %s\n",
+        nd_printf("%s: Fatal sink thread exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
     catch (ndSocketException &e) {
-        nd_printf("%s: error starting socket thread: %s\n",
-            tag.c_str(), e.what()
-        );
-        goto ndInstance_RunReturn;
-    }
-    catch (ndSocketSystemException &e) {
-        nd_printf("%s: error starting socket thread: %s\n",
+        nd_printf("%s: Fatal socket exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
     catch (ndSocketThreadException &e) {
-        nd_printf("%s: error starting socket thread: %s\n",
+        nd_printf("%s: Fatal socket thread exception: %s\n",
+            tag.c_str(), e.what()
+        );
+        goto ndInstance_RunReturn;
+    }
+    catch (ndSocketSystemException &e) {
+        nd_printf("%s: Fatal system exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
 #ifdef _ND_USE_CONNTRACK
     catch (ndConntrackThreadException &e) {
-        nd_printf("%s: error starting conntrack thread: %s\n",
+        nd_printf("%s: Fatal conntrack thread exception: %s\n",
+            tag.c_str(), e.what()
+        );
+        goto ndInstance_RunReturn;
+    }
+#endif
+#ifdef _ND_USE_PLUGINS
+    catch (ndPluginException &e) {
+        nd_printf("%s: Fatal plugin exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
 #endif
     catch (ndThreadException &e) {
-        nd_printf("%s: error starting thread: %s\n",
+        nd_printf("%s: Fatal thread exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
     catch (exception &e) {
-        nd_printf("%s: error starting thread: %s\n",
+        nd_printf("%s: Fatal exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
@@ -1820,7 +2008,8 @@ void *ndInstance::ndInstance::Entry(void)
             return nullptr;
     }
     catch (exception &e) {
-        nd_printf("%s: exception while starting capture threads: %s\n",
+        nd_printf(
+            "%s: exception while starting capture threads: %s\n",
             tag.c_str(), e.what()
         );
         exit_code = EXIT_FAILURE;
@@ -1857,9 +2046,9 @@ void *ndInstance::ndInstance::Entry(void)
     }
 
     do {
-        int ipc = WaitForIPC(1);
+        int ipc = ndIPC_NONE;
 
-        switch (ipc) {
+        switch ((ipc = WaitForIPC(1))) {
         case ndIPC_NONE:
             break;
         case ndIPC_NETLINK_IO:
@@ -1867,6 +2056,10 @@ void *ndInstance::ndInstance::Entry(void)
                 "%s: received IPC: [%d] %s\n",
                 tag.c_str(), ipc, "Netlink data available"
             );
+#ifdef _ND_USE_NETLINK
+            if (ndGC_USE_NETLINK && netlink != nullptr)
+                netlink->ProcessEvent();
+#endif
             break;
         case ndIPC_RELOAD:
             nd_dprintf(
@@ -1883,18 +2076,34 @@ void *ndInstance::ndInstance::Entry(void)
             nd_dprintf("%s: received IPC: [%d] %s\n",
                 tag.c_str(), ipc, "Update");
             ProcessUpdate();
+            ProcessFlows();
             break;
         case ndIPC_UPDATE_NAPI:
             nd_dprintf(
                 "%s: received IPC: [%d] %s\n",
                 tag.c_str(), ipc, "Netify API update"
             );
+            if (ndGC_USE_NAPI && thread_napi == NULL) {
+                thread_napi = new ndNetifyApiThread();
+                thread_napi->Create();
+            }
             break;
         case ndIPC_UPDATE_NAPI_DONE:
             nd_dprintf(
                 "%s: received IPC: [%d] %s\n",
                 tag.c_str(), ipc, "Netify API update complete"
             );
+            Reload();
+            if (thread_napi != nullptr) {
+                delete thread_napi;
+                thread_napi = nullptr;
+#ifdef _ND_USE_PLUGINS
+            plugins.BroadcastEvent(
+                ndPlugin::TYPE_BASE,
+                ndPlugin::EVENT_CATEGORIES_UPDATE
+            );
+#endif
+            }
             break;
         default:
             nd_dprintf(
@@ -1902,6 +2111,22 @@ void *ndInstance::ndInstance::Entry(void)
                 tag.c_str(), ipc, "Ignored"
             );
         }
+
+        size_t threads = thread_capture.size();
+
+        for (auto &it : thread_capture) {
+            for (auto &it_instance : it.second) {
+                if (it_instance->HasTerminated()) threads--;
+            }
+        }
+
+        if (threads == 0) {
+            nd_printf("Exiting, no active capture threads.\n");
+            Terminate();
+            exit_code = EXIT_SUCCESS;
+        }
+
+        plugins.Reap();
 
         nd_dprintf("%s: tick\n", tag.c_str());
     }
@@ -2094,7 +2319,7 @@ void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
         for (auto it = fm->begin(); it != fm->end(); it++) {
             if (it->second->flags.expiring.load() == false) {
                 it->second->flags.expiring = true;
-                // TODO: nd_expire_flow(it->second);
+                ExpireFlow(it->second);
                 thread_detection[it->second->dpi_thread_id]->
                     QueuePacket(it->second);
             }
@@ -2140,6 +2365,66 @@ int ndInstance::WaitForIPC(int timeout)
     while (! ShouldTerminate() && timeout < 0 && --timeout != 0);
 
     return ipc;
+}
+
+void ndInstance::UpdateStatus(void)
+{
+#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+    size_t tcm_alloc_bytes = 0;
+
+    // Force tcmalloc to free unused memory
+    MallocExtension::instance()->ReleaseFreeMemory();
+    MallocExtension::instance()->
+        GetNumericProperty("generic.current_allocated_bytes", &tcm_alloc_bytes);
+    status.tcm_alloc_kb_prev = status.tcm_alloc_kb;
+    status.tcm_alloc_kb = tcm_alloc_bytes / 1024;
+#endif
+    struct rusage rusage_data;
+    getrusage(RUSAGE_SELF, &rusage_data);
+
+    status.cpu_user_prev = status.cpu_user;
+    status.cpu_user = (double)rusage_data.ru_utime.tv_sec +
+        ((double)rusage_data.ru_utime.tv_usec / 1000000.0);
+    status.cpu_system_prev = status.cpu_system;
+    status.cpu_system = (double)rusage_data.ru_stime.tv_sec +
+        ((double)rusage_data.ru_stime.tv_usec / 1000000.0);
+
+    status.maxrss_kb_prev = status.maxrss_kb;
+    status.maxrss_kb = rusage_data.ru_maxrss;
+
+    status.flows_prev = status.flows;
+    status.flows = 0;
+
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &status.ts_now) != 0)
+        memcpy(&status.ts_now, &status.ts_epoch, sizeof(struct timespec));
+
+    if (ndGC_USE_DHC) {
+        status.dhc_status = true;
+        status.dhc_size = dns_hint_cache->GetSize();
+    }
+    else
+        status.dhc_status = false;
+
+    if (thread_sink == NULL)
+        status.sink_status = false;
+    else {
+        status.sink_status = true;
+        status.sink_queue_size = thread_sink->QueuePendingSize();
+    }
+}
+
+void ndInstance::DisplayDebugScoreboard(void)
+{
+}
+
+void ndInstance::ExpireFlow(ndFlow *flow)
+{
+    flow->flags.expiring = true;
+#ifdef _ND_USE_PLUGINS
+    plugins.BroadcastDetectionEvent(
+        ndPluginDetection::EVENT_EXPIRING, flow
+    );
+#endif
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

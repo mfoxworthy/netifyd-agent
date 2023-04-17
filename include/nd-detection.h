@@ -45,7 +45,7 @@ public:
     uint16_t length;
 };
 
-class ndDetectionThread : public ndThread
+class ndDetectionThread : public ndThread, public ndInstanceClient
 {
 public:
     ndDetectionThread(
@@ -117,8 +117,6 @@ protected:
 
     void FlowUpdate(ndDetectionQueueEntry *entry);
 };
-
-typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
 
 #endif // _ND_DETECTION_THREAD_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -224,7 +224,7 @@ typedef unordered_map<int, ndSocket *> ndSocketClientMap;
 typedef unordered_map<int, ndSocketServer *> ndSocketServerMap;
 typedef unordered_map<int, ndSocketBuffer *> ndSocketBufferMap;
 
-class ndSocketThread : public ndThread
+class ndSocketThread : public ndThread, public ndInstanceClient
 {
 public:
     ndSocketThread(int16_t cpu = -1);

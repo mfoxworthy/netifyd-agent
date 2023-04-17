@@ -93,6 +93,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
@@ -109,19 +110,21 @@ using namespace std;
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 #include "nd-flow-parser.h"
+#include "nd-dhc.h"
+#include "nd-fhc.h"
 #include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
+#include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-dhc.h"
-#include "nd-fhc.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
-#include "nd-signal.h"
 #include "nd-napi.h"
 #include "nd-socket.h"
 #include "nd-sink.h"
-#include "nd-instance.h"
 
 #define _ND_SOCKET_PROC_NET_UNIX    "/proc/net/unix"
 
@@ -786,7 +789,7 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
 #if _ND_INSTANCE_SUPPORT
         json js_status;
         js_status["type"] = "agent_status";
-        ndInstance::GetInstance().GetStatus().Encode(js_status);
+        ndi.GetStatus().Encode(js_status);
 
         nd_json_to_string(js_status, json_string);
         json_string.append("\n");
@@ -795,10 +798,10 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
         json js_defs;
         js_defs["type"] = "definitions";
         json js_apps;
-        ndInstance::GetInstance().EncodeApplications(js_apps);
+        ndi.EncodeApplications(js_apps);
         js_defs["applications"] = js_apps;
         json js_protos;
-        ndInstance::GetInstance().EncodeProtocols(js_protos);
+        ndi.EncodeProtocols(js_protos);
         js_defs["protocols"] = js_protos;
 
         nd_json_to_string(js_defs, json_string);
