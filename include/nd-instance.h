@@ -317,7 +317,7 @@ protected:
 
     void *Entry(void);
 
-    bool Reload(void);
+    bool Reload(bool broadcast = true);
 
     bool CreateCaptureThreads(nd_capture_threads &threads);
     void DestroyCaptureThreads(

@@ -433,7 +433,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         ndGC.Close();
     }
 
-    Reload();
+    Reload(false);
 
     optind = 1;
     while (true) {
@@ -2155,12 +2155,6 @@ void *ndInstance::ndInstance::Entry(void)
             if (thread_napi != nullptr) {
                 delete thread_napi;
                 thread_napi = nullptr;
-#ifdef _ND_USE_PLUGINS
-            plugins.BroadcastEvent(
-                ndPlugin::TYPE_BASE,
-                ndPlugin::EVENT_CATEGORIES_UPDATE
-            );
-#endif
             }
             break;
         default:
@@ -2206,7 +2200,7 @@ ndInstance_EntryReturn:
     return nullptr;
 }
 
-bool ndInstance::Reload(void)
+bool ndInstance::Reload(bool broadcast)
 {
     bool result = true;
 
@@ -2219,7 +2213,11 @@ bool ndInstance::Reload(void)
     if (ndGC_LOAD_DOMAINS) result = domains.Load();
 
 #ifdef _ND_USE_PLUGINS
-    //nd_plugin_event(ndPlugin::EVENT_RELOAD);
+    if (broadcast) {
+        plugins.BroadcastEvent(
+            ndPlugin::TYPE_BASE, ndPlugin::EVENT_RELOAD
+        );
+    }
 #endif
 
     nd_dprintf("%s: configuration reloaded %s.\n", tag.c_str(),
