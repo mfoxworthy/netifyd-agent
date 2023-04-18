@@ -1007,7 +1007,7 @@ void ndInstance::CommandLineHelp(bool version_only)
 #endif
 #ifdef _ND_USE_PLUGINS
         try {
-            plugins.Load();
+            plugins.Load(ndPlugin::TYPE_BASE, false);
 
             if (ndGC.plugin_detections.size()) {
                 fprintf(stderr, "\nDetection plugins:\n");
@@ -1584,6 +1584,13 @@ void ndInstance::ProcessUpdate(void)
     // Attempt to release heap back to OS when supported
     malloc_trim(0);
 #endif
+
+#ifdef _ND_USE_PLUGINS
+    plugins.BroadcastEvent(
+        ndPlugin::TYPE_BASE,
+        ndPlugin::EVENT_STATUS_UPDATE
+    );
+#endif
 }
 
 void ndInstance::ProcessFlows(void)
@@ -2077,6 +2084,7 @@ void *ndInstance::ndInstance::Entry(void)
                 tag.c_str(), ipc, "Update");
             ProcessUpdate();
             ProcessFlows();
+            ReapCaptureThreads(thread_capture);
             break;
         case ndIPC_UPDATE_NAPI:
             nd_dprintf(
@@ -2300,7 +2308,8 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
     return true;
 }
 
-void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
+void ndInstance::DestroyCaptureThreads(
+    nd_capture_threads &threads, bool expire_flows)
 {
     for (auto &it : threads) {
         for (auto &it_instance : it.second) {
@@ -2310,6 +2319,8 @@ void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
     }
 
     threads.clear();
+
+    if (! expire_flows) return;
 
     size_t buckets = flow_buckets->GetBuckets();
 
@@ -2327,6 +2338,28 @@ void ndInstance::DestroyCaptureThreads(nd_capture_threads &threads)
 
         flow_buckets->Release(b);
     }
+}
+
+size_t ndInstance::ReapCaptureThreads(nd_capture_threads &threads)
+{
+    size_t count = threads.size();
+
+    for (auto &it : threads) {
+        for (auto &it_instance : it.second) {
+            if (it_instance->HasTerminated()) count--;
+        }
+    }
+
+    if (count == 0) {
+        DestroyCaptureThreads(threads, true);
+        if (thread_sink == nullptr ||
+            thread_sink->QueuePendingSize() == 0) {
+            nd_printf("Exiting, no remaining capture threads.\n");
+            Terminate();
+        }
+    }
+
+    return count;
 }
 
 int ndInstance::WaitForIPC(int timeout)

@@ -319,7 +319,9 @@ protected:
     bool Reload(void);
 
     bool CreateCaptureThreads(nd_capture_threads &threads);
-    void DestroyCaptureThreads(nd_capture_threads &threads);
+    void DestroyCaptureThreads(
+        nd_capture_threads &threads, bool expire_flows = false);
+    size_t ReapCaptureThreads(nd_capture_threads &threads);
 
     int WaitForIPC(int timeout = -1);
 
