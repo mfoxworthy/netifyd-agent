@@ -196,6 +196,7 @@ ndGlobalConfig::ndGlobalConfig() :
     flags |= ndGF_USE_NETLINK;
 #endif
     flags |= ndGF_SOFT_DISSECTORS;
+    flags |= ndGF_SYN_SCAN_PROTECTION;
 }
 
 ndGlobalConfig::~ndGlobalConfig()
@@ -314,16 +315,20 @@ bool ndGlobalConfig::Load(const string &filename)
     UpdatePaths();
 
     path_pid_file = r->Get(
-        "netifyd", "path_pid_file", ND_PID_FILE_NAME);
+        "netifyd", "path_pid_file",
+        path_state_volatile + "/" + ND_PID_FILE_BASE);
 
     path_uuid = r->Get(
-        "netifyd", "path_uuid", ND_AGENT_UUID_PATH);
+        "netifyd", "path_uuid",
+        path_state_persistent + "/" + ND_AGENT_UUID_BASE);
 
     path_uuid_serial = r->Get(
-        "netifyd", "path_uuid_serial", ND_AGENT_SERIAL_PATH);
+        "netifyd", "path_uuid_serial",
+        path_state_persistent + "/" + ND_AGENT_SERIAL_BASE);
 
     path_uuid_site = r->Get(
-        "netifyd", "path_uuid_site", ND_SITE_UUID_PATH);
+        "netifyd", "path_uuid_site",
+        path_state_persistent + "/" + ND_SITE_UUID_BASE);
 
     string url_sink_provision = r->Get(
         "netifyd", "url_sink", ND_URL_SINK);
@@ -379,13 +384,13 @@ bool ndGlobalConfig::Load(const string &filename)
     this->sink_max_post_errors = (unsigned)r->GetInteger(
         "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
 
+    ndGC_SetFlag(ndGF_SYN_SCAN_PROTECTION,
+        r->GetBoolean("netifyd", "syn_scan_protection", true));
+
     this->ttl_idle_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
     this->ttl_idle_tcp_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
-
-    ndGC_SetFlag(ndGF_CAPTURE_UNKNOWN_FLOWS,
-        r->GetBoolean("netifyd", "capture_unknown_flows", false));
 
     this->max_flows = (size_t)r->GetInteger(
         "netifyd", "max_flows", 0);

@@ -25,19 +25,19 @@ public:
     long cpus;
     struct timespec ts_epoch;
     struct timespec ts_now;
-    uint32_t flows;
-    uint32_t flows_prev;
+    atomic<size_t> flows;
+    size_t flows_prev;
+    size_t flows_purged;
+    size_t flows_expiring;
+    size_t flows_expired;
+    size_t flows_active;
+    size_t flows_locked;
     double cpu_user;
     double cpu_user_prev;
     double cpu_system;
     double cpu_system_prev;
-#if (SIZEOF_LONG == 4)
-    uint32_t maxrss_kb;
-    uint32_t maxrss_kb_prev;
-#elif (SIZEOF_LONG == 8)
-    uint64_t maxrss_kb;
-    uint64_t maxrss_kb_prev;
-#endif
+    size_t maxrss_kb;
+    size_t maxrss_kb_prev;
 #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
     size_t tcm_alloc_kb;
     size_t tcm_alloc_kb_prev;
@@ -65,8 +65,13 @@ public:
         serialize(output, { "cpu_user_prev" }, cpu_user_prev);
         serialize(output, { "cpu_system" }, cpu_system);
         serialize(output, { "cpu_system_prev" }, cpu_system_prev);
-        serialize(output, { "flow_count" }, flows);
+        serialize(output, { "flow_count" }, flows.load());
         serialize(output, { "flow_count_prev" }, flows_prev);
+        serialize(output, { "flows_purged" }, flows_purged);
+        serialize(output, { "flows_expiring" }, flows_expiring);
+        serialize(output, { "flows_expired" }, flows_expired);
+        serialize(output, { "flows_active" }, flows_active);
+        serialize(output, { "flows_locked" }, flows_locked);
         serialize(output, { "maxrss_kb" }, maxrss_kb);
         serialize(output, { "maxrss_kb_prev" }, maxrss_kb_prev);
 #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
@@ -110,7 +115,7 @@ class ndCaptureThread;
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
 typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
 
-class ndInstance : protected ndThread
+class ndInstance : public ndThread
 {
 public:
     static ndInstance& Create(const string &tag = "nd-instance");
@@ -193,21 +198,20 @@ public:
 
     bool CheckAgentUUID(void);
 
-    bool AgentStatus(void);
+    bool SaveAgentStatus(void);
+    bool DisplayAgentStatus(void);
 
     void ProcessUpdate(void);
     void ProcessFlows(void);
 
     int Run(void);
 
-    inline void Terminate(void) {
-        if (ShouldTerminate())
+    void Terminate(void) {
+        if (ShouldTerminate()) {
+            nd_dprintf("%s: Forcing termination...\n", tag.c_str());
             terminate_force = true;
+        }
         ndThread::Terminate();
-    }
-
-    inline bool Terminated(void) {
-        return ndThread::HasTerminated();
     }
 
     inline const string& GetVersion() const { return version; }
@@ -286,6 +290,7 @@ public:
 
     int exit_code;
 
+    ndInstanceStatus status;
     ndApplications apps;
     ndCategories categories;
     ndDomains domains;
@@ -330,7 +335,7 @@ protected:
 
     void DisplayDebugScoreboard(void);
 
-    void ExpireFlow(ndFlow *flow);
+    bool ExpireFlow(ndFlow *flow);
 
     int sig_update, sig_update_napi;
     timer_t timer_update, timer_update_napi;
@@ -343,10 +348,6 @@ protected:
     atomic_bool terminate_force;
 
     string conf_filename;
-
-    atomic<uint64_t> flows;
-
-    ndInstanceStatus status;
 
 private:
     ndInstance(const string &tag = "nd-instance");

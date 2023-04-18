@@ -1980,7 +1980,7 @@ int main(int argc, char *argv[])
     if (rc == 0) {
         struct timespec tspec_sigwait = { 1, 0 };
 
-        while (! instance.Terminated()) {
+        while (! instance.HasTerminated()) {
             int sig;
             siginfo_t si;
 

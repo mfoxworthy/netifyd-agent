@@ -142,6 +142,7 @@ protected:
     ndPlugin *plugin;
 };
 
+#if _ND_INSTANCE_SUPPORT
 class ndPluginManager
 {
 public:
@@ -153,7 +154,7 @@ public:
 
     bool Create(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
 
-    void Reap(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+    bool Reap(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
 
     void BroadcastEvent(ndPlugin::ndPluginType type,
         ndPlugin::ndPluginEvent event, void *param = nullptr);
@@ -169,8 +170,8 @@ public:
 protected:
     map<ndPlugin::ndPluginType, vector<ndPluginLoader *>> plugins;
 };
-
+#endif // _ND_INSTANCE_SUPPORT
 #endif // _ND_INTERNAL
-
 #endif // _ND_PLUGIN_H
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

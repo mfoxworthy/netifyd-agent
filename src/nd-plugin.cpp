@@ -162,6 +162,7 @@ ndPluginLoader::~ndPluginLoader()
     if (so_handle != NULL) dlclose(so_handle);
 }
 
+#if _ND_INSTANCE_SUPPORT
 ndPluginManager::~ndPluginManager()
 {
     for (auto &l : plugins) {
@@ -296,8 +297,10 @@ bool ndPluginManager::Create(ndPlugin::ndPluginType type)
     return true;
 }
 
-void ndPluginManager::Reap(ndPlugin::ndPluginType type)
+bool ndPluginManager::Reap(ndPlugin::ndPluginType type)
 {
+    size_t count = 0;
+
     for (auto &t : ndPlugin::types) {
         if (type != ndPlugin::TYPE_BASE && type != t.first)
             continue;
@@ -313,7 +316,7 @@ void ndPluginManager::Reap(ndPlugin::ndPluginType type)
                 continue;
             }
 
-            nd_printf("WARNING: Plugin exited abnormally: %s: %s\n",
+            nd_printf("Plugin exited abnormally: %s: %s\n",
                 (*p)->GetPlugin()->GetTag().c_str(),
                 (*p)->GetObjectName().c_str()
             );
@@ -321,9 +324,12 @@ void ndPluginManager::Reap(ndPlugin::ndPluginType type)
             delete (*p)->GetPlugin();
             delete (*p);
 
+            count++;
             p = pl->second.erase(p);
         }
     }
+
+    return (count > 0);
 }
 
 void ndPluginManager::BroadcastEvent(ndPlugin::ndPluginType type,
@@ -382,5 +388,6 @@ void ndPluginManager::DumpVersions(ndPlugin::ndPluginType type)
         }
     }
 }
+#endif
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

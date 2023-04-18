@@ -99,6 +99,8 @@
 #ifndef ND_PID_FILE_NAME
 #define ND_PID_FILE_NAME        ND_VOLATILE_STATEDIR "/netifyd.pid"
 #endif
+#define ND_PID_FILE_BASE        "netifyd.pid"
+#define ND_PID_FILE_PATH        ND_VOLATILE_STATEDIR "/" ND_PID_FILE_BASE
 
 #define ND_JSON_VERSION         1.9     // JSON format version
 #define ND_JSON_FILE_USER       "root"

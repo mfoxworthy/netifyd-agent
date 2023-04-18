@@ -132,14 +132,20 @@ using namespace std;
 #include "nd-base64.h"
 #include "nd-napi.h"
 
+//#define _ND_PROCESS_FLOW_DEBUG    1
+
 ndInstance *ndInstance::instance = nullptr;
 
 ndInstanceStatus::ndInstanceStatus() :
     cpus(0),
     ts_epoch{ 0, 0 },
     ts_now{ 0, 0 },
-    flows(0),
     flows_prev(0),
+    flows_purged(0),
+    flows_expiring(0),
+    flows_expired(0),
+    flows_active(0),
+    flows_locked(0),
     cpu_user(0),
     cpu_user_prev(0),
     cpu_system(0),
@@ -157,6 +163,7 @@ ndInstanceStatus::ndInstanceStatus() :
     sink_queue_size(0),
     sink_resp_code(ndJSON_RESP_NULL)
 {
+    flows = 0;
     cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
@@ -182,12 +189,11 @@ ndInstance::ndInstance(const string &tag)
     conf_filename(ND_CONF_FILE_NAME)
 {
     terminate_force = false;
-    flows = 0;
 }
 
 ndInstance::~ndInstance()
 {
-    Terminate();
+    if (! ShouldTerminate()) Terminate();
 
     Join();
 
@@ -680,7 +686,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             return ndCR_OPTION_DISABLED;
 #endif
         case 's':
-            rc = AgentStatus();
+            rc = DisplayAgentStatus();
             return ndCR_Pack(
                 ndCR_AGENT_STATUS, (rc) ? 0 : 1
             );
@@ -1171,7 +1177,35 @@ bool ndInstance::CheckAgentUUID(void)
     return true;
 }
 
-bool ndInstance::AgentStatus(void)
+bool ndInstance::SaveAgentStatus(void)
+{
+    json jstatus;
+
+    try {
+        jstatus["type"] = "agent_status";
+        jstatus["agent_version"] = PACKAGE_VERSION;
+
+        status.Encode(jstatus);
+
+        string json_string;
+        nd_json_to_string(jstatus, json_string);
+        json_string.append("\n");
+
+        if (thread_socket)
+            thread_socket->QueueWrite(json_string);
+
+        nd_json_save_to_file(json_string, ndGC.path_agent_status);
+        return true;
+    }
+    catch (exception &e) {
+        nd_printf("%s: Error saving Agent status to file: %s\n",
+            tag.c_str(), e.what());
+    }
+
+    return false;
+}
+
+bool ndInstance::DisplayAgentStatus(void)
 {
     const char *icon = ND_I_INFO;
     const char *color = ND_C_RESET;
@@ -1294,6 +1328,33 @@ bool ndInstance::AgentStatus(void)
             color, (unsigned)flows, ND_C_RESET,
             max_flows.c_str(),
             color, flow_utilization, ND_C_RESET
+        );
+
+        unsigned long flows_locked = (unsigned long)jstatus[
+            "flows_locked"
+        ].get<unsigned>();
+
+        if (flows_locked) {
+            icon = ND_I_WARN;
+            color = ND_C_YELLOW;
+        }
+        else {
+            icon = ND_I_INFO;
+            color = ND_C_RESET;
+        }
+
+        fprintf(stderr,
+            "%s%s%s flows purged: %lu, locked: %s%lu%s\n",
+            color, icon, ND_C_RESET,
+            (unsigned long)jstatus["flows_purged"].get<unsigned>(),
+            color, flows_locked, ND_C_RESET
+        );
+
+        fprintf(stderr,
+            "%s%s%s flows expiring: %lu, expired: %lu\n",
+            color, icon, ND_C_RESET,
+            (unsigned long)jstatus["flows_expiring"].get<unsigned>(),
+            (unsigned long)jstatus["flows_expired"].get<unsigned>()
         );
 
         fprintf(stderr, "%s minimum flow size: %lu\n",
@@ -1624,8 +1685,6 @@ bool ndInstance::AgentStatus(void)
 
 void ndInstance::ProcessUpdate(void)
 {
-    nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
-
     UpdateStatus();
 
     if (ndGC_USE_DHC && dns_hint_cache != nullptr)
@@ -1645,10 +1704,14 @@ void ndInstance::ProcessUpdate(void)
 
 void ndInstance::ProcessFlows(void)
 {
-    nd_dprintf("%s: %s\n", tag.c_str(), __PRETTY_FUNCTION__);
-
     uint32_t now = time(NULL);
-    size_t purged = 0, expiring = 0, expired = 0, active = 0, total = 0, blocked = 0;
+
+    status.flows_purged = 0;
+    status.flows_expiring = 0;
+    status.flows_expired = 0;
+    status.flows_active = 0;
+    status.flows_locked = 0;
+
 #ifdef _ND_PROCESS_FLOW_DEBUG
     size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
 #endif
@@ -1663,7 +1726,6 @@ void ndInstance::ProcessFlows(void)
         nd_flow_map *fm = flow_buckets->Acquire(b);
         nd_flow_map::const_iterator i = fm->begin();
 
-        total += fm->size();
         status.flows += fm->size();
 
         while (i != fm->end()) {
@@ -1681,33 +1743,18 @@ void ndInstance::ProcessFlows(void)
 
                 uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
                     ndGC.ttl_idle_flow : (
-                        (i->second->flags.tcp_fin_ack.load() >= 2) ?
+                        (i->second->flags.tcp_fin_ack.load()) ?
                             ndGC.ttl_idle_flow : ndGC.ttl_idle_tcp_flow
                     )
                 );
 
-                if ((i->second->ts_last_seen / 1000) + ttl < now) {
-
-                    if (i->second->flags.detection_complete.load() == true)
-                        i->second->flags.expired = true;
-                    else if (i->second->flags.expiring.load() == false) {
-
-                        expiring++;
-
-                        ExpireFlow(i->second);
-
-                        auto it = thread_detection.find(i->second->dpi_thread_id);
-                        if (it != thread_detection.end())
-                            it->second->QueuePacket(i->second);
-                        else
-                            i->second->flags.expired = true;
-                    }
-                }
+                if ((i->second->ts_last_seen / 1000) + ttl < now)
+                    if (ExpireFlow(i->second)) status.flows_expiring++;
             }
 
             if (i->second->flags.expired.load() == true) {
 
-                expired++;
+                status.flows_expired++;
 
                 if (i->second->tickets.load() == 0) {
 
@@ -1777,18 +1824,19 @@ void ndInstance::ProcessFlows(void)
                     delete i->second;
                     i = fm->erase(i);
 
-                    purged++;
-                    flows--;
+                    status.flows_purged++;
 
                     continue;
                 }
                 else {
-                    if (blocked == 0) {
-                        nd_dprintf("%s: flow purge blocked by %lu tickets.\n",
-                            i->second->iface.ifname.c_str(), i->second->tickets.load());
+                    if (status.flows_locked == 0) {
+                        nd_dprintf(
+                            "%s: flow purge blocked by locked tickets.\n",
+                            i->second->iface.ifname.c_str()
+                        );
                     }
 
-                    blocked++;
+                    status.flows_locked++;
                 }
             }
             else {
@@ -1829,7 +1877,7 @@ void ndInstance::ProcessFlows(void)
 
                     i->second->reset();
 
-                    active++;
+                    status.flows_active++;
                 }
             }
 
@@ -1839,10 +1887,16 @@ void ndInstance::ProcessFlows(void)
         flow_buckets->Release(b);
     }
 
+    status.flows -= status.flows_purged;
+
     nd_dprintf(
         "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
-        "idle: %lu, blocked: %lu\n",
-        purged, total, active, expiring, expired, total - active, blocked
+        "idle: %lu, locked: %lu\n",
+        status.flows_purged, status.flows.load(),
+        status.flows_active, status.flows_expiring,
+        status.flows_expired,
+        status.flows.load() - status.flows_active,
+        status.flows_locked
     );
 #ifdef _ND_PROCESS_FLOW_DEBUG
     nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu, tickets: %lu\n",
@@ -2132,9 +2186,10 @@ void *ndInstance::ndInstance::Entry(void)
         case ndIPC_UPDATE:
             nd_dprintf("%s: received IPC: [%d] %s\n",
                 tag.c_str(), ipc, "Update");
+            ReapCaptureThreads(thread_capture);
             ProcessUpdate();
             ProcessFlows();
-            ReapCaptureThreads(thread_capture);
+            SaveAgentStatus();
             break;
         case ndIPC_UPDATE_NAPI:
             nd_dprintf(
@@ -2164,30 +2219,26 @@ void *ndInstance::ndInstance::Entry(void)
             );
         }
 
-        size_t threads = thread_capture.size();
-
-        for (auto &it : thread_capture) {
-            for (auto &it_instance : it.second) {
-                if (it_instance->HasTerminated()) threads--;
-            }
+        if (plugins.Reap()) {
+            exit_code = EXIT_FAILURE;
+            break;
         }
-
-        if (threads == 0) {
-            nd_printf("Exiting, no active capture threads.\n");
-            Terminate();
-            exit_code = EXIT_SUCCESS;
-        }
-
-        plugins.Reap();
 
         nd_dprintf("%s: tick\n", tag.c_str());
     }
-    while (! ShouldTerminate());
+    while (
+        (terminate_force.load() == false &&
+            ShouldTerminate() && status.flows.load() > 0) ||
+        ShouldTerminate() == false
+    );
 
 ndInstance_EntryReturn:
-    Terminate();
+    if (! ShouldTerminate()) Terminate();
 
     DestroyCaptureThreads(thread_capture);
+
+    // Process an final update on shutdown
+    ProcessUpdate();
 
     if (exit_code == 0)
         nd_dprintf("%s: normal exit.\n", tag.c_str());
@@ -2376,11 +2427,9 @@ void ndInstance::DestroyCaptureThreads(
         nd_flow_map *fm = flow_buckets->Acquire(b);
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
-            if (it->second->flags.expiring.load() == false) {
-                it->second->flags.expiring = true;
+            if (it->second->flags.detection_complete.load() != true &&
+                it->second->flags.expiring.load() == false) {
                 ExpireFlow(it->second);
-                thread_detection[it->second->dpi_thread_id]->
-                    QueuePacket(it->second);
             }
         }
 
@@ -2398,13 +2447,13 @@ size_t ndInstance::ReapCaptureThreads(nd_capture_threads &threads)
         }
     }
 
-    if (count == 0) {
+    if (ShouldTerminate() == false && count == 0) {
+        nd_printf("%s: Exiting, no remaining capture threads.\n",
+            tag.c_str()
+        );
+
         DestroyCaptureThreads(threads, true);
-        if (thread_sink == nullptr ||
-            thread_sink->QueuePendingSize() == 0) {
-            nd_printf("Exiting, no remaining capture threads.\n");
-            Terminate();
-        }
+        Terminate();
     }
 
     return count;
@@ -2473,7 +2522,7 @@ void ndInstance::UpdateStatus(void)
     status.maxrss_kb_prev = status.maxrss_kb;
     status.maxrss_kb = rusage_data.ru_maxrss;
 
-    status.flows_prev = status.flows;
+    status.flows_prev = status.flows.load();
     status.flows = 0;
 
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &status.ts_now) != 0)
@@ -2498,14 +2547,29 @@ void ndInstance::DisplayDebugScoreboard(void)
 {
 }
 
-void ndInstance::ExpireFlow(ndFlow *flow)
+bool ndInstance::ExpireFlow(ndFlow *flow)
 {
-    flow->flags.expiring = true;
+    if (flow->flags.detection_complete.load() == true)
+        flow->flags.expired = true;
+    else if (flow->flags.expiring.load() == false) {
+
+        flow->flags.expiring = true;
+
+        auto it = thread_detection.find(flow->dpi_thread_id);
+        if (it != thread_detection.end()) {
+            it->second->QueuePacket(flow);
 #ifdef _ND_USE_PLUGINS
-    plugins.BroadcastDetectionEvent(
-        ndPluginDetection::EVENT_EXPIRING, flow
-    );
+//            plugins.BroadcastDetectionEvent(
+//                ndPluginDetection::EVENT_EXPIRING, flow
+//            );
 #endif
+            return true;
+        }
+        else
+            flow->flags.expired = true;
+    }
+
+    return false;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

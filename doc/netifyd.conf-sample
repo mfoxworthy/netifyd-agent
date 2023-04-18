@@ -6,7 +6,6 @@
 # Read the netifyd.conf(5) man page for documentation.
 
 [netifyd]
-capture_unknown_flows = <yes/no>
 enable_sink = <yes/no>
 flow_map_buckets = <buckets>
 json_save = <yes/no>
@@ -27,6 +26,7 @@ sink_xfer_timeout = <transfer timeout in seconds>
 soft_dissectors = <yes/no>
 ssl_use_tlsv1 = <yes/no>
 ssl_verify = <yes/no>
+syn_scan_protection = <yes/no>
 ttl_idle_flow = <idle flow TTL in seconds>
 ttl_idle_tcp_flow = <idle TCP flow TTL in seconds>
 update_interval = <update interval in seconds>

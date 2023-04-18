@@ -61,10 +61,10 @@ enum nd_tpv3_fanout_flags {
 enum nd_global_flags {
     ndGF_DEBUG = 0x1,
     ndGF_DEBUG_UPLOAD = 0x2,
-    ndGF_UNUSED0x4 = 0x4,
+    ndGF_UNUSED_0x4 = 0x4,
     ndGF_DEBUG_NDPI= 0x8,
     ndGF_QUIET = 0x10,
-    ndGF_CAPTURE_UNKNOWN_FLOWS = 0x20,
+    ndGF_SYN_SCAN_PROTECTION = 0x20,
     ndGF_PRIVATE_EXTADDR = 0x40,
     ndGF_SSL_USE_TLSv1 = 0x80,
     ndGF_SSL_VERIFY = 0x100,
@@ -92,7 +92,7 @@ enum nd_global_flags {
 #define ndGC_DEBUG_NDPI (ndGlobalConfig::GetInstance().flags & ndGF_DEBUG_NDPI)
 #define ndGC_QUIET (ndGlobalConfig::GetInstance().flags & ndGF_QUIET)
 #define ndGC_OVERRIDE_LEGACY_CONFIG (ndGlobalConfig::GetInstance().flags & ndGF_OVERRIDE_LEGACY_CONFIG)
-#define ndGC_CAPTURE_UNKNOWN_FLOWS (ndGlobalConfig::GetInstance().flags & ndGF_CAPTURE_UNKNOWN_FLOWS)
+#define ndGC_SYN_SCAN_PROTECTION (ndGlobalConfig::GetInstance().flags & ndGF_SYN_SCAN_PROTECTION)
 #define ndGC_PRIVATE_EXTADDR (ndGlobalConfig::GetInstance().flags & ndGF_PRIVATE_EXTADDR)
 #define ndGC_SSL_USE_TLSv1 (ndGlobalConfig::GetInstance().flags & ndGF_SSL_USE_TLSv1)
 #define ndGC_SSL_VERIFY (ndGlobalConfig::GetInstance().flags & ndGF_SSL_VERIFY)

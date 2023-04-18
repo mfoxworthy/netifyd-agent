@@ -302,6 +302,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
         Unlock();
 
         if (entry != NULL) {
+
             if (ndEF->detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
                 (ndEF->flags.expiring.load() == false ||
