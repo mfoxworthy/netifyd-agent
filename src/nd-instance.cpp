@@ -384,9 +384,11 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "dump-risks", 0, 0, _ND_LO_DUMP_RISKS },
 #define _ND_LO_DUMP_SORT_BY_TAG     16
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
-#define _ND_LO_EXPORT_APPS          17
+#define _ND_LO_DUMP_WITH_CATS       17
+        { "dump-with-categories", 0, 0, _ND_LO_DUMP_WITH_CATS },
+#define _ND_LO_EXPORT_APPS          18
         { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
-#define _ND_LO_LOOKUP_IP            18
+#define _ND_LO_LOOKUP_IP            19
         { "lookup-ip", 1, 0, _ND_LO_LOOKUP_IP },
 
         { NULL, 0, 0, 0 }
@@ -403,6 +405,12 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 
         switch (rc) {
         case 0:
+            break;
+        case _ND_LO_DUMP_SORT_BY_TAG:
+            dump_flags |= ndDUMP_SORT_BY_TAG;
+            break;
+        case _ND_LO_DUMP_WITH_CATS:
+            dump_flags |= ndDUMP_WITH_CATS;
             break;
         case '?':
             fprintf(stderr, "Try `--help' for more information.\n");
@@ -525,6 +533,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 #endif
         case _ND_LO_DUMP_SORT_BY_TAG:
             dump_flags |= ndDUMP_SORT_BY_TAG;
+            break;
+
+        case _ND_LO_DUMP_WITH_CATS:
+            dump_flags |= ndDUMP_WITH_CATS;
             break;
 
         case _ND_LO_DUMP_PROTOS:
@@ -957,10 +969,48 @@ bool ndInstance::DumpList(uint8_t type)
         }
     }
 
-    for (auto &entry : entries_by_id)
-        printf("%6u: %s\n", entry.first, entry.second.c_str());
-    for (auto &entry : entries_by_tag)
-        printf("%6u: %s\n", entry.second, entry.first.c_str());
+    for (auto &entry : entries_by_id) {
+        if (type & ndDUMP_WITH_CATS &&
+            (type & ndDUMP_TYPE_PROTOS || type & ndDUMP_TYPE_APPS)) {
+            string tag;
+            nd_cat_id_t cat_id = categories.ResolveTag(
+                (type & ndDUMP_TYPE_PROTOS) ?
+                    ndCAT_TYPE_PROTO : ndCAT_TYPE_APP,
+                entry.first,
+                tag
+            );
+
+            if (cat_id == ND_CAT_UNKNOWN || tag.empty())
+                tag = "unknown/" + to_string(cat_id);
+
+            printf("%6u: %s: %s\n",
+                entry.first, entry.second.c_str(), tag.c_str()
+            );
+        }
+        else
+            printf("%6u: %s\n", entry.first, entry.second.c_str());
+    }
+    for (auto &entry : entries_by_tag) {
+        if (type & ndDUMP_WITH_CATS &&
+            (type & ndDUMP_TYPE_PROTOS || type & ndDUMP_TYPE_APPS)) {
+            string tag;
+            nd_cat_id_t cat_id = categories.ResolveTag(
+                (type & ndDUMP_TYPE_PROTOS) ?
+                    ndCAT_TYPE_PROTO : ndCAT_TYPE_APP,
+                entry.second,
+                tag
+            );
+
+            if (cat_id == ND_CAT_UNKNOWN || tag.empty())
+                tag = "unknown/" + to_string(cat_id);
+
+            printf("%6u: %s: %s\n",
+                entry.second, entry.first.c_str(), tag.c_str()
+            );
+        }
+        else
+            printf("%6u: %s\n", entry.second, entry.first.c_str());
+    }
 
     return true;
 }

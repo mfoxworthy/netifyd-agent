@@ -176,6 +176,7 @@ public:
         ndDUMP_TYPE_RISKS = 0x10,
         ndDUMP_TYPE_VALID = 0x20,
         ndDUMP_SORT_BY_TAG = 0x40,
+        ndDUMP_WITH_CATS = 0x80,
         ndDUMP_TYPE_CATS = (
             ndDUMP_TYPE_CAT_APP | ndDUMP_TYPE_CAT_PROTO
         ),

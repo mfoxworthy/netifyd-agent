@@ -366,6 +366,25 @@ nd_cat_id_t ndCategories::LookupTag(ndCategoryType type, const string &tag)
     return ND_CAT_UNKNOWN;
 }
 
+nd_cat_id_t ndCategories::ResolveTag(ndCategoryType type, unsigned id, string& tag)
+{
+    if (type >= ndCAT_TYPE_MAX) return ND_CAT_UNKNOWN;
+
+    nd_cat_id_t cat_id = Lookup(type, id);
+
+    if (cat_id == ND_CAT_UNKNOWN) return ND_CAT_UNKNOWN;
+
+    unique_lock<mutex> ul(lock);
+
+    for (auto &i : categories[type].tag) {
+        if (i.second != cat_id) continue;
+        tag = i.first;
+        break;
+    }
+
+    return cat_id;
+}
+
 ndDomains::ndDomains()
 {
     path_domains = ndGC.path_state_persistent + "/domains.d";

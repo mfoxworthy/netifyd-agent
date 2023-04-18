@@ -71,6 +71,7 @@ public:
 
     nd_cat_id_t Lookup(ndCategoryType type, unsigned id);
     nd_cat_id_t LookupTag(ndCategoryType type, const string &tag);
+    nd_cat_id_t ResolveTag(ndCategoryType type, unsigned id, string &tag);
 
     bool GetTagIndex(ndCategoryType type, ndCategory::index_tag &index) {
         unique_lock<mutex> ul(lock);
