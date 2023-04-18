@@ -189,28 +189,34 @@ using namespace std;
 #include "nd-napi.h"
 
 // Enable to log discarded packets
-//#define _ND_LOG_PKT_DISCARD   1
+//#define _ND_LOG_PKT_DISCARD     1
+
+// Enable to log discarded TCP flags
+//#define _ND_LOG_PKT_TCP_FLAGS   1
+
+// Enable to log discarded TCP packets
+//#define _ND_LOG_PKT_TCP_DISCARD 1
 
 // Enable to log discarded flows
-//#define _ND_LOG_FLOW_DISCARD  1
+//#define _ND_LOG_FLOW_DISCARD    1
 
 // Enable DNS response debug logging
-//#define _ND_LOG_DNS_RESPONSE  1
+//#define _ND_LOG_DNS_RESPONSE    1
 
 // Enable DNS hint cache debug logging
-//#define _ND_LOG_DHC           1
+//#define _ND_LOG_DHC             1
 
 // Enable flow hash cache debug logging
-//#define _ND_LOG_FHC           1
+//#define _ND_LOG_FHC             1
 
 // Enable GTP tunnel dissection
 #define _ND_DISSECT_GTP         1
 
 #ifndef _ND_INSTANCE_SUPPORT
 extern ndFlowMap *nd_flow_buckets;
-#endif
 
 atomic_uint nd_flow_count;
+#endif
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -295,7 +301,6 @@ ndCaptureThread::ndCaptureThread(
     ndInstanceClient(),
     dl_type(0), cs_type(cs_type),
     iface(iface), thread_socket(thread_socket),
-/*    capture_unknown_flows(ndGC_CAPTURE_UNKNOWN_FLOWS), */
     ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
@@ -801,16 +806,26 @@ nd_process_ip:
         }
         else {
             hdr_tcp = reinterpret_cast<const struct tcphdr *>(l4);
-
+#ifdef _ND_LOG_PKT_TCP_FLAGS
+            nd_dprintf("%s: TCP flags: %c%c%c%c%c%c\n",
+                tag.c_str(),
+                (hdr_tcp->th_flags & TH_FIN) ? 'f' : '-',
+                (hdr_tcp->th_flags & TH_SYN) ? 's' : '-',
+                (hdr_tcp->th_flags & TH_RST) ? 'r' : '-',
+                (hdr_tcp->th_flags & TH_PUSH) ? 'p' : '-',
+                (hdr_tcp->th_flags & TH_ACK) ? 'a' : '-',
+                (hdr_tcp->th_flags & TH_URG) ? 'u' : '-'
+            );
+#endif
             uint16_t hdr_size = hdr_tcp->th_off * 4;
 
             if (hdr_size < 20 || hdr_size > l4_len) {
                 stats.pkt.discard++;
                 stats.pkt.discard_bytes += packet->length;
-    #ifdef _ND_LOG_PKT_DISCARD
+#ifdef _ND_LOG_PKT_DISCARD
                 nd_dprintf("%s: discard: unexpected TCP payload length.\n",
                     tag.c_str());
-    #endif
+#endif
                 return packet;
             }
 
@@ -941,14 +956,41 @@ nd_process_ip:
         }
     }
     else {
-        if (ndGC.max_flows > 0 && nd_flow_count + 1 > ndGC.max_flows) {
-            stats.pkt.discard++;
-            stats.pkt.discard_bytes += packet->length;
-            stats.flow.dropped++;
+#ifdef _ND_INSTANCE_SUPPORT
+        if (ndGC.max_flows > 0 &&
+            ndi.status.flows.load() + 1 > ndGC.max_flows) {
+#else
+        if (ndGC.max_flows > 0 &&
+            nd_flow_count + 1 > ndGC.max_flows) {
+#endif
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
                 tag.c_str(), ndGC.max_flows);
 #endif
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
+            stats.flow.dropped++;
+#ifdef _ND_INSTANCE_SUPPORT
+            ndi.flow_buckets->Release(flow_digest);
+#else
+            nd_flow_buckets->Release(flow_digest);
+#endif
+            return packet;
+        }
+
+        // A new TCP flow must only have SYN+ACK bits set
+        if (ndGC_SYN_SCAN_PROTECTION &&
+            flow.ip_protocol == IPPROTO_TCP &&
+            hdr_tcp->th_flags != (TH_SYN | TH_ACK)) {
+#ifdef _ND_LOG_PKT_TCP_DISCARD
+            nd_dprintf(
+                "%s: discard: new TCP flow without SYN/ACK.\n",
+                tag.c_str()
+            );
+#endif
+            stats.pkt.discard++;
+            stats.pkt.discard_bytes += packet->length;
+            stats.flow.dropped++;
 #ifdef _ND_INSTANCE_SUPPORT
             ndi.flow_buckets->Release(flow_digest);
 #else
@@ -976,9 +1018,11 @@ nd_process_ip:
         }
 #endif
         ticket.Take(nf, false);
-
+#ifdef _ND_INSTANCE_SUPPORT
+        ndi.status.flows++;
+#else
         nd_flow_count++;
-
+#endif
         // New flow inserted, initialize...
         nf->ts_first_seen = ts_pkt;
 
@@ -1142,8 +1186,6 @@ nd_process_ip:
             throw ndCaptureThreadException("CPU thread ID not found!");
         }
     }
-
-//    if (capture_unknown_flows) nf->push(pkt_header, packet->data);
 
     return packet;
 }
