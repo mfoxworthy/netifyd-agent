@@ -2559,9 +2559,9 @@ bool ndInstance::ExpireFlow(ndFlow *flow)
         if (it != thread_detection.end()) {
             it->second->QueuePacket(flow);
 #ifdef _ND_USE_PLUGINS
-//            plugins.BroadcastDetectionEvent(
-//                ndPluginDetection::EVENT_EXPIRING, flow
-//            );
+            plugins.BroadcastDetectionEvent(
+                ndPluginDetection::EVENT_EXPIRING, flow
+            );
 #endif
             return true;
         }
