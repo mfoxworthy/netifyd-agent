@@ -96,7 +96,6 @@ ndFlow::ndFlow(ndInterface &iface)
     digest_lower{}, digest_mdata{},
     dns_host_name{}, host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
-    capture_filename{},
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
@@ -128,7 +127,6 @@ ndFlow::ndFlow(const ndFlow &flow)
     ndpi_flow(NULL),
     dns_host_name{}, host_server_name{}, http{},
     privacy_mask(0), origin(0), direction(0),
-    capture_filename{},
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
     ct_id(0), ct_mark(0),
 #endif
@@ -227,49 +225,6 @@ void ndFlow::hash(const string &device,
         sha1_result(&ctx, digest_mdata);
 }
 
-void ndFlow::push(const struct pcap_pkthdr *pkt_header, const uint8_t *pkt_data)
-{
-    struct pcap_pkthdr *header = new struct pcap_pkthdr;
-    if (header == NULL)
-        throw ndSystemException(__PRETTY_FUNCTION__, "new header", ENOMEM);
-    uint8_t *data = new uint8_t[pkt_header->len];
-    if (data == NULL)
-        throw ndSystemException(__PRETTY_FUNCTION__, "new data", ENOMEM);
-
-    memcpy(header, pkt_header, sizeof(struct pcap_pkthdr));
-    memcpy(data, pkt_data, pkt_header->caplen);
-
-    capture.push_back(make_pair(header, data));
-}
-#if 0
-// TODO: Move to capture classes...
-int ndFlow::dump(pcap_t *pcap, const uint8_t *digest)
-{
-    char *p = capture_filename;
-    memcpy(p, ND_FLOW_CAPTURE_TEMPLATE, sizeof(ND_FLOW_CAPTURE_TEMPLATE));
-
-    p += ND_FLOW_CAPTURE_SUB_OFFSET;
-    for (int i = 0; i < 4; i++, p += 2) sprintf(p, "%02hhx", digest[i]);
-    strcat(p, ".cap");
-
-    pcap_dumper_t *pcap_dumper = pcap_dump_open(pcap, capture_filename);
-
-    if (pcap_dumper == NULL) {
-        nd_dprintf("%s: pcap_dump_open: %s: %s\n",
-            __PRETTY_FUNCTION__, capture_filename, "unknown");
-        return -1;
-    }
-
-    for (nd_flow_capture::const_iterator i = capture.begin();
-        i != capture.end(); i++) {
-        pcap_dump((uint8_t *)pcap_dumper, i->first, i->second);
-    }
-
-    pcap_dump_close(pcap_dumper);
-
-    return 0;
-}
-#endif
 void ndFlow::reset(bool full_reset)
 {
     ts_first_update = 0;
@@ -299,14 +254,6 @@ void ndFlow::release(void)
         ndpi_free_flow(ndpi_flow);
         ndpi_flow = NULL;
     }
-
-    for (nd_flow_capture::const_iterator i = capture.begin();
-        i != capture.end(); i++) {
-        delete i->first;
-        delete [] i->second;
-    }
-
-    capture.clear();
 }
 
 nd_proto_id_t ndFlow::master_protocol(void) const

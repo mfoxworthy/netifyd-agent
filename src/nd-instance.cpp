@@ -1157,6 +1157,7 @@ bool ndInstance::SaveAgentStatus(void)
         jstatus["type"] = "agent_status";
         jstatus["agent_version"] = PACKAGE_VERSION;
 
+        apps.Encode(jstatus);
         status.Encode(jstatus);
 
         string json_string;
@@ -1447,6 +1448,16 @@ bool ndInstance::DisplayAgentStatus(void)
                 colors[1], dropped_percent, ND_C_RESET
             );
         }
+
+        json jsig = jstatus["signatures"];
+        fprintf(stderr, "%s apps: %u, domains: %u, networks: %u, soft-dissectors: %u, transforms: %u\n",
+            ND_I_INFO,
+            jsig["apps"].get<unsigned>(),
+            jsig["domains"].get<unsigned>(),
+            jsig["networks"].get<unsigned>(),
+            jsig["soft_dissectors"].get<unsigned>(),
+            jsig["transforms"].get<unsigned>()
+        );
 
         bool dhc_status = jstatus["dhc_status"].get<bool>();
         fprintf(stderr, "%s%s%s DNS hint cache: %s%s%s\n",

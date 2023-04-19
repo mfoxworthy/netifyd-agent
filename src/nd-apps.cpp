@@ -97,7 +97,7 @@ typedef radix_tree<ndRadixNetworkEntry<32>, nd_app_id_t> nd_rn4_app;
 typedef radix_tree<ndRadixNetworkEntry<128>, nd_app_id_t> nd_rn6_app;
 
 ndApplications::ndApplications()
-    : app_networks4(NULL), app_networks6(NULL)
+    : stats{ 0 }, app_networks4(NULL), app_networks6(NULL)
 {
     Reset();
 }
@@ -109,7 +109,7 @@ ndApplications::~ndApplications()
 
 bool ndApplications::Load(const string &filename)
 {
-    size_t ac = 0, dc = 0, nc = 0, sc = 0, xc = 0;
+    stats.ac = stats.dc = stats.nc = stats.sc = stats.xc = 0;
 
     ifstream ifs(filename);
 
@@ -141,18 +141,20 @@ bool ndApplications::Load(const string &filename)
             );
 
             if (type == "app" && apps.find(id) == apps.end()) {
-                if (AddApp(id, line.substr(p + 1)) != nullptr) ac++;
+                if (AddApp(id, line.substr(p + 1)) != nullptr)
+                    stats.ac++;
             }
             else if (type == "dom") {
-                if (AddDomain(id, line.substr(p + 1))) dc++;
+                if (AddDomain(id, line.substr(p + 1))) stats.dc++;
             }
             else if (type == "net") {
-                if (AddNetwork(id, line.substr(p + 1))) nc++;
+                if (AddNetwork(id, line.substr(p + 1))) stats.nc++;
             }
         }
         else if (type == "xfm") {
             if ((p = line.find_first_of(":")) == string::npos) continue;
-            if (AddDomainTransform(line.substr(0, p), line.substr(p + 1))) xc++;
+            if (AddDomainTransform(line.substr(0, p), line.substr(p + 1)))
+                stats.xc++;
         }
         else if (type == "nsd") {
             if ((p = line.find_last_of(":")) == string::npos) continue;
@@ -170,17 +172,17 @@ bool ndApplications::Load(const string &filename)
                 line.c_str(), NULL, 0
             );
 
-            if (AddSoftDissector(aid, pid, expr)) sc++;
+            if (AddSoftDissector(aid, pid, expr)) stats.sc++;
         }
     }
 
-    if (ac > 0) {
+    if (stats.ac > 0) {
         nd_dprintf("Loaded %u apps, %u domains, %u networks, %u soft-dissectors, %u transforms.\n",
-            ac, dc, nc, sc, xc
+            stats.ac, stats.dc, stats.nc, stats.sc, stats.xc
         );
     }
 
-    return (ac > 0 && (ac > 0 || nc > 0));
+    return (stats.ac > 0 && (stats.ac > 0 || stats.nc > 0));
 }
 
 bool ndApplications::LoadLegacy(const string &filename)

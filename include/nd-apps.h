@@ -64,7 +64,7 @@ typedef vector<ndSoftDissector> nd_nsd_t;
 class ndFlow;
 class ndFlowParser;
 
-class ndApplications
+class ndApplications : public ndSerializer
 {
 public:
     ndApplications();
@@ -88,6 +88,15 @@ public:
     bool SoftDissectorMatch(
         const ndFlow *flow, ndFlowParser *parser, ndSoftDissector &match);
 
+    template <class T>
+    void Encode(T &output) const {
+        serialize(output, { "signatures", "apps" }, stats.ac);
+        serialize(output, { "signatures", "domains" }, stats.dc);
+        serialize(output, { "signatures", "networks" }, stats.nc);
+        serialize(output, { "signatures", "soft_dissectors" }, stats.sc);
+        serialize(output, { "signatures", "transforms" }, stats.xc);
+    };
+
 protected:
     mutex lock;
     nd_app_id_map apps;
@@ -96,6 +105,10 @@ protected:
     nd_domains_t domains;
     nd_nsd_t soft_dissectors;
     nd_domain_rx_xforms_t domain_xforms;
+
+    struct {
+        size_t ac, dc, nc, sc, xc;
+    } stats;
 
     void Reset(bool free_only = false);
 
