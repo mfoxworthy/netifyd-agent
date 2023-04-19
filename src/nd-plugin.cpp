@@ -78,6 +78,8 @@ using namespace std;
 #include "nd-flow-map.h"
 #include "nd-plugin.h"
 
+//#define _ND_LOG_PLUGIN_DEBUG    1
+
 const map<ndPlugin::ndPluginType, string> ndPlugin::types = {
     // XXX: Keep in sync with ndPluginType enum
     make_pair(ndPlugin::TYPE_SINK, "sink"),
@@ -85,47 +87,64 @@ const map<ndPlugin::ndPluginType, string> ndPlugin::types = {
     make_pair(ndPlugin::TYPE_STATS, "stats"),
 };
 
-ndPlugin::ndPlugin(const string &tag)
-    : ndThread(tag, -1), type(TYPE_BASE)
+ndPlugin::ndPlugin(ndPluginType type, const string &tag)
+    : ndThread(tag, -1), type(type)
 {
-    nd_dprintf("Plugin initialized: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Plugin created: %s\n", tag.c_str());
+#endif
 }
 
 ndPlugin::~ndPlugin()
 {
+#ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Plugin destroyed: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginSink::ndPluginSink(const string &tag)
-    : ndPlugin(tag) { }
+    : ndPlugin(ndPlugin::TYPE_SINK, tag)
+{
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Sink plugin created: %s\n", tag.c_str());
+#endif
+}
 
 ndPluginSink::~ndPluginSink()
 {
-    nd_dprintf("Plugin sink destroyed: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Sink plugin destroyed: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginDetection::ndPluginDetection(const string &tag)
-    : ndPlugin(tag)
+    : ndPlugin(ndPlugin::TYPE_DETECTION, tag)
 {
-    type = ndPlugin::TYPE_DETECTION;
-    nd_dprintf("Plugin detection initialized: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Detection plugin created: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginDetection::~ndPluginDetection()
 {
-    nd_dprintf("Plugin detection destroyed: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Detection plugin destroyed: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginStats::ndPluginStats(const string &tag)
-    : ndPlugin(tag)
+    : ndPlugin(ndPlugin::TYPE_STATS, tag)
 {
-    type = ndPlugin::TYPE_STATS;
-    nd_dprintf("Plugin detection initialized: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Stats plugin created: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginStats::~ndPluginStats()
 {
-    nd_dprintf("Plugin detection destroyed: %s\n", tag.c_str());
+#ifdef _ND_LOG_PLUGIN_DEBUG
+    nd_dprintf("Stats plugin destroyed: %s\n", tag.c_str());
+#endif
 }
 
 ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
@@ -158,8 +177,12 @@ ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
 
 ndPluginLoader::~ndPluginLoader()
 {
-    nd_dprintf("Plugin dereferenced: %s\n", so_name.c_str());
-    if (so_handle != NULL) dlclose(so_handle);
+    if (so_handle != NULL) {
+        dlclose(so_handle);
+#ifdef _ND_LOG_PLUGIN_DEBUG
+        nd_dprintf("Plugin dereferenced: %s\n", so_name.c_str());
+#endif
+    }
 }
 
 ndPluginManager::~ndPluginManager()
@@ -206,49 +229,13 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
         for (auto &i : *conf_plugins) {
             ndPluginLoader *loader = nullptr;
 
-            try {
-                loader = new ndPluginLoader(i.second, i.first);
+            loader = new ndPluginLoader(i.second, i.first);
 
-                if (loader->GetPlugin()->GetType() != t.first)
-                    throw ndPluginException(i.first, "wrong type");
+            if (loader->GetPlugin()->GetType() != t.first)
+                throw ndPluginException(i.first, "wrong type");
 
-                if (create)
-                    loader->GetPlugin()->Create();
-            }
-            catch (ndPluginException &e) {
-                nd_printf("Error loading %s plugin: %s\n",
-                    t.second.c_str(), e.what()
-                );
-                if (loader != nullptr) {
-                    if (loader->GetPlugin() != nullptr)
-                        delete loader->GetPlugin();
-                    delete loader;
-                }
-                throw e;
-            }
-            catch (ndThreadException &e) {
-                nd_printf("Error starting %s plugin: %s %s: %s\n",
-                    t.second.c_str(), i.first.c_str(),
-                    i.second.c_str(), e.what()
-                );
-                if (loader != nullptr) {
-                    if (loader->GetPlugin() != nullptr)
-                        delete loader->GetPlugin();
-                    delete loader;
-                }
-                throw e;
-            }
-            catch (exception &e) {
-                nd_printf("Unknown error loading %s plugin: %s\n",
-                    t.second.c_str(), e.what()
-                );
-                if (loader != nullptr) {
-                    if (loader->GetPlugin() != nullptr)
-                        delete loader->GetPlugin();
-                    delete loader;
-                }
-                throw e;
-            }
+            if (create)
+                loader->GetPlugin()->Create();
 
             auto pl = plugins.find(t.first);
 

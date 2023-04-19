@@ -20,20 +20,21 @@
 #define _ND_PLUGIN_VER  0x20230309
 
 #define ndPluginInit(class_name) \
-    extern "C" { \
+extern "C" { \
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
         if (p == NULL) return NULL; \
         if (p->GetType() != ndPlugin::TYPE_SINK && \
             p->GetType() != ndPlugin::TYPE_DETECTION && \
             p->GetType() != ndPlugin::TYPE_STATS) { \
-                nd_printf("Invalid plugin type detected during init: %s\n", \
-                    tag.c_str()); \
+                nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
+                    tag.c_str(), p->GetType()); \
                 delete p; \
                 return NULL; \
         } \
         return dynamic_cast<ndPlugin *>(p); \
-    } }
+    } \
+}
 
 class ndPluginException : public ndException
 {
@@ -46,7 +47,15 @@ public:
 class ndPlugin : public ndThread
 {
 public:
-    ndPlugin(const string &tag);
+    enum ndPluginType
+    {
+        TYPE_BASE,
+        TYPE_SINK,
+        TYPE_DETECTION,
+        TYPE_STATS,
+    };
+
+    ndPlugin(ndPluginType type, const string &tag);
     virtual ~ndPlugin();
 
     virtual void *Entry(void) = 0;
@@ -60,14 +69,6 @@ public:
     };
 
     virtual void ProcessEvent(ndPluginEvent event, void *param = NULL) { };
-
-    enum ndPluginType
-    {
-        TYPE_BASE,
-        TYPE_SINK,
-        TYPE_DETECTION,
-        TYPE_STATS,
-    };
 
     static const map<ndPlugin::ndPluginType, string> types;
     ndPluginType GetType(void) { return type; };
