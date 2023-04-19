@@ -360,7 +360,7 @@ void *ndNetifyApiThread::Entry(void)
             rc = Get(url.str().c_str());
         }
         catch (CURLcode &rc) {
-            nd_printf("%s: Error: %d\n", tag.c_str(), rc);
+            nd_printf("%s: Error: %s\n", tag.c_str(), curl_easy_strerror(rc));
             break;
         }
         catch (const string &es) {
