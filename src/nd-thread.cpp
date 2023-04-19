@@ -159,7 +159,7 @@ int ndThread::Join(void)
     int rc = -1;
 
     if (id == 0) {
-        nd_printf("%s: Thread ID invalid.\n", tag.c_str());
+        nd_dprintf("%s: Thread ID invalid.\n", tag.c_str());
         return rc;
     }
 
