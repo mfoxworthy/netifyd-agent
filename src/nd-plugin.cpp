@@ -162,7 +162,6 @@ ndPluginLoader::~ndPluginLoader()
     if (so_handle != NULL) dlclose(so_handle);
 }
 
-#if _ND_INSTANCE_SUPPORT
 ndPluginManager::~ndPluginManager()
 {
     for (auto &l : plugins) {
@@ -388,6 +387,5 @@ void ndPluginManager::DumpVersions(ndPlugin::ndPluginType type)
         }
     }
 }
-#endif
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

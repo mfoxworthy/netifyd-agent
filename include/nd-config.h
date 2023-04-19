@@ -71,7 +71,7 @@ enum nd_global_flags {
     ndGF_USE_CONNTRACK = 0x200,
     ndGF_USE_NETLINK = 0x400,
     ndGF_USE_NAPI = 0x800,
-    ndGF_USE_SINK = 0x1000,
+    ndGF_USE_SINKS = 0x1000,
     ndGF_USE_DHC = 0x2000,
     ndGF_USE_FHC = 0x4000,
     ndGF_EXPORT_JSON = 0x8000,
@@ -99,7 +99,7 @@ enum nd_global_flags {
 #define ndGC_USE_CONNTRACK (ndGlobalConfig::GetInstance().flags & ndGF_USE_CONNTRACK)
 #define ndGC_USE_NETLINK (ndGlobalConfig::GetInstance().flags & ndGF_USE_NETLINK)
 #define ndGC_USE_NAPI (ndGlobalConfig::GetInstance().flags & ndGF_USE_NAPI)
-#define ndGC_USE_SINK (ndGlobalConfig::GetInstance().flags & ndGF_USE_SINK)
+#define ndGC_USE_SINKS (ndGlobalConfig::GetInstance().flags & ndGF_USE_SINKS)
 #define ndGC_USE_DHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_DHC)
 #define ndGC_USE_FHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_FHC)
 #define ndGC_EXPORT_JSON (ndGlobalConfig::GetInstance().flags & ndGF_EXPORT_JSON)

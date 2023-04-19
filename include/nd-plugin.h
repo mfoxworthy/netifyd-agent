@@ -142,7 +142,6 @@ protected:
     ndPlugin *plugin;
 };
 
-#if _ND_INSTANCE_SUPPORT
 class ndPluginManager
 {
 public:
@@ -170,7 +169,6 @@ public:
 protected:
     map<ndPlugin::ndPluginType, vector<ndPluginLoader *>> plugins;
 };
-#endif // _ND_INSTANCE_SUPPORT
 #endif // _ND_INTERNAL
 #endif // _ND_PLUGIN_H
 

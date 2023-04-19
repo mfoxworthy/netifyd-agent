@@ -358,8 +358,12 @@ bool ndGlobalConfig::Load(const string &filename)
     this->max_packet_queue = r->GetInteger(
         "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
 
-    ndGC_SetFlag(ndGF_USE_SINK,
+    ndGC_SetFlag(ndGF_USE_SINKS,
         r->GetBoolean("netifyd", "enable_sink", false));
+    if (! ndGC_USE_SINKS) {
+        ndGC_SetFlag(ndGF_USE_SINKS,
+            r->GetBoolean("netifyd", "enable_sinks", false));
+    }
 
     if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
         ndGC_SetFlag(ndGF_SSL_VERIFY,

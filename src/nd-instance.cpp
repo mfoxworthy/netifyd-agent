@@ -128,7 +128,6 @@ using namespace std;
 #include "nd-capture-nfq.h"
 #endif
 #include "nd-socket.h"
-#include "nd-sink.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
@@ -158,10 +157,7 @@ ndInstanceStatus::ndInstanceStatus() :
 #endif
     dhc_status(false),
     dhc_size(0),
-    sink_uploads(false),
-    sink_status(false),
-    sink_queue_size(0),
-    sink_resp_code(ndJSON_RESP_NULL)
+    sink_status(false)
 {
     flows = 0;
     cpus = sysconf(_SC_NPROCESSORS_ONLN);
@@ -176,7 +172,6 @@ ndInstance::ndInstance(const string &tag)
 #ifdef _ND_USE_NETLINK
     netlink(nullptr),
 #endif
-    thread_sink(nullptr),
     thread_socket(nullptr),
     thread_napi(nullptr),
 #ifdef _ND_USE_CONNTRACK
@@ -218,15 +213,6 @@ ndInstance::~ndInstance()
             else {
                 delete thread_socket;
                 thread_socket = nullptr;
-            }
-        }
-
-        if (thread_sink) {
-            if (p == 0)
-                thread_sink->Terminate();
-            else {
-                delete thread_sink;
-                thread_sink = nullptr;
             }
         }
 
@@ -333,7 +319,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "debug", 0, 0, 'd' },
         { "debug-ether-names", 0, 0, 'e' },
         { "debug-ndpi", 0, 0, 'n' },
-        { "debug-uploads", 0, 0, 'D' },
+        { "debug-curl", 0, 0, 'D' },
         { "device-address", 1, 0, 'A' },
         { "device-filter", 1, 0, 'F' },
         { "device-peer", 1, 0, 'N' },
@@ -355,31 +341,29 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "uuidgen", 0, 0, 'U' },
         { "verbose", 0, 0, 'v' },
         { "version", 0, 0, 'V' },
-#define _ND_LO_ENABLE_SINK          1
-#define _ND_LO_DISABLE_SINK         2
-        { "enable-sink", 0, 0, _ND_LO_ENABLE_SINK },
-        { "disable-sink", 0, 0, _ND_LO_DISABLE_SINK },
+#define _ND_LO_ENABLE_SINKS         1
+#define _ND_LO_DISABLE_SINKS        2
+        { "enable-sinks", 0, 0, _ND_LO_ENABLE_SINKS },
+        { "disable-sinks", 0, 0, _ND_LO_DISABLE_SINKS },
 #define _ND_LO_FORCE_RESET          3
         { "force-reset", 0, 0, _ND_LO_FORCE_RESET },
 #define _ND_LO_CA_CAPTURE_BASE      4
 #define _ND_LO_CA_CONNTRACK         5
 #define _ND_LO_CA_DETECTION_BASE    6
 #define _ND_LO_CA_DETECTION_CORES   7
-#define _ND_LO_CA_SINK              8
-#define _ND_LO_CA_SOCKET            9
+#define _ND_LO_CA_SOCKET            8
         { "thread-capture-base", 1, 0, _ND_LO_CA_CAPTURE_BASE },
         { "thread-conntrack", 1, 0, _ND_LO_CA_CONNTRACK },
         { "thread-detection-base", 1, 0, _ND_LO_CA_DETECTION_BASE },
         { "thread-detection-cores", 1, 0, _ND_LO_CA_DETECTION_CORES },
-        { "thread-sink", 1, 0, _ND_LO_CA_SINK },
         { "thread-socket", 1, 0, _ND_LO_CA_SOCKET },
-#define _ND_LO_WAIT_FOR_CLIENT      10
+#define _ND_LO_WAIT_FOR_CLIENT      9
         { "wait-for-client", 0, 0, _ND_LO_WAIT_FOR_CLIENT },
-#define _ND_LO_DUMP_PROTOS          11
-#define _ND_LO_DUMP_APPS            12
-#define _ND_LO_DUMP_CAT             13
-#define _ND_LO_DUMP_CATS            14
-#define _ND_LO_DUMP_RISKS           15
+#define _ND_LO_DUMP_PROTOS          10
+#define _ND_LO_DUMP_APPS            11
+#define _ND_LO_DUMP_CAT             12
+#define _ND_LO_DUMP_CATS            13
+#define _ND_LO_DUMP_RISKS           14
         { "dump-all", 0, 0, 'P' },
         { "dump-protos", 0, 0, _ND_LO_DUMP_PROTOS },
         { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
@@ -388,13 +372,13 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "dump-category", 1, 0, _ND_LO_DUMP_CAT },
         { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
         { "dump-risks", 0, 0, _ND_LO_DUMP_RISKS },
-#define _ND_LO_DUMP_SORT_BY_TAG     16
+#define _ND_LO_DUMP_SORT_BY_TAG     15
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
-#define _ND_LO_DUMP_WITH_CATS       17
+#define _ND_LO_DUMP_WITH_CATS       16
         { "dump-with-categories", 0, 0, _ND_LO_DUMP_WITH_CATS },
-#define _ND_LO_EXPORT_APPS          18
+#define _ND_LO_EXPORT_APPS          17
         { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
-#define _ND_LO_LOOKUP_IP            19
+#define _ND_LO_LOOKUP_IP            18
         { "lookup-ip", 1, 0, _ND_LO_LOOKUP_IP },
 
         { NULL, 0, 0, 0 }
@@ -449,19 +433,19 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         switch (rc) {
         case 0:
             break;
-        case _ND_LO_ENABLE_SINK:
+        case _ND_LO_ENABLE_SINKS:
             rc = ndGC.SetOption(
                 conf_filename, "config_enable_sink"
             );
             return ndCR_Pack(
-                ndCR_SETOPT_SINK_ENABLE, (rc) ? 0 : 1
+                ndCR_SETOPT_SINKS_ENABLE, (rc) ? 0 : 1
             );
-        case _ND_LO_DISABLE_SINK:
+        case _ND_LO_DISABLE_SINKS:
             rc = ndGC.SetOption(
                 conf_filename, "config_disable_sink"
             );
             return ndCR_Pack(
-                ndCR_SETOPT_SINK_DISABLE, (rc) ? 0 : 1
+                ndCR_SETOPT_SINKS_DISABLE, (rc) ? 0 : 1
             );
         case _ND_LO_FORCE_RESET:
             rc = ndGC.ForceReset();
@@ -500,15 +484,6 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             if (ndGC.ca_detection_cores > status.cpus) {
                 fprintf(stderr,
                     "Detection cores greater than online cores.\n"
-                );
-                return ndCR_INVALID_VALUE;
-            }
-            break;
-        case _ND_LO_CA_SINK:
-            ndGC.ca_sink = (int16_t)atoi(optarg);
-            if (ndGC.ca_sink > status.cpus) {
-                fprintf(stderr,
-                    "Sink thread ID greater than online cores.\n"
                 );
                 return ndCR_INVALID_VALUE;
             }
@@ -793,7 +768,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     // Test mode enabled?  Disable/set certain config parameters
     if (ndGC.h_flow != stderr) {
         ndGC_SetFlag(ndGF_USE_FHC, true);
-        ndGC_SetFlag(ndGF_USE_SINK, false);
+        ndGC_SetFlag(ndGF_USE_SINKS, false);
         ndGC_SetFlag(ndGF_EXPORT_JSON, false);
         ndGC_SetFlag(ndGF_REMAIN_IN_FOREGROUND, true);
 
@@ -1096,7 +1071,7 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  -d, --debug\n    Enable debug output and remain in foreground.\n"
             "  -e, --debug-ether-names\n    In debug mode, resolve and display addresses from: /etc/ethers\n"
             "  -n, --debug-ndpi\n    In debug mode, display nDPI debug message when enabled (compile-time).\n"
-            "  -D, --debug-upload\n    In debug mode, display debug output from sink server uploads.\n"
+            "  -D, --debug-curl\n    In debug mode, display debug output from libCURL.\n"
             "  -v, --verbose\n    In debug mode, display real-time flow detections.\n"
             "  -R, --remain-in-foreground\n    Remain in foreground, don't daemonize (OpenWrt).\n"
             "  --wait-for-client\n    In debug mode, don't start capture threads until a client connects.\n"
@@ -1105,13 +1080,13 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  -u, --uuid\n    Display configured Agent UUID.\n"
             "  -U, --uuidgen\n    Generate (but don't save) a new Agent UUID.\n"
             "  -p, --provision\n    Provision Agent (generate and save Agent UUID).\n"
-            "  --enable-sink, --disable-sink\n    Enable/disable sink uploads.\n"
+            "  --enable-sinks, --disable-sinks\n    Enable/disable sink plugins.\n"
             "  -c, --config <filename>\n    Specify an alternate Agent configuration.\n"
             "    Default: %s\n"
             "  -f, --ndpi-config <filename>\n    Specify an alternate legacy (nDPI) application configuration file.\n"
             "    Default: %s\n"
             "  --force-reset\n    Reset Agent sink configuration options.\n"
-            "    Deletes: %s, %s, %s\n"
+            "    Deletes: %s, %s\n"
             "\nDump options:\n"
             "  --dump-sort-by-tag\n    Sort entries by tag.\n"
             "    Default: sort entries by ID.\n"
@@ -1135,18 +1110,15 @@ void ndInstance::CommandLineHelp(bool version_only)
             "\nThreading options:\n"
             "  --thread-capture-base <offset>\n    Specify a thread affinity base or offset for capture threads.\n"
             "  --thread-conntrack <cpu>\n    Specify a CPU affinity ID for the conntrack thread.\n"
-            "  --thread-sink <cpu>\n    Specify a CPU affinity ID for the sink upload thread.\n"
             "  --thread-socket <cpu>\n    Specify a CPU affinity ID for the socket server thread.\n"
             "  --thread-detection-base <offset>\n    Specify a thread affinity base or offset for detection (DPI) threads.\n"
             "  --thread-detection-cores <count>\n    Specify the number of detection (DPI) threads to start.\n"
 
             "\nSee netifyd(8) and netifyd.conf(5) for further options.\n",
-
             ND_CONF_FILE_NAME,
             ND_CONF_LEGACY_PATH,
             ndGC.path_uuid.c_str(),
-            ndGC.path_uuid_site.c_str(),
-            ND_URL_SINK_PATH
+            ndGC.path_uuid_site.c_str()
         );
     }
 }
@@ -1223,14 +1195,6 @@ bool ndInstance::DisplayAgentStatus(void)
 
     pid_t nd_pid = nd_load_pid(ndGC.path_pid_file);
     nd_pid = nd_is_running(nd_pid, self);
-
-    if (nd_file_exists(ND_URL_SINK_PATH) > 0) {
-        string url_sink;
-        if (nd_load_sink_url(url_sink)) {
-            free(ndGC.url_sink);
-            ndGC.url_sink = strdup(url_sink.c_str());
-        }
-    }
 
     fprintf(stderr, "%s%s%s agent %s: PID %d\n",
         (nd_pid < 0) ? ND_C_YELLOW :
@@ -1501,34 +1465,19 @@ bool ndInstance::DisplayAgentStatus(void)
             );
         }
 
-        fprintf(stderr, "%s%s%s sink URL: %s\n",
-            ND_C_GREEN, ND_I_INFO, ND_C_RESET, ndGC.url_sink);
-        fprintf(stderr, "%s%s%s sink services are %s.\n",
-            (ndGC_USE_SINK) ? ND_C_GREEN : ND_C_RED,
-            (ndGC_USE_SINK) ? ND_I_OK : ND_I_FAIL,
+        bool sink_status = jstatus["sink_status"].get<bool>();
+        fprintf(stderr, "%s%s%s sink plugins are %s.\n",
+            (sink_status) ? ND_C_GREEN : ND_C_RED,
+            (sink_status) ? ND_I_OK : ND_I_FAIL,
             ND_C_RESET,
-            (ndGC_USE_SINK) ? "enabled" : "disabled"
+            (sink_status) ? "enabled" : "disabled"
         );
 
-        if (! ndGC_USE_SINK) {
+        if (! sink_status) {
             fprintf(stderr,
-                "  To enable sink services, run the following command:\n"
+                "  To enable sink plugins, run the following command:\n"
             );
-            fprintf(stderr, "  # netifyd --enable-sink\n");
-        }
-
-        bool sink_uploads = jstatus["sink_uploads"].get<bool>();
-        fprintf(stderr, "%s%s%s sink uploads are %s.\n",
-            (sink_uploads) ? ND_C_GREEN : ND_C_RED,
-            (sink_uploads) ? ND_I_OK : ND_I_FAIL,
-            ND_C_RESET,
-            (sink_uploads) ? "enabled" : "disabled"
-        );
-
-        if (! sink_uploads) {
-            fprintf(stderr,
-                "  To enable sink uploads, ensure your Agent has been provisioned.\n"
-            );
+            fprintf(stderr, "  # netifyd --enable-sinks\n");
         }
 
         string uuid;
@@ -1572,104 +1521,6 @@ bool ndInstance::DisplayAgentStatus(void)
         else {
             fprintf(stderr, "%s%s%s sink site UUID: %s\n",
                 ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
-        }
-
-        bool sink_status = jstatus["sink_status"].get<bool>();
-        if (sink_status) {
-            string status, help;
-            icon = ND_I_OK;
-            color = ND_C_GREEN;
-            unsigned resp_code = jstatus["sink_resp_code"].get<unsigned>();
-            switch (resp_code) {
-            case ndJSON_RESP_NULL:
-                status = "not available";
-                icon = ND_I_WARN;
-                color = ND_C_YELLOW;
-                help = "Sink status not yet available, try again.";
-                break;
-            case ndJSON_RESP_OK:
-                status = "ok";
-                break;
-            case ndJSON_RESP_AUTH_FAIL:
-                status = "authorization failed";
-                icon = ND_I_FAIL;
-                color = ND_C_YELLOW;
-                help = "If no site UUID is set, please provision this agent.";
-                break;
-            case ndJSON_RESP_MALFORMED_DATA:
-                status = "malformed data";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "This should never happen, please contact support.";
-                break;
-            case ndJSON_RESP_SERVER_ERROR:
-                status = "server error";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "Contact support if this error persists.";
-                break;
-            case ndJSON_RESP_POST_ERROR:
-                status = "upload error";
-                icon = ND_I_WARN;
-                color = ND_C_YELLOW;
-                help = "This error should resolve automatically.";
-                break;
-            case ndJSON_RESP_PARSE_ERROR:
-                status = "parse error";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "This should never happen, please contact support.";
-                break;
-            case ndJSON_RESP_INVALID_RESPONSE:
-                status = "invalid response";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "This should never happen, please contact support.";
-                break;
-            case ndJSON_RESP_INVALID_CONTENT_TYPE:
-                status = "invalid response content type";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "This should never happen, please contact support.";
-                break;
-            default:
-                status = "unknown error";
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-                help = "This should never happen, please contact support.";
-                break;
-            }
-
-            fprintf(stderr, "%s%s%s sink server status: %s%s (%d)%s\n",
-                color, icon, ND_C_RESET, color,
-                status.c_str(), resp_code, ND_C_RESET
-            );
-
-            if (help.size() > 0)
-                fprintf(stderr, "  %s\n", help.c_str());
-
-            double sink_util =
-                jstatus["sink_queue_size_kb"].get<double>() * 100 /
-                jstatus["sink_queue_max_size_kb"].get<double>();
-
-            if (sink_util < 33.34) {
-                icon = ND_I_OK;
-                color = ND_C_GREEN;
-            }
-            else if (sink_util < 66.67) {
-                icon = ND_I_WARN;
-                color = ND_C_YELLOW;
-            }
-            else {
-                icon = ND_I_FAIL;
-                color = ND_C_RED;
-            }
-
-            fprintf(stderr,
-                "%s%s%s sink queue utilization: %s%.1lf%%%s\n",
-                color, icon, ND_C_RESET,
-                color, sink_util, ND_C_RESET
-            );
         }
     }
     catch (runtime_error &e) {
@@ -1715,7 +1566,7 @@ void ndInstance::ProcessFlows(void)
 #ifdef _ND_PROCESS_FLOW_DEBUG
     size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
 #endif
-    bool add_flows = (ndGC_USE_SINK || ndGC_EXPORT_JSON);
+    bool add_flows = (ndGC_USE_SINKS || ndGC_EXPORT_JSON);
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
     //flow_buckets->DumpBucketStats();
@@ -1972,11 +1823,6 @@ int ndInstance::Run(void)
 #ifdef _ND_USE_PLUGINS
         plugins.Load();
 #endif
-        if (ndGC_USE_SINK) {
-            thread_sink = new ndSinkThread(ndGC.ca_sink);
-            thread_sink->Create();
-        }
-
         if (ndGC.socket_host.size() || ndGC.socket_path.size()) {
             thread_socket = new ndSocketThread(ndGC.ca_socket);
             thread_socket->Create();
@@ -2015,12 +1861,6 @@ int ndInstance::Run(void)
 
             if (++cpu == cpus) cpu = 0;
         }
-    }
-    catch (ndSinkThreadException &e) {
-        nd_printf("%s: Fatal sink thread exception: %s\n",
-            tag.c_str(), e.what()
-        );
-        goto ndInstance_RunReturn;
     }
     catch (ndSocketException &e) {
         nd_printf("%s: Fatal socket exception: %s\n",
@@ -2535,12 +2375,9 @@ void ndInstance::UpdateStatus(void)
     else
         status.dhc_status = false;
 
-    if (thread_sink == NULL)
-        status.sink_status = false;
-    else {
-        status.sink_status = true;
-        status.sink_queue_size = thread_sink->QueuePendingSize();
-    }
+    status.sink_status = (
+        ndGC_USE_SINKS && ndGC.plugin_sinks.size() > 0
+    );
 }
 
 void ndInstance::DisplayDebugScoreboard(void)

@@ -44,10 +44,7 @@ public:
 #endif
     bool dhc_status;
     size_t dhc_size;
-    bool sink_uploads;
     bool sink_status;
-    size_t sink_queue_size;
-    ndJsonResponseCode sink_resp_code;
 
     template <class T>
     void Encode(T &output) const {
@@ -85,21 +82,6 @@ public:
             serialize(output, { "dhc_size" }, dhc_size);
 
         serialize(output, { "sink_status" }, sink_status);
-        serialize(output, { "sink_uploads" },
-            (ndGC_UPLOAD_ENABLED) ? true : false
-        );
-
-        if (sink_status) {
-            serialize(output, { "sink_queue_size_kb" },
-                sink_queue_size / 1024
-            );
-            serialize(output, { "sink_queue_max_size_kb" },
-                ndGC.max_backlog / 1024
-            );
-            serialize(output, { "sink_resp_code" },
-                (unsigned)sink_resp_code
-            );
-        }
     }
 };
 
@@ -154,8 +136,8 @@ public:
         ndCR_LOAD_FAILURE,
         ndCR_LOOKUP_ADDR,
         ndCR_PROVISION_UUID,
-        ndCR_SETOPT_SINK_DISABLE,
-        ndCR_SETOPT_SINK_ENABLE,
+        ndCR_SETOPT_SINKS_DISABLE,
+        ndCR_SETOPT_SINKS_ENABLE,
         ndCR_USAGE_OR_VERSION,
     };
 
@@ -303,7 +285,6 @@ public:
     ndNetlink *netlink;
 #endif
 
-    ndSinkThread *thread_sink;
     ndSocketThread *thread_socket;
     ndNetifyApiThread *thread_napi;
 #ifdef _ND_USE_CONNTRACK

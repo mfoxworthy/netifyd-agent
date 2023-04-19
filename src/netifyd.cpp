@@ -1290,7 +1290,7 @@ static void nd_dump_stats(void)
     }
 #endif
     nd_process_flows(jflows,
-        (ndGC_USE_SINK || ndGC_EXPORT_JSON)
+        (ndGC_USE_SINKS || ndGC_EXPORT_JSON)
     );
 
     jstatus["flow_count"] = nd_json_agent_stats.flows;
@@ -1315,12 +1315,12 @@ static void nd_dump_stats(void)
             e.what());
     }
 
-    if (ndGC_USE_SINK || ndGC_EXPORT_JSON) {
+    if (ndGC_USE_SINKS || ndGC_EXPORT_JSON) {
         j["flows"] = jflows;
         nd_json_to_string(j, json_string, ndGC_DEBUG);
     }
 
-    if (ndGC_USE_SINK && ! nd_terminate) {
+    if (ndGC_USE_SINKS && ! nd_terminate) {
         try {
             if (ndGC_UPLOAD_ENABLED)
                 thread_sink->QueuePush(json_string);
@@ -1737,13 +1737,13 @@ static void nd_status(void)
         fprintf(stderr, "%s%s%s sink URL: %s\n",
             ND_C_GREEN, ND_I_INFO, ND_C_RESET, ndGC.url_sink);
         fprintf(stderr, "%s%s%s sink services are %s.\n",
-            (ndGC_USE_SINK) ? ND_C_GREEN : ND_C_RED,
-            (ndGC_USE_SINK) ? ND_I_OK : ND_I_FAIL,
+            (ndGC_USE_SINKS) ? ND_C_GREEN : ND_C_RED,
+            (ndGC_USE_SINKS) ? ND_I_OK : ND_I_FAIL,
             ND_C_RESET,
-            (ndGC_USE_SINK) ? "enabled" : "disabled"
+            (ndGC_USE_SINKS) ? "enabled" : "disabled"
         );
 
-        if (! ndGC_USE_SINK) {
+        if (! ndGC_USE_SINKS) {
             fprintf(stderr, "  To enable sink services, run the following command:\n");
             fprintf(stderr, "  # netifyd --enable-sink\n");
         }
@@ -2428,7 +2428,7 @@ int main(int argc, char *argv[])
     if (ndGC.h_flow != stderr) {
         // Test mode enabled, disable/set certain config parameters
         ndGC_SetFlag(ndGF_USE_FHC, true);
-        ndGC_SetFlag(ndGF_USE_SINK, false);
+        ndGC_SetFlag(ndGF_USE_SINKS, false);
         ndGC_SetFlag(ndGF_EXPORT_JSON, false);
         ndGC_SetFlag(ndGF_REMAIN_IN_FOREGROUND, true);
 
@@ -2529,7 +2529,7 @@ int main(int argc, char *argv[])
         if (ndGC.socket_host.size() || ndGC.socket_path.size())
             thread_socket = new ndSocketThread(ndGC.ca_socket);
 
-        if (ndGC_USE_SINK) {
+        if (ndGC_USE_SINKS) {
             thread_sink = new ndSinkThread(ndGC.ca_sink);
             thread_sink->Create();
         }
@@ -2750,7 +2750,7 @@ int main(int argc, char *argv[])
         }
 
         if (sig == ND_SIG_SINK_REPLY) {
-            if (ndGC_USE_SINK && nd_sink_process_responses() < 0) {
+            if (ndGC_USE_SINKS && nd_sink_process_responses() < 0) {
                 nd_dprintf("nd_sink_process_responses failed!\n");
                 break;
             }
@@ -2786,7 +2786,7 @@ int main(int argc, char *argv[])
                 delete thread_napi;
                 thread_napi = NULL;
 #ifdef _ND_USE_PLUGINS
-                nd_plugin_event(ndPlugin::EVENT_CATEGORIES_UPDATE);
+                nd_plugin_event(ndPlugin::EVENT_RELOAD);
 #endif
             }
             continue;
