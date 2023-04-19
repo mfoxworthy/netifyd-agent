@@ -1040,19 +1040,14 @@ void ndInstance::CommandLineHelp(bool version_only)
         try {
             plugins.Load(ndPlugin::TYPE_BASE, false);
 
-            if (ndGC.plugin_detections.size()) {
-                fprintf(stderr, "\nDetection plugins:\n");
-                plugins.DumpVersions(ndPlugin::TYPE_DETECTION);
-            }
-
             if (ndGC.plugin_stats.size()) {
                 fprintf(stderr, "\nStatistics plugins:\n");
                 plugins.DumpVersions(ndPlugin::TYPE_STATS);
             }
 
-            if (ndGC.plugin_sinks.size()) {
-                fprintf(stderr, "\nSink plugins:\n");
-                plugins.DumpVersions(ndPlugin::TYPE_SINK);
+            if (ndGC.plugin_detections.size()) {
+                fprintf(stderr, "\nDetection plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_DETECTION);
             }
         }
         catch (exception &e) {
@@ -2397,10 +2392,6 @@ void ndInstance::UpdateStatus(void)
     }
     else
         status.dhc_status = false;
-
-    status.sink_status = (
-        ndGC_USE_SINKS && ndGC.plugin_sinks.size() > 0
-    );
 }
 
 void ndInstance::DisplayDebugScoreboard(void)

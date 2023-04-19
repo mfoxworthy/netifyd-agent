@@ -24,9 +24,8 @@ extern "C" { \
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
         if (p == NULL) return NULL; \
-        if (p->GetType() != ndPlugin::TYPE_SINK && \
-            p->GetType() != ndPlugin::TYPE_DETECTION && \
-            p->GetType() != ndPlugin::TYPE_STATS) { \
+        if (p->GetType() != ndPlugin::TYPE_STATS && \
+            p->GetType() != ndPlugin::TYPE_DETECTION) { \
                 nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
                     tag.c_str(), p->GetType()); \
                 delete p; \
@@ -50,9 +49,8 @@ public:
     enum ndPluginType
     {
         TYPE_BASE,
-        TYPE_SINK,
-        TYPE_DETECTION,
         TYPE_STATS,
+        TYPE_DETECTION,
     };
 
     ndPlugin(ndPluginType type, const string &tag);
@@ -77,11 +75,23 @@ protected:
     ndPluginType type;
 };
 
-class ndPluginSink : public ndPlugin
+class ndPluginStats : public ndPlugin
 {
 public:
-    ndPluginSink(const string &tag);
-    virtual ~ndPluginSink();
+    ndPluginStats(const string &tag);
+    virtual ~ndPluginStats();
+
+    enum ndStatsEvent {
+        INIT,
+        COMPLETE,
+    };
+
+    virtual void ProcessStats(ndStatsEvent event) { }
+    virtual void ProcessStats(const ndInterfaces &nd_interfaces) { }
+    virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
+    virtual void ProcessStats(
+        const string &iface, const ndPacketStats &pkt_stats) { }
+    virtual void ProcessStats(const ndFlowMap *flows) { }
 
 protected:
 };
@@ -101,27 +111,6 @@ public:
     virtual ~ndPluginDetection();
 
     virtual void ProcessFlow(ndDetectionEvent event, ndFlow *flow) = 0;
-
-protected:
-};
-
-class ndPluginStats : public ndPlugin
-{
-public:
-    ndPluginStats(const string &tag);
-    virtual ~ndPluginStats();
-
-    enum ndStatsEvent {
-        INIT,
-        COMPLETE,
-    };
-
-    virtual void ProcessStats(ndStatsEvent event) { }
-    virtual void ProcessStats(const ndInterfaces &nd_interfaces) { }
-    virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
-    virtual void ProcessStats(
-        const string &iface, const ndPacketStats &pkt_stats) { }
-    virtual void ProcessStats(const ndFlowMap *flows) { }
 
 protected:
 };

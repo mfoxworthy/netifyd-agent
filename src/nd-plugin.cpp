@@ -82,9 +82,8 @@ using namespace std;
 
 const map<ndPlugin::ndPluginType, string> ndPlugin::types = {
     // XXX: Keep in sync with ndPluginType enum
-    make_pair(ndPlugin::TYPE_SINK, "sink"),
-    make_pair(ndPlugin::TYPE_DETECTION, "detection"),
     make_pair(ndPlugin::TYPE_STATS, "stats"),
+    make_pair(ndPlugin::TYPE_DETECTION, "detection"),
 };
 
 ndPlugin::ndPlugin(ndPluginType type, const string &tag)
@@ -102,18 +101,18 @@ ndPlugin::~ndPlugin()
 #endif
 }
 
-ndPluginSink::ndPluginSink(const string &tag)
-    : ndPlugin(ndPlugin::TYPE_SINK, tag)
+ndPluginStats::ndPluginStats(const string &tag)
+    : ndPlugin(ndPlugin::TYPE_STATS, tag)
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Sink plugin created: %s\n", tag.c_str());
+    nd_dprintf("Stats plugin created: %s\n", tag.c_str());
 #endif
 }
 
-ndPluginSink::~ndPluginSink()
+ndPluginStats::~ndPluginStats()
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Sink plugin destroyed: %s\n", tag.c_str());
+    nd_dprintf("Stats plugin destroyed: %s\n", tag.c_str());
 #endif
 }
 
@@ -129,21 +128,6 @@ ndPluginDetection::~ndPluginDetection()
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Detection plugin destroyed: %s\n", tag.c_str());
-#endif
-}
-
-ndPluginStats::ndPluginStats(const string &tag)
-    : ndPlugin(ndPlugin::TYPE_STATS, tag)
-{
-#ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Stats plugin created: %s\n", tag.c_str());
-#endif
-}
-
-ndPluginStats::~ndPluginStats()
-{
-#ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Stats plugin destroyed: %s\n", tag.c_str());
 #endif
 }
 
@@ -211,14 +195,11 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
             continue;
 
         switch (t.first) {
-        case ndPlugin::TYPE_SINK:
-            conf_plugins = &ndGC.plugin_sinks;
+        case ndPlugin::TYPE_STATS:
+            conf_plugins = &ndGC.plugin_stats;
             break;
         case ndPlugin::TYPE_DETECTION:
             conf_plugins = &ndGC.plugin_detections;
-            break;
-        case ndPlugin::TYPE_STATS:
-            conf_plugins = &ndGC.plugin_stats;
             break;
         default:
             break;
