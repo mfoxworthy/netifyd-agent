@@ -754,7 +754,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 
     if (interfaces.size() == 0) {
         fprintf(stderr,
-            "%s: no packet capture sources configured.\n",
+            "%s: No packet capture sources configured.\n",
             tag.c_str()
         );
         return ndCR_INVALID_INTERFACES;
@@ -820,7 +820,7 @@ bool ndInstance::InitializeTimers(
     sigev.sigev_signo = sig_update;
 
     if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
-        nd_printf("%s: timer_create: %s\n",
+        nd_printf("%s: Error creating update timer: %s\n",
             tag.c_str(), strerror(errno)
         );
         return false;
@@ -833,7 +833,7 @@ bool ndInstance::InitializeTimers(
 
         if (timer_create(
             CLOCK_MONOTONIC, &sigev, &timer_update_napi) < 0) {
-            nd_printf("%s: timer_create: %s\n",
+            nd_printf("%s: Error creating API update timer: %s\n",
                 tag.c_str(), strerror(errno)
             );
             exit_code = EXIT_FAILURE;
@@ -852,7 +852,7 @@ bool ndInstance::Daemonize(void)
 {
     if (! ndGC_DEBUG && ! ndGC_REMAIN_IN_FOREGROUND) {
         if (daemon(1, 0) != 0) {
-            nd_printf("%s: daemon: %s\n",
+            nd_printf("%s: Error while daemonizing: %s\n",
                 tag.c_str(), strerror(errno)
             );
             return false;
@@ -861,7 +861,7 @@ bool ndInstance::Daemonize(void)
 
     if (! nd_dir_exists(ndGC.path_state_volatile)) {
         if (mkdir(ndGC.path_state_volatile.c_str(), 0755) != 0) {
-            nd_printf("%s: error creating volatile state path: %s: %s\n",
+            nd_printf("%s: Error creating volatile state path: %s: %s\n",
                 tag.c_str(),
                 ndGC.path_state_volatile.c_str(), strerror(errno)
             );
@@ -873,7 +873,7 @@ bool ndInstance::Daemonize(void)
 
     if (old_pid > 0 &&
         old_pid == nd_is_running(old_pid, self)) {
-        nd_printf("%s: an instance is already running: PID %d\n",
+        nd_printf("%s: An instance is already running: PID %d\n",
             tag.c_str(), old_pid
         );
         return false;
@@ -1752,7 +1752,7 @@ void ndInstance::ProcessFlows(void)
     status.flows -= status.flows_purged;
 
     nd_dprintf(
-        "Purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
+        "purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
         "idle: %lu, locked: %lu\n",
         status.flows_purged, status.flows.load(),
         status.flows_active, status.flows_expiring,
@@ -1923,7 +1923,7 @@ int ndInstance::Run(void)
     if (clock_gettime(
         CLOCK_MONOTONIC_RAW, &status.ts_epoch) != 0) {
         nd_printf(
-            "%s: error getting epoch time: %s\n",
+            "%s: Error loading epoch time (clock_gettime): %s\n",
             tag.c_str(), strerror(errno)
         );
         goto ndInstance_RunReturn;
@@ -1935,7 +1935,9 @@ int ndInstance::Run(void)
     }
     catch (exception &e) {
         exit_code = EXIT_FAILURE;
-        nd_dprintf("%s: exception: %s\n", tag.c_str(), e.what());
+        nd_printf("%s: Exception while starting instance thread: %s\n",
+            tag.c_str(), e.what()
+        );
     }
 
 ndInstance_RunReturn:
@@ -1956,7 +1958,7 @@ void *ndInstance::ndInstance::Entry(void)
 #endif
         }
         catch (exception &e) {
-            nd_printf("%s: exception while refreshing Netlink: %s\n",
+            nd_printf("%s: Exception while refreshing Netlink: %s\n",
                 tag.c_str(), e.what()
             );
             exit_code = EXIT_FAILURE;
@@ -1971,7 +1973,7 @@ void *ndInstance::ndInstance::Entry(void)
     }
     catch (exception &e) {
         nd_printf(
-            "%s: exception while starting capture threads: %s\n",
+            "%s: Exception while starting capture threads: %s\n",
             tag.c_str(), e.what()
         );
         exit_code = EXIT_FAILURE;
@@ -2032,6 +2034,8 @@ void *ndInstance::ndInstance::Entry(void)
             break;
         case ndIPC_TERMINATE:
             Terminate();
+            if (! terminate_force.load())
+                DestroyCaptureThreads(thread_capture, true);
             exit_code = EXIT_SUCCESS;
             break;
         case ndIPC_UPDATE:
@@ -2094,7 +2098,7 @@ ndInstance_EntryReturn:
     if (exit_code == 0)
         nd_dprintf("%s: normal exit.\n", tag.c_str());
     else {
-        nd_dprintf("%s: exit on error: %d\n",
+        nd_printf("%s: Exit on error: %d\n",
             tag.c_str(), exit_code
         );
     }
@@ -2131,7 +2135,7 @@ bool ndInstance::Reload(bool broadcast)
 bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
 {
     if (threads.size() != 0) {
-        nd_printf("%s: capture threads already created.\n",
+        nd_printf("%s: Capture threads already created.\n",
             tag.c_str()
         );
         return false;
@@ -2262,30 +2266,38 @@ void ndInstance::DestroyCaptureThreads(
     nd_capture_threads &threads, bool expire_flows)
 {
     for (auto &it : threads) {
-        for (auto &it_instance : it.second) {
+        for (auto &it_instance : it.second)
             it_instance->Terminate();
+    }
+    for (auto &it : threads) {
+        for (auto &it_instance : it.second)
             delete it_instance;
-        }
     }
 
     threads.clear();
 
     if (! expire_flows) return;
 
+    size_t count = 0, total = 0;
     size_t buckets = flow_buckets->GetBuckets();
 
     for (size_t b = 0; b < buckets; b++) {
         nd_flow_map *fm = flow_buckets->Acquire(b);
 
         for (auto it = fm->begin(); it != fm->end(); it++) {
-            if (it->second->flags.detection_complete.load() != true &&
+            if (it->second->flags.expired.load() == false &&
                 it->second->flags.expiring.load() == false) {
-                ExpireFlow(it->second);
+                if (ExpireFlow(it->second)) count++;
+                total++;
             }
         }
 
         flow_buckets->Release(b);
     }
+
+    nd_dprintf("%s: forcibly expired %lu of %lu flow(s).\n",
+        tag.c_str(), count, total
+    );
 }
 
 size_t ndInstance::ReapCaptureThreads(nd_capture_threads &threads)
