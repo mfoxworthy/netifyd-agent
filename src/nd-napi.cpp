@@ -128,7 +128,6 @@ using namespace std;
 #include "nd-capture-nfq.h"
 #endif
 #include "nd-socket.h"
-#include "nd-sink.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
@@ -338,14 +337,8 @@ void *ndNetifyApiThread::Entry(void)
 
         // Done?
         if (cid == ndCAT_TYPE_MAX || cqueue.size() == 0) {
-            if (categories.Save()) {
-#if _ND_INSTANCE_SUPPORT
-                ndi.SendIPC(ndInstance::ndIPC_UPDATE_NAPI_DONE);
-#else
             if (categories.Save())
-                kill(getpid(), ND_SIG_NAPI_UPDATED);
-#endif
-            }
+                ndi.SendIPC(ndInstance::ndIPC_UPDATE_NAPI_DONE);
             break;
         }
 

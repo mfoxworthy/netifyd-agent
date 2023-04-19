@@ -124,7 +124,6 @@ using namespace std;
 #include "nd-capture.h"
 #include "nd-napi.h"
 #include "nd-socket.h"
-#include "nd-sink.h"
 
 #define _ND_SOCKET_PROC_NET_UNIX    "/proc/net/unix"
 
@@ -784,9 +783,10 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
 
     try {
         string json_string;
-        nd_json_agent_hello(json_string);
-        buffer->Push(json_string);
-#if _ND_INSTANCE_SUPPORT
+        // TODO:
+        //nd_json_agent_hello(json_string);
+        //buffer->Push(json_string);
+
         json js_status;
         js_status["type"] = "agent_status";
         ndi.GetStatus().Encode(js_status);
@@ -807,16 +807,6 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
         nd_json_to_string(js_defs, json_string);
         json_string.append("\n");
         buffer->Push(json_string);
-#else
-        json js;
-        js["type"] = "agent_status";
-        nd_json_agent_status(js);
-        nd_json_to_string(js, json_string);
-        json_string.append("\n");
-        buffer->Push(json_string);
-        nd_json_protocols(json_string);
-        buffer->Push(json_string);
-#endif
     }
     catch (exception &e) {
         Unlock();

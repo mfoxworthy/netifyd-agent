@@ -44,11 +44,9 @@ public:
 #endif
     bool dhc_status;
     size_t dhc_size;
-    bool sink_status;
 
     template <class T>
     void Encode(T &output) const {
-        serialize(output, { "version" }, (double)ND_JSON_VERSION);
         serialize(output, { "timestamp" }, time(NULL));
         serialize(output, { "update_interval" },
             ndGC.update_interval
@@ -80,8 +78,6 @@ public:
         serialize(output, { "dhc_status" }, dhc_status);
         if (dhc_status)
             serialize(output, { "dhc_size" }, dhc_size);
-
-        serialize(output, { "sink_status" }, sink_status);
     }
 };
 
@@ -89,7 +85,6 @@ public:
 class ndConntrackThread;
 #endif
 class ndNetifyApiThread;
-class ndSinkThread;
 class ndSocketThread;
 class ndDetectionThread;
 class ndCaptureThread;
@@ -136,8 +131,6 @@ public:
         ndCR_LOAD_FAILURE,
         ndCR_LOOKUP_ADDR,
         ndCR_PROVISION_UUID,
-        ndCR_SETOPT_SINKS_DISABLE,
-        ndCR_SETOPT_SINKS_ENABLE,
         ndCR_USAGE_OR_VERSION,
     };
 

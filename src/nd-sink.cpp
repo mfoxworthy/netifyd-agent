@@ -439,9 +439,6 @@ void ndSinkThread::PushResponse(ndJsonResponse *response)
     responses.push_back(response);
 
     pthread_mutex_unlock(&response_mutex);
-#ifndef _ND_INSTANCE_SUPPORT
-    kill(getpid(), ND_SIG_SINK_REPLY);
-#endif
 }
 
 ndJsonResponse *ndSinkThread::PopResponse(void)
@@ -834,11 +831,11 @@ void ndSinkThread::ProcessResponse(void)
                         create_headers = true;
                 }
             }
-#if _ND_INSTANCE_SUPPORT
+
             if (reload_config) {
                 ndi.SendIPC(ndInstance::ndIPC_RELOAD);
             }
-#endif
+
             if (create_headers) CreateHeaders();
         }
 

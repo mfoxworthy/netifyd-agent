@@ -156,8 +156,7 @@ ndInstanceStatus::ndInstanceStatus() :
     tcm_alloc_kb_prev(0),
 #endif
     dhc_status(false),
-    dhc_size(0),
-    sink_status(false)
+    dhc_size(0)
 {
     flows = 0;
     cpus = sysconf(_SC_NPROCESSORS_ONLN);
@@ -341,29 +340,25 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "uuidgen", 0, 0, 'U' },
         { "verbose", 0, 0, 'v' },
         { "version", 0, 0, 'V' },
-#define _ND_LO_ENABLE_SINKS         1
-#define _ND_LO_DISABLE_SINKS        2
-        { "enable-sinks", 0, 0, _ND_LO_ENABLE_SINKS },
-        { "disable-sinks", 0, 0, _ND_LO_DISABLE_SINKS },
-#define _ND_LO_FORCE_RESET          3
+#define _ND_LO_FORCE_RESET          1
         { "force-reset", 0, 0, _ND_LO_FORCE_RESET },
-#define _ND_LO_CA_CAPTURE_BASE      4
-#define _ND_LO_CA_CONNTRACK         5
-#define _ND_LO_CA_DETECTION_BASE    6
-#define _ND_LO_CA_DETECTION_CORES   7
-#define _ND_LO_CA_SOCKET            8
+#define _ND_LO_CA_CAPTURE_BASE      2
+#define _ND_LO_CA_CONNTRACK         3
+#define _ND_LO_CA_DETECTION_BASE    4
+#define _ND_LO_CA_DETECTION_CORES   5
+#define _ND_LO_CA_SOCKET            6
         { "thread-capture-base", 1, 0, _ND_LO_CA_CAPTURE_BASE },
         { "thread-conntrack", 1, 0, _ND_LO_CA_CONNTRACK },
         { "thread-detection-base", 1, 0, _ND_LO_CA_DETECTION_BASE },
         { "thread-detection-cores", 1, 0, _ND_LO_CA_DETECTION_CORES },
         { "thread-socket", 1, 0, _ND_LO_CA_SOCKET },
-#define _ND_LO_WAIT_FOR_CLIENT      9
+#define _ND_LO_WAIT_FOR_CLIENT      7
         { "wait-for-client", 0, 0, _ND_LO_WAIT_FOR_CLIENT },
-#define _ND_LO_DUMP_PROTOS          10
-#define _ND_LO_DUMP_APPS            11
-#define _ND_LO_DUMP_CAT             12
-#define _ND_LO_DUMP_CATS            13
-#define _ND_LO_DUMP_RISKS           14
+#define _ND_LO_DUMP_PROTOS          8
+#define _ND_LO_DUMP_APPS            9
+#define _ND_LO_DUMP_CAT             10
+#define _ND_LO_DUMP_CATS            11
+#define _ND_LO_DUMP_RISKS           12
         { "dump-all", 0, 0, 'P' },
         { "dump-protos", 0, 0, _ND_LO_DUMP_PROTOS },
         { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
@@ -372,13 +367,13 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "dump-category", 1, 0, _ND_LO_DUMP_CAT },
         { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
         { "dump-risks", 0, 0, _ND_LO_DUMP_RISKS },
-#define _ND_LO_DUMP_SORT_BY_TAG     15
+#define _ND_LO_DUMP_SORT_BY_TAG     13
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
-#define _ND_LO_DUMP_WITH_CATS       16
+#define _ND_LO_DUMP_WITH_CATS       14
         { "dump-with-categories", 0, 0, _ND_LO_DUMP_WITH_CATS },
-#define _ND_LO_EXPORT_APPS          17
+#define _ND_LO_EXPORT_APPS          15
         { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
-#define _ND_LO_LOOKUP_IP            18
+#define _ND_LO_LOOKUP_IP            16
         { "lookup-ip", 1, 0, _ND_LO_LOOKUP_IP },
 
         { NULL, 0, 0, 0 }
@@ -433,20 +428,6 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         switch (rc) {
         case 0:
             break;
-        case _ND_LO_ENABLE_SINKS:
-            rc = ndGC.SetOption(
-                conf_filename, "config_enable_sink"
-            );
-            return ndCR_Pack(
-                ndCR_SETOPT_SINKS_ENABLE, (rc) ? 0 : 1
-            );
-        case _ND_LO_DISABLE_SINKS:
-            rc = ndGC.SetOption(
-                conf_filename, "config_disable_sink"
-            );
-            return ndCR_Pack(
-                ndCR_SETOPT_SINKS_DISABLE, (rc) ? 0 : 1
-            );
         case _ND_LO_FORCE_RESET:
             rc = ndGC.ForceReset();
             return ndCR_Pack(
@@ -768,14 +749,11 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     // Test mode enabled?  Disable/set certain config parameters
     if (ndGC.h_flow != stderr) {
         ndGC_SetFlag(ndGF_USE_FHC, true);
-        ndGC_SetFlag(ndGF_USE_SINKS, false);
-        ndGC_SetFlag(ndGF_EXPORT_JSON, false);
         ndGC_SetFlag(ndGF_REMAIN_IN_FOREGROUND, true);
 
         ndGC.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
         ndGC.plugin_detections.clear();
-        ndGC.plugin_sinks.clear();
         ndGC.plugin_stats.clear();
 #endif
         ndGC.dhc_save = ndDHC_DISABLED;
@@ -799,8 +777,6 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     nd_sha1_file(
         ndGC.path_legacy_config, ndGC.digest_legacy_config
     );
-
-    ndGC.LoadSinkURL();
 
     // Configuration is valid when version is set
     version = nd_get_version_and_features();
@@ -1075,12 +1051,11 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  -u, --uuid\n    Display configured Agent UUID.\n"
             "  -U, --uuidgen\n    Generate (but don't save) a new Agent UUID.\n"
             "  -p, --provision\n    Provision Agent (generate and save Agent UUID).\n"
-            "  --enable-sinks, --disable-sinks\n    Enable/disable sink plugins.\n"
             "  -c, --config <filename>\n    Specify an alternate Agent configuration.\n"
             "    Default: %s\n"
             "  -f, --ndpi-config <filename>\n    Specify an alternate legacy (nDPI) application configuration file.\n"
             "    Default: %s\n"
-            "  --force-reset\n    Reset Agent sink configuration options.\n"
+            "  --force-reset\n    Reset global sink configuration options.\n"
             "    Deletes: %s, %s\n"
             "\nDump options:\n"
             "  --dump-sort-by-tag\n    Sort entries by tag.\n"
@@ -1162,7 +1137,7 @@ bool ndInstance::SaveAgentStatus(void)
         if (thread_socket)
             thread_socket->QueueWrite(json_string);
 
-        nd_json_save_to_file(json_string, ndGC.path_agent_status);
+        nd_file_save(ndGC.path_agent_status, json_string);
         return true;
     }
     catch (exception &e) {
@@ -1225,7 +1200,7 @@ bool ndInstance::DisplayAgentStatus(void)
         jstatus = json::parse(status);
 
         if (jstatus["type"].get<string>() != "agent_status")
-            throw ndJsonParseException("Required type: agent_status");
+            throw runtime_error("Required type: agent_status");
 
         char timestamp[64];
         time_t ts = jstatus["timestamp"].get<time_t>();
@@ -1471,21 +1446,6 @@ bool ndInstance::DisplayAgentStatus(void)
             );
         }
 
-        bool sink_status = jstatus["sink_status"].get<bool>();
-        fprintf(stderr, "%s%s%s sink plugins are %s.\n",
-            (sink_status) ? ND_C_GREEN : ND_C_RED,
-            (sink_status) ? ND_I_OK : ND_I_FAIL,
-            ND_C_RESET,
-            (sink_status) ? "enabled" : "disabled"
-        );
-
-        if (! sink_status) {
-            fprintf(stderr,
-                "  To enable sink plugins, run the following command:\n"
-            );
-            fprintf(stderr, "  # netifyd --enable-sinks\n");
-        }
-
         string uuid;
 
         uuid = (ndGC.uuid != NULL) ? ndGC.uuid : "00-00-00-00";
@@ -1496,9 +1456,10 @@ bool ndInstance::DisplayAgentStatus(void)
             fprintf(stderr, "%s%s%s sink agent UUID is not set.\n",
                 ND_C_RED, ND_I_FAIL, ND_C_RESET);
             fprintf(stderr,
-                "  To generate a new one, run the following command:\n"
+                "  %s To generate a new one, run the following command:\n",
+                ND_I_NOTE
             );
-            fprintf(stderr, "  # netifyd --provision\n");
+            fprintf(stderr, "  %s # netifyd --provision\n", ND_I_NOTE);
         }
         else {
             fprintf(stderr, "%s%s%s sink agent UUID: %s\n",
@@ -1521,8 +1482,10 @@ bool ndInstance::DisplayAgentStatus(void)
         if (! uuid.size() || uuid == "-") {
             fprintf(stderr, "%s%s%s sink site UUID is not set.\n",
                 ND_C_YELLOW, ND_I_WARN, ND_C_RESET);
-            fprintf(stderr, "  A new site UUID will be automatically set "
-                "after this agent has been provisioned by the sink server.\n");
+            fprintf(stderr, "  %s A new site UUID will be automatically set "
+                "after this agent has been provisioned by a sink server.\n",
+                ND_I_NOTE
+            );
         }
         else {
             fprintf(stderr, "%s%s%s sink site UUID: %s\n",
@@ -1572,7 +1535,7 @@ void ndInstance::ProcessFlows(void)
 #ifdef _ND_PROCESS_FLOW_DEBUG
     size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
 #endif
-    bool add_flows = (ndGC_USE_SINKS || ndGC_EXPORT_JSON);
+    bool add_flows = false;
     bool socket_queue = (thread_socket && thread_socket->GetClientCount());
 
     //flow_buckets->DumpBucketStats();

@@ -154,15 +154,6 @@ AC_ARG_ENABLE([instance-support],
     [],
     [enable_instance_support=no])
 
-AS_IF([test "x$enable_instance_support" = "xyes"], [
-    AC_DEFINE([_ND_INSTANCE_SUPPORT], [1],
-        [Define to enable instance support.])
-    ND_DEFINES+=" -D_ND_INSTANCE_SUPPORT=1"
-    AM_CONDITIONAL(ENALBE_INSTANCE_SUPPORT, true)
-], [
-    AM_CONDITIONAL(ENALBE_INSTANCE_SUPPORT, false)
-])
-
 PKG_CHECK_MODULES([LIBCURL], [libcurl])
 PKG_CHECK_MODULES([ZLIB], [zlib])
 
@@ -398,7 +389,6 @@ AC_CONFIG_FILES([deploy/rpm/Makefile])
 AC_CONFIG_FILES([deploy/systemd/Makefile])
 AC_CONFIG_FILES([deploy/ubios/Makefile])
 AC_CONFIG_FILES([doc/netifyd.8 doc/netifyd.conf.5])
-AC_CONFIG_FILES([util/generate-json-include.sh], [chmod +x util/generate-json-include.sh])
 AC_CONFIG_FILES([util/generate-protocol-csv.sh], [chmod +x util/generate-protocol-csv.sh])
 
 AC_OUTPUT

@@ -17,8 +17,6 @@
 #ifndef _ND_H
 #define _ND_H
 
-#include "nd-json-response-code.h"
-
 #ifndef AF_LINK
 #define AF_LINK AF_PACKET
 #endif
@@ -102,18 +100,6 @@
 #define ND_PID_FILE_BASE        "netifyd.pid"
 #define ND_PID_FILE_PATH        ND_VOLATILE_STATEDIR "/" ND_PID_FILE_BASE
 
-#define ND_JSON_VERSION         1.9     // JSON format version
-#define ND_JSON_FILE_USER       "root"
-#ifndef BSD4_4
-#define ND_JSON_FILE_GROUP      "root"
-#else
-#define ND_JSON_FILE_GROUP      "wheel"
-#endif
-#define ND_JSON_FILE_MODE       0600
-#define ND_JSON_FILE_EXPORT     ND_VOLATILE_STATEDIR "/sink-request.json"
-#define ND_JSON_FILE_RESPONSE   ND_VOLATILE_STATEDIR "/sink-response.json"
-#define ND_JSON_FILE_BAD_SEND   ND_VOLATILE_STATEDIR "/sink-bad-request.json"
-#define ND_JSON_FILE_BAD_RECV   ND_VOLATILE_STATEDIR "/sink-bad-response.json"
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 
@@ -128,18 +114,7 @@
 #define ND_AGENT_STATUS_BASE    "status.json"
 #define ND_AGENT_STATUS_PATH    ND_VOLATILE_STATEDIR "/" ND_AGENT_STATUS_BASE
 
-#ifndef ND_URL_SINK
-#define ND_URL_SINK             "https://sink.netify.ai/provision/"
-#endif
-#define ND_URL_SINK_PATH        ND_PERSISTENT_STATEDIR "/sink.url"
-#define ND_URL_SINK_LEN         256
-
-#define ND_SINK_MAX_POST_ERRORS 3       // Maximum number of sink POST errors.
-
 #define ND_COOKIE_JAR           ND_VOLATILE_STATEDIR "/cookie.jar"
-
-#define ND_SINK_CONNECT_TIMEOUT 30      // Default 30-second connection timeout
-#define ND_SINK_XFER_TIMEOUT    300     // Default 5-minute upload timeout
 
 #define ND_AGENT_UUID_BASE      "agent.uuid"
 #define ND_AGENT_UUID_PATH      ND_PERSISTENT_STATEDIR "/" ND_AGENT_UUID_BASE
@@ -203,38 +178,7 @@ typedef map<string, ndPluginLoader *> nd_plugins;
 #endif
 typedef pair<struct sockaddr_storage, struct sockaddr_storage> nd_private_addr;
 
-typedef struct nd_agent_stats_t
-{
-    long cpus;
-    struct timespec ts_epoch;
-    struct timespec ts_now;
-    uint32_t flows;
-    uint32_t flows_prev;
-    double cpu_user;
-    double cpu_user_prev;
-    double cpu_system;
-    double cpu_system_prev;
-#if (SIZEOF_LONG == 4)
-    uint32_t maxrss_kb;
-    uint32_t maxrss_kb_prev;
-#elif (SIZEOF_LONG == 8)
-    uint64_t maxrss_kb;
-    uint64_t maxrss_kb_prev;
-#endif
-#if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))
-    size_t tcm_alloc_kb;
-    size_t tcm_alloc_kb_prev;
-#endif
-    bool dhc_status;
-    size_t dhc_size;
-    bool sink_uploads;
-    bool sink_status;
-    size_t sink_queue_size;
-    ndJsonResponseCode sink_resp_code;
-} nd_agent_stats;
-
 void nd_json_agent_hello(string &json_string);
-void nd_json_agent_status(json &j);
 void nd_json_protocols(string &json_string);
 
 struct ndInterfaceAddress

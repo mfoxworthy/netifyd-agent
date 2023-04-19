@@ -183,7 +183,6 @@ using namespace std;
 #include "nd-conntrack.h"
 #endif
 #include "nd-socket.h"
-#include "nd-sink.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-napi.h"
@@ -214,12 +213,6 @@ using namespace std;
 
 // Enable GTP tunnel dissection
 #define _ND_DISSECT_GTP         1
-
-#ifndef _ND_INSTANCE_SUPPORT
-extern ndFlowMap *nd_flow_buckets;
-
-atomic_uint nd_flow_count;
-#endif
 
 struct __attribute__((packed)) nd_mpls_header_t
 {
@@ -924,11 +917,9 @@ nd_process_ip:
 
     flow.hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);
-#ifdef _ND_INSTANCE_SUPPORT
+
     nf = ndi.flow_buckets->Lookup(flow_digest, true);
-#else
-    nf = nd_flow_buckets->Lookup(flow_digest, true);
-#endif
+
     if (nf != NULL) {
         // Flow exists in map.
         ticket.Take(nf, false);
@@ -960,13 +951,8 @@ nd_process_ip:
         }
     }
     else {
-#ifdef _ND_INSTANCE_SUPPORT
         if (ndGC.max_flows > 0 &&
             ndi.status.flows.load() + 1 > ndGC.max_flows) {
-#else
-        if (ndGC.max_flows > 0 &&
-            nd_flow_count + 1 > ndGC.max_flows) {
-#endif
 #ifdef _ND_LOG_FLOW_DISCARD
             nd_dprintf("%s: discard: maximum flows exceeded: %u\n",
                 tag.c_str(), ndGC.max_flows);
@@ -974,11 +960,8 @@ nd_process_ip:
             stats.pkt.discard++;
             stats.pkt.discard_bytes += packet->length;
             stats.flow.dropped++;
-#ifdef _ND_INSTANCE_SUPPORT
+
             ndi.flow_buckets->Release(flow_digest);
-#else
-            nd_flow_buckets->Release(flow_digest);
-#endif
             return packet;
         }
 
@@ -995,11 +978,8 @@ nd_process_ip:
             stats.pkt.discard++;
             stats.pkt.discard_bytes += packet->length;
             stats.flow.dropped++;
-#ifdef _ND_INSTANCE_SUPPORT
+
             ndi.flow_buckets->Release(flow_digest);
-#else
-            nd_flow_buckets->Release(flow_digest);
-#endif
             return packet;
         }
 
@@ -1008,25 +988,16 @@ nd_process_ip:
 
         nf->direction = addr_cmp;
 
-#ifdef _ND_INSTANCE_SUPPORT
         if (ndi.flow_buckets->InsertUnlocked(flow_digest, nf) != NULL) {
             ndi.flow_buckets->Release(flow_digest);
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
-#else
-        if (nd_flow_buckets->InsertUnlocked(flow_digest, nf) != NULL) {
-            nd_flow_buckets->Release(flow_digest);
-            // Flow exists in map!  Impossible!
-            throw ndCaptureThreadException(strerror(EINVAL));
-        }
-#endif
+
         ticket.Take(nf, false);
-#ifdef _ND_INSTANCE_SUPPORT
+
         ndi.status.flows++;
-#else
-        nd_flow_count++;
-#endif
+
         // New flow inserted, initialize...
         nf->ts_first_seen = ts_pkt;
 

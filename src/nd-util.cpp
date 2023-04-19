@@ -612,48 +612,6 @@ bool nd_save_uuid(const string &uuid, const string &path, size_t length)
     return true;
 }
 
-bool nd_load_sink_url(string &url)
-{
-    char _url[ND_URL_SINK_LEN];
-    FILE *fh = fopen(ND_URL_SINK_PATH, "r");
-
-    if (fh == NULL) {
-        if (ndGC_DEBUG || errno != ENOENT)
-            nd_printf("Error loading URL: %s: %s\n", ND_URL_SINK_PATH, strerror(errno));
-        return false;
-    }
-
-    if (fgets(_url, ND_URL_SINK_LEN, fh) == NULL) {
-        fclose(fh);
-        nd_printf("Error reading URL: %s: %s\n", ND_URL_SINK_PATH, strerror(errno));
-        return false;
-    }
-
-    fclose(fh);
-    url.assign(_url);
-
-    return true;
-}
-
-bool nd_save_sink_url(const string &url)
-{
-    FILE *fh = fopen(ND_URL_SINK_PATH, "w");
-
-    if (fh == NULL) {
-        nd_printf("Error saving URL: %s: %s\n", ND_URL_SINK_PATH, strerror(errno));
-        return false;
-    }
-
-    if (fputs(url.c_str(), fh) < 0) {
-        fclose(fh);
-        nd_printf("Error writing URL: %s: %s\n", ND_URL_SINK_PATH, strerror(errno));
-        return false;
-    }
-
-    fclose(fh);
-    return true;
-}
-
 void nd_seed_rng(void)
 {
     FILE *fh = fopen("/dev/urandom", "r");
@@ -857,21 +815,6 @@ void nd_file_save(const string &filename,
 
     flock(fd, LOCK_UN);
     close(fd);
-}
-
-int nd_save_response_data(const char *filename, const ndJsonDataChunks &data)
-{
-    try {
-        int chunks = 0;
-        for (ndJsonDataChunks::const_iterator i = data.begin(); i != data.end(); i++)
-            nd_file_save(filename, (*i), (0 != chunks++));
-    }
-    catch (runtime_error &e) {
-        nd_printf("Error saving file: %s: %s\n", filename, e.what());
-        return -1;
-    }
-
-    return 0;
 }
 
 int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr)

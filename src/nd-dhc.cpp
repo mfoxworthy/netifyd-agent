@@ -128,13 +128,8 @@ using namespace std;
 #include "nd-capture-nfq.h"
 #endif
 #include "nd-socket.h"
-#include "nd-sink.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
-
-#ifndef _ND_INSTANCE_SUPPORT
-extern ndAddrType *nd_addrtype;
-#endif
 
 ndDNSHintCache::ndDNSHintCache()
 {
@@ -151,11 +146,8 @@ void ndDNSHintCache::Insert(const ndAddr &addr, const string &hostname)
     }
 
     ndAddr::Type type;
-#ifdef _ND_INSTANCE_SUPPORT
     ndInstance::GetInstance().addr_types.Classify(type, addr);
-#else
-    nd_addrtype->Classify(type, addr);
-#endif
+
     if (type != ndAddr::atOTHER) {
         nd_dprintf("Invalid DHC address type: %d: %s\n",
             type, addr.GetString().c_str());

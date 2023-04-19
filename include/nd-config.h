@@ -71,7 +71,7 @@ enum nd_global_flags {
     ndGF_USE_CONNTRACK = 0x200,
     ndGF_USE_NETLINK = 0x400,
     ndGF_USE_NAPI = 0x800,
-    ndGF_USE_SINKS = 0x1000,
+    ndGF_UNUSED_0x1000 = 0x1000,
     ndGF_USE_DHC = 0x2000,
     ndGF_USE_FHC = 0x4000,
     ndGF_EXPORT_JSON = 0x8000,
@@ -99,7 +99,6 @@ enum nd_global_flags {
 #define ndGC_USE_CONNTRACK (ndGlobalConfig::GetInstance().flags & ndGF_USE_CONNTRACK)
 #define ndGC_USE_NETLINK (ndGlobalConfig::GetInstance().flags & ndGF_USE_NETLINK)
 #define ndGC_USE_NAPI (ndGlobalConfig::GetInstance().flags & ndGF_USE_NAPI)
-#define ndGC_USE_SINKS (ndGlobalConfig::GetInstance().flags & ndGF_USE_SINKS)
 #define ndGC_USE_DHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_DHC)
 #define ndGC_USE_FHC (ndGlobalConfig::GetInstance().flags & ndGF_USE_FHC)
 #define ndGC_EXPORT_JSON (ndGlobalConfig::GetInstance().flags & ndGF_EXPORT_JSON)
@@ -160,8 +159,6 @@ public:
     string path_uuid_serial;
     string path_uuid_site;
     char *url_napi;
-    char *url_sink;
-    char *url_sink_provision;
     char *uuid;
     char *uuid_serial;
     char *uuid_site;
@@ -175,9 +172,7 @@ public:
     int16_t ca_conntrack;
     int16_t ca_detection_base;
     int16_t ca_detection_cores;
-    int16_t ca_sink;
     int16_t ca_socket;
-    size_t max_backlog;
     size_t max_packet_queue;
     uint16_t max_capture_length;
     uint32_t flags;
@@ -188,9 +183,6 @@ public:
     unsigned max_detection_pkts;
     unsigned max_fhc;
     unsigned max_flows;
-    unsigned sink_connect_timeout;
-    unsigned sink_max_post_errors;
-    unsigned sink_xfer_timeout;
     unsigned ttl_dns_entry;
     unsigned ttl_idle_flow;
     unsigned ttl_idle_tcp_flow;
@@ -206,7 +198,6 @@ public:
     nd_interface_filter interface_filters;
 #ifdef _ND_USE_PLUGINS
     map<string, string> plugin_detections;
-    map<string, string> plugin_sinks;
     map<string, string> plugin_stats;
 #endif
     map<string, string> custom_headers;
@@ -228,10 +219,6 @@ public:
     void Close(void);
 
     bool Load(const string &filename);
-
-    bool LoadSinkURL();
-
-    bool SetOption(const string &filename, const string &func);
 
     bool ForceReset(void);
 

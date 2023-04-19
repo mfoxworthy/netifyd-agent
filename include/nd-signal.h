@@ -20,10 +20,5 @@
 #define ND_SIG_UPDATE       (SIGRTMIN + 0)
 #define ND_SIG_UPDATE_NAPI  (SIGRTMIN + 1)
 
-#ifndef _ND_INSTANCE_SUPPORT
-#define ND_SIG_SINK_REPLY   (SIGRTMIN + 2)
-#define ND_SIG_NAPI_UPDATED (SIGRTMIN + 3)
-#endif
-
 #endif // _ND_SIGNAL_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

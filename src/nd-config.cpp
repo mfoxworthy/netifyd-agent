@@ -121,7 +121,6 @@ using namespace std;
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-socket.h"
-#include "nd-sink.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
@@ -133,7 +132,6 @@ ndGlobalConfig::ndGlobalConfig() :
     path_app_config(ND_CONF_APP_PATH),
     path_cat_config(ND_CONF_CAT_PATH),
     path_config(ND_CONF_FILE_NAME),
-    path_export_json(ND_JSON_FILE_EXPORT),
     path_legacy_config(ND_CONF_LEGACY_PATH),
     path_pid_file(ND_PID_FILE_NAME),
     path_state_persistent(ND_PERSISTENT_STATEDIR),
@@ -142,8 +140,6 @@ ndGlobalConfig::ndGlobalConfig() :
     path_uuid_serial(ND_AGENT_SERIAL_PATH),
     path_uuid_site(ND_SITE_UUID_PATH),
     url_napi(NULL),
-    url_sink(NULL),
-    url_sink_provision(NULL),
     uuid(NULL),
     uuid_serial(NULL),
     uuid_site(NULL),
@@ -164,9 +160,7 @@ ndGlobalConfig::ndGlobalConfig() :
     ca_conntrack(-1),
     ca_detection_base(0),
     ca_detection_cores(-1),
-    ca_sink(-1),
     ca_socket(-1),
-    max_backlog(ND_MAX_BACKLOG_KB * 1024),
     max_packet_queue(ND_MAX_PKT_QUEUE_KB * 1024),
     max_capture_length(ND_PCAP_SNAPLEN),
     flags(0),
@@ -177,9 +171,6 @@ ndGlobalConfig::ndGlobalConfig() :
     max_detection_pkts(ND_MAX_DETECTION_PKTS),
     max_fhc(ND_MAX_FHC_ENTRIES),
     max_flows(0),
-    sink_connect_timeout(ND_SINK_CONNECT_TIMEOUT),
-    sink_max_post_errors(ND_SINK_MAX_POST_ERRORS),
-    sink_xfer_timeout(ND_SINK_XFER_TIMEOUT),
     ttl_dns_entry(ND_TTL_IDLE_DHC_ENTRY),
     ttl_idle_flow(ND_TTL_IDLE_FLOW),
     ttl_idle_tcp_flow(ND_TTL_IDLE_TCP_FLOW),
@@ -196,7 +187,6 @@ ndGlobalConfig::ndGlobalConfig() :
     flags |= ndGF_USE_NETLINK;
 #endif
     flags |= ndGF_SOFT_DISSECTORS;
-    flags |= ndGF_SYN_SCAN_PROTECTION;
 }
 
 ndGlobalConfig::~ndGlobalConfig()
@@ -330,40 +320,11 @@ bool ndGlobalConfig::Load(const string &filename)
         "netifyd", "path_uuid_site",
         path_state_persistent + "/" + ND_SITE_UUID_BASE);
 
-    string url_sink_provision = r->Get(
-        "netifyd", "url_sink", ND_URL_SINK);
-    this->url_sink_provision = strdup(url_sink_provision.c_str());
-    this->url_sink = strdup(url_sink_provision.c_str());
-
     this->update_interval = (unsigned)r->GetInteger(
         "netifyd", "update_interval", ND_STATS_INTERVAL);
 
-    this->sink_connect_timeout = (unsigned)r->GetInteger(
-        "netifyd", "upload_connect_timeout", ND_SINK_CONNECT_TIMEOUT);
-    this->sink_xfer_timeout = (unsigned)r->GetInteger(
-        "netifyd", "upload_timeout", ND_SINK_XFER_TIMEOUT);
-    ndGC_SetFlag(ndGF_UPLOAD_NAT_FLOWS, r->GetBoolean(
-        "netifyd", "upload_nat_flows", false));
-
-    ndGC_SetFlag(ndGF_EXPORT_JSON,
-        r->GetBoolean("netifyd", "export_json", false));
-    if (! ndGC_EXPORT_JSON) {
-        ndGC_SetFlag(ndGF_EXPORT_JSON,
-            r->GetBoolean("netifyd", "json_save", false));
-    }
-
-    this->max_backlog = r->GetInteger(
-        "netifyd", "max_backlog_kb", ND_MAX_BACKLOG_KB) * 1024;
-
     this->max_packet_queue = r->GetInteger(
         "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
-
-    ndGC_SetFlag(ndGF_USE_SINKS,
-        r->GetBoolean("netifyd", "enable_sink", false));
-    if (! ndGC_USE_SINKS) {
-        ndGC_SetFlag(ndGF_USE_SINKS,
-            r->GetBoolean("netifyd", "enable_sinks", false));
-    }
 
     if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
         ndGC_SetFlag(ndGF_SSL_VERIFY,
@@ -385,11 +346,8 @@ bool ndGlobalConfig::Load(const string &filename)
     this->max_detection_pkts = (unsigned)r->GetInteger(
         "netifyd", "max_detection_pkts", ND_MAX_DETECTION_PKTS);
 
-    this->sink_max_post_errors = (unsigned)r->GetInteger(
-        "netifyd", "sink_max_post_errors", ND_SINK_MAX_POST_ERRORS);
-
     ndGC_SetFlag(ndGF_SYN_SCAN_PROTECTION,
-        r->GetBoolean("netifyd", "syn_scan_protection", true));
+        r->GetBoolean("netifyd", "syn_scan_protection", false));
 
     this->ttl_idle_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
@@ -417,8 +375,6 @@ bool ndGlobalConfig::Load(const string &filename)
         "threads", "detection_base", this->ca_detection_base);
     this->ca_detection_cores = (int16_t)r->GetInteger(
         "threads", "detection_cores", this->ca_detection_cores);
-    this->ca_sink = (int16_t)r->GetInteger(
-        "threads", "sink", this->ca_sink);
     this->ca_socket = (int16_t)r->GetInteger(
         "threads", "socket", this->ca_socket);
 
@@ -617,12 +573,8 @@ bool ndGlobalConfig::Load(const string &filename)
 #ifdef _ND_USE_PLUGINS
     // Plugins section
     r->GetSection("plugin_detections", this->plugin_detections);
-    r->GetSection("plugin_sinks", this->plugin_sinks);
     r->GetSection("plugin_stats", this->plugin_stats);
 #endif
-
-    // Sink headers section
-    r->GetSection("sink_headers", this->custom_headers);
 
     // Netify API section
     ndGC_SetFlag(ndGF_USE_NAPI,
@@ -648,58 +600,10 @@ bool ndGlobalConfig::Load(const string &filename)
     return true;
 }
 
-bool ndGlobalConfig::LoadSinkURL(void)
-{
-    string url_sink;
-    if (nd_load_sink_url(url_sink)) {
-        free(this->url_sink);
-        this->url_sink = strdup(url_sink.c_str());
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ndGlobalConfig::SetOption(const string &filename, const string &func)
-{
-    if (func == "config_enable_sink")
-        fprintf(stdout, "Enabling Netify Cloud Sink.\n");
-    else if (func == "config_disable_sink")
-        fprintf(stdout, "Disabling Netify Cloud Sink.\n");
-    else {
-        fprintf(stderr,
-            "Unrecognized configuration option: %s\n", func.c_str()
-        );
-        return false;
-    }
-
-    string result;
-    int rc = nd_functions_exec(func, result);
-
-    if (rc != 0) {
-        fprintf(stderr,
-            "Error while modifying configuration file.\n"
-            "Manually edit configuration file: %s\n",
-            filename.c_str()
-        );
-
-        if (ndGC_DEBUG) fprintf(stderr, "%s", result.c_str());
-
-        return false;
-    }
-
-    fprintf(stderr,
-        "Configuration modified: %s\n", filename.c_str()
-    );
-
-    return true;
-}
-
 bool ndGlobalConfig::ForceReset(void)
 {
     vector<string> files = {
-        path_uuid, path_uuid_site, ND_URL_SINK_PATH
+        path_uuid, path_uuid_site
     };
 
     int seconds = 3;

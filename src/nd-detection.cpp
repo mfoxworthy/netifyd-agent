@@ -118,7 +118,6 @@ using namespace std;
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-tls-alpn.h"
-#include "nd-sink.h"
 #include "nd-napi.h"
 
 // Enable flow hash cache debug logging
@@ -129,14 +128,6 @@ using namespace std;
 
 // Enable to log custom domain category lookups
 //#define _ND_LOG_DOMAIN_LOOKUPS  1
-
-#ifndef _ND_INSTANCE_SUPPORT
-extern ndApplications *nd_apps;
-extern ndCategories *nd_categories;
-extern ndDomains *nd_domains;
-extern ndAddrType *nd_addrtype;
-extern ndInterface nd_interfaces;
-#endif
 
 #define ndEF    entry->flow
 #define ndEFNF  entry->flow->ndpi_flow
@@ -467,13 +458,9 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
                 ndEFNFP.tls_quic.serverCN = NULL;
 
                 // Detect application by server CN if still unknown.
-#if _ND_INSTANCE_SUPPORT
                 SetDetectedApplication(entry,
                     ndi.apps.Find(ndEF->ssl.server_cn)
                 );
-#else
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
-#endif
 
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
@@ -618,13 +605,9 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
 
 void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 {
-#ifdef _ND_INSTANCE_SUPPORT
     ndi.addr_types.Classify(ndEF->lower_type, ndEF->lower_addr);
     ndi.addr_types.Classify(ndEF->upper_type, ndEF->upper_addr);
-#else
-    nd_addrtype->Classify(ndEF->lower_type, ndEF->lower_addr);
-    nd_addrtype->Classify(ndEF->upper_type, ndEF->upper_addr);
-#endif
+
     if (dhc != NULL && ndEF->master_protocol() != ND_PROTO_DNS) {
         string hostname;
 
@@ -657,7 +640,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         ndEF->host_server_name, ndEFNF->host_server_name,
         min((size_t)ND_FLOW_HOSTNAME, (size_t)sizeof(ndEFNF->host_server_name))
     );
-#ifdef _ND_INSTANCE_SUPPORT
+
     // Determine application based on master protocol metadata for
     // Protocol / Application "Twins"
     switch (ndEF->detected_protocol) {
@@ -748,98 +731,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
                 SetDetectedApplication(entry, ndi.apps.Find(ndEF->lower_addr));
         }
     }
-#else
-    // Determine application based on master protocol metadata for
-    // Protocol / Application "Twins"
-    switch (ndEF->detected_protocol) {
 
-    case ND_PROTO_APPLE_PUSH:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.apple-push"));
-        break;
-
-    case ND_PROTO_AVAST:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.avast"));
-        break;
-
-    case ND_PROTO_LINE_CALL:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.line"));
-        break;
-
-    case ND_PROTO_NEST_LOG_SINK:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.nest"));
-        break;
-
-    case ND_PROTO_SPOTIFY:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.spotify"));
-        break;
-
-    case ND_PROTO_STEAM:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.steam"));
-        break;
-
-    case ND_PROTO_SYNCTHING:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.syncthing"));
-        break;
-
-    case ND_PROTO_TEAMVIEWER:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.teamviewer"));
-        break;
-
-    case ND_PROTO_TIVOCONNECT:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.tivo"));
-        break;
-
-    case ND_PROTO_TPLINK_SHP:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.tp-link"));
-        break;
-
-    case ND_PROTO_TUYA_LP:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.tuya-smart"));
-        break;
-
-    case ND_PROTO_UBNTAC2:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.ubiquiti"));
-        break;
-
-    case ND_PROTO_ZOOM:
-        SetDetectedApplication(entry, nd_apps->Lookup("netify.zoom"));
-        break;
-
-    default:
-        break;
-    }
-
-    // Determine application by host_server_name if still unknown.
-    if (ndEF->detected_application == ND_APP_UNKNOWN) {
-        if (ndEF->host_server_name[0] != '\0')
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->host_server_name));
-    }
-
-    // Determine application by dns_host_name if still unknown.
-    if (ndEF->detected_application == ND_APP_UNKNOWN) {
-        if (ndEF->dns_host_name[0] != '\0')
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->dns_host_name));
-    }
-
-    // Determine application by network CIDR if still unknown.
-    // DNS flows excluded...
-    if (ndEF->master_protocol() != ND_PROTO_DNS &&
-        ndEF->detected_application == ND_APP_UNKNOWN) {
-
-        if (ndEF->lower_type == ndAddr::atOTHER) {
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
-
-            if (ndEF->detected_application == ND_APP_UNKNOWN)
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
-        }
-        else {
-            SetDetectedApplication(entry, nd_apps->Find(ndEF->upper_addr));
-
-            if (ndEF->detected_application == ND_APP_UNKNOWN)
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->lower_addr));
-        }
-    }
-#endif // _ND_INSTANCE_SUPPORT
     // Additional protocol-specific processing...
     switch (ndEF->master_protocol()) {
 
@@ -864,11 +756,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
             // Detect application by server CN if still unknown.
             if (ndEF->detected_application == ND_APP_UNKNOWN)
-#if _ND_INSTANCE_SUPPORT
                 SetDetectedApplication(entry, ndi.apps.Find(ndEF->ssl.server_cn));
-#else
-                SetDetectedApplication(entry, nd_apps->Find(ndEF->ssl.server_cn));
-#endif
         }
 
         if (ndEF->ssl.issuer_dn == NULL &&
@@ -992,11 +880,9 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
             ndEF->lower_type == ndAddr::atLOCAL ||
             ndEF->lower_type == ndAddr::atLOCALNET ||
             ndEF->lower_type == ndAddr::atRESERVED)) {
-#if _ND_INSTANCE_SUPPORT
+
             ndi.addr_types.Classify(type, ndEF->lower_mac);
-#else
-            nd_addrtype->Classify(type, ndEF->lower_mac);
-#endif
+
             mac = &ndEF->lower_mac;
             ip = &ndEF->lower_addr;
         }
@@ -1004,11 +890,9 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
             ndEF->upper_type == ndAddr::atLOCAL ||
             ndEF->upper_type == ndAddr::atLOCALNET ||
             ndEF->upper_type == ndAddr::atRESERVED)) {
-#if _ND_INSTANCE_SUPPORT
+
             ndi.addr_types.Classify(type, ndEF->upper_mac);
-#else
-            nd_addrtype->Classify(type, ndEF->upper_mac);
-#endif
+
             mac = &ndEF->upper_mac;
             ip = &ndEF->upper_addr;
         }
@@ -1040,29 +924,16 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     );
 
     if (ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
-#if _ND_INSTANCE_SUPPORT
         ndEF->category.protocol = ndi.categories.Lookup(
             ndCAT_TYPE_PROTO,
             (unsigned)ndEF->detected_protocol
         );
-#else
-        ndEF->category.protocol = nd_categories->Lookup(
-            ndCAT_TYPE_PROTO,
-            (unsigned)ndEF->detected_protocol
-        );
-#endif
     }
 
     if (ndEFNF->host_server_name[0] != '\0') {
-#if _ND_INSTANCE_SUPPORT
         ndEF->category.domain = ndi.domains.Lookup(
             ndEFNF->host_server_name
         );
-#else
-        ndEF->category.domain = nd_domains->Lookup(
-            ndEFNF->host_server_name
-        );
-#endif
 #ifdef _ND_LOG_DOMAIN_LOOKUPS
         nd_dprintf("%s: category.domain: %hu\n",
             tag.c_str(), ndEF->category.domain);
@@ -1122,11 +993,8 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
 {
     if (app_id == ND_APP_UNKNOWN) return;
     ndEF->detected_application = app_id;
-#if _ND_INSTANCE_SUPPORT
     const char *name = ndi.apps.Lookup(app_id);
-#else
-    const char *name = nd_apps->Lookup(app_id);
-#endif
+
     if (ndEF->detected_application_name != NULL) {
         ndEF->detected_application_name = (char *)realloc(
             ndEF->detected_application_name,
@@ -1137,66 +1005,44 @@ void ndDetectionThread::SetDetectedApplication(ndDetectionQueueEntry *entry, nd_
     }
     else
         ndEF->detected_application_name = strdup(name);
-#if _ND_INSTANCE_SUPPORT
+
     ndEF->category.application = ndi.categories.Lookup(
         ndCAT_TYPE_APP, app_id
     );
-#else
-    ndEF->category.application = nd_categories->Lookup(
-        ndCAT_TYPE_APP, app_id
-    );
-#endif
 }
 
 void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
 {
     if (ndEF->category.application == ND_CAT_UNKNOWN &&
         ndEF->detected_application != ND_APP_UNKNOWN) {
-#if _ND_INSTANCE_SUPPORT
+
         ndEF->category.application = ndi.categories.Lookup(
             ndCAT_TYPE_APP,
             (unsigned)ndEF->detected_application
         );
-#else
-        ndEF->category.application = nd_categories->Lookup(
-            ndCAT_TYPE_APP,
-            (unsigned)ndEF->detected_application
-        );
-#endif
     }
 
     if (ndEF->category.protocol == ND_CAT_UNKNOWN &&
         ndEF->detected_protocol != ND_PROTO_UNKNOWN) {
-#if _ND_INSTANCE_SUPPORT
+
         ndEF->category.protocol = ndi.categories.Lookup(
             ndCAT_TYPE_PROTO,
             (unsigned)ndEF->detected_protocol
         );
-#else
-        ndEF->category.protocol = nd_categories->Lookup(
-            ndCAT_TYPE_PROTO,
-            (unsigned)ndEF->detected_protocol
-        );
-#endif
     }
 
     if (ndEF->category.domain == ND_DOMAIN_UNKNOWN &&
         ndEFNF->host_server_name[0] != '\0') {
-#if _ND_INSTANCE_SUPPORT
+
         ndEF->category.domain = ndi.domains.Lookup(
             ndEFNF->host_server_name
         );
-#else
-        ndEF->category.domain = nd_domains->Lookup(
-            ndEFNF->host_server_name
-        );
-#endif
     }
 
     if (ndGC_SOFT_DISSECTORS) {
 
         ndSoftDissector nsd;
-#if _ND_INSTANCE_SUPPORT
+
         if (ndi.apps.SoftDissectorMatch(ndEF, &parser, nsd)) {
 
             ndEF->flags.soft_dissector = true;
@@ -1228,67 +1074,19 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
             }
         }
     }
-#else
-        if (nd_apps->SoftDissectorMatch(ndEF, &parser, nsd)) {
 
-            ndEF->flags.soft_dissector = true;
-            ndEF->flags.detection_complete = true;
-
-            if (nsd.aid > -1) {
-                if (nsd.aid == ND_APP_UNKNOWN) {
-                    ndEF->detected_application = 0;
-                    if (ndEF->detected_application_name != NULL) {
-                        free(ndEF->detected_application_name);
-                        ndEF->detected_application_name = NULL;
-                    }
-                    ndEF->category.application = ND_CAT_UNKNOWN;
-                }
-                else
-                    SetDetectedApplication(entry, (nd_app_id_t)nsd.aid);
-            }
-
-            if (nsd.pid > -1) {
-                ndEF->detected_protocol = (nd_proto_id_t)nsd.pid;
-
-                ndEF->category.protocol = nd_categories->Lookup(
-                    ndCAT_TYPE_PROTO,
-                    (unsigned)ndEF->detected_protocol
-                );
-                ndEF->detected_protocol_name = nd_proto_get_name(
-                    ndEF->detected_protocol
-                );
-            }
-        }
-    }
-#endif
     if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
+
         ndEF->print();
 
 #ifdef _ND_USE_PLUGINS
-#ifdef _ND_INSTANCE_SUPPORT
         ndi.plugins.BroadcastDetectionEvent(
             (ndEF->flags.detection_updated.load()) ?
                 ndPluginDetection::EVENT_UPDATED :
                 ndPluginDetection::EVENT_NEW,
             ndEF
         );
-#else
-    for (nd_plugins::iterator i = plugins->begin();
-        i != plugins->end(); i++) {
-
-        ndPluginDetection *p = reinterpret_cast<ndPluginDetection *>(
-            i->second->GetPlugin()
-        );
-
-        p->ProcessFlow(
-            (ndEF->flags.detection_updated.load()) ?
-                ndPluginDetection::EVENT_UPDATED :
-                ndPluginDetection::EVENT_NEW,
-            ndEF
-        );
-    }
 #endif
-#endif // _ND_USE_PLUGINS
     if (thread_socket && (ndGC_FLOW_DUMP_UNKNOWN ||
         ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
         json j;

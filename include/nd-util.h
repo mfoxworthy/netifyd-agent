@@ -28,6 +28,7 @@
 #define ND_I_OK             "✓"
 #define ND_I_WARN           "!"
 #define ND_I_FAIL           "✗"
+#define ND_I_NOTE           "↪"
 
 void *nd_mem_alloc(size_t size);
 
@@ -94,9 +95,6 @@ void nd_private_ipaddr(uint8_t index, struct sockaddr_storage &addr);
 bool nd_load_uuid(string &uuid, const string &path, size_t length);
 bool nd_save_uuid(const string &uuid, const string &path, size_t length);
 
-bool nd_load_sink_url(string &url);
-bool nd_save_sink_url(const string &url);
-
 void nd_seed_rng(void);
 
 void nd_generate_uuid(string &uuid);
@@ -112,8 +110,6 @@ int nd_file_load(const string &filename, string &data);
 void nd_file_save(const string &filename, const string &data,
     bool append = false, mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP,
     const char *user = NULL, const char *group = NULL);
-
-int nd_save_response_data(const char *filename, const ndJsonDataChunks &data);
 
 int nd_ifreq(const string &name, unsigned long request, struct ifreq *ifr);
 
