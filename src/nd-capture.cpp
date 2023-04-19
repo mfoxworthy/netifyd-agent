@@ -197,6 +197,9 @@ using namespace std;
 // Enable to log discarded TCP packets
 //#define _ND_LOG_PKT_TCP_DISCARD 1
 
+// Enable to log replay packet delay intervals
+//#define _ND_LOG_PKT_DELAY_TIME    1
+
 // Enable to log discarded flows
 //#define _ND_LOG_FLOW_DISCARD    1
 
@@ -301,7 +304,7 @@ ndCaptureThread::ndCaptureThread(
     ndInstanceClient(),
     dl_type(0), cs_type(cs_type),
     iface(iface), thread_socket(thread_socket),
-    ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
+    tv_epoch(0), ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {
     capture_state = STATE_INIT;
@@ -342,8 +345,8 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
             ND_DETECTION_TICKS +
             packet->tv_usec /
             (1000000 / ND_DETECTION_TICKS);
-#if 0
-    if (pcap_file.size()) {
+
+    if (ndGC_REPLAY_DELAY) {
         if (ts_pkt_first == 0)
             ts_pkt_first = ts_pkt;
 
@@ -351,9 +354,11 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
 
         if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
-        if (ndGC_REPLAY_DELAY && ts_pkt_last) {
+        if (ts_pkt_last) {
             useconds_t delay = useconds_t(ts_pkt - ts_pkt_last) * 1000;
-            //nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
+#ifdef _ND_LOG_PKT_DELAY_TIME
+            nd_dprintf("%s: pkt delay: %lu\n", tag.c_str(), delay);
+#endif
             if (delay) {
                 pthread_mutex_unlock(&lock);
                 usleep(delay);
@@ -362,8 +367,7 @@ const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
         }
     }
     else
-#endif
-    if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
+        if (ts_pkt_last > ts_pkt) ts_pkt = ts_pkt_last;
 
     ts_pkt_last = ts_pkt;
 

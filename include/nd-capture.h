@@ -61,8 +61,8 @@ protected:
 
     ndInterface& iface;
     ndSocketThread *thread_socket;
-//    bool capture_unknown_flows;
 
+    time_t tv_epoch;
     uint64_t ts_pkt_first;
     uint64_t ts_pkt_last;
 

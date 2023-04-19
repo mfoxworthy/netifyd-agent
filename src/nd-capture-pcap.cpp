@@ -122,7 +122,7 @@ ndCapturePcap::ndCapturePcap(
         threads_dpi, dhc, private_addr),
     pcap(NULL), pcap_fd(-1),
     pkt_header(NULL), pkt_data(NULL),
-    pcs_last{0}, tv_epoch(0)
+    pcs_last{0}
 {
     nd_capture_filename(iface.ifname, pcap_file);
     if (pcap_file.size())
