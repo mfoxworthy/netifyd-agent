@@ -76,8 +76,6 @@ using namespace std;
 #include "nd-flow.h"
 #include "nd-flow-map.h"
 
-ndFlowMap *nd_flow_buckets = NULL;
-
 ndFlowMap::ndFlowMap(size_t buckets)
     : buckets(buckets)
 {
@@ -191,7 +189,7 @@ bool ndFlowMap::Delete(const string &digest)
     return deleted;
 }
 
-nd_flow_map *ndFlowMap::Acquire(size_t b)
+nd_flow_map& ndFlowMap::Acquire(size_t b)
 {
     if (b >= buckets)
         throw ndSystemException(__PRETTY_FUNCTION__, "bucket", EINVAL);
@@ -200,10 +198,10 @@ nd_flow_map *ndFlowMap::Acquire(size_t b)
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
-    return bucket[b];
+    return *bucket[b];
 }
 
-const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
+const nd_flow_map& ndFlowMap::AcquireConst(size_t b) const
 {
     if (b >= buckets)
         throw ndSystemException(__PRETTY_FUNCTION__, "bucket", EINVAL);
@@ -212,7 +210,7 @@ const nd_flow_map *ndFlowMap::AcquireConst(size_t b) const
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
-    return (const nd_flow_map *)bucket[b];
+    return *bucket[b];
 }
 
 void ndFlowMap::Release(size_t b) const

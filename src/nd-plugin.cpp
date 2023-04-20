@@ -316,6 +316,20 @@ void ndPluginManager::BroadcastEvent(ndPlugin::ndPluginType type,
     }
 }
 
+void ndPluginManager::BroadcastStatsEvent(
+    ndPluginStats::ndStatsEvent event, void *param)
+{
+    auto pl = plugins.find(ndPlugin::TYPE_STATS);
+
+    if (pl == plugins.end()) return;
+
+    for (auto &p : pl->second) {
+        reinterpret_cast<ndPluginStats *>(
+            p->GetPlugin()
+        )->ProcessStatsEvent(event, param);
+    }
+}
+
 void ndPluginManager::BroadcastDetectionEvent(
     ndPluginDetection::ndDetectionEvent event, ndFlow *flow)
 {
@@ -326,12 +340,8 @@ void ndPluginManager::BroadcastDetectionEvent(
     for (auto &p : pl->second) {
         reinterpret_cast<ndPluginDetection *>(
             p->GetPlugin()
-        )->ProcessFlow(event, flow);
+        )->ProcessDetectionEvent(event, flow);
     }
-}
-
-void ndPluginManager::GetStatus(json &status)
-{
 }
 
 void ndPluginManager::DumpVersions(ndPlugin::ndPluginType type)

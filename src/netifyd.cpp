@@ -511,8 +511,6 @@ int main(int argc, char *argv[])
             int sig;
             siginfo_t si;
 
-            nd_dprintf("instance running...\n");
-
             if ((sig = sigtimedwait(&sigset, &si, &tspec_sigwait)) < 0) {
                 if (errno == EAGAIN || errno == EINTR) continue;
 

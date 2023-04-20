@@ -23,13 +23,13 @@
 extern "C" { \
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
-        if (p == NULL) return NULL; \
+        if (p == nullptr) return nullptr; \
         if (p->GetType() != ndPlugin::TYPE_STATS && \
             p->GetType() != ndPlugin::TYPE_DETECTION) { \
                 nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
                     tag.c_str(), p->GetType()); \
                 delete p; \
-                return NULL; \
+                return nullptr; \
         } \
         return dynamic_cast<ndPlugin *>(p); \
     } \
@@ -66,7 +66,8 @@ public:
         EVENT_STATUS_UPDATE,
     };
 
-    virtual void ProcessEvent(ndPluginEvent event, void *param = NULL) { };
+    virtual void ProcessEvent(
+        ndPluginEvent event, void *param = nullptr) { };
 
     static const map<ndPlugin::ndPluginType, string> types;
     ndPluginType GetType(void) { return type; };
@@ -82,16 +83,16 @@ public:
     virtual ~ndPluginStats();
 
     enum ndStatsEvent {
-        INIT,
-        COMPLETE,
+        EVENT_INIT,
+        EVENT_INTERFACES,
+        EVENT_PKT_CAPTURE_STATS,
+        EVENT_PKT_GLOBAL_STATS,
+        EVENT_FLOW_MAP,
+        EVENT_COMPLETE,
     };
 
-    virtual void ProcessStats(ndStatsEvent event) { }
-    virtual void ProcessStats(const ndInterfaces &nd_interfaces) { }
-    virtual void ProcessStats(const ndPacketStats &pkt_totals) { }
-    virtual void ProcessStats(
-        const string &iface, const ndPacketStats &pkt_stats) { }
-    virtual void ProcessStats(const ndFlowMap *flows) { }
+    virtual void ProcessStatsEvent(
+        ndStatsEvent event, void *param = nullptr) = 0;
 
 protected:
 };
@@ -110,7 +111,8 @@ public:
     ndPluginDetection(const string &tag);
     virtual ~ndPluginDetection();
 
-    virtual void ProcessFlow(ndDetectionEvent event, ndFlow *flow) = 0;
+    virtual void ProcessDetectionEvent(
+        ndDetectionEvent event, ndFlow *flow) = 0;
 
 protected:
 };
@@ -132,7 +134,7 @@ protected:
     ndPlugin *plugin;
 };
 
-class ndPluginManager
+class ndPluginManager : public ndSerializer
 {
 public:
     virtual ~ndPluginManager();
@@ -148,10 +150,16 @@ public:
     void BroadcastEvent(ndPlugin::ndPluginType type,
         ndPlugin::ndPluginEvent event, void *param = nullptr);
 
+    void BroadcastStatsEvent(
+        ndPluginStats::ndStatsEvent event, void *param = nullptr);
+
     void BroadcastDetectionEvent(
         ndPluginDetection::ndDetectionEvent event, ndFlow *flow);
 
-    void GetStatus(json &status);
+    template <class T>
+    void Encode(T &output) const {
+        serialize(output, { "plugins", "timestamp" }, time(NULL));
+    }
 
     void DumpVersions(
         ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);

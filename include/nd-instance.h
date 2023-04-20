@@ -176,9 +176,6 @@ public:
     bool SaveAgentStatus(void);
     bool DisplayAgentStatus(void);
 
-    void ProcessUpdate(void);
-    void ProcessFlows(void);
-
     int Run(void);
 
     void Terminate(void) {
@@ -266,6 +263,7 @@ public:
     int exit_code;
 
     ndInstanceStatus status;
+    ndPacketStats pkt_stats_global;
     ndApplications apps;
     ndCategories categories;
     ndDomains domains;
@@ -310,6 +308,10 @@ protected:
     void DisplayDebugScoreboard(void);
 
     bool ExpireFlow(ndFlow *flow);
+
+    void ProcessUpdate(nd_capture_threads &threads);
+
+    void ProcessFlows(void);
 
     int sig_update, sig_update_napi;
     timer_t timer_update, timer_update_napi;

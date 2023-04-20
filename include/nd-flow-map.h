@@ -37,8 +37,8 @@ public:
 
     bool Delete(const string &digest);
 
-    nd_flow_map *Acquire(size_t b);
-    const nd_flow_map *AcquireConst(size_t b) const;
+    nd_flow_map& Acquire(size_t b);
+    const nd_flow_map& AcquireConst(size_t b) const;
 
     void Release(size_t b) const;
 #if 0
