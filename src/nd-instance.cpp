@@ -753,8 +753,8 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 
         ndGC.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
-        ndGC.plugin_detections.clear();
-        ndGC.plugin_stats.clear();
+        ndGC.plugin_sinks.clear();
+        ndGC.plugin_encoders.clear();
 #endif
         ndGC.dhc_save = ndDHC_DISABLED;
         ndGC.fhc_save = ndFHC_DISABLED;
@@ -1016,14 +1016,14 @@ void ndInstance::CommandLineHelp(bool version_only)
         try {
             plugins.Load(ndPlugin::TYPE_BASE, false);
 
-            if (ndGC.plugin_stats.size()) {
-                fprintf(stderr, "\nStatistics plugins:\n");
-                plugins.DumpVersions(ndPlugin::TYPE_STATS);
+            if (ndGC.plugin_sinks.size()) {
+                fprintf(stderr, "\nSink plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_SINK);
             }
 
-            if (ndGC.plugin_detections.size()) {
-                fprintf(stderr, "\nDetection plugins:\n");
-                plugins.DumpVersions(ndPlugin::TYPE_DETECTION);
+            if (ndGC.plugin_encoders.size()) {
+                fprintf(stderr, "\nEncoder plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_ENCODER);
             }
         }
         catch (exception &e) {
@@ -2154,8 +2154,9 @@ bool ndInstance::ExpireFlow(ndFlow *flow)
         if (it != thread_detection.end()) {
             it->second->QueuePacket(flow);
 #ifdef _ND_USE_PLUGINS
-            plugins.BroadcastDetectionEvent(
-                ndPluginDetection::EVENT_EXPIRING, flow
+            plugins.BroadcastEncoderEvent(
+                ndPluginEncoder::EVENT_FLOW_EXPIRING,
+                static_cast<void *>(flow)
             );
 #endif
             return true;
@@ -2185,16 +2186,16 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         ndPlugin::EVENT_STATUS_UPDATE
     );
 
-    plugins.BroadcastStatsEvent(
-        ndPluginStats::EVENT_INIT, static_cast<void *>(&status)
+    plugins.BroadcastEncoderEvent(
+        ndPluginEncoder::EVENT_INIT, static_cast<void *>(&status)
     );
 #endif
 
     ndInterface::UpdateAddrs(interfaces);
 
 #ifdef _ND_USE_PLUGINS
-    plugins.BroadcastStatsEvent(
-        ndPluginStats::EVENT_INTERFACES,
+    plugins.BroadcastEncoderEvent(
+        ndPluginEncoder::EVENT_INTERFACES,
         static_cast<void *>(&interfaces)
     );
 #endif
@@ -2219,51 +2220,48 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         pkt_stats_global += pkt_stats.second;
 
 #ifdef _ND_USE_PLUGINS
-        plugins.BroadcastStatsEvent(
-            ndPluginStats::EVENT_PKT_CAPTURE_STATS,
+        plugins.BroadcastEncoderEvent(
+            ndPluginEncoder::EVENT_PKT_CAPTURE_STATS,
             static_cast<void *>(&pkt_stats)
         );
 #endif
     }
 
 #ifdef _ND_USE_PLUGINS
-    plugins.BroadcastStatsEvent(
-        ndPluginStats::EVENT_PKT_GLOBAL_STATS,
+    plugins.BroadcastEncoderEvent(
+        ndPluginEncoder::EVENT_PKT_GLOBAL_STATS,
         static_cast<void *>(&pkt_stats_global)
     );
 
-    plugins.BroadcastStatsEvent(
-        ndPluginStats::EVENT_FLOW_MAP,
+    plugins.BroadcastEncoderEvent(
+        ndPluginEncoder::EVENT_FLOW_MAP,
         static_cast<void *>(flow_buckets)
     );
 
-    plugins.BroadcastStatsEvent(
-        ndPluginStats::EVENT_COMPLETE
+    plugins.BroadcastEncoderEvent(
+        ndPluginEncoder::EVENT_COMPLETE
     );
 #endif
 }
 
 void ndInstance::ProcessFlows(void)
 {
-    uint32_t now = time(NULL);
-
+    time_t now = time(NULL);
+    size_t buckets = flow_buckets->GetBuckets();
+#ifdef _ND_PROCESS_FLOW_DEBUG
+    size_t tcp = 0, tcp_fin = 0,
+        tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
+#endif
     status.flows_purged = 0;
     status.flows_expiring = 0;
     status.flows_expired = 0;
     status.flows_active = 0;
     status.flows_locked = 0;
 
-#ifdef _ND_PROCESS_FLOW_DEBUG
-    size_t tcp = 0, tcp_fin = 0, tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
-#endif
-    bool add_flows = false;
-    bool socket_queue = (thread_socket && thread_socket->GetClientCount());
-
     //flow_buckets->DumpBucketStats();
 
-    size_t buckets = flow_buckets->GetBuckets();
-
     for (size_t b = 0; b < buckets; b++) {
+
         auto &fm = flow_buckets->Acquire(b);
         auto i = fm.cbegin();
 
@@ -2282,14 +2280,14 @@ void ndInstance::ProcessFlows(void)
 #endif
             if (i->second->flags.expired.load() == false) {
 
-                uint32_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
+                time_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
                     ndGC.ttl_idle_flow : (
                         (i->second->flags.tcp_fin_ack.load()) ?
                             ndGC.ttl_idle_flow : ndGC.ttl_idle_tcp_flow
                     )
                 );
 
-                if ((i->second->ts_last_seen / 1000) + ttl < now)
+                if (((time_t)(i->second->ts_last_seen / 1000) + ttl) < now)
                     if (ExpireFlow(i->second)) status.flows_expiring++;
             }
 
@@ -2298,70 +2296,23 @@ void ndInstance::ProcessFlows(void)
                 status.flows_expired++;
 
                 if (i->second->tickets.load() == 0) {
-
-                    if (add_flows &&
-                        (ndGC_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
-
-                        json jf;
-                        i->second->encode<json>(jf);
-
-                        string iface_name;
-                        nd_iface_name(i->second->iface.ifname, iface_name);
-
-                        // TODO: jflows[iface_name].push_back(jf);
+#ifdef _ND_USE_PLUGINS
+                    if (ndGC_FLOW_DUMP_UNKNOWN &&
+                        i->second->detected_protocol == ND_PROTO_UNKNOWN) {
+                        plugins.BroadcastEncoderEvent(
+                            ndPluginEncoder::EVENT_FLOW_NEW,
+                            static_cast<void *>(i->second)
+                        );
                     }
 
-                    if (socket_queue) {
-
-                        if (ndGC_FLOW_DUMP_UNKNOWN &&
-                            i->second->detected_protocol == ND_PROTO_UNKNOWN) {
-
-                            json j, jf;
-
-                            j["type"] = "flow";
-                            j["interface"] = i->second->iface.ifname;
-                            j["internal"] = (i->second->iface.role == ndIR_LAN);
-                            j["established"] = false;
-
-                            i->second->encode<json>(
-                                jf, ndFlow::ENCODE_METADATA
-                            );
-                            j["flow"] = jf;
-
-                            string json_string;
-                            nd_json_to_string(j, json_string, false);
-                            json_string.append("\n");
-
-                            thread_socket->QueueWrite(json_string);
-                        }
-
-                        if (ndGC_FLOW_DUMP_UNKNOWN ||
-                            i->second->detected_protocol != ND_PROTO_UNKNOWN) {
-
-                            json j, jf;
-
-                            j["type"] = "flow_purge";
-                            j["reason"] = (
-                                i->second->ip_protocol == IPPROTO_TCP &&
-                                i->second->flags.tcp_fin.load()
-                            ) ? "closed" : (ShouldTerminate()) ? "terminated" : "expired";
-                            j["interface"] = i->second->iface.ifname;
-                            j["internal"] = (i->second->iface.role == ndIR_LAN);
-                            j["established"] = false;
-
-                            i->second->encode<json>(
-                                jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
-                            );
-                            j["flow"] = jf;
-
-                            string json_string;
-                            nd_json_to_string(j, json_string, false);
-                            json_string.append("\n");
-
-                            thread_socket->QueueWrite(json_string);
-                        }
+                    if (ndGC_FLOW_DUMP_UNKNOWN ||
+                        i->second->detected_protocol != ND_PROTO_UNKNOWN) {
+                        plugins.BroadcastEncoderEvent(
+                            ndPluginEncoder::EVENT_FLOW_EXPIRED,
+                            static_cast<void *>(i->second)
+                        );
                     }
-
+#endif
                     delete i->second;
                     i = fm.erase(i);
 
@@ -2382,39 +2333,6 @@ void ndInstance::ProcessFlows(void)
             }
             else {
                 if (i->second->flags.detection_init.load()) {
-
-                    if (add_flows && i->second->ts_first_update &&
-                        (ndGC_UPLOAD_NAT_FLOWS || i->second->flags.ip_nat.load() == false)) {
-
-                        json jf;
-                        i->second->encode<json>(jf);
-
-                        string iface_name;
-                        nd_iface_name(i->second->iface.ifname, iface_name);
-
-                        // TODO: jflows[iface_name].push_back(jf);
-
-                        if (socket_queue) {
-                            json j;
-
-                            j["type"] = "flow_stats";
-                            j["interface"] = i->second->iface.ifname;
-                            j["internal"] = (i->second->iface.role == ndIR_LAN);
-                            j["established"] = false;
-
-                            jf.clear();
-                            i->second->encode<json>(
-                                jf, ndFlow::ENCODE_STATS | ndFlow::ENCODE_TUNNELS
-                            );
-                            j["flow"] = jf;
-
-                            string json_string;
-                            nd_json_to_string(j, json_string, false);
-                            json_string.append("\n");
-
-                            thread_socket->QueueWrite(json_string);
-                        }
-                    }
 
                     i->second->reset();
 

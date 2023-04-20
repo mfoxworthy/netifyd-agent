@@ -197,8 +197,8 @@ public:
     vector<pair<regex *, string> > privacy_regex;
     nd_interface_filter interface_filters;
 #ifdef _ND_USE_PLUGINS
-    map<string, string> plugin_detections;
-    map<string, string> plugin_stats;
+    map<string, string> plugin_sinks;
+    map<string, string> plugin_encoders;
 #endif
     map<string, string> custom_headers;
     map<string, string> protocols;

@@ -1080,10 +1080,10 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         ndEF->print();
 
 #ifdef _ND_USE_PLUGINS
-        ndi.plugins.BroadcastDetectionEvent(
+        ndi.plugins.BroadcastEncoderEvent(
             (ndEF->flags.detection_updated.load()) ?
-                ndPluginDetection::EVENT_UPDATED :
-                ndPluginDetection::EVENT_NEW,
+                ndPluginEncoder::EVENT_FLOW_UPDATED :
+                ndPluginEncoder::EVENT_FLOW_NEW,
             ndEF
         );
 #endif

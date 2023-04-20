@@ -92,7 +92,7 @@ class ndCaptureThread;
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
 typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
 
-class ndInstance : public ndThread
+class ndInstance : public ndThread, public ndSerializer
 {
 public:
     static ndInstance& Create(const string &tag = "nd-instance");
@@ -164,6 +164,19 @@ public:
             ndDUMP_TYPE_PROTOS | ndDUMP_TYPE_APPS
         )
     };
+
+    template <class T>
+    void Encode(T &output) const {
+        serialize(output, { "build_version" },
+            nd_get_version_and_features()
+        );
+        serialize(output, { "agent_version" },
+            strtod(PACKAGE_VERSION, NULL)
+        );
+        serialize(output, { "json_version" },
+            1.9 // XXX: Deprecated, keep for compatibility
+        );
+    }
 
     bool DumpList(uint8_t type = ndDUMP_TYPE_ALL);
 

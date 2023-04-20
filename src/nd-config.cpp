@@ -572,8 +572,8 @@ bool ndGlobalConfig::Load(const string &filename)
 
 #ifdef _ND_USE_PLUGINS
     // Plugins section
-    r->GetSection("plugin_detections", this->plugin_detections);
-    r->GetSection("plugin_stats", this->plugin_stats);
+    r->GetSection("sink_plugins", this->plugin_sinks);
+    r->GetSection("encoder_plugins", this->plugin_encoders);
 #endif
 
     // Netify API section

@@ -783,9 +783,14 @@ void ndSocketThread::ClientAccept(ndSocketServerMap::iterator &si)
 
     try {
         string json_string;
-        // TODO:
-        //nd_json_agent_hello(json_string);
-        //buffer->Push(json_string);
+
+        json js_hello;
+        js_hello["type"] = "agent_hello";
+        ndi.Encode(js_hello);
+
+        nd_json_to_string(js_hello, json_string);
+        json_string.append("\n");
+        buffer->Push(json_string);
 
         json js_status;
         js_status["type"] = "agent_status";

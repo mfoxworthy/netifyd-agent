@@ -24,8 +24,8 @@ extern "C" { \
     ndPlugin *ndPluginInit(const string &tag) { \
         class_name *p = new class_name(tag); \
         if (p == nullptr) return nullptr; \
-        if (p->GetType() != ndPlugin::TYPE_STATS && \
-            p->GetType() != ndPlugin::TYPE_DETECTION) { \
+        if (p->GetType() != ndPlugin::TYPE_SINK && \
+            p->GetType() != ndPlugin::TYPE_ENCODER) { \
                 nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
                     tag.c_str(), p->GetType()); \
                 delete p; \
@@ -49,8 +49,8 @@ public:
     enum ndPluginType
     {
         TYPE_BASE,
-        TYPE_STATS,
-        TYPE_DETECTION,
+        TYPE_SINK,
+        TYPE_ENCODER,
     };
 
     ndPlugin(ndPluginType type, const string &tag);
@@ -59,6 +59,7 @@ public:
     virtual void *Entry(void) = 0;
 
     virtual void GetVersion(string &version) = 0;
+    virtual void GetStatus(const json &jstatus) { };
 
     enum ndPluginEvent
     {
@@ -66,7 +67,7 @@ public:
         EVENT_STATUS_UPDATE,
     };
 
-    virtual void ProcessEvent(
+    virtual void DispatchEvent(
         ndPluginEvent event, void *param = nullptr) { };
 
     static const map<ndPlugin::ndPluginType, string> types;
@@ -76,43 +77,39 @@ protected:
     ndPluginType type;
 };
 
-class ndPluginStats : public ndPlugin
+class ndPluginSink : public ndPlugin
 {
 public:
-    ndPluginStats(const string &tag);
-    virtual ~ndPluginStats();
+    ndPluginSink(const string &tag);
+    virtual ~ndPluginSink();
 
-    enum ndStatsEvent {
-        EVENT_INIT,
-        EVENT_INTERFACES,
-        EVENT_PKT_CAPTURE_STATS,
-        EVENT_PKT_GLOBAL_STATS,
-        EVENT_FLOW_MAP,
-        EVENT_COMPLETE,
-    };
-
-    virtual void ProcessStatsEvent(
-        ndStatsEvent event, void *param = nullptr) = 0;
+    virtual void DispatchSinkEvent(
+        const string &channel, size_t length, const uint8_t *payload) = 0;
 
 protected:
 };
 
-class ndPluginDetection : public ndPlugin
+class ndPluginEncoder : public ndPlugin
 {
 public:
+    ndPluginEncoder(const string &tag);
+    virtual ~ndPluginEncoder();
 
-    enum ndDetectionEvent
-    {
-        EVENT_NEW,
-        EVENT_UPDATED,
-        EVENT_EXPIRING,
+    enum ndEncoderEvent {
+        EVENT_INIT,
+        EVENT_INTERFACES,
+        EVENT_PKT_GLOBAL_STATS,
+        EVENT_PKT_CAPTURE_STATS,
+        EVENT_FLOW_NEW,
+        EVENT_FLOW_MAP,
+        EVENT_FLOW_UPDATED,
+        EVENT_FLOW_EXPIRING,
+        EVENT_FLOW_EXPIRED,
+        EVENT_COMPLETE,
     };
 
-    ndPluginDetection(const string &tag);
-    virtual ~ndPluginDetection();
-
-    virtual void ProcessDetectionEvent(
-        ndDetectionEvent event, ndFlow *flow) = 0;
+    virtual void DispatchEncoderEvent(
+        ndEncoderEvent event, void *param = nullptr) = 0;
 
 protected:
 };
@@ -150,11 +147,13 @@ public:
     void BroadcastEvent(ndPlugin::ndPluginType type,
         ndPlugin::ndPluginEvent event, void *param = nullptr);
 
-    void BroadcastStatsEvent(
-        ndPluginStats::ndStatsEvent event, void *param = nullptr);
+    void BroadcastSinkPayload(
+        const string &channel, size_t length, uint8_t *payload);
+    bool DispatchSinkPayload(const string &tag,
+        const string &channel, size_t length, uint8_t *payload);
 
-    void BroadcastDetectionEvent(
-        ndPluginDetection::ndDetectionEvent event, ndFlow *flow);
+    void BroadcastEncoderEvent(
+        ndPluginEncoder::ndEncoderEvent event, void *param = nullptr);
 
     template <class T>
     void Encode(T &output) const {
@@ -165,8 +164,14 @@ public:
         ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
 
 protected:
-    map<ndPlugin::ndPluginType, vector<ndPluginLoader *>> plugins;
+    mutex lock;
+
+    typedef map<string, ndPluginLoader *> map_plugin;
+
+    map_plugin sinks;
+    map_plugin encoders;
 };
+
 #endif // _ND_INTERNAL
 #endif // _ND_PLUGIN_H
 
