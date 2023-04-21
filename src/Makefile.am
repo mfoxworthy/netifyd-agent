@@ -14,10 +14,10 @@ AM_CPPFLAGS = $(CPPFLAGS) -D_GNU_SOURCE \
 	-I $(top_srcdir)/libs/ndpi/src/include -I $(top_srcdir)/libs/inih/cpp \
 	$(LIBCURL_CFLAGS) $(ZLIB_CFLAGS) \
 	-D_ND_INTERNAL=1 \
-	-D'ND_CONF_FILE_NAME="$(sysconfdir)/$(PACKAGE_TARNAME).conf"' \
 	-D'ND_DATADIR="$(datadir)/$(PACKAGE_TARNAME)"' \
-	-D'ND_PERSISTENT_STATEDIR="$(persistentstatedir)"' \
 	-D'ND_PID_FILE_NAME="$(volatilestatedir)/$(PACKAGE_TARNAME).pid"' \
+	-D'ND_CONF_FILE_NAME="$(sysconfdir)/$(PACKAGE_TARNAME).conf"' \
+	-D'ND_PERSISTENT_STATEDIR="$(persistentstatedir)"' \
 	-D'ND_VOLATILE_STATEDIR="$(volatilestatedir)"'
 
 if USE_LIBTCMALLOC

@@ -8,6 +8,9 @@
 
 [netifyd]
 syn_scan_protection = no
+path_state_volatile = @volatilestatedir@
+path_state_persistent = @persistentstatedir@
+path_pid_file = ${path_state_volatile}/netifyd.pid
 
 [protocols]
 all=include
@@ -38,9 +41,9 @@ conf_filename = ${path_state_persistent}/netify-sink-socket.json
 [proc-legacy]
 enable = yes
 plugin_library = @libdir@/libnetify-proc-post-legacy.so
-sink_targets = sink-legacy:default
+sink_targets = sink-legacy
 
 [proc-socket]
 enable = yes
 plugin_library = @libdir@/libnetify-proc-socket-legacy.so
-sink_targets = sink-socket:default
+sink_targets = sink-socket:local_unix

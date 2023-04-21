@@ -22,10 +22,12 @@ EXTRA_DIST = $(TEMPLATEFILES_IN) freebsd netifyd.default netify-apps.conf netify
 %: %.in
 	$(SED) \
 		-e 's|[@]bindir@|$(bindir)|g' \
+		-e 's|[@]libdir@|$(libdir)|g' \
 		-e 's|[@]datadir@|$(datadir)/$(PACKAGE_TARNAME)|g' \
 		-e 's|[@]PACKAGE_NAME@|$(PACKAGE_NAME)|g' \
 		-e 's|[@]PACKAGE_TARNAME@|$(PACKAGE_TARNAME)|g' \
 		-e 's|[@]sysconfdir@|$(sysconfdir)|g' \
+		-e 's|[@]persistentstatedir@|$(persistentstatedir)|g' \
 		-e 's|[@]volatilestatedir@|$(volatilestatedir)|g' \
 		< "$<" > "$@"
 
