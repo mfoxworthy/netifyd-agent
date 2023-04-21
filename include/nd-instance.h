@@ -81,13 +81,12 @@ public:
     }
 };
 
+class ndCaptureThread;
+class ndDetectionThread;
+class ndNetifyApiThread;
 #ifdef _ND_USE_CONNTRACK
 class ndConntrackThread;
 #endif
-class ndNetifyApiThread;
-class ndSocketThread;
-class ndDetectionThread;
-class ndCaptureThread;
 
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
 typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
@@ -289,7 +288,6 @@ public:
     ndNetlink *netlink;
 #endif
 
-    ndSocketThread *thread_socket;
     ndNetifyApiThread *thread_napi;
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack;

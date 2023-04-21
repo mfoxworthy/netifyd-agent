@@ -127,7 +127,6 @@ using namespace std;
 #ifdef _ND_USE_NFQUEUE
 #include "nd-capture-nfq.h"
 #endif
-#include "nd-socket.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
@@ -271,7 +270,7 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     header.str("");
 
-    if (strncmp(ndGC.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN))
+    if (ndGC.uuid != ND_AGENT_UUID_NULL)
         header << "X-UUID: " << ndGC.uuid;
     else {
         string uuid;
@@ -284,7 +283,7 @@ ndNetifyApiThread::ndNetifyApiThread()
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
-    if (strncmp(ndGC.uuid_serial, ND_AGENT_SERIAL_NULL, ND_AGENT_SERIAL_LEN))
+    if (ndGC.uuid_serial != ND_AGENT_SERIAL_NULL)
         header << "X-UUID-Serial: " << ndGC.uuid_serial;
     else {
         string uuid;

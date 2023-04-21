@@ -111,7 +111,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-socket.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-capture-nfq.h"
@@ -275,15 +274,14 @@ static int ndCaptureNFQueue_Callback(
 ndCaptureNFQueue::ndCaptureNFQueue(
     int16_t cpu,
     ndInterface& iface,
-    ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     unsigned instance_id,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
-    :
-    ndCaptureThread(ndCT_NFQ,
-        (long)cpu, iface, thread_socket,
-        threads_dpi, dhc, private_addr),
+    : ndCaptureThread(
+        ndCT_NFQ,
+        cpu, iface, threads_dpi, dhc, private_addr
+    ),
     nl(nullptr), port_id(0),
     buffer_size(0xffff + (MNL_SOCKET_BUFFER_SIZE / 2)),
     buffer(nullptr), dropped(0)

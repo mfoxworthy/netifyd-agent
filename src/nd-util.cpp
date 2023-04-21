@@ -1287,4 +1287,34 @@ void nd_set_hostname(char *dst,
     for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
 }
 
+void nd_expand_variables(const string &input, string &output)
+{
+    map<string, string> vars = {
+        { "${path_state_persistent}", ndGC.path_state_persistent },
+        { "${path_state_volatile}", ndGC.path_state_volatile },
+    };
+
+    output = input;
+
+    for (auto &var : vars) {
+        size_t p;
+
+        while ((p = output.find(var.first)) != string::npos) {
+            if (var.second.size() > var.first.size()) {
+                output.insert(p + var.first.size(),
+                    var.second.size() - var.first.size(), ' '
+                );
+            }
+
+            output.replace(p, var.second.size(), var.second);
+
+            if (var.second.size() < var.first.size()) {
+                output.erase(p + var.second.size(),
+                    var.first.size() - var.second.size()
+                );
+            }
+        }
+    }
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

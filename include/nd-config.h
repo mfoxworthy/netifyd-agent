@@ -78,11 +78,11 @@ enum nd_global_flags {
     ndGF_VERBOSE = 0x10000,
     ndGF_REPLAY_DELAY = 0x20000,
     ndGF_REMAIN_IN_FOREGROUND = 0x40000,
-    ndGF_FLOW_DUMP_ESTABLISHED = 0x80000,
-    ndGF_FLOW_DUMP_UNKNOWN = 0x100000,
+    ndGF_UNUSED_0x80000 = 0x80000,
+    ndGF_UNUSED_0x100000 = 0x100000,
     ndGF_UPLOAD_ENABLED = 0x200000,
     ndGF_UPLOAD_NAT_FLOWS = 0x400000,
-    ndGF_WAIT_FOR_CLIENT = 0x800000,
+    ndGF_UNUSED_0x800000 = 0x800000,
     ndGF_SOFT_DISSECTORS = 0x1000000,
     ndGF_LOAD_DOMAINS = 0x2000000,
 };
@@ -105,11 +105,8 @@ enum nd_global_flags {
 #define ndGC_VERBOSE (ndGlobalConfig::GetInstance().flags & ndGF_VERBOSE)
 #define ndGC_REPLAY_DELAY (ndGlobalConfig::GetInstance().flags & ndGF_REPLAY_DELAY)
 #define ndGC_REMAIN_IN_FOREGROUND (ndGlobalConfig::GetInstance().flags & ndGF_REMAIN_IN_FOREGROUND)
-#define ndGC_FLOW_DUMP_ESTABLISHED (ndGlobalConfig::GetInstance().flags & ndGF_FLOW_DUMP_ESTABLISHED)
-#define ndGC_FLOW_DUMP_UNKNOWN (ndGlobalConfig::GetInstance().flags & ndGF_FLOW_DUMP_UNKNOWN)
 #define ndGC_UPLOAD_ENABLED (ndGlobalConfig::GetInstance().flags & ndGF_UPLOAD_ENABLED)
 #define ndGC_UPLOAD_NAT_FLOWS (ndGlobalConfig::GetInstance().flags & ndGF_UPLOAD_NAT_FLOWS)
-#define ndGC_WAIT_FOR_CLIENT (ndGlobalConfig::GetInstance().flags & ndGF_WAIT_FOR_CLIENT)
 #define ndGC_SOFT_DISSECTORS (ndGlobalConfig::GetInstance().flags & ndGF_SOFT_DISSECTORS)
 #define ndGC_LOAD_DOMAINS (ndGlobalConfig::GetInstance().flags & ndGF_LOAD_DOMAINS)
 
@@ -145,7 +142,7 @@ typedef struct
 class ndGlobalConfig
 {
 public:
-    char *napi_vendor;
+    string napi_vendor;
     string path_agent_status;
     string path_app_config;
     string path_cat_config;
@@ -158,10 +155,10 @@ public:
     string path_uuid;
     string path_uuid_serial;
     string path_uuid_site;
-    char *url_napi;
-    char *uuid;
-    char *uuid_serial;
-    char *uuid_site;
+    string url_napi;
+    string uuid;
+    string uuid_serial;
+    string uuid_site;
     enum nd_dhc_save dhc_save;
     enum nd_fhc_save fhc_save;
     enum nd_capture_type capture_type;
@@ -172,7 +169,6 @@ public:
     int16_t ca_conntrack;
     int16_t ca_detection_base;
     int16_t ca_detection_cores;
-    int16_t ca_socket;
     size_t max_packet_queue;
     uint16_t max_capture_length;
     uint32_t flags;
@@ -197,8 +193,9 @@ public:
     vector<pair<regex *, string> > privacy_regex;
     nd_interface_filter interface_filters;
 #ifdef _ND_USE_PLUGINS
-    map<string, string> plugin_sinks;
-    map<string, string> plugin_encoders;
+    typedef map<string, pair<string, map<string, string>>> map_plugin;
+    map_plugin plugin_processors;
+    map_plugin plugin_sinks;
 #endif
     map<string, string> custom_headers;
     map<string, string> protocols;
@@ -234,7 +231,9 @@ protected:
     void *reader;
 
     bool AddInterfaces(void);
-
+#ifdef _ND_USE_PLUGINS
+    bool AddPlugins(void);
+#endif
     enum nd_capture_type LoadCaptureType(
         const string &section, const string &key);
     void LoadCaptureSettings(

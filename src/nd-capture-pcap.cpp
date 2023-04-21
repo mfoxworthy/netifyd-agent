@@ -104,7 +104,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-socket.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-capture-pcap.h"
@@ -112,14 +111,13 @@ using namespace std;
 ndCapturePcap::ndCapturePcap(
     int16_t cpu,
     ndInterface& iface,
-    ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
-    :
-    ndCaptureThread(ndCT_PCAP,
-        (long)cpu, iface, thread_socket,
-        threads_dpi, dhc, private_addr),
+    : ndCaptureThread(
+        ndCT_PCAP,
+        cpu, iface, threads_dpi, dhc, private_addr
+    ),
     pcap(NULL), pcap_fd(-1),
     pkt_header(NULL), pkt_data(NULL),
     pcs_last{0}

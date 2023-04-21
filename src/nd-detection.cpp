@@ -114,7 +114,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-socket.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-tls-alpn.h"
@@ -139,7 +138,6 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_NETLINK
     ndNetlink *netlink,
 #endif
-    ndSocketThread *thread_socket,
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack,
 #endif
@@ -154,7 +152,6 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_NETLINK
     netlink(netlink),
 #endif
-    thread_socket(thread_socket),
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(thread_conntrack),
 #endif
@@ -1076,36 +1073,16 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
     }
 
     if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
-
         ndEF->print();
 
 #ifdef _ND_USE_PLUGINS
-        ndi.plugins.BroadcastEncoderEvent(
-            (ndEF->flags.detection_updated.load()) ?
-                ndPluginEncoder::EVENT_FLOW_UPDATED :
-                ndPluginEncoder::EVENT_FLOW_NEW,
-            ndEF
-        );
+    ndi.plugins.BroadcastProcessorEvent(
+        (ndEF->flags.detection_updated.load()) ?
+            ndPluginProcessor::EVENT_FLOW_UPDATED :
+            ndPluginProcessor::EVENT_FLOW_NEW,
+        ndEF
+    );
 #endif
-    if (thread_socket && (ndGC_FLOW_DUMP_UNKNOWN ||
-        ndEF->detected_protocol != ND_PROTO_UNKNOWN)) {
-        json j;
-
-        j["type"] = "flow";
-        j["interface"] = ndEF->iface.ifname;
-        j["internal"] = (ndEF->iface.role == ndIR_LAN);
-        j["established"] = false;
-
-        json jf;
-        ndEF->encode(jf, ndFlow::ENCODE_METADATA);
-        j["flow"] = jf;
-
-        string json_string;
-        nd_json_to_string(j, json_string, false);
-        json_string.append("\n");
-
-        thread_socket->QueueWrite(json_string);
-    }
 }
 
 void ndDetectionThread::SetGuessedProtocol(ndDetectionQueueEntry *entry)

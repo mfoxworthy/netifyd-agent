@@ -113,7 +113,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-socket.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-capture-tpv3.h"
@@ -608,14 +607,13 @@ ndPacket *ndPacketRing::CopyPacket(const void *entry,
 ndCaptureTPv3::ndCaptureTPv3(
     int16_t cpu,
     ndInterface& iface,
-    ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
-    :
-    ndCaptureThread(ndCT_TPV3,
-        (long)cpu, iface, thread_socket,
-        threads_dpi, dhc, private_addr),
+    : ndCaptureThread(
+        ndCT_TPV3,
+        cpu, iface, threads_dpi, dhc, private_addr
+    ),
     ring(nullptr)
 {
     dl_type = DLT_EN10MB;

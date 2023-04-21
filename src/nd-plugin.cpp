@@ -18,6 +18,8 @@
 #include "config.h"
 #endif
 
+#include <string>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 #include <map>
@@ -80,15 +82,34 @@ using namespace std;
 
 //#define _ND_LOG_PLUGIN_DEBUG    1
 
-const map<ndPlugin::ndPluginType, string> ndPlugin::types = {
-    // XXX: Keep in sync with ndPluginType enum
+const map<ndPlugin::Type, string> ndPlugin::types = {
+    // XXX: Keep in sync with Type enum
+    make_pair(ndPlugin::TYPE_PROC, "processor"),
     make_pair(ndPlugin::TYPE_SINK, "sink"),
-    make_pair(ndPlugin::TYPE_ENCODER, "encoder"),
 };
 
-ndPlugin::ndPlugin(ndPluginType type, const string &tag)
+ndPlugin::ndPlugin(
+    Type type,
+    const string &tag, const map<string, string> &params)
     : ndThread(tag, -1), type(type)
 {
+    for (auto &param : params) {
+        if (param.first == "conf_filename")
+            conf_filename = param.second;
+        else if (param.first == "sink_targets") {
+            stringstream ss(param.second);
+            while (ss.good()) {
+                string target;
+                getline(ss, target, ',');
+                if (! target.empty()) {
+                    nd_trim(target, ' ');
+                    sink_targets.push_back(target);
+                }
+            }
+        }
+        else if (param.first == "sink_channel")
+            sink_channel = param.second;
+    }
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Plugin created: %s\n", tag.c_str());
 #endif
@@ -101,8 +122,9 @@ ndPlugin::~ndPlugin()
 #endif
 }
 
-ndPluginSink::ndPluginSink(const string &tag)
-    : ndPlugin(ndPlugin::TYPE_SINK, tag)
+ndPluginSink::ndPluginSink(
+    const string &tag, const map<string, string> &params)
+    : ndPlugin(ndPlugin::TYPE_SINK, tag, params)
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Sink plugin created: %s\n", tag.c_str());
@@ -116,29 +138,33 @@ ndPluginSink::~ndPluginSink()
 #endif
 }
 
-ndPluginEncoder::ndPluginEncoder(const string &tag)
-    : ndPlugin(ndPlugin::TYPE_ENCODER, tag)
+ndPluginProcessor::ndPluginProcessor(
+    const string &tag, const map<string, string> &params)
+    : ndPlugin(ndPlugin::TYPE_PROC, tag, params)
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Encoder plugin created: %s\n", tag.c_str());
+    nd_dprintf("Processor plugin created: %s\n", tag.c_str());
 #endif
 }
 
-ndPluginEncoder::~ndPluginEncoder()
+ndPluginProcessor::~ndPluginProcessor()
 {
 #ifdef _ND_LOG_PLUGIN_DEBUG
-    nd_dprintf("Encoder plugin destroyed: %s\n", tag.c_str());
+    nd_dprintf("Processor plugin destroyed: %s\n", tag.c_str());
 #endif
 }
 
-ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
-    : so_name(so_name), so_handle(NULL)
+ndPluginLoader::ndPluginLoader(
+    const string &tag,
+    const string &so_name, const map<string, string> &params)
+    : tag(tag), so_name(so_name), so_handle(NULL)
 {
     so_handle = dlopen(so_name.c_str(), RTLD_NOW);
-    if (so_handle == NULL) throw ndPluginException(tag, dlerror());
+    if (so_handle == NULL)
+        throw ndPluginException(tag, dlerror());
 
     char *dlerror_string;
-    ndPlugin *(*ndPluginInit)(const string &);
+    ndPlugin *(*ndPluginInit)(const string &, const map<string, string> &);
 
     dlerror();
     *(void **) (&ndPluginInit) = dlsym(so_handle, "ndPluginInit");
@@ -149,14 +175,16 @@ ndPluginLoader::ndPluginLoader(const string &so_name, const string &tag)
         throw ndPluginException(tag, dlerror_string);
     }
 
-    plugin = (*ndPluginInit)(tag);
+    plugin = (*ndPluginInit)(tag, params);
     if (plugin == NULL) {
         dlclose(so_handle);
         so_handle = NULL;
         throw ndPluginException(tag, "ndPluginInit");
     }
 
-    nd_dprintf("Plugin loaded: %s: %s\n", tag.c_str(), so_name.c_str());
+    nd_dprintf("Plugin loaded: %s: %s\n",
+        tag.c_str(), so_name.c_str()
+    );
 }
 
 ndPluginLoader::~ndPluginLoader()
@@ -164,7 +192,9 @@ ndPluginLoader::~ndPluginLoader()
     if (so_handle != NULL) {
         dlclose(so_handle);
 #ifdef _ND_LOG_PLUGIN_DEBUG
-        nd_dprintf("Plugin dereferenced: %s\n", so_name.c_str());
+        nd_dprintf("Plugin dereferenced: %s: %s\n",
+            tag.c_str(), so_name.c_str()
+        );
 #endif
     }
 }
@@ -172,6 +202,14 @@ ndPluginLoader::~ndPluginLoader()
 ndPluginManager::~ndPluginManager()
 {
     unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors)
+        p.second->GetPlugin()->Terminate();
+
+    for (auto &p : processors) {
+        delete p.second->GetPlugin();
+        delete p.second;
+    }
 
     for (auto &p : sinks)
         p.second->GetPlugin()->Terminate();
@@ -181,19 +219,11 @@ ndPluginManager::~ndPluginManager()
         delete p.second;
     }
 
-    for (auto &p : encoders)
-        p.second->GetPlugin()->Terminate();
-
-    for (auto &p : encoders) {
-        delete p.second->GetPlugin();
-        delete p.second;
-    }
-
+    processors.clear();
     sinks.clear();
-    encoders.clear();
 }
 
-void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
+void ndPluginManager::Load(ndPlugin::Type type, bool create)
 {
     unique_lock<mutex> ul(lock);
 
@@ -201,14 +231,14 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
         if (type != ndPlugin::TYPE_BASE && type != t.first)
             continue;
 
-        const map<string, string> *plugins = nullptr;
+        const ndGlobalConfig::map_plugin *plugins = nullptr;
 
         switch (t.first) {
+        case ndPlugin::TYPE_PROC:
+            plugins = &ndGC.plugin_processors;
+            break;
         case ndPlugin::TYPE_SINK:
             plugins = &ndGC.plugin_sinks;
-            break;
-        case ndPlugin::TYPE_ENCODER:
-            plugins = &ndGC.plugin_encoders;
             break;
         default:
             break;
@@ -219,7 +249,8 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
         for (auto &i : *plugins) {
             ndPluginLoader *loader = nullptr;
 
-            loader = new ndPluginLoader(i.second, i.first);
+            loader = new ndPluginLoader(
+                i.first, i.second.first, i.second.second);
 
             if (loader->GetPlugin()->GetType() != t.first)
                 throw ndPluginException(i.first, "wrong type");
@@ -230,11 +261,11 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
             map_plugin *mp = nullptr;
 
             switch (t.first) {
+            case ndPlugin::TYPE_PROC:
+                mp = &processors;
+                break;
             case ndPlugin::TYPE_SINK:
                 mp = &sinks;
-                break;
-            case ndPlugin::TYPE_ENCODER:
-                mp = &encoders;
                 break;
             default:
                 throw ndPluginException(
@@ -260,7 +291,7 @@ void ndPluginManager::Load(ndPlugin::ndPluginType type, bool create)
     }
 }
 
-bool ndPluginManager::Create(ndPlugin::ndPluginType type)
+bool ndPluginManager::Create(ndPlugin::Type type)
 {
     unique_lock<mutex> ul(lock);
 
@@ -271,11 +302,11 @@ bool ndPluginManager::Create(ndPlugin::ndPluginType type)
         map_plugin *mp = nullptr;
 
         switch (t.first) {
+        case ndPlugin::TYPE_PROC:
+            mp = &processors;
+            break;
         case ndPlugin::TYPE_SINK:
             mp = &sinks;
-            break;
-        case ndPlugin::TYPE_ENCODER:
-            mp = &encoders;
             break;
         default:
             throw ndPluginException(
@@ -300,7 +331,7 @@ bool ndPluginManager::Create(ndPlugin::ndPluginType type)
     return false;
 }
 
-bool ndPluginManager::Reap(ndPlugin::ndPluginType type)
+bool ndPluginManager::Reap(ndPlugin::Type type)
 {
     size_t count = 0;
     unique_lock<mutex> ul(lock);
@@ -312,11 +343,11 @@ bool ndPluginManager::Reap(ndPlugin::ndPluginType type)
         map_plugin *mp = nullptr;
 
         switch (t.first) {
+        case ndPlugin::TYPE_PROC:
+            mp = &processors;
+            break;
         case ndPlugin::TYPE_SINK:
             mp = &sinks;
-            break;
-        case ndPlugin::TYPE_ENCODER:
-            mp = &encoders;
             break;
         default:
             throw ndPluginException(
@@ -334,7 +365,7 @@ bool ndPluginManager::Reap(ndPlugin::ndPluginType type)
             }
 
             nd_printf("Plugin exited abnormally: %s: %s\n",
-                p->second->GetPlugin()->GetTag().c_str(),
+                p->second->GetTag().c_str(),
                 p->second->GetObjectName().c_str()
             );
 
@@ -349,23 +380,23 @@ bool ndPluginManager::Reap(ndPlugin::ndPluginType type)
     return (count > 0);
 }
 
-void ndPluginManager::BroadcastEvent(ndPlugin::ndPluginType type,
-    ndPlugin::ndPluginEvent event, void *param)
+void ndPluginManager::BroadcastEvent(ndPlugin::Type type,
+    ndPlugin::Event event, void *param)
 {
     unique_lock<mutex> ul(lock);
 
     for (auto &t : ndPlugin::types) {
-        if (type != ndPlugin::TYPE_BASE || type != t.first)
+        if (type != ndPlugin::TYPE_BASE && type != t.first)
             continue;
 
         map_plugin *mp = nullptr;
 
         switch (t.first) {
+        case ndPlugin::TYPE_PROC:
+            mp = &processors;
+            break;
         case ndPlugin::TYPE_SINK:
             mp = &sinks;
-            break;
-        case ndPlugin::TYPE_ENCODER:
-            mp = &encoders;
             break;
         default:
             throw ndPluginException(
@@ -416,34 +447,34 @@ bool ndPluginManager::DispatchSinkPayload(const string &tag,
     return true;
 }
 
-void ndPluginManager::BroadcastEncoderEvent(
-    ndPluginEncoder::ndEncoderEvent event, void *param)
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event, void *param)
 {
     unique_lock<mutex> ul(lock);
 
-    for (auto &p : encoders) {
-        reinterpret_cast<ndPluginEncoder *>(
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
             p.second->GetPlugin()
-        )->DispatchEncoderEvent(event, param);
+        )->DispatchProcessorEvent(event, param);
     }
 }
 
-void ndPluginManager::DumpVersions(ndPlugin::ndPluginType type)
+void ndPluginManager::DumpVersions(ndPlugin::Type type)
 {
     unique_lock<mutex> ul(lock);
 
     for (auto &t : ndPlugin::types) {
-        if (type != ndPlugin::TYPE_BASE || type != t.first)
+        if (type != ndPlugin::TYPE_BASE && type != t.first)
             continue;
 
         map_plugin *mp = nullptr;
 
         switch (t.first) {
+        case ndPlugin::TYPE_PROC:
+            mp = &processors;
+            break;
         case ndPlugin::TYPE_SINK:
             mp = &sinks;
-            break;
-        case ndPlugin::TYPE_ENCODER:
-            mp = &encoders;
             break;
         default:
             throw ndPluginException(
@@ -457,7 +488,7 @@ void ndPluginManager::DumpVersions(ndPlugin::ndPluginType type)
             p.second->GetPlugin()->GetVersion(version);
 
             fprintf(stderr, "%16s: %s: v%s\n",
-                p.second->GetPlugin()->GetTag().c_str(),
+                p.second->GetTag().c_str(),
                 p.second->GetObjectName().c_str(),
                 (version.empty()) ? "?.?.?" : version.c_str()
             );

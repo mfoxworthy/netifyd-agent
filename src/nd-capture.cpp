@@ -182,7 +182,6 @@ using namespace std;
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
-#include "nd-socket.h"
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-napi.h"
@@ -289,14 +288,13 @@ ndCaptureThread::ndCaptureThread(
     nd_capture_type cs_type,
     int16_t cpu,
     ndInterface& iface,
-    ndSocketThread *thread_socket,
     const nd_detection_threads &threads_dpi,
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     : ndThread(iface.ifname, (long)cpu, /* IPC? */ false),
     ndInstanceClient(),
     dl_type(0), cs_type(cs_type),
-    iface(iface), thread_socket(thread_socket),
+    iface(iface),
     tv_epoch(0), ts_pkt_first(0), ts_pkt_last(0), dhc(dhc),
     threads_dpi(threads_dpi), dpi_thread_id(rand() % threads_dpi.size())
 {

@@ -17,15 +17,12 @@
 #ifndef _ND_CAPTURE_PCAP_H
 #define _ND_CAPTURE_PCAP_H
 
-class ndSocketThread;
-
 class ndCapturePcap : public ndCaptureThread
 {
 public:
     ndCapturePcap(
         int16_t cpu,
         ndInterface& iface,
-        ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);

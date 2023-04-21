@@ -127,7 +127,6 @@ using namespace std;
 #ifdef _ND_USE_NFQUEUE
 #include "nd-capture-nfq.h"
 #endif
-#include "nd-socket.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
@@ -171,7 +170,6 @@ ndInstance::ndInstance(const string &tag)
 #ifdef _ND_USE_NETLINK
     netlink(nullptr),
 #endif
-    thread_socket(nullptr),
     thread_napi(nullptr),
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(nullptr),
@@ -203,15 +201,6 @@ ndInstance::~ndInstance()
             else {
                 delete thread_napi;
                 thread_napi= nullptr;
-            }
-        }
-
-        if (thread_socket) {
-            if (p == 0)
-                thread_socket->Terminate();
-            else {
-                delete thread_socket;
-                thread_socket = nullptr;
             }
         }
 
@@ -346,19 +335,15 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 #define _ND_LO_CA_CONNTRACK         3
 #define _ND_LO_CA_DETECTION_BASE    4
 #define _ND_LO_CA_DETECTION_CORES   5
-#define _ND_LO_CA_SOCKET            6
         { "thread-capture-base", 1, 0, _ND_LO_CA_CAPTURE_BASE },
         { "thread-conntrack", 1, 0, _ND_LO_CA_CONNTRACK },
         { "thread-detection-base", 1, 0, _ND_LO_CA_DETECTION_BASE },
         { "thread-detection-cores", 1, 0, _ND_LO_CA_DETECTION_CORES },
-        { "thread-socket", 1, 0, _ND_LO_CA_SOCKET },
-#define _ND_LO_WAIT_FOR_CLIENT      7
-        { "wait-for-client", 0, 0, _ND_LO_WAIT_FOR_CLIENT },
-#define _ND_LO_DUMP_PROTOS          8
-#define _ND_LO_DUMP_APPS            9
-#define _ND_LO_DUMP_CAT             10
-#define _ND_LO_DUMP_CATS            11
-#define _ND_LO_DUMP_RISKS           12
+#define _ND_LO_DUMP_PROTOS          6
+#define _ND_LO_DUMP_APPS            7
+#define _ND_LO_DUMP_CAT             8
+#define _ND_LO_DUMP_CATS            9
+#define _ND_LO_DUMP_RISKS           10
         { "dump-all", 0, 0, 'P' },
         { "dump-protos", 0, 0, _ND_LO_DUMP_PROTOS },
         { "dump-protocols", 0, 0, _ND_LO_DUMP_PROTOS },
@@ -367,13 +352,13 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "dump-category", 1, 0, _ND_LO_DUMP_CAT },
         { "dump-categories", 0, 0, _ND_LO_DUMP_CATS },
         { "dump-risks", 0, 0, _ND_LO_DUMP_RISKS },
-#define _ND_LO_DUMP_SORT_BY_TAG     13
+#define _ND_LO_DUMP_SORT_BY_TAG     11
         { "dump-sort-by-tag", 0, 0, _ND_LO_DUMP_SORT_BY_TAG },
-#define _ND_LO_DUMP_WITH_CATS       14
+#define _ND_LO_DUMP_WITH_CATS       12
         { "dump-with-categories", 0, 0, _ND_LO_DUMP_WITH_CATS },
-#define _ND_LO_EXPORT_APPS          15
+#define _ND_LO_EXPORT_APPS          13
         { "export-apps", 0, 0, _ND_LO_EXPORT_APPS },
-#define _ND_LO_LOOKUP_IP            16
+#define _ND_LO_LOOKUP_IP            14
         { "lookup-ip", 1, 0, _ND_LO_LOOKUP_IP },
 
         { NULL, 0, 0, 0 }
@@ -412,8 +397,14 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     }
 
     if (conf_filename != "/dev/null") {
-        if (ndGC.Load(conf_filename) == false)
-            return ndCR_LOAD_FAILURE;
+        if (ndGC.Load(conf_filename) == false) {
+            fprintf(stderr, "Error while loading configuration: %s\n",
+                conf_filename.c_str()
+            );
+            return ndCR_Pack(
+                ndCR_LOAD_FAILURE, 1
+            );
+        }
 
         ndGC.Close();
     }
@@ -468,18 +459,6 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 );
                 return ndCR_INVALID_VALUE;
             }
-            break;
-        case _ND_LO_CA_SOCKET:
-            ndGC.ca_socket = (int16_t)atoi(optarg);
-            if (ndGC.ca_socket > status.cpus) {
-                fprintf(stderr,
-                    "Socket thread ID greater than online cores.\n"
-                );
-                return ndCR_INVALID_VALUE;
-            }
-            break;
-        case _ND_LO_WAIT_FOR_CLIENT:
-            ndGC_SetFlag(ndGF_WAIT_FOR_CLIENT, true);
             break;
         case _ND_LO_EXPORT_APPS:
 #ifndef _ND_LEAN_AND_MEAN
@@ -610,8 +589,8 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 ndCR_DUMP_LIST, (rc) ? 0 : 1
             );
         case 'p':
-            if ((rc = (CheckAgentUUID() && ndGC.uuid != nullptr)))
-                fprintf(stdout, "Agent UUID: %s\n", ndGC.uuid);
+            if ((rc = (CheckAgentUUID() && ! ndGC.uuid.empty())))
+                fprintf(stdout, "Agent UUID: %s\n", ndGC.uuid.c_str());
             return ndCR_Pack(
                 ndCR_PROVISION_UUID, (rc) ? 0 : 1
             );
@@ -753,8 +732,8 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 
         ndGC.update_interval = 1;
 #ifdef _ND_USE_PLUGINS
+        ndGC.plugin_processors.clear();
         ndGC.plugin_sinks.clear();
-        ndGC.plugin_encoders.clear();
 #endif
         ndGC.dhc_save = ndDHC_DISABLED;
         ndGC.fhc_save = ndFHC_DISABLED;
@@ -1016,14 +995,14 @@ void ndInstance::CommandLineHelp(bool version_only)
         try {
             plugins.Load(ndPlugin::TYPE_BASE, false);
 
+            if (ndGC.plugin_processors.size()) {
+                fprintf(stderr, "\nProcessor plugins:\n");
+                plugins.DumpVersions(ndPlugin::TYPE_PROC);
+            }
+
             if (ndGC.plugin_sinks.size()) {
                 fprintf(stderr, "\nSink plugins:\n");
                 plugins.DumpVersions(ndPlugin::TYPE_SINK);
-            }
-
-            if (ndGC.plugin_encoders.size()) {
-                fprintf(stderr, "\nEncoder plugins:\n");
-                plugins.DumpVersions(ndPlugin::TYPE_ENCODER);
             }
         }
         catch (exception &e) {
@@ -1045,7 +1024,6 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  -D, --debug-curl\n    In debug mode, display debug output from libCURL.\n"
             "  -v, --verbose\n    In debug mode, display real-time flow detections.\n"
             "  -R, --remain-in-foreground\n    Remain in foreground, don't daemonize (OpenWrt).\n"
-            "  --wait-for-client\n    In debug mode, don't start capture threads until a client connects.\n"
 
             "\nConfiguration options:\n"
             "  -u, --uuid\n    Display configured Agent UUID.\n"
@@ -1080,7 +1058,6 @@ void ndInstance::CommandLineHelp(bool version_only)
             "\nThreading options:\n"
             "  --thread-capture-base <offset>\n    Specify a thread affinity base or offset for capture threads.\n"
             "  --thread-conntrack <cpu>\n    Specify a CPU affinity ID for the conntrack thread.\n"
-            "  --thread-socket <cpu>\n    Specify a CPU affinity ID for the socket server thread.\n"
             "  --thread-detection-base <offset>\n    Specify a thread affinity base or offset for detection (DPI) threads.\n"
             "  --thread-detection-cores <count>\n    Specify the number of detection (DPI) threads to start.\n"
 
@@ -1095,13 +1072,11 @@ void ndInstance::CommandLineHelp(bool version_only)
 
 bool ndInstance::CheckAgentUUID(void)
 {
-    if (ndGC.uuid == nullptr ||
-        ! strncmp(ndGC.uuid, ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+    if (ndGC.uuid.empty() || ndGC.uuid == ND_AGENT_UUID_NULL) {
 
         string uuid;
         if (! nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN) ||
-            ! uuid.size() ||
-            ! strncmp(uuid.c_str(), ND_AGENT_UUID_NULL, ND_AGENT_UUID_LEN)) {
+            uuid.empty() || uuid == ND_AGENT_UUID_NULL) {
 
             nd_generate_uuid(uuid);
 
@@ -1112,8 +1087,7 @@ bool ndInstance::CheckAgentUUID(void)
                 return false;
         }
 
-        if (ndGC.uuid != nullptr) free(ndGC.uuid);
-        ndGC.uuid = strdup(uuid.c_str());
+        ndGC.uuid = uuid;
     }
 
     return true;
@@ -1136,9 +1110,6 @@ bool ndInstance::SaveAgentStatus(void)
         string json_string;
         nd_json_to_string(jstatus, json_string);
         json_string.append("\n");
-
-        if (thread_socket)
-            thread_socket->QueueWrite(json_string);
 
         nd_file_save(ndGC.path_agent_status, json_string);
         return true;
@@ -1449,13 +1420,13 @@ bool ndInstance::DisplayAgentStatus(void)
             );
         }
 
-        string uuid;
+        string uuid = (ndGC.uuid.empty()) ?
+            ND_AGENT_UUID_NULL : ndGC.uuid;
 
-        uuid = (ndGC.uuid != NULL) ? ndGC.uuid : "00-00-00-00";
         if (nd_file_exists(ndGC.path_uuid) > 0)
             nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN);
 
-        if (uuid.size() != ND_AGENT_UUID_LEN || uuid == "00-00-00-00") {
+        if (uuid.size() != ND_AGENT_UUID_LEN || uuid == ND_AGENT_UUID_NULL) {
             fprintf(stderr, "%s%s%s sink agent UUID is not set.\n",
                 ND_C_RED, ND_I_FAIL, ND_C_RESET);
             fprintf(stderr,
@@ -1469,20 +1440,22 @@ bool ndInstance::DisplayAgentStatus(void)
                 ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (ndGC.uuid_serial != NULL) ? ndGC.uuid_serial : "-";
+        uuid = (ndGC.uuid_serial.empty()) ?
+            ND_AGENT_SERIAL_NULL : ndGC.uuid_serial;
         if (nd_file_exists(ndGC.path_uuid_serial) > 0)
             nd_load_uuid(uuid, ndGC.path_uuid_serial, ND_AGENT_SERIAL_LEN);
 
-        if (uuid.size() && uuid != "-") {
+        if (! uuid.empty() && uuid != ND_AGENT_SERIAL_NULL) {
             fprintf(stderr, "%s%s%s sink serial UUID: %s\n",
                 ND_C_GREEN, ND_I_INFO, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (ndGC.uuid_site != NULL) ? ndGC.uuid_site : "-";
+        uuid = (ndGC.uuid_site.empty()) ?
+            ND_SITE_UUID_NULL : ndGC.uuid_site;
         if (nd_file_exists(ndGC.path_uuid_site) > 0)
             nd_load_uuid(uuid, ndGC.path_uuid_site, ND_SITE_UUID_LEN);
 
-        if (! uuid.size() || uuid == "-") {
+        if (uuid.empty() || uuid == ND_SITE_UUID_NULL) {
             fprintf(stderr, "%s%s%s sink site UUID is not set.\n",
                 ND_C_YELLOW, ND_I_WARN, ND_C_RESET);
             fprintf(stderr, "  %s A new site UUID will be automatically set "
@@ -1573,11 +1546,6 @@ int ndInstance::Run(void)
 #ifdef _ND_USE_PLUGINS
         plugins.Load();
 #endif
-        if (ndGC.socket_host.size() || ndGC.socket_path.size()) {
-            thread_socket = new ndSocketThread(ndGC.ca_socket);
-            thread_socket->Create();
-        }
-
         int16_t cpu = (
                 ndGC.ca_detection_base > -1 &&
                 ndGC.ca_detection_base < (int16_t)status.cpus
@@ -1595,7 +1563,6 @@ int ndInstance::Run(void)
 #ifdef _ND_USE_NETLINK
                 netlink,
 #endif
-                thread_socket,
 #ifdef _ND_USE_CONNTRACK
                 (! ndGC_USE_CONNTRACK) ? nullptr : thread_conntrack,
 #endif
@@ -1611,24 +1578,6 @@ int ndInstance::Run(void)
 
             if (++cpu == cpus) cpu = 0;
         }
-    }
-    catch (ndSocketException &e) {
-        nd_printf("%s: Fatal socket exception: %s\n",
-            tag.c_str(), e.what()
-        );
-        goto ndInstance_RunReturn;
-    }
-    catch (ndSocketThreadException &e) {
-        nd_printf("%s: Fatal socket thread exception: %s\n",
-            tag.c_str(), e.what()
-        );
-        goto ndInstance_RunReturn;
-    }
-    catch (ndSocketSystemException &e) {
-        nd_printf("%s: Fatal system exception: %s\n",
-            tag.c_str(), e.what()
-        );
-        goto ndInstance_RunReturn;
     }
 #ifdef _ND_USE_CONNTRACK
     catch (ndConntrackThreadException &e) {
@@ -1835,7 +1784,7 @@ ndInstance_EntryReturn:
     ProcessUpdate(thread_capture);
 
     if (exit_code == 0)
-        nd_dprintf("%s: normal exit.\n", tag.c_str());
+        nd_printf("%s: Normal exit.\n", tag.c_str());
     else {
         nd_printf("%s: Exit on error: %d\n",
             tag.c_str(), exit_code
@@ -1896,7 +1845,6 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
             ndCapturePcap *thread = new ndCapturePcap(
                 (interfaces.size() > 1) ? cpu++ : -1,
                 it.second,
-                thread_socket,
                 thread_detection,
                 dns_hint_cache,
                 (it.second.role == ndIR_LAN) ? 0 : ++private_addr
@@ -1918,7 +1866,6 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
                 ndCaptureTPv3 *thread = new ndCaptureTPv3(
                     (instances > 1) ? cpu++ : -1,
                     it.second,
-                    thread_socket,
                     thread_detection,
                     dns_hint_cache,
                     (it.second.role == ndIR_LAN) ? 0 : ++private_addr
@@ -1944,7 +1891,6 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
                 ndCaptureNFQueue *thread = new ndCaptureNFQueue(
                     (instances > 1) ? cpu++ : -1,
                     it.second,
-                    thread_socket,
                     thread_detection,
                     i, // instance_id
                     dns_hint_cache,
@@ -1973,24 +1919,6 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
         thread_group.clear();
 
         if (cpu == (int16_t)status.cpus) cpu = 0;
-    }
-
-    if (thread_socket != nullptr && ndGC_WAIT_FOR_CLIENT) {
-        nd_dprintf("%s: waiting for a client to connect...\n",
-            tag.c_str()
-        );
-        do {
-            if (WaitForIPC(1) == ndIPC_TERMINATE) {
-                Terminate();
-                exit_code = EXIT_SUCCESS;
-                return false;
-            }
-
-            sleep(1);
-        }
-        while (
-            ! ShouldTerminate() && ! thread_socket->GetClientCount()
-        );
     }
 
     for (auto &it : threads) {
@@ -2154,8 +2082,8 @@ bool ndInstance::ExpireFlow(ndFlow *flow)
         if (it != thread_detection.end()) {
             it->second->QueuePacket(flow);
 #ifdef _ND_USE_PLUGINS
-            plugins.BroadcastEncoderEvent(
-                ndPluginEncoder::EVENT_FLOW_EXPIRING,
+            plugins.BroadcastProcessorEvent(
+                ndPluginProcessor::EVENT_FLOW_EXPIRING,
                 static_cast<void *>(flow)
             );
 #endif
@@ -2186,16 +2114,16 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         ndPlugin::EVENT_STATUS_UPDATE
     );
 
-    plugins.BroadcastEncoderEvent(
-        ndPluginEncoder::EVENT_INIT, static_cast<void *>(&status)
+    plugins.BroadcastProcessorEvent(
+        ndPluginProcessor::EVENT_INIT, static_cast<void *>(&status)
     );
 #endif
 
     ndInterface::UpdateAddrs(interfaces);
 
 #ifdef _ND_USE_PLUGINS
-    plugins.BroadcastEncoderEvent(
-        ndPluginEncoder::EVENT_INTERFACES,
+    plugins.BroadcastProcessorEvent(
+        ndPluginProcessor::EVENT_INTERFACES,
         static_cast<void *>(&interfaces)
     );
 #endif
@@ -2220,26 +2148,26 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         pkt_stats_global += pkt_stats.second;
 
 #ifdef _ND_USE_PLUGINS
-        plugins.BroadcastEncoderEvent(
-            ndPluginEncoder::EVENT_PKT_CAPTURE_STATS,
+        plugins.BroadcastProcessorEvent(
+            ndPluginProcessor::EVENT_PKT_CAPTURE_STATS,
             static_cast<void *>(&pkt_stats)
         );
 #endif
     }
 
 #ifdef _ND_USE_PLUGINS
-    plugins.BroadcastEncoderEvent(
-        ndPluginEncoder::EVENT_PKT_GLOBAL_STATS,
+    plugins.BroadcastProcessorEvent(
+        ndPluginProcessor::EVENT_PKT_GLOBAL_STATS,
         static_cast<void *>(&pkt_stats_global)
     );
 
-    plugins.BroadcastEncoderEvent(
-        ndPluginEncoder::EVENT_FLOW_MAP,
+    plugins.BroadcastProcessorEvent(
+        ndPluginProcessor::EVENT_FLOW_MAP,
         static_cast<void *>(flow_buckets)
     );
 
-    plugins.BroadcastEncoderEvent(
-        ndPluginEncoder::EVENT_COMPLETE
+    plugins.BroadcastProcessorEvent(
+        ndPluginProcessor::EVENT_COMPLETE
     );
 #endif
 }
@@ -2297,21 +2225,18 @@ void ndInstance::ProcessFlows(void)
 
                 if (i->second->tickets.load() == 0) {
 #ifdef _ND_USE_PLUGINS
-                    if (ndGC_FLOW_DUMP_UNKNOWN &&
-                        i->second->detected_protocol == ND_PROTO_UNKNOWN) {
-                        plugins.BroadcastEncoderEvent(
-                            ndPluginEncoder::EVENT_FLOW_NEW,
+                    // TODO: Do we need to do this?
+                    if (i->second->detected_protocol == ND_PROTO_UNKNOWN) {
+                        plugins.BroadcastProcessorEvent(
+                            ndPluginProcessor::EVENT_FLOW_NEW,
                             static_cast<void *>(i->second)
                         );
                     }
 
-                    if (ndGC_FLOW_DUMP_UNKNOWN ||
-                        i->second->detected_protocol != ND_PROTO_UNKNOWN) {
-                        plugins.BroadcastEncoderEvent(
-                            ndPluginEncoder::EVENT_FLOW_EXPIRED,
-                            static_cast<void *>(i->second)
-                        );
-                    }
+                    plugins.BroadcastProcessorEvent(
+                        ndPluginProcessor::EVENT_FLOW_EXPIRED,
+                        static_cast<void *>(i->second)
+                    );
 #endif
                     delete i->second;
                     i = fm.erase(i);

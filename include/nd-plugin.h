@@ -21,11 +21,12 @@
 
 #define ndPluginInit(class_name) \
 extern "C" { \
-    ndPlugin *ndPluginInit(const string &tag) { \
-        class_name *p = new class_name(tag); \
+    ndPlugin *ndPluginInit( \
+        const string &tag, const map<string, string> &params) { \
+        class_name *p = new class_name(tag, params); \
         if (p == nullptr) return nullptr; \
-        if (p->GetType() != ndPlugin::TYPE_SINK && \
-            p->GetType() != ndPlugin::TYPE_ENCODER) { \
+        if (p->GetType() != ndPlugin::TYPE_PROC && \
+            p->GetType() != ndPlugin::TYPE_SINK) { \
                 nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
                     tag.c_str(), p->GetType()); \
                 delete p; \
@@ -43,59 +44,68 @@ public:
         : ndException(where_arg, what_arg) { }
 };
 
-class ndPlugin : public ndThread
+class ndPlugin : public ndThread, public ndSerializer
 {
 public:
-    enum ndPluginType
+    enum Type
     {
         TYPE_BASE,
+        TYPE_PROC,
         TYPE_SINK,
-        TYPE_ENCODER,
     };
 
-    ndPlugin(ndPluginType type, const string &tag);
+    ndPlugin(
+        Type type,
+        const string &tag, const map<string, string> &params);
     virtual ~ndPlugin();
 
     virtual void *Entry(void) = 0;
 
     virtual void GetVersion(string &version) = 0;
-    virtual void GetStatus(const json &jstatus) { };
 
-    enum ndPluginEvent
+    template <class T>
+    void GetStatus(T &output) const {
+        switch (type) {
+        case TYPE_PROC:
+            serialize(output, { tag, "type" }, "processor");
+            break;
+        case TYPE_SINK:
+            serialize(output, { tag, "type" }, "sink");
+            break;
+        default:
+            serialize(output, { tag, "type" }, "unkown");
+            break;
+        }
+    }
+
+    enum Event
     {
         EVENT_RELOAD,
         EVENT_STATUS_UPDATE,
     };
 
     virtual void DispatchEvent(
-        ndPluginEvent event, void *param = nullptr) { };
+        Event event, void *param = nullptr) { };
 
-    static const map<ndPlugin::ndPluginType, string> types;
-    ndPluginType GetType(void) { return type; };
+    static const map<ndPlugin::Type, string> types;
 
-protected:
-    ndPluginType type;
-};
-
-class ndPluginSink : public ndPlugin
-{
-public:
-    ndPluginSink(const string &tag);
-    virtual ~ndPluginSink();
-
-    virtual void DispatchSinkEvent(
-        const string &channel, size_t length, const uint8_t *payload) = 0;
+    Type GetType(void) { return type; };
 
 protected:
+    Type type;
+    string conf_filename;
+    vector<string> sink_targets;
+    string sink_channel;
 };
 
-class ndPluginEncoder : public ndPlugin
+class ndPluginProcessor : public ndPlugin
 {
 public:
-    ndPluginEncoder(const string &tag);
-    virtual ~ndPluginEncoder();
+    ndPluginProcessor(
+        const string &tag, const map<string, string> &params);
+    virtual ~ndPluginProcessor();
 
-    enum ndEncoderEvent {
+    enum Event {
         EVENT_INIT,
         EVENT_INTERFACES,
         EVENT_PKT_GLOBAL_STATS,
@@ -108,8 +118,32 @@ public:
         EVENT_COMPLETE,
     };
 
-    virtual void DispatchEncoderEvent(
-        ndEncoderEvent event, void *param = nullptr) = 0;
+    template <class T>
+    void GetStatus(T &output) const {
+        ndPlugin::GetStatus(output);
+    }
+
+    virtual void DispatchProcessorEvent(
+        Event event, void *param = nullptr) = 0;
+
+protected:
+};
+
+class ndPluginSink : public ndPlugin
+{
+public:
+    ndPluginSink(
+        const string &tag, const map<string, string> &params);
+    virtual ~ndPluginSink();
+
+    template <class T>
+    void GetStatus(T &output) const {
+        ndPlugin::GetStatus(output);
+    }
+
+    virtual void DispatchSinkEvent(
+        const string &channel,
+        size_t length, const uint8_t *payload) = 0;
 
 protected:
 };
@@ -119,13 +153,17 @@ protected:
 class ndPluginLoader
 {
 public:
-    ndPluginLoader(const string &so_name, const string &tag);
+    ndPluginLoader(
+        const string &tag,
+        const string &so_name, const map<string, string> &params);
     virtual ~ndPluginLoader();
 
     inline ndPlugin *GetPlugin(void) { return plugin; };
+    inline const string& GetTag(void) { return tag; };
     inline const string& GetObjectName(void) { return so_name; };
 
 protected:
+    string tag;
     string so_name;
     void *so_handle;
     ndPlugin *plugin;
@@ -137,39 +175,46 @@ public:
     virtual ~ndPluginManager();
 
     void Load(
-        ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE,
+        ndPlugin::Type type = ndPlugin::TYPE_BASE,
         bool create = true);
 
-    bool Create(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+    bool Create(ndPlugin::Type type = ndPlugin::TYPE_BASE);
 
-    bool Reap(ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+    bool Reap(ndPlugin::Type type = ndPlugin::TYPE_BASE);
 
-    void BroadcastEvent(ndPlugin::ndPluginType type,
-        ndPlugin::ndPluginEvent event, void *param = nullptr);
+    void BroadcastEvent(ndPlugin::Type type,
+        ndPlugin::Event event, void *param = nullptr);
 
     void BroadcastSinkPayload(
         const string &channel, size_t length, uint8_t *payload);
     bool DispatchSinkPayload(const string &tag,
         const string &channel, size_t length, uint8_t *payload);
 
-    void BroadcastEncoderEvent(
-        ndPluginEncoder::ndEncoderEvent event, void *param = nullptr);
+    void BroadcastProcessorEvent(
+        ndPluginProcessor::Event event, void *param = nullptr);
 
     template <class T>
     void Encode(T &output) const {
-        serialize(output, { "plugins", "timestamp" }, time(NULL));
+        T plugins;
+
+        for (auto &p : processors)
+            p.second->GetPlugin()->GetStatus(plugins);
+        for (auto &p : sinks)
+            p.second->GetPlugin()->GetStatus(plugins);
+
+        serialize(output, { "plugins" }, plugins);
     }
 
     void DumpVersions(
-        ndPlugin::ndPluginType type = ndPlugin::TYPE_BASE);
+        ndPlugin::Type type = ndPlugin::TYPE_BASE);
 
 protected:
     mutex lock;
 
     typedef map<string, ndPluginLoader *> map_plugin;
 
+    map_plugin processors;
     map_plugin sinks;
-    map_plugin encoders;
 };
 
 #endif // _ND_INTERNAL

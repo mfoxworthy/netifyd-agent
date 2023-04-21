@@ -24,8 +24,6 @@ public:
         : runtime_error(what_arg) { }
 };
 
-class ndSocketThread;
-
 class ndCaptureThread : public ndThread, public ndInstanceClient
 {
 public:
@@ -33,7 +31,6 @@ public:
         nd_capture_type cs_type,
         int16_t cpu,
         ndInterface& iface,
-        ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);
@@ -60,7 +57,6 @@ protected:
     nd_capture_type cs_type;
 
     ndInterface& iface;
-    ndSocketThread *thread_socket;
 
     time_t tv_epoch;
     uint64_t ts_pkt_first;

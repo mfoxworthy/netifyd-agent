@@ -6,11 +6,8 @@
 # Read the netifyd.conf(5) man page for documentation.
 
 [netifyd]
-enable_sink = <yes/no>
 flow_map_buckets = <buckets>
-json_save = <yes/no>
 load_domains = <yes/no>
-max_backlog_kb = <amount of payload data to buffer in kilobytes>
 max_capture_length = <packet capture snap length>
 max_detection_pkts = <number of packets to perform DPI on before taking a guess>
 max_flows = <flows>
@@ -20,9 +17,6 @@ path_pid_file = <pid file path>
 path_uuid = <agent uuid path>
 path_uuid_serial = <serial uuid path>
 path_uuid_site = <site uuid path>
-sink_connect_timeout = <connect timeout in seconds>
-sink_max_post_errors = <number of POST errors before reverting to default sink URL>
-sink_xfer_timeout = <transfer timeout in seconds>
 soft_dissectors = <yes/no>
 ssl_use_tlsv1 = <yes/no>
 ssl_verify = <yes/no>
@@ -30,19 +24,15 @@ syn_scan_protection = <yes/no>
 ttl_idle_flow = <idle flow TTL in seconds>
 ttl_idle_tcp_flow = <idle TCP flow TTL in seconds>
 update_interval = <update interval in seconds>
-upload_connect_timeout = <timeout in seconds>
-upload_nat_flows = <yes/no>
-upload_xfer_timeout = <timeout in seconds>
-url_sink = <sink upload URL>
 uuid = <agent uuid>
 uuid_serial = <agent serial uuid>
 uuid_site = <site uuid>
 
-[capture_defaults]
+[capture-defaults]
 capture_type = <default capture type: pcap, tpv3, nfqueue>
 read_timeout = <capture timeout in milliseconds>
 
-[capture_defaults_tpv3]
+[capture-defaults-tpv3]
 fanout_mode = <fanout mode: hash, lb, cpu, rollover, random>
 fanout_flags = <fanout flags: defrag, rollover>
 fanout_instances = <number of fanout instances>
@@ -50,7 +40,7 @@ rb_block_size = <ring buffer block size in bytes>
 rb_frame_size = <ring buffer minimum frame size in bytes>
 rb_blocks = <ring buffer block count>
 
-[capture_interface_<if name>]
+[capture-interface-<if name>]
 role = <interface role: LAN, WAN>
 capture_type = <capture type: pcap, tpv3, nfqueue>
 address[0] = <local address: IPv4/6 CIDR>
@@ -59,55 +49,48 @@ filter = <BPF packet filter>
 ...
 <capture type options, override defaults>
 
-[capture_interface_nfq<queue ID>]
+[capture-interface-nfq<queue ID>]
 role = <interface role: LAN, WAN>
 capture_type = <capture type: nfqueue>
 address[0] = <local address: IPv4/6 CIDR>
 filter = <BPF packet filter>
 queue_instances = <number of instance threads, starting from queue ID>
 
-[flow_hash_cache]
+[flow-hash-cache]
 enable = <yes/no>
 save = <persistent/volatile/disabled>
 cache_size = <number of flow hashes to cache per capture source>
 purge_divisor = <number of flow hashes to purge when full>
 
-[dns_hint_cache]
+[dns-hint-cache]
 enable = <yes/no>
 save = <persistent/volatile/disabled>
 ttl = <cache entry TTL>
 
-[socket]
-dump_established_flows = <enable to write all established flows to connecting client>
-dump_unknown_flows = <enable to write unknown flows to connecting client>
-listen_path[0] = <path to socket file>
-listen_address[0] = <IPv4/6 address for connect>
-listen_port[0] = <corresponding port for connect>
-
-[privacy_filter]
+[privacy-filter]
 mac[0] = <MAC address to filter>
 host[0] = <IPv4/6 address to filter>
 regex_search[0] = <regular expression>
 regex_replace[0] = <replacement text>
 private_external_addresses = <yes/no>
 
-[plugin_detections]
-<name> = <plugin library>
-
-[plugin_stats]
-<name> = <plugin library>
-
-[sink_headers]
-<header> = <value>
-
-[netify_api]
+[netify-api]
 enable_updates = <enable to periodically update metadata (ex: categories)>
 update_interval = <number of seconds between API updates (1 day, 86400, by default)>
-url_api = <Base API URL to use>
-vendor = <Optional two character vendor ID>
+url_api = <base API URL to use>
+vendor = <optional two character vendor ID>
 
 [protocols]
 all=include
 edonkey=exclude
+
+[proc-<tag>]
+plugin_library = <plugin library>
+conf_filename = <configuration filename; optional for some plugin types>
+sink_targets = <comma-delimited list of sink tag:channel pairs>
+
+[sink-<tag>]
+plugin_library = <plugin library>
+conf_filename = <configuration filename; optional for some plugin types>
 
 # vi: syntax=ini

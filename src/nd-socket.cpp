@@ -123,7 +123,6 @@ using namespace std;
 #include "nd-detection.h"
 #include "nd-capture.h"
 #include "nd-napi.h"
-#include "nd-socket.h"
 
 #define _ND_SOCKET_PROC_NET_UNIX    "/proc/net/unix"
 

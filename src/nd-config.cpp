@@ -120,14 +120,13 @@ using namespace std;
 #endif
 #include "nd-detection.h"
 #include "nd-capture.h"
-#include "nd-socket.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
 extern ndInterfaces nd_interfaces;
 
 ndGlobalConfig::ndGlobalConfig() :
-    napi_vendor(NULL),
+    napi_vendor(ND_API_VENDOR),
     path_agent_status(ND_AGENT_STATUS_PATH),
     path_app_config(ND_CONF_APP_PATH),
     path_cat_config(ND_CONF_CAT_PATH),
@@ -139,10 +138,7 @@ ndGlobalConfig::ndGlobalConfig() :
     path_uuid(ND_AGENT_UUID_PATH),
     path_uuid_serial(ND_AGENT_SERIAL_PATH),
     path_uuid_site(ND_SITE_UUID_PATH),
-    url_napi(NULL),
-    uuid(NULL),
-    uuid_serial(NULL),
-    uuid_site(NULL),
+    url_napi(ND_API_UPDATE_URL),
     dhc_save(ndDHC_PERSISTENT),
     fhc_save(ndFHC_PERSISTENT),
     capture_type(ndCT_NONE),
@@ -160,7 +156,6 @@ ndGlobalConfig::ndGlobalConfig() :
     ca_conntrack(-1),
     ca_detection_base(0),
     ca_detection_cores(-1),
-    ca_socket(-1),
     max_packet_queue(ND_MAX_PKT_QUEUE_KB * 1024),
     max_capture_length(ND_PCAP_SNAPLEN),
     flags(0),
@@ -274,39 +269,30 @@ bool ndGlobalConfig::Load(const string &filename)
         return false;
     }
 
+    string value;
+
     // Netify section
-    nd_config_section netifyd_section;
-    r->GetSection("netifyd", netifyd_section);
+    if (uuid.empty())
+        uuid = r->Get("netifyd", "uuid", ND_AGENT_UUID_NULL);
 
-    if (this->uuid == NULL) {
-        string uuid = r->Get("netifyd", "uuid", ND_AGENT_UUID_NULL);
-        if (uuid.size() > 0)
-            this->uuid = strdup(uuid.c_str());
-    }
+    if (uuid_serial.empty())
+        uuid_serial = r->Get("netifyd", "uuid_serial", ND_AGENT_SERIAL_NULL);
 
-    if (this->uuid_serial == NULL) {
-        string serial = r->Get("netifyd", "uuid_serial", ND_AGENT_SERIAL_NULL);
-        if (serial.size() > 0)
-            this->uuid_serial = strdup(serial.c_str());
-    }
-
-    if (this->uuid_site == NULL) {
-        string uuid_site = r->Get("netifyd", "uuid_site", ND_SITE_UUID_NULL);
-        if (uuid_site.size() > 0)
-            this->uuid_site = strdup(uuid_site.c_str());
-    }
+    if (uuid_site.empty())
+        uuid_site = r->Get("netifyd", "uuid_site", ND_SITE_UUID_NULL);
 
     path_state_persistent = r->Get(
-        "netifyd", "path_persistent_state", ND_PERSISTENT_STATEDIR);
+        "netifyd", "path_state_persistent", ND_PERSISTENT_STATEDIR);
 
     path_state_volatile = r->Get(
-        "netifyd", "path_volatile_state", ND_VOLATILE_STATEDIR);
+        "netifyd", "path_state_volatile", ND_VOLATILE_STATEDIR);
 
     UpdatePaths();
 
-    path_pid_file = r->Get(
+    value = r->Get(
         "netifyd", "path_pid_file",
         path_state_volatile + "/" + ND_PID_FILE_BASE);
+    nd_expand_variables(value, path_pid_file);
 
     path_uuid = r->Get(
         "netifyd", "path_uuid",
@@ -320,41 +306,33 @@ bool ndGlobalConfig::Load(const string &filename)
         "netifyd", "path_uuid_site",
         path_state_persistent + "/" + ND_SITE_UUID_BASE);
 
-    this->update_interval = (unsigned)r->GetInteger(
+    update_interval = (unsigned)r->GetInteger(
         "netifyd", "update_interval", ND_STATS_INTERVAL);
 
-    this->max_packet_queue = r->GetInteger(
+    max_packet_queue = r->GetInteger(
         "netifyd", "max_packet_queue_kb", ND_MAX_PKT_QUEUE_KB) * 1024;
 
-    if (netifyd_section.find("ssl_verify") != netifyd_section.end()) {
-        ndGC_SetFlag(ndGF_SSL_VERIFY,
-            r->GetBoolean("netifyd", "ssl_verify", true));
-    }
-    else if (netifyd_section.find("ssl_verify_peer") != netifyd_section.end()) {
-        ndGC_SetFlag(ndGF_SSL_VERIFY,
-            r->GetBoolean("netifyd", "ssl_verify_peer", true));
-    }
+    ndGC_SetFlag(ndGF_SSL_VERIFY,
+        r->GetBoolean("netifyd", "ssl_verify", true));
 
     ndGC_SetFlag(ndGF_SSL_USE_TLSv1,
         r->GetBoolean("netifyd", "ssl_use_tlsv1", false));
 
-    this->max_capture_length = (uint16_t)r->GetInteger(
+    max_capture_length = (uint16_t)r->GetInteger(
         "netifyd", "max_capture_length", ND_PCAP_SNAPLEN);
 
-    // TODO: Deprecated:
-    // max_tcp_pkts, max_udp_pkts
-    this->max_detection_pkts = (unsigned)r->GetInteger(
+    max_detection_pkts = (unsigned)r->GetInteger(
         "netifyd", "max_detection_pkts", ND_MAX_DETECTION_PKTS);
 
     ndGC_SetFlag(ndGF_SYN_SCAN_PROTECTION,
         r->GetBoolean("netifyd", "syn_scan_protection", false));
 
-    this->ttl_idle_flow = (unsigned)r->GetInteger(
+    ttl_idle_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_flow", ND_TTL_IDLE_FLOW);
-    this->ttl_idle_tcp_flow = (unsigned)r->GetInteger(
+    ttl_idle_tcp_flow = (unsigned)r->GetInteger(
         "netifyd", "ttl_idle_tcp_flow", ND_TTL_IDLE_TCP_FLOW);
 
-    this->max_flows = (size_t)r->GetInteger(
+    max_flows = (size_t)r->GetInteger(
         "netifyd", "max_flows", 0);
 
     ndGC_SetFlag(ndGF_SOFT_DISSECTORS,
@@ -363,35 +341,33 @@ bool ndGlobalConfig::Load(const string &filename)
     ndGC_SetFlag(ndGF_LOAD_DOMAINS,
         r->GetBoolean("netifyd", "load_domains", true));
 
-    this->fm_buckets = (unsigned)r->GetInteger(
+    fm_buckets = (unsigned)r->GetInteger(
         "netifyd", "flow_map_buckets", ND_FLOW_MAP_BUCKETS);
 
     // Threading section
-    this->ca_capture_base = (int16_t)r->GetInteger(
+    ca_capture_base = (int16_t)r->GetInteger(
         "threads", "capture_base", this->ca_capture_base);
-    this->ca_conntrack = (int16_t)r->GetInteger(
+    ca_conntrack = (int16_t)r->GetInteger(
         "threads", "conntrack", this->ca_conntrack);
-    this->ca_detection_base = (int16_t)r->GetInteger(
+    ca_detection_base = (int16_t)r->GetInteger(
         "threads", "detection_base", this->ca_detection_base);
-    this->ca_detection_cores = (int16_t)r->GetInteger(
+    ca_detection_cores = (int16_t)r->GetInteger(
         "threads", "detection_cores", this->ca_detection_cores);
-    this->ca_socket = (int16_t)r->GetInteger(
-        "threads", "socket", this->ca_socket);
 
     // Capture defaults section
-    this->capture_read_timeout = (unsigned)r->GetInteger(
-        "capture_defaults", "read_timeout", ND_CAPTURE_READ_TIMEOUT);
-    this->capture_type = LoadCaptureType(
-        "capture_defaults", "capture_type"
+    capture_read_timeout = (unsigned)r->GetInteger(
+        "capture-defaults", "read_timeout", ND_CAPTURE_READ_TIMEOUT);
+    capture_type = LoadCaptureType(
+        "capture-defaults", "capture_type"
     );
 
-    if (this->capture_type == ndCT_NONE) {
+    if (capture_type == ndCT_NONE) {
 #if defined(_ND_USE_LIBPCAP)
-        this->capture_type = ndCT_PCAP;
+        capture_type = ndCT_PCAP;
 #elif defined(_ND_USE_TPACKETV3)
-        this->capture_type = ndCT_TPV3;
+        capture_type = ndCT_TPV3;
 #elif defined(_ND_USE_NFQUEUE)
-        this->capture_type = ndCT_TPV3;
+        capture_type = ndCT_TPV3;
 #else
         fprintf(stderr,
             "Not default capture type could be determined.\n");
@@ -400,91 +376,56 @@ bool ndGlobalConfig::Load(const string &filename)
     }
 
     // TPv3 capture defaults section
-    LoadCaptureSettings("capture_defaults_tpv3",
+    LoadCaptureSettings("capture-defaults-tpv3",
         ndCT_TPV3, static_cast<void *>(&tpv3_defaults)
     );
 
     // Flow Hash Cache section
     ndGC_SetFlag(ndGF_USE_FHC,
-        r->GetBoolean("flow_hash_cache", "enable", true));
+        r->GetBoolean("flow-hash-cache", "enable", true));
 
     string fhc_save_mode = r->Get(
-        "flow_hash_cache", "save", "persistent"
+        "flow-hash-cache", "save", "persistent"
     );
 
     if (fhc_save_mode == "persistent")
-        this->fhc_save = ndFHC_PERSISTENT;
+        fhc_save = ndFHC_PERSISTENT;
     else if (fhc_save_mode == "volatile")
-        this->fhc_save = ndFHC_VOLATILE;
+        fhc_save = ndFHC_VOLATILE;
     else
-        this->fhc_save = ndFHC_DISABLED;
+        fhc_save = ndFHC_DISABLED;
 
-    this->max_fhc = (size_t)r->GetInteger(
-        "flow_hash_cache", "cache_size", ND_MAX_FHC_ENTRIES);
-    this->fhc_purge_divisor = (size_t)r->GetInteger(
-        "flow_hash_cache", "purge_divisor", ND_FHC_PURGE_DIVISOR);
+    max_fhc = (size_t)r->GetInteger(
+        "flow-hash-cache", "cache_size", ND_MAX_FHC_ENTRIES);
+    fhc_purge_divisor = (size_t)r->GetInteger(
+        "flow-hash-cache", "purge_divisor", ND_FHC_PURGE_DIVISOR);
 
     // DNS Cache section
     ndGC_SetFlag(ndGF_USE_DHC,
-        r->GetBoolean("dns_hint_cache", "enable", true));
+        r->GetBoolean("dns-hint-cache", "enable", true));
 
     string dhc_save_mode = r->Get(
-        "dns_hint_cache", "save", "persistent"
+        "dns-hint-cache", "save", "persistent"
     );
 
     if (dhc_save_mode == "persistent" ||
         dhc_save_mode == "1" ||
         dhc_save_mode == "yes" ||
         dhc_save_mode == "true")
-        this->dhc_save = ndDHC_PERSISTENT;
+        dhc_save = ndDHC_PERSISTENT;
     else if (dhc_save_mode == "volatile")
-        this->dhc_save = ndDHC_VOLATILE;
+        dhc_save = ndDHC_VOLATILE;
     else
-        this->dhc_save = ndDHC_DISABLED;
+        dhc_save = ndDHC_DISABLED;
 
-    this->ttl_dns_entry = (unsigned)r->GetInteger(
-        "dns_hint_cache", "ttl", ND_TTL_IDLE_DHC_ENTRY);
-
-    // Socket section
-    ndGC_SetFlag(ndGF_FLOW_DUMP_ESTABLISHED,
-        r->GetBoolean("socket", "dump_established_flows", false));
-    ndGC_SetFlag(ndGF_FLOW_DUMP_UNKNOWN,
-        r->GetBoolean("socket", "dump_unknown_flows", false));
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "listen_address[" << i << "]";
-        string socket_node = r->Get("socket", os.str(), "");
-        if (socket_node.size() > 0) {
-            os.str("");
-            os << "listen_port[" << i << "]";
-            string socket_port = r->Get(
-                "socket", os.str(), ND_SOCKET_PORT);
-            this->socket_host.push_back(
-                make_pair(socket_node, socket_port));
-            continue;
-        }
-
-        break;
-    }
-
-    for (int i = 0; ; i++) {
-        ostringstream os;
-        os << "listen_path[" << i << "]";
-        string socket_node = r->Get("socket", os.str(), "");
-        if (socket_node.size() > 0) {
-            this->socket_path.push_back(socket_node);
-            continue;
-        }
-
-        break;
-    }
+    ttl_dns_entry = (unsigned)r->GetInteger(
+        "dns-hint-cache", "ttl", ND_TTL_IDLE_DHC_ENTRY);
 
     // Privacy filter section
     for (int i = 0; ; i++) {
         ostringstream os;
         os << "mac[" << i << "]";
-        string mac_addr = r->Get("privacy_filter", os.str(), "");
+        string mac_addr = r->Get("privacy-filter", os.str(), "");
 
         if (mac_addr.size() == 0) break;
 
@@ -501,14 +442,14 @@ bool ndGlobalConfig::Load(const string &filename)
         if (nd_string_to_mac(mac_addr, mac)) {
             uint8_t *p = new uint8_t[ETH_ALEN];
             memcpy(p, mac, ETH_ALEN);
-            this->privacy_filter_mac.push_back(p);
+            privacy_filter_mac.push_back(p);
         }
     }
 
     for (int i = 0; ; i++) {
         ostringstream os;
         os << "host[" << i << "]";
-        string host_addr = r->Get("privacy_filter", os.str(), "");
+        string host_addr = r->Get("privacy-filter", os.str(), "");
 
         if (host_addr.size() == 0) break;
 
@@ -532,7 +473,7 @@ bool ndGlobalConfig::Load(const string &filename)
             if (! saddr)
                 throw ndSystemException(__PRETTY_FUNCTION__, "new", ENOMEM);
             memcpy(saddr, rp->ai_addr, rp->ai_addrlen);
-            this->privacy_filter_host.push_back(saddr);
+            privacy_filter_host.push_back(saddr);
         }
 
         freeaddrinfo(result);
@@ -541,11 +482,11 @@ bool ndGlobalConfig::Load(const string &filename)
     for (int i = 0; ; i++) {
         ostringstream os;
         os << "regex_search[" << i << "]";
-        string search = r->Get("privacy_filter", os.str(), "");
+        string search = r->Get("privacy-filter", os.str(), "");
 
         os.str("");
         os << "regex_replace[" << i << "]";
-        string replace = r->Get("privacy_filter", os.str(), "");
+        string replace = r->Get("privacy-filter", os.str(), "");
 
         if (search.size() == 0 || replace.size() == 0) break;
 
@@ -556,7 +497,7 @@ bool ndGlobalConfig::Load(const string &filename)
                 regex::icase |
                 regex::optimize
             );
-            this->privacy_regex.push_back(make_pair(rx_search, replace));
+            privacy_regex.push_back(make_pair(rx_search, replace));
         } catch (const regex_error &e) {
             string error;
             nd_regex_error(e, error);
@@ -567,35 +508,29 @@ bool ndGlobalConfig::Load(const string &filename)
         }
     }
 
-    ndGC_SetFlag(ndGF_PRIVATE_EXTADDR,
-        r->GetBoolean("privacy_filter", "private_external_addresses", false));
-
-#ifdef _ND_USE_PLUGINS
-    // Plugins section
-    r->GetSection("sink_plugins", this->plugin_sinks);
-    r->GetSection("encoder_plugins", this->plugin_encoders);
-#endif
+    ndGC_SetFlag(ndGF_PRIVATE_EXTADDR, r->GetBoolean(
+        "privacy-filter", "private_external_addresses", false));
 
     // Netify API section
     ndGC_SetFlag(ndGF_USE_NAPI,
-        r->GetBoolean("netify_api", "enable_updates", true));
+        r->GetBoolean("netify-api", "enable_updates", true));
 
-    this->ttl_napi_update = r->GetInteger(
-        "netify_api", "update_interval", ND_API_UPDATE_TTL);
+    ttl_napi_update = r->GetInteger(
+        "netify-api", "update_interval", ND_API_UPDATE_TTL);
 
-    string url_napi = r->Get(
-        "netify_api", "url_api", ND_API_UPDATE_URL);
-    this->url_napi = strdup(url_napi.c_str());
+    url_napi = r->Get("netify-api", "url_api", ND_API_UPDATE_URL);
 
-    string napi_vendor = r->Get(
-        "netify_api", "vendor", ND_API_VENDOR);
-    this->napi_vendor = strdup(napi_vendor.c_str());
+    napi_vendor = r->Get("netify-api", "vendor", ND_API_VENDOR);
 
     // Protocols section
-    r->GetSection("protocols", this->protocols);
+    r->GetSection("protocols", protocols);
 
-    // Added static (non-command-line) capture interfaces
-    AddInterfaces();
+    // Add static (non-command-line) capture interfaces
+    if (! AddInterfaces()) return false;
+#ifdef _ND_USE_PLUGINS
+    // Add plugins
+    if (! AddPlugins()) return false;
+#endif
 
     return true;
 }
@@ -795,13 +730,13 @@ bool ndGlobalConfig::AddInterfaces(void)
     r->GetSections(sections);
 
     for (auto &s : sections) {
-        static const char *key = "capture_interface_";
+        static const char *key = "capture-interface-";
         static const size_t key_len = strlen(key);
 
         if (strncasecmp(s.c_str(), key, key_len))
             continue;
 
-        size_t p = s.find_last_of("_");
+        size_t p = s.find_last_of("-");
         if (p == string::npos) continue;
 
         string iface = s.substr(p + 1);
@@ -899,8 +834,104 @@ bool ndGlobalConfig::AddInterfaces(void)
             AddInterfaceFilter(iface, filter);
     }
 
-    return false;
+    return true;
 }
+
+#ifdef _ND_USE_PLUGINS
+bool ndGlobalConfig::AddPlugins(void)
+{
+    INIReader *r = static_cast<INIReader *>(reader);
+
+    set<string> sections;
+    r->GetSections(sections);
+
+    for (auto &tag : sections) {
+        size_t p = string::npos;
+        map_plugin *mpi = nullptr;
+        ndPlugin::Type type = ndPlugin::TYPE_BASE;
+
+        if ((p = tag.find("proc-")) != string::npos) {
+            mpi = &plugin_processors;
+            type = ndPlugin::TYPE_PROC;
+        }
+        else if ((p = tag.find("sink-")) != string::npos) {
+            mpi = &plugin_sinks;
+            type = ndPlugin::TYPE_SINK;
+        }
+
+        if (mpi == nullptr || p != 0)
+            continue;
+        if (! r->GetBoolean(s, "enable", true))
+            continue;
+
+        string so_name = r->Get(s, "plugin_library", "");
+
+        if (so_name.empty()) {
+            fprintf(stderr, "Plugin library not set: %s\n",
+                tag.c_str()
+            );
+            return false;
+        }
+
+        static vector<string> keys = {
+            "conf_filename", "sink_targets"
+        };
+
+        map<string, string> params;
+
+        for (auto &key : keys) {
+            string value = r->Get(s, key, "");
+            if (value.empty()) continue;
+
+            switch (type) {
+            case ndPlugin::TYPE_SINK:
+                if (key == "sink_targets") {
+                    fprintf(stderr, "Invalid plugin option: %s: %s\n",
+                        tag.c_str(), key.c_str()
+                    );
+                    return false;
+                }
+                break;
+            default:
+                break;
+            }
+
+            string expanded;
+            nd_expand_variables(value, expanded);
+            params.insert(make_pair(key, expanded));
+        }
+
+        try {
+            ndPluginLoader loader(tag, so_name, params);
+
+            if (type != loader.GetPlugin()->GetType()) {
+                fprintf(stderr, "Invalid plugin type: %s: %d (expected: %d)\n",
+                    tag.c_str(), loader.GetPlugin()->GetType(), type
+                );
+                return false;
+            }
+        }
+        catch (exception &e) {
+            fprintf(stderr, "Plugin cannot be loaded: %s: %s: %s\n",
+                tag.c_str(), so_name.c_str(), e.what()
+            );
+            return false;
+        }
+
+        if (! mpi->insert(
+            make_pair(tag,
+                make_pair(so_name, params)
+            )).second) {
+            fprintf(stderr, "Duplicate plugin tag found: %s\n",
+                tag.c_str()
+            );
+            return false;
+        }
+    }
+
+    return true;
+}
+#endif
 
 enum nd_capture_type ndGlobalConfig::LoadCaptureType(
     const string &section, const string &key)

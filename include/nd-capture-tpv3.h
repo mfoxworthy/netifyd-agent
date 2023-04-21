@@ -17,15 +17,12 @@
 #ifndef _ND_CAPTURE_TPV3_H
 #define _ND_CAPTURE_TPV3_H
 
-class ndSocketThread;
-
 class ndCaptureTPv3 : public ndCaptureThread
 {
 public:
     ndCaptureTPv3(
         int16_t cpu,
         ndInterface& iface,
-        ndSocketThread *thread_socket,
         const nd_detection_threads &threads_dpi,
         ndDNSHintCache *dhc = NULL,
         uint8_t private_addr = 0);

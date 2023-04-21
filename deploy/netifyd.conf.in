@@ -7,10 +7,40 @@
 # See @datadir@/@PACKAGE_TARNAME@.conf-sample for all possible options.
 
 [netifyd]
-enable_sink = no
-
-[socket]
-listen_path[0] = @volatilestatedir@/@PACKAGE_TARNAME@.sock
+syn_scan_protection = no
 
 [protocols]
 all=include
+
+[capture-defaults]
+capture_type = pcap
+
+[sink-legacy]
+enable = no
+plugin_library = @libdir@/libnetify-sink-post.so
+conf_filename = ${path_state_persistent}/netify-sink-legacy.json
+
+[sink-mqtt]
+enable = no
+plugin_library = @libdir@/libnetify-sink-mqtt.so
+conf_filename = ${path_state_persistent}/netify-sink-mqtt.json
+
+[sink-file]
+enable = no
+plugin_library = @libdir@/libnetify-sink-file.so
+conf_filename = ${path_state_persistent}/netify-sink-file.json
+
+[sink-socket]
+enable = yes
+plugin_library = @libdir@/libnetify-sink-socket.so
+conf_filename = ${path_state_persistent}/netify-sink-socket.json
+
+[proc-legacy]
+enable = yes
+plugin_library = @libdir@/libnetify-proc-post-legacy.so
+sink_targets = sink-legacy:default
+
+[proc-socket]
+enable = yes
+plugin_library = @libdir@/libnetify-proc-socket-legacy.so
+sink_targets = sink-socket:default

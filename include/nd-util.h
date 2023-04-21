@@ -162,5 +162,7 @@ bool nd_scan_dotd(const string &path, vector<string> &files);
 void nd_set_hostname(char *dst,
     const char *src, size_t length, bool strict = true);
 
+void nd_expand_variables(const string &input, string &output);
+
 #endif // _ND_UTIL_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

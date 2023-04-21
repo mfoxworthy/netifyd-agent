@@ -54,7 +54,6 @@ public:
 #ifdef _ND_USE_NETLINK
         ndNetlink *netlink,
 #endif
-        ndSocketThread *thread_socket,
 #ifdef _ND_USE_CONNTRACK
         ndConntrackThread *thread_conntrack,
 #endif
@@ -84,7 +83,6 @@ protected:
 #ifdef _ND_USE_NETLINK
     ndNetlink *netlink;
 #endif
-    ndSocketThread *thread_socket;
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack;
 #endif

@@ -127,7 +127,6 @@ using namespace std;
 #ifdef _ND_USE_NFQUEUE
 #include "nd-capture-nfq.h"
 #endif
-#include "nd-socket.h"
 #include "nd-base64.h"
 #include "nd-napi.h"
 
