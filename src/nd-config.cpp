@@ -229,8 +229,6 @@ void ndGlobalConfig::Close(void)
 
 bool ndGlobalConfig::Load(const string &filename)
 {
-    typedef map<string, string> nd_config_section;
-
     struct stat extern_config_stat;
     if (stat(filename.c_str(), &extern_config_stat) < 0) {
         fprintf(stderr, "Can not stat configuration file: %s: %s\n",
@@ -861,10 +859,10 @@ bool ndGlobalConfig::AddPlugins(void)
 
         if (mpi == nullptr || p != 0)
             continue;
-        if (! r->GetBoolean(s, "enable", true))
+        if (! r->GetBoolean(tag, "enable", true))
             continue;
 
-        string so_name = r->Get(s, "plugin_library", "");
+        string so_name = r->Get(tag, "plugin_library", "");
 
         if (so_name.empty()) {
             fprintf(stderr, "Plugin library not set: %s\n",
@@ -877,10 +875,10 @@ bool ndGlobalConfig::AddPlugins(void)
             "conf_filename", "sink_targets"
         };
 
-        map<string, string> params;
+        ndPlugin::Params params;
 
         for (auto &key : keys) {
-            string value = r->Get(s, key, "");
+            string value = r->Get(tag, key, "");
             if (value.empty()) continue;
 
             switch (type) {

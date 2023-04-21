@@ -22,12 +22,12 @@
 #define ndPluginInit(class_name) \
 extern "C" { \
     ndPlugin *ndPluginInit( \
-        const string &tag, const map<string, string> &params) { \
+        const string &tag, const ndPlugin::Params &params) { \
         class_name *p = new class_name(tag, params); \
         if (p == nullptr) return nullptr; \
         if (p->GetType() != ndPlugin::TYPE_PROC && \
             p->GetType() != ndPlugin::TYPE_SINK) { \
-                nd_printf("Invalid plugin type detected during init: %s [%u]\n", \
+                nd_printf("Invalid plugin type: %s [%u]\n", \
                     tag.c_str(), p->GetType()); \
                 delete p; \
                 return nullptr; \
@@ -54,9 +54,11 @@ public:
         TYPE_SINK,
     };
 
+    typedef map<string, string> Params;
+
     ndPlugin(
         Type type,
-        const string &tag, const map<string, string> &params);
+        const string &tag, const Params &params);
     virtual ~ndPlugin();
 
     virtual void *Entry(void) = 0;
@@ -94,28 +96,26 @@ public:
 protected:
     Type type;
     string conf_filename;
-    vector<string> sink_targets;
-    string sink_channel;
 };
 
 class ndPluginProcessor : public ndPlugin
 {
 public:
     ndPluginProcessor(
-        const string &tag, const map<string, string> &params);
+        const string &tag, const ndPlugin::Params &params);
     virtual ~ndPluginProcessor();
 
     enum Event {
-        EVENT_INIT,
-        EVENT_INTERFACES,
-        EVENT_PKT_GLOBAL_STATS,
-        EVENT_PKT_CAPTURE_STATS,
-        EVENT_FLOW_NEW,
         EVENT_FLOW_MAP,
+        EVENT_FLOW_NEW,
         EVENT_FLOW_UPDATED,
         EVENT_FLOW_EXPIRING,
         EVENT_FLOW_EXPIRED,
-        EVENT_COMPLETE,
+        EVENT_INTERFACES,
+        EVENT_PKT_CAPTURE_STATS,
+        EVENT_PKT_GLOBAL_STATS,
+        EVENT_UPDATE_INIT,
+        EVENT_UPDATE_COMPLETE,
     };
 
     template <class T>
@@ -127,13 +127,70 @@ public:
         Event event, void *param = nullptr) = 0;
 
 protected:
+    virtual bool DispatchSinkPayload(
+        size_t length, const uint8_t *payload);
+
+    map<string, set<string>> sink_targets;
 };
+
+class ndPluginSinkPayload
+{
+public:
+    ndPluginSinkPayload() : length(0), data(nullptr) { }
+    ndPluginSinkPayload(
+        size_t length, const uint8_t *data, const set<string> &channels)
+        : length(length), data(nullptr), channels(channels) {
+        this->data = new uint8_t[length];
+        if (this->data == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new sink payload", ENOMEM
+            );
+        }
+        memcpy(this->data, data, length);
+    }
+    ndPluginSinkPayload(const ndPluginSinkPayload &payload)
+        : length(payload.length), data(nullptr),
+        channels(payload.channels) {
+        data = new uint8_t[length];
+        if (data == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new sink payload", ENOMEM
+            );
+        }
+        memcpy(data, payload.data, length);
+    }
+    ndPluginSinkPayload(const ndPluginSinkPayload *payload)
+        : length(payload->length), data(nullptr),
+        channels(payload->channels) {
+        data = new uint8_t[length];
+        if (data == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new sink payload", ENOMEM
+            );
+        }
+        memcpy(data, payload->data, length);
+    }
+
+    virtual ~ndPluginSinkPayload() {
+        if (data) {
+            delete [] data;
+            data = nullptr;
+        }
+        length = 0;
+    }
+
+    size_t length;
+    uint8_t *data;
+    set<string> channels;
+};
+
+#define _ND_PLQ_DEFAULT_MAX_SIZE    2097152
 
 class ndPluginSink : public ndPlugin
 {
 public:
     ndPluginSink(
-        const string &tag, const map<string, string> &params);
+        const string &tag, const ndPlugin::Params &params);
     virtual ~ndPluginSink();
 
     template <class T>
@@ -141,11 +198,26 @@ public:
         ndPlugin::GetStatus(output);
     }
 
-    virtual void DispatchSinkEvent(
-        const string &channel,
-        size_t length, const uint8_t *payload) = 0;
+    virtual void QueuePayload(ndPluginSinkPayload *payload);
 
 protected:
+    size_t plq_size;
+    size_t plq_size_max;
+    queue<ndPluginSinkPayload *> plq_public;
+    queue<ndPluginSinkPayload *> plq_private;
+    pthread_cond_t plq_cond;
+    pthread_mutex_t plq_cond_mutex;
+
+    size_t PullPayloadQueue(void);
+    size_t WaitOnPayloadQueue(unsigned timeout = 1);
+
+    inline ndPluginSinkPayload *PopPayloadQueue(void) {
+        if (! plq_private.size()) return nullptr;
+        ndPluginSinkPayload *p = plq_private.front();
+        plq_private.pop();
+        plq_size -= p->length;
+        return p;
+    }
 };
 
 #ifdef _ND_INTERNAL
@@ -155,7 +227,7 @@ class ndPluginLoader
 public:
     ndPluginLoader(
         const string &tag,
-        const string &so_name, const map<string, string> &params);
+        const string &so_name, const ndPlugin::Params &params);
     virtual ~ndPluginLoader();
 
     inline ndPlugin *GetPlugin(void) { return plugin; };
@@ -185,10 +257,9 @@ public:
     void BroadcastEvent(ndPlugin::Type type,
         ndPlugin::Event event, void *param = nullptr);
 
-    void BroadcastSinkPayload(
-        const string &channel, size_t length, uint8_t *payload);
-    bool DispatchSinkPayload(const string &tag,
-        const string &channel, size_t length, uint8_t *payload);
+    void BroadcastSinkPayload(ndPluginSinkPayload *payload);
+    bool DispatchSinkPayload(
+        const string &target, ndPluginSinkPayload *payload);
 
     void BroadcastProcessorEvent(
         ndPluginProcessor::Event event, void *param = nullptr);

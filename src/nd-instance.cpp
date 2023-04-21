@@ -2115,7 +2115,8 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     );
 
     plugins.BroadcastProcessorEvent(
-        ndPluginProcessor::EVENT_INIT, static_cast<void *>(&status)
+        ndPluginProcessor::EVENT_UPDATE_INIT,
+        static_cast<void *>(&status)
     );
 #endif
 
@@ -2167,7 +2168,7 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     );
 
     plugins.BroadcastProcessorEvent(
-        ndPluginProcessor::EVENT_COMPLETE
+        ndPluginProcessor::EVENT_UPDATE_COMPLETE
     );
 #endif
 }
@@ -2201,9 +2202,11 @@ void ndInstance::ProcessFlows(void)
             if (i->second->ip_protocol == IPPROTO_TCP &&
                 i->second->flags.tcp_fin.load()) tcp_fin++;
             if (i->second->ip_protocol == IPPROTO_TCP &&
-                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() == 1) tcp_fin_ack_1++;
+                i->second->flags.tcp_fin.load() &&
+                i->second->flags.tcp_fin_ack.load() == 1) tcp_fin_ack_1++;
             if (i->second->ip_protocol == IPPROTO_TCP &&
-                i->second->flags.tcp_fin.load() && i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
+                i->second->flags.tcp_fin.load() &&
+                i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
             if (i->second->tickets.load() > 0) tickets++;
 #endif
             if (i->second->flags.expired.load() == false) {
@@ -2225,14 +2228,6 @@ void ndInstance::ProcessFlows(void)
 
                 if (i->second->tickets.load() == 0) {
 #ifdef _ND_USE_PLUGINS
-                    // TODO: Do we need to do this?
-                    if (i->second->detected_protocol == ND_PROTO_UNKNOWN) {
-                        plugins.BroadcastProcessorEvent(
-                            ndPluginProcessor::EVENT_FLOW_NEW,
-                            static_cast<void *>(i->second)
-                        );
-                    }
-
                     plugins.BroadcastProcessorEvent(
                         ndPluginProcessor::EVENT_FLOW_EXPIRED,
                         static_cast<void *>(i->second)

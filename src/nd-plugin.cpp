@@ -18,42 +18,70 @@
 #include "config.h"
 #endif
 
-#include <string>
+#include <iomanip>
+#include <iostream>
+#include <set>
+#include <map>
+#include <queue>
 #include <sstream>
 #include <stdexcept>
-#include <vector>
-#include <map>
-#include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <list>
+#include <vector>
+#include <locale>
 #include <atomic>
 #include <regex>
 #include <mutex>
-#include <bitset>
 
-#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/resource.h>
+
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <getopt.h>
 #include <signal.h>
-#include <pthread.h>
+#include <time.h>
+#include <unistd.h>
+#include <locale.h>
+#include <syslog.h>
+#include <fcntl.h>
 #include <dlfcn.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
 
-#define __FAVOR_BSD 1
-#include <netinet/tcp.h>
-#undef __FAVOR_BSD
+#include <netdb.h>
+#include <netinet/in.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
+#define __FAVOR_BSD 1
+#include <netinet/tcp.h>
+#undef __FAVOR_BSD
+
+#include <curl/curl.h>
 #include <pcap/pcap.h>
+#include <pthread.h>
+#include <resolv.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#ifdef _ND_USE_CONNTRACK
+#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
+#endif
+
+#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#include <gperftools/malloc_extension.h>
+#elif defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
+#endif
 
 #include <radix/radix_tree.hpp>
 
@@ -62,8 +90,8 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
-#include "nd-thread.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
 #include "nd-packet.h"
@@ -78,7 +106,30 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
+#include "nd-flow-parser.h"
+#include "nd-dhc.h"
+#include "nd-fhc.h"
+#include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
 #include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
+#ifdef _ND_USE_CONNTRACK
+#include "nd-conntrack.h"
+#endif
+#include "nd-detection.h"
+#include "nd-capture.h"
+#ifdef _ND_USE_LIBPCAP
+#include "nd-capture-pcap.h"
+#endif
+#ifdef _ND_USE_TPACKETV3
+#include "nd-capture-tpv3.h"
+#endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
+#include "nd-base64.h"
+#include "nd-napi.h"
 
 //#define _ND_LOG_PLUGIN_DEBUG    1
 
@@ -90,25 +141,12 @@ const map<ndPlugin::Type, string> ndPlugin::types = {
 
 ndPlugin::ndPlugin(
     Type type,
-    const string &tag, const map<string, string> &params)
+    const string &tag, const Params &params)
     : ndThread(tag, -1), type(type)
 {
     for (auto &param : params) {
         if (param.first == "conf_filename")
             conf_filename = param.second;
-        else if (param.first == "sink_targets") {
-            stringstream ss(param.second);
-            while (ss.good()) {
-                string target;
-                getline(ss, target, ',');
-                if (! target.empty()) {
-                    nd_trim(target, ' ');
-                    sink_targets.push_back(target);
-                }
-            }
-        }
-        else if (param.first == "sink_channel")
-            sink_channel = param.second;
     }
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Plugin created: %s\n", tag.c_str());
@@ -123,9 +161,25 @@ ndPlugin::~ndPlugin()
 }
 
 ndPluginSink::ndPluginSink(
-    const string &tag, const map<string, string> &params)
-    : ndPlugin(ndPlugin::TYPE_SINK, tag, params)
+    const string &tag, const ndPlugin::Params &params)
+    : ndPlugin(ndPlugin::TYPE_SINK, tag, params),
+    plq_size(0), plq_size_max(_ND_PLQ_DEFAULT_MAX_SIZE)
 {
+    int rc;
+
+    pthread_condattr_t cond_attr;
+    pthread_condattr_init(&cond_attr);
+
+    pthread_condattr_setclock(&cond_attr, CLOCK_MONOTONIC);
+
+    if ((rc = pthread_cond_init(&plq_cond, &cond_attr)) != 0)
+        throw ndPluginException("pthread_cond_init", strerror(rc));
+
+    pthread_condattr_destroy(&cond_attr);
+
+    if ((rc = pthread_mutex_init(&plq_cond_mutex, NULL)) != 0)
+        throw ndPluginException("pthread_mutex_init", strerror(rc));
+
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Sink plugin created: %s\n", tag.c_str());
 #endif
@@ -133,15 +187,158 @@ ndPluginSink::ndPluginSink(
 
 ndPluginSink::~ndPluginSink()
 {
+    pthread_cond_destroy(&plq_cond);
+    pthread_mutex_destroy(&plq_cond_mutex);
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Sink plugin destroyed: %s\n", tag.c_str());
 #endif
 }
 
+void ndPluginSink::QueuePayload(ndPluginSinkPayload *payload)
+{
+    Lock();
+
+    plq_public.push(payload);
+
+    Unlock();
+
+    int rc;
+
+    if ((rc = pthread_cond_broadcast(&plq_cond)) != 0) {
+        throw ndPluginException(
+            "pthread_cond_broadcast", strerror(rc)
+        );
+    }
+}
+
+size_t ndPluginSink::PullPayloadQueue(void)
+{
+    if (plq_public.size() == 0)
+        return 0;
+
+    ndPluginSinkPayload *p;
+
+    do {
+        while (plq_private.size() && plq_size > plq_size_max) {
+            p = plq_private.front();
+            plq_private.pop();
+
+            plq_size -= p->length;
+            delete p;
+        }
+
+        p = plq_public.front();
+        plq_public.pop();
+
+        plq_size += p->length;
+        plq_private.push(p);
+    }
+    while (plq_public.size() > 0);
+
+    return plq_private.size();
+}
+
+size_t ndPluginSink::WaitOnPayloadQueue(unsigned timeout)
+{
+    Lock();
+
+    size_t entries = PullPayloadQueue();
+
+    if (timeout > 0 && entries == 0) {
+
+        Unlock();
+
+        int rc;
+        if ((rc = pthread_mutex_lock(&plq_cond_mutex)) != 0) {
+            throw ndPluginException(
+                "pthread_mutex_lock", strerror(rc)
+            );
+        }
+
+        struct timespec ts_cond;
+        if (clock_gettime(CLOCK_MONOTONIC, &ts_cond) != 0) {
+            throw ndPluginException(
+                "clock_gettime", strerror(errno)
+            );
+        }
+
+        ts_cond.tv_sec += timeout;
+
+        if ((rc = pthread_cond_timedwait(
+            &plq_cond, &plq_cond_mutex, &ts_cond)) != 0 &&
+            rc != ETIMEDOUT) {
+            throw ndPluginException(
+                "pthread_cond_timedwait", strerror(rc)
+            );
+        }
+
+        if ((rc = pthread_mutex_unlock(&plq_cond_mutex)) != 0) {
+            throw ndPluginException(
+                "pthread_mutex_unlock", strerror(rc));
+        }
+
+        Lock();
+
+        entries = PullPayloadQueue();
+    }
+
+    Unlock();
+
+    return entries;
+}
+
 ndPluginProcessor::ndPluginProcessor(
-    const string &tag, const map<string, string> &params)
+    const string &tag, const ndPlugin::Params &params)
     : ndPlugin(ndPlugin::TYPE_PROC, tag, params)
 {
+    for (auto &param : params) {
+        if (param.first == "sink_targets") {
+            stringstream ss(param.second);
+
+            while (ss.good()) {
+                string value;
+                getline(ss, value, ',');
+
+                nd_trim(value, ' ');
+
+                if (value.empty()) continue;
+
+                string target;
+                string channel = "default";
+
+                size_t p = value.find_first_of(":");
+
+                if (p == string::npos)
+                    target = value;
+                else {
+                    target = value.substr(0, p);
+                    channel = value.substr(p + 1);
+                }
+
+                auto i = sink_targets.find(target);
+
+                if (i != sink_targets.end()) {
+                    if (! i->second.insert(channel).second) {
+                        throw ndPluginException(
+                            "duplicate channel specified",
+                            channel
+                        );
+                    }
+                }
+                else {
+                    set<string> channels = { channel };
+
+                    if (! sink_targets.insert(
+                        make_pair(target, channels)).second) {
+                        throw ndPluginException(
+                            "error creating target",
+                            target
+                        );
+                    }
+                }
+            }
+        }
+    }
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Processor plugin created: %s\n", tag.c_str());
 #endif
@@ -154,9 +351,38 @@ ndPluginProcessor::~ndPluginProcessor()
 #endif
 }
 
+bool ndPluginProcessor::DispatchSinkPayload(
+    size_t length, const uint8_t *payload)
+{
+    size_t count = 0;
+    static ndInstance& ndi = ndInstance::GetInstance();
+
+    for (auto &t : sink_targets) {
+        ndPluginSinkPayload *sp = new ndPluginSinkPayload(
+            length, payload, t.second
+        );
+        if (sp == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new sink payload", ENOMEM
+            );
+        }
+
+        if (ndi.plugins.DispatchSinkPayload(
+            t.first, sp)) count++;
+        else {
+            throw ndPluginException(
+                "sink target not found",
+                t.first.c_str()
+            );
+        }
+    }
+
+    return (count > 0);
+}
+
 ndPluginLoader::ndPluginLoader(
     const string &tag,
-    const string &so_name, const map<string, string> &params)
+    const string &so_name, const ndPlugin::Params &params)
     : tag(tag), so_name(so_name), so_handle(NULL)
 {
     so_handle = dlopen(so_name.c_str(), RTLD_NOW);
@@ -164,7 +390,7 @@ ndPluginLoader::ndPluginLoader(
         throw ndPluginException(tag, dlerror());
 
     char *dlerror_string;
-    ndPlugin *(*ndPluginInit)(const string &, const map<string, string> &);
+    ndPlugin *(*ndPluginInit)(const string &, const ndPlugin::Params &);
 
     dlerror();
     *(void **) (&ndPluginInit) = dlsym(so_handle, "ndPluginInit");
@@ -411,38 +637,34 @@ void ndPluginManager::BroadcastEvent(ndPlugin::Type type,
 }
 
 void ndPluginManager::BroadcastSinkPayload(
-    const string &channel, size_t length, uint8_t *payload)
+    ndPluginSinkPayload *payload)
 {
     unique_lock<mutex> ul(lock);
 
     for (auto &p : sinks) {
-        uint8_t *pd = new uint8_t[length];
-        if (pd == nullptr) {
+        ndPluginSinkPayload *sp = new ndPluginSinkPayload(payload);
+        if (sp == nullptr) {
             throw ndSystemException(__PRETTY_FUNCTION__,
                 "new sink payload", ENOMEM
             );
         }
 
-        memcpy(pd, payload, length);
-
         reinterpret_cast<ndPluginSink *>(
-            p.second->GetPlugin()
-        )->DispatchSinkEvent(channel, length, pd);
+            p.second->GetPlugin())->QueuePayload(sp);
     }
 }
 
-bool ndPluginManager::DispatchSinkPayload(const string &tag,
-    const string &channel, size_t length, uint8_t *payload)
+bool ndPluginManager::DispatchSinkPayload(const string &target,
+    ndPluginSinkPayload *payload)
 {
     unique_lock<mutex> ul(lock);
 
-    auto p = sinks.find(tag);
+    auto p = sinks.find(target);
 
     if (p == sinks.end()) return false;
 
     reinterpret_cast<ndPluginSink *>(
-        (*p).second->GetPlugin()
-    )->DispatchSinkEvent(channel, length, payload);
+        (*p).second->GetPlugin())->QueuePayload(payload);
 
     return true;
 }
@@ -454,8 +676,9 @@ void ndPluginManager::BroadcastProcessorEvent(
 
     for (auto &p : processors) {
         reinterpret_cast<ndPluginProcessor *>(
-            p.second->GetPlugin()
-        )->DispatchProcessorEvent(event, param);
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, param
+            );
     }
 }
 
