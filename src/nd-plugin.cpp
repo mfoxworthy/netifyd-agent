@@ -291,6 +291,7 @@ ndPluginProcessor::ndPluginProcessor(
     const string &tag, const ndPlugin::Params &params)
     : ndPlugin(ndPlugin::TYPE_PROC, tag, params)
 {
+#if 0
     for (auto &param : params) {
         if (param.first == "sink_targets") {
             stringstream ss(param.second);
@@ -339,6 +340,7 @@ ndPluginProcessor::ndPluginProcessor(
             }
         }
     }
+#endif
 #ifdef _ND_LOG_PLUGIN_DEBUG
     nd_dprintf("Processor plugin created: %s\n", tag.c_str());
 #endif
@@ -351,36 +353,33 @@ ndPluginProcessor::~ndPluginProcessor()
 #endif
 }
 
-bool ndPluginProcessor::DispatchSinkPayload(
+void ndPluginProcessor::DispatchSinkPayload(
+    const string &target, const ndPlugin::Channels &channels,
     size_t length, const uint8_t *payload)
 {
-    size_t count = 0;
     static ndInstance& ndi = ndInstance::GetInstance();
 
-    for (auto &t : sink_targets) {
-        ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
-            length, payload, t.second
-        );
+    ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
+        length, payload, channels
+    );
 
-        if (ndi.plugins.DispatchSinkPayload(
-            t.first, sp)) count++;
-        else {
-            throw ndPluginException(
-                "sink target not found",
-                t.first.c_str()
-            );
-        }
-    }
+    if (ndi.plugins.DispatchSinkPayload(target, sp))
+        return;
 
-    return (count > 0);
+    throw ndPluginException(
+        "sink target not found", target.c_str()
+    );
 }
 
-bool ndPluginProcessor::DispatchSinkPayload(const json &j)
+void ndPluginProcessor::DispatchSinkPayload(
+    const string &target, const ndPlugin::Channels &channels,
+    const json &j)
 {
     string output;
     nd_json_to_string(j, output, ndGC_DEBUG);
 
-    return DispatchSinkPayload(
+    DispatchSinkPayload(
+        target, channels,
         output.size(), (const uint8_t *)output.c_str()
     );
 }

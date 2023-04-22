@@ -202,12 +202,13 @@ public:
         Event event, void *param = nullptr) = 0;
 
 protected:
-    virtual bool DispatchSinkPayload(
+    virtual void DispatchSinkPayload(
+        const string &target, const ndPlugin::Channels &channels,
         size_t length, const uint8_t *payload);
 
-    virtual bool DispatchSinkPayload(const json &j);
-
-    map<string, set<string>> sink_targets;
+    virtual void DispatchSinkPayload(
+        const string &target, const ndPlugin::Channels &channels,
+        const json &j);
 };
 
 #define _ND_PLQ_DEFAULT_MAX_SIZE    2097152

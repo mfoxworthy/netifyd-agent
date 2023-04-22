@@ -872,7 +872,7 @@ bool ndGlobalConfig::AddPlugins(void)
         }
 
         static vector<string> keys = {
-            "conf_filename", "sink_targets"
+            "conf_filename",
         };
 
         ndPlugin::Params params;
@@ -880,8 +880,8 @@ bool ndGlobalConfig::AddPlugins(void)
         for (auto &key : keys) {
             string value = r->Get(tag, key, "");
             if (value.empty()) continue;
-
             switch (type) {
+#if 0
             case ndPlugin::TYPE_SINK:
                 if (key == "sink_targets") {
                     fprintf(stderr, "Invalid plugin option: %s: %s\n",
@@ -890,6 +890,7 @@ bool ndGlobalConfig::AddPlugins(void)
                     return false;
                 }
                 break;
+#endif
             default:
                 break;
             }

@@ -18,6 +18,16 @@ all=include
 [capture-defaults]
 capture_type = pcap
 
+[proc-legacy]
+enable = yes
+plugin_library = @libdir@/libnetify-proc-post-legacy.so
+conf_filename = ${path_state_persistent}/netify-proc-post-legacy.json
+
+[proc-socket]
+enable = yes
+plugin_library = @libdir@/libnetify-proc-socket-legacy.so
+conf_filename = ${path_state_persistent}/netify-proc-socket-legacy.json
+
 [sink-legacy]
 enable = no
 plugin_library = @libdir@/libnetify-sink-post.so
@@ -37,13 +47,3 @@ conf_filename = ${path_state_persistent}/netify-sink-file.json
 enable = yes
 plugin_library = @libdir@/libnetify-sink-socket.so
 conf_filename = ${path_state_persistent}/netify-sink-socket.json
-
-[proc-legacy]
-enable = yes
-plugin_library = @libdir@/libnetify-proc-post-legacy.so
-sink_targets = sink-legacy
-
-[proc-socket]
-enable = yes
-plugin_library = @libdir@/libnetify-proc-socket-legacy.so
-sink_targets = sink-socket:local_unix
