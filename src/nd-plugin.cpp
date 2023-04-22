@@ -326,7 +326,7 @@ ndPluginProcessor::ndPluginProcessor(
                     }
                 }
                 else {
-                    set<string> channels = { channel };
+                    ndPlugin::Channels channels = { channel };
 
                     if (! sink_targets.insert(
                         make_pair(target, channels)).second) {
@@ -358,14 +358,9 @@ bool ndPluginProcessor::DispatchSinkPayload(
     static ndInstance& ndi = ndInstance::GetInstance();
 
     for (auto &t : sink_targets) {
-        ndPluginSinkPayload *sp = new ndPluginSinkPayload(
+        ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
             length, payload, t.second
         );
-        if (sp == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
 
         if (ndi.plugins.DispatchSinkPayload(
             t.first, sp)) count++;
@@ -378,6 +373,16 @@ bool ndPluginProcessor::DispatchSinkPayload(
     }
 
     return (count > 0);
+}
+
+bool ndPluginProcessor::DispatchSinkPayload(const json &j)
+{
+    string output;
+    nd_json_to_string(j, output, ndGC_DEBUG);
+
+    return DispatchSinkPayload(
+        output.size(), (const uint8_t *)output.c_str()
+    );
 }
 
 ndPluginLoader::ndPluginLoader(
@@ -641,17 +646,24 @@ void ndPluginManager::BroadcastSinkPayload(
 {
     unique_lock<mutex> ul(lock);
 
-    for (auto &p : sinks) {
-        ndPluginSinkPayload *sp = new ndPluginSinkPayload(payload);
-        if (sp == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
+    if (sinks.empty()) {
+        delete payload;
+        return;
+    }
+
+    auto p = sinks.cbegin();
+
+    for ( ; p != prev(sinks.cend()); p++) {
+        ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
+            payload
+        );
 
         reinterpret_cast<ndPluginSink *>(
-            p.second->GetPlugin())->QueuePayload(sp);
+            p->second->GetPlugin())->QueuePayload(sp);
     }
+
+    reinterpret_cast<ndPluginSink *>(
+        p->second->GetPlugin())->QueuePayload(payload);
 }
 
 bool ndPluginManager::DispatchSinkPayload(const string &target,

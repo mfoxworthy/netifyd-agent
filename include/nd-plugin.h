@@ -55,6 +55,7 @@ public:
     };
 
     typedef map<string, string> Params;
+    typedef set<string> Channels;
 
     ndPlugin(
         Type type,
@@ -98,6 +99,80 @@ protected:
     string conf_filename;
 };
 
+class ndPluginSinkPayload
+{
+public:
+    inline static ndPluginSinkPayload *Create(
+        size_t length, const uint8_t *data,
+        const ndPlugin::Channels &channels) {
+
+        ndPluginSinkPayload *p = new ndPluginSinkPayload(
+            length, data, channels
+        );
+
+        if (p == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new sink payload", ENOMEM
+            );
+        }
+
+        return p;
+    }
+
+    inline static ndPluginSinkPayload *Create(
+        const ndPluginSinkPayload &payload) {
+        return Create(
+            payload.length, payload.data, payload.channels
+        );
+    }
+
+    inline static ndPluginSinkPayload *Create(
+        const ndPluginSinkPayload *payload) {
+        return Create(
+            payload->length, payload->data, payload->channels
+        );
+    }
+
+    inline static ndPluginSinkPayload *Create(const json &j,
+        const ndPlugin::Channels &channels) {
+        string output;
+        nd_json_to_string(j, output, ndGC_DEBUG);
+
+        return Create(output.size(),
+            (const uint8_t *)output.c_str(), channels);
+    }
+
+    ndPluginSinkPayload() : length(0), data(nullptr) { }
+
+    ndPluginSinkPayload(size_t length, const uint8_t *data,
+        const ndPlugin::Channels &channels)
+        : length(length), data(nullptr), channels(channels) {
+
+        this->data = new uint8_t[length];
+
+        if (this->data == nullptr) {
+            throw ndSystemException(
+                __PRETTY_FUNCTION__,
+                "new sink payload data", ENOMEM
+            );
+        }
+
+        memcpy(this->data, data, length);
+    }
+
+    virtual ~ndPluginSinkPayload() {
+        if (data) {
+            delete [] data;
+            data = nullptr;
+        }
+        length = 0;
+    }
+
+    size_t length;
+    uint8_t *data;
+    ndPlugin::Channels channels;
+};
+
 class ndPluginProcessor : public ndPlugin
 {
 public:
@@ -130,58 +205,9 @@ protected:
     virtual bool DispatchSinkPayload(
         size_t length, const uint8_t *payload);
 
+    virtual bool DispatchSinkPayload(const json &j);
+
     map<string, set<string>> sink_targets;
-};
-
-class ndPluginSinkPayload
-{
-public:
-    ndPluginSinkPayload() : length(0), data(nullptr) { }
-    ndPluginSinkPayload(
-        size_t length, const uint8_t *data, const set<string> &channels)
-        : length(length), data(nullptr), channels(channels) {
-        this->data = new uint8_t[length];
-        if (this->data == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
-        memcpy(this->data, data, length);
-    }
-    ndPluginSinkPayload(const ndPluginSinkPayload &payload)
-        : length(payload.length), data(nullptr),
-        channels(payload.channels) {
-        data = new uint8_t[length];
-        if (data == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
-        memcpy(data, payload.data, length);
-    }
-    ndPluginSinkPayload(const ndPluginSinkPayload *payload)
-        : length(payload->length), data(nullptr),
-        channels(payload->channels) {
-        data = new uint8_t[length];
-        if (data == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
-        memcpy(data, payload->data, length);
-    }
-
-    virtual ~ndPluginSinkPayload() {
-        if (data) {
-            delete [] data;
-            data = nullptr;
-        }
-        length = 0;
-    }
-
-    size_t length;
-    uint8_t *data;
-    set<string> channels;
 };
 
 #define _ND_PLQ_DEFAULT_MAX_SIZE    2097152
