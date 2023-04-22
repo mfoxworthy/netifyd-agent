@@ -68,7 +68,7 @@ void nd_json_to_string(const json &j, string &output, bool pretty)
 {
     output = j.dump(
         pretty ? ND_JSON_INDENT : -1,
-        ' ', false, json::error_handler_t::replace
+        ' ', true, json::error_handler_t::replace
     );
 
     vector<pair<regex *, string> >::const_iterator i;
