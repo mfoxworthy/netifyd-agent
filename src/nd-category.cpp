@@ -404,8 +404,8 @@ bool ndDomains::Load(void)
 
     domains.clear();
 
-    // /etc/netify.d/domains.d/10-adult.txt
-    // /etc/netify.d/domains.d/{pri}-{cat_tag}.txt
+    // /etc/netifyd/domains.d/10-adult.txt
+    // /etc/netifyd/domains.d/{pri}-{cat_tag}.txt
 
     for (auto &it : files) {
         size_t p1 = it.find_first_of("-");

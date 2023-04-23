@@ -19,7 +19,7 @@
 %define netifyd_init deploy/%{name}.init
 
 # Persistent and volatile state paths
-%define statedir_pdata %{_sysconfdir}/netify.d
+%define statedir_pdata %{_sysconfdir}/netifyd
 %define statedir_vdata %{_localstatedir}/run/%{name}
 %define statedir_vdata_old %{_sharedstatedir}/%{name}
 

@@ -3,8 +3,8 @@
 %%DATADIR%%/watchdog.sh
 @dir /var/run/netifyd
 @sample %%ETCDIR%%.conf.sample
-@sample etc/netify.d/netify-apps.conf.sample
-@sample etc/netify.d/netify-categories.json.sample
+@sample etc/netifyd/netify-apps.conf.sample
+@sample etc/netifyd/netify-categories.json.sample
 lib/libnetifyd.so
 lib/libnetifyd.so.2
 lib/libnetifyd.so.2.0.1

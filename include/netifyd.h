@@ -83,7 +83,7 @@
 #endif
 
 #ifndef ND_PERSISTENT_STATEDIR
-#define ND_PERSISTENT_STATEDIR  "/etc/netify.d"
+#define ND_PERSISTENT_STATEDIR  "/etc/netifyd"
 #endif
 
 #ifndef ND_DATADIR

@@ -200,7 +200,7 @@ AC_ARG_WITH([persistentstatedir],
      [AS_HELP_STRING([--with-persistentstatedir=DIR], [Directory for persistent state files])],,
      [with_persistentstatedir=auto])
 AS_IF([test "x$with_persistentstatedir" = "xyes" -o "x$with_persistentstatedir" = "xauto"],
-    AC_SUBST([persistentstatedir], [$sysconfdir/netify.d]),
+    AC_SUBST([persistentstatedir], [$sysconfdir/netifyd]),
     AC_SUBST([persistentstatedir], [$with_persistentstatedir])
 )
 

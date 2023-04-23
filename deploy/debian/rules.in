@@ -24,9 +24,9 @@ override_dh_install:
 	rm -rf $(DESTDIR)@bindir@
 
 	install -d -m 0755 $(DESTDIR)@volatilestatedir@
-	install -d -m 0755 $(DESTDIR)@sysconfdir@/netify.d
+	install -d -m 0755 $(DESTDIR)@sysconfdir@/netifyd
 
-	rm -f $(DESTDIR)@sysconfdir@/netify.d/netify-sink.conf
+	rm -f $(DESTDIR)@sysconfdir@/netifyd/netify-sink.conf
 
 	chmod a+x $(DESTDIR)@datadir@/*.sh
 

@@ -19,7 +19,7 @@ if (! defined('NETIFY_SBINDIR'))
     define('NETIFY_SBINDIR', NETIFY_PREFIX . 'sbin/');
 
 if (! defined('NETIFY_CONFDIR'))
-    define('NETIFY_CONFDIR', NETIFY_PREFIX . 'etc/netify.d/');
+    define('NETIFY_CONFDIR', NETIFY_PREFIX . 'etc/netifyd/');
 
 if (! defined('NETIFYD_UUID_AGENT'))
     define('NETIFYD_UUID_AGENT', NETIFY_CONFDIR . 'agent.uuid');

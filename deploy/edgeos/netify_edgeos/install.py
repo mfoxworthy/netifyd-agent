@@ -16,7 +16,7 @@ def nd_copy_files(src, dst='/'):
     files = []
     conf_files = [
         '/etc/netifyd.conf',
-        '/etc/netify.d/netify-sink.conf',
+        '/etc/netifyd/netify-sink.conf',
         '/etc/default/netifyd'
     ]
     src_glob = glob.glob(src)
