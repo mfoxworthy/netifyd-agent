@@ -111,6 +111,7 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_PLUGINS
+class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
@@ -681,14 +682,93 @@ bool ndPluginManager::DispatchSinkPayload(const string &target,
 }
 
 void ndPluginManager::BroadcastProcessorEvent(
-    ndPluginProcessor::Event event, void *param)
+    ndPluginProcessor::Event event, ndFlowMap *flow_map)
 {
     unique_lock<mutex> ul(lock);
 
     for (auto &p : processors) {
         reinterpret_cast<ndPluginProcessor *>(
             p.second->GetPlugin())->DispatchProcessorEvent(
-                event, param
+                event, flow_map
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event, ndFlow *flow)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, flow
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event, ndInterfaces *interfaces)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, interfaces
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event,
+    const string &iface, ndPacketStats *stats)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, iface, stats
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event, ndPacketStats *stats)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, stats
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event, ndInstanceStatus *status)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event, status
+            );
+    }
+}
+
+void ndPluginManager::BroadcastProcessorEvent(
+    ndPluginProcessor::Event event)
+{
+    unique_lock<mutex> ul(lock);
+
+    for (auto &p : processors) {
+        reinterpret_cast<ndPluginProcessor *>(
+            p.second->GetPlugin())->DispatchProcessorEvent(
+                event
             );
     }
 }

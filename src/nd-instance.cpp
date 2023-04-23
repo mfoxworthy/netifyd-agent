@@ -110,6 +110,7 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_PLUGINS
+class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
@@ -2083,8 +2084,7 @@ bool ndInstance::ExpireFlow(ndFlow *flow)
             it->second->QueuePacket(flow);
 #ifdef _ND_USE_PLUGINS
             plugins.BroadcastProcessorEvent(
-                ndPluginProcessor::EVENT_FLOW_EXPIRING,
-                static_cast<void *>(flow)
+                ndPluginProcessor::EVENT_FLOW_EXPIRING, flow
             );
 #endif
             return true;
@@ -2115,8 +2115,7 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     );
 
     plugins.BroadcastProcessorEvent(
-        ndPluginProcessor::EVENT_UPDATE_INIT,
-        static_cast<void *>(&status)
+        ndPluginProcessor::EVENT_UPDATE_INIT, &status
     );
 #endif
 
@@ -2124,8 +2123,7 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 
 #ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
-        ndPluginProcessor::EVENT_INTERFACES,
-        static_cast<void *>(&interfaces)
+        ndPluginProcessor::EVENT_INTERFACES, &interfaces
     );
 #endif
     for (auto &it : threads) {
@@ -2133,25 +2131,23 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         string iface_name;
         nd_iface_name(it.first, iface_name);
 
-        pair<string, ndPacketStats> pkt_stats = make_pair(
-            iface_name, ndPacketStats()
-        );
+        ndPacketStats pkt_stats;
 
         for (auto &it_instance : it.second) {
 
             it_instance->Lock();
 
-            it_instance->GetCaptureStats(pkt_stats.second);
+            it_instance->GetCaptureStats(pkt_stats);
 
             it_instance->Unlock();
         }
 
-        pkt_stats_global += pkt_stats.second;
+        pkt_stats_global += pkt_stats;
 
 #ifdef _ND_USE_PLUGINS
         plugins.BroadcastProcessorEvent(
             ndPluginProcessor::EVENT_PKT_CAPTURE_STATS,
-            static_cast<void *>(&pkt_stats)
+            iface_name, &pkt_stats
         );
 #endif
     }
@@ -2159,12 +2155,11 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 #ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_PKT_GLOBAL_STATS,
-        static_cast<void *>(&pkt_stats_global)
+        &pkt_stats_global
     );
 
     plugins.BroadcastProcessorEvent(
-        ndPluginProcessor::EVENT_FLOW_MAP,
-        static_cast<void *>(flow_buckets)
+        ndPluginProcessor::EVENT_FLOW_MAP, flow_buckets
     );
 
     plugins.BroadcastProcessorEvent(
@@ -2230,7 +2225,7 @@ void ndInstance::ProcessFlows(void)
 #ifdef _ND_USE_PLUGINS
                     plugins.BroadcastProcessorEvent(
                         ndPluginProcessor::EVENT_FLOW_EXPIRED,
-                        static_cast<void *>(i->second)
+                        i->second
                     );
 #endif
                     delete i->second;

@@ -69,6 +69,8 @@ protected:
 class ndPacketStats : public ndSerializer
 {
 public:
+    typedef pair<string, ndPacketStats> Interface;
+
     struct pkt_t {
         uint64_t raw;
         uint64_t eth;

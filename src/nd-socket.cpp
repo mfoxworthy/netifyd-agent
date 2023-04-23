@@ -114,6 +114,7 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-thread.h"
 #ifdef _ND_USE_PLUGINS
+class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"

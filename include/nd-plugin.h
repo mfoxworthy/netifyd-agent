@@ -181,15 +181,15 @@ public:
     virtual ~ndPluginProcessor();
 
     enum Event {
-        EVENT_FLOW_MAP,
-        EVENT_FLOW_NEW,
-        EVENT_FLOW_UPDATED,
-        EVENT_FLOW_EXPIRING,
-        EVENT_FLOW_EXPIRED,
-        EVENT_INTERFACES,
-        EVENT_PKT_CAPTURE_STATS,
-        EVENT_PKT_GLOBAL_STATS,
-        EVENT_UPDATE_INIT,
+        EVENT_FLOW_MAP, // ndFlowMap *
+        EVENT_FLOW_NEW, // ndFlow *
+        EVENT_FLOW_UPDATED, // ndFlow *
+        EVENT_FLOW_EXPIRING, // ndFlow *
+        EVENT_FLOW_EXPIRED, // ndFlow *
+        EVENT_INTERFACES, // ndInterfaces
+        EVENT_PKT_CAPTURE_STATS, // string, ndPacketStats *
+        EVENT_PKT_GLOBAL_STATS, // ndPacketStats *
+        EVENT_UPDATE_INIT, // ndInstanceStatus *
         EVENT_UPDATE_COMPLETE,
     };
 
@@ -198,8 +198,19 @@ public:
         ndPlugin::GetStatus(output);
     }
 
-    virtual void DispatchProcessorEvent(
-        Event event, void *param = nullptr) = 0;
+    virtual void DispatchProcessorEvent(Event event,
+        ndFlowMap *flow_map) { }
+    virtual void DispatchProcessorEvent(Event event,
+        ndFlow *flow) { }
+    virtual void DispatchProcessorEvent(Event event,
+        ndInterfaces *interfaces) { }
+    virtual void DispatchProcessorEvent(Event event,
+        const string &iface, ndPacketStats *stats) { }
+    virtual void DispatchProcessorEvent(Event event,
+        ndPacketStats *stats) { }
+    virtual void DispatchProcessorEvent(Event event,
+        ndInstanceStatus *status) { }
+    virtual void DispatchProcessorEvent(Event event) { }
 
 protected:
     virtual void DispatchSinkPayload(
@@ -247,8 +258,6 @@ protected:
     }
 };
 
-#ifdef _ND_INTERNAL
-
 class ndPluginLoader
 {
 public:
@@ -288,8 +297,19 @@ public:
     bool DispatchSinkPayload(
         const string &target, ndPluginSinkPayload *payload);
 
-    void BroadcastProcessorEvent(
-        ndPluginProcessor::Event event, void *param = nullptr);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        ndFlowMap *flow_map);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        ndFlow *flow);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        ndInterfaces *interfaces);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        const string &iface, ndPacketStats *stats);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        ndPacketStats *stats);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event,
+        ndInstanceStatus *status);
+    void BroadcastProcessorEvent(ndPluginProcessor::Event event);
 
     template <class T>
     void Encode(T &output) const {
@@ -315,7 +335,6 @@ protected:
     map_plugin sinks;
 };
 
-#endif // _ND_INTERNAL
 #endif // _ND_PLUGIN_H
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
