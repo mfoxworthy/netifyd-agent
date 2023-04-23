@@ -1,23 +1,47 @@
 # Netify Agent configuration
-# Copyright (C) 2016-2022 eGloo Incorporated
+# Copyright (C) 2016-2023 eGloo Incorporated
 #
 # This is free software, licensed under the GNU General Public License v3.
 #
 # Read the netifyd.conf(5) man page for documentation.
-# See @datadir@/@PACKAGE_TARNAME@.conf-sample for all possible options.
+# See @datadir@/@PACKAGE_TARNAME@-sample.conf for all possible options.
+#
+##############################################################################
 
 [netifyd]
+# Don't track TCP flows until a SYN+ACK has been captured.
 syn_scan_protection = no
+
+# Where to store "volatile" data (temporary state files).
+# The value for this attribute can be referenced throughout this configuration
+# file using the ${path_state_volatile} variable.
 path_state_volatile = @volatilestatedir@
+
+# Where to store "persistent" data (configuration files).
+# The value for this attribute can be referenced throughout this configuration
+# file using the ${path_state_persistent} variable.
 path_state_persistent = @persistentstatedir@
+
+# Where to save our PID for: netifyd --status
 path_pid_file = ${path_state_volatile}/netifyd.pid
 
+# Protocol Dissector Options
+##############################################################################
 [protocols]
+
+# Enable all DPI protocol dissectors
 all=include
 
+# Capture Defaults
+##############################################################################
 [capture-defaults]
+
+# Default capture method for -I and -E command-line options.
+# Valid types include: pcap, tpv3
 capture_type = pcap
 
+# Processor Plugins
+##############################################################################
 [proc-legacy]
 enable = yes
 plugin_library = @libdir@/libnetify-proc-post-legacy.so
@@ -28,6 +52,8 @@ enable = yes
 plugin_library = @libdir@/libnetify-proc-socket-legacy.so
 conf_filename = ${path_state_persistent}/netify-proc-socket-legacy.json
 
+# Sink Plugins
+##############################################################################
 [sink-legacy]
 enable = no
 plugin_library = @libdir@/libnetify-sink-post.so
@@ -47,3 +73,5 @@ conf_filename = ${path_state_persistent}/netify-sink-file.json
 enable = yes
 plugin_library = @libdir@/libnetify-sink-socket.so
 conf_filename = ${path_state_persistent}/netify-sink-socket.json
+
+# vim: set ft=dosini :
