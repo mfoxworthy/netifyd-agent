@@ -590,8 +590,11 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
                 ndCR_DUMP_LIST, (rc) ? 0 : 1
             );
         case 'p':
-            if ((rc = (CheckAgentUUID() && ! ndGC.uuid.empty())))
-                fprintf(stdout, "Agent UUID: %s\n", ndGC.uuid.c_str());
+            if ((rc = CheckAgentUUID())) {
+                string uuid;
+                ndGC.GetUUID(ndGlobalConfig::UUID_AGENT, uuid);
+                fprintf(stdout, "Agent UUID: %s\n", uuid.c_str());
+            }
             return ndCR_Pack(
                 ndCR_PROVISION_UUID, (rc) ? 0 : 1
             );
@@ -647,7 +650,12 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             }
             return ndCR_GENERATE_UUID;
         case 'u':
-            ndGC.uuid = strdup(optarg);
+            if (! ndGC.SaveUUID(
+                ndGlobalConfig::UUID_AGENT, optarg)) {
+                return ndCR_Pack(
+                    ndCR_SAVE_UUID_FAILURE, (rc) ? 0 : 1
+                );
+            }
             break;
         case 'V':
             CommandLineHelp(true);
@@ -1073,25 +1081,25 @@ void ndInstance::CommandLineHelp(bool version_only)
 
 bool ndInstance::CheckAgentUUID(void)
 {
-    if (ndGC.uuid.empty() || ndGC.uuid == ND_AGENT_UUID_NULL) {
+    string uuid;
+    ndGC.GetUUID(ndGlobalConfig::UUID_AGENT, uuid);
+
+    if (uuid.empty() || uuid == ND_AGENT_UUID_NULL) {
 
         string uuid;
-        if (! nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN) ||
-            uuid.empty() || uuid == ND_AGENT_UUID_NULL) {
+        if (! ndGC.LoadUUID(ndGlobalConfig::UUID_AGENT, uuid)) {
 
             nd_generate_uuid(uuid);
 
             fprintf(stdout,
                 "Generated a new Agent UUID: %s\n", uuid.c_str()
             );
-            if (! nd_save_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN))
+            if (! ndGC.SaveUUID(ndGlobalConfig::UUID_AGENT, uuid))
                 return false;
         }
-
-        ndGC.uuid = uuid;
     }
 
-    return true;
+    return (! uuid.empty());
 }
 
 bool ndInstance::SaveAgentStatus(void)
@@ -1421,13 +1429,11 @@ bool ndInstance::DisplayAgentStatus(void)
             );
         }
 
-        string uuid = (ndGC.uuid.empty()) ?
-            ND_AGENT_UUID_NULL : ndGC.uuid;
+        string uuid;
+        ndGC.LoadUUID(ndGlobalConfig::UUID_AGENT, uuid);
 
-        if (nd_file_exists(ndGC.path_uuid) > 0)
-            nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN);
-
-        if (uuid.size() != ND_AGENT_UUID_LEN || uuid == ND_AGENT_UUID_NULL) {
+        if (uuid.size() != ND_AGENT_UUID_LEN ||
+            uuid == ND_AGENT_UUID_NULL) {
             fprintf(stderr, "%s%s%s sink agent UUID is not set.\n",
                 ND_C_RED, ND_I_FAIL, ND_C_RESET);
             fprintf(stderr,
@@ -1441,20 +1447,14 @@ bool ndInstance::DisplayAgentStatus(void)
                 ND_C_GREEN, ND_I_OK, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (ndGC.uuid_serial.empty()) ?
-            ND_AGENT_SERIAL_NULL : ndGC.uuid_serial;
-        if (nd_file_exists(ndGC.path_uuid_serial) > 0)
-            nd_load_uuid(uuid, ndGC.path_uuid_serial, ND_AGENT_SERIAL_LEN);
+        ndGC.LoadUUID(ndGlobalConfig::UUID_SERIAL, uuid);
 
         if (! uuid.empty() && uuid != ND_AGENT_SERIAL_NULL) {
             fprintf(stderr, "%s%s%s sink serial UUID: %s\n",
                 ND_C_GREEN, ND_I_INFO, ND_C_RESET, uuid.c_str());
         }
 
-        uuid = (ndGC.uuid_site.empty()) ?
-            ND_SITE_UUID_NULL : ndGC.uuid_site;
-        if (nd_file_exists(ndGC.path_uuid_site) > 0)
-            nd_load_uuid(uuid, ndGC.path_uuid_site, ND_SITE_UUID_LEN);
+        ndGC.LoadUUID(ndGlobalConfig::UUID_SITE, uuid);
 
         if (uuid.empty() || uuid == ND_SITE_UUID_NULL) {
             fprintf(stderr, "%s%s%s sink site UUID is not set.\n",

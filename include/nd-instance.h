@@ -131,6 +131,7 @@ public:
         ndCR_LOOKUP_ADDR,
         ndCR_PROVISION_UUID,
         ndCR_USAGE_OR_VERSION,
+        ndCR_SAVE_UUID_FAILURE,
     };
 
 #define ndCR_Pack(r, c) ((c << 16) + (r & 0x0000ffff))

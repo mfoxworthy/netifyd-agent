@@ -292,12 +292,12 @@ bool ndGlobalConfig::Load(const string &filename)
     value = r->Get(
         "netifyd", "path_pid_file",
         path_state_volatile + "/" + ND_PID_FILE_BASE);
-    nd_expand_variables(value, path_pid_file);
+    nd_expand_variables(value, path_pid_file, conf_vars);
 
     value = r->Get(
         "netifyd", "path_plugins",
         path_state_persistent + "/" + ND_PLUGINS_BASE);
-    nd_expand_variables(value, path_plugins);
+    nd_expand_variables(value, path_plugins, conf_vars);
 
     path_uuid = r->Get(
         "netifyd", "path_uuid",
@@ -543,6 +543,92 @@ bool ndGlobalConfig::Load(const string &filename)
 #endif
 
     return true;
+}
+
+bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
+{
+    size_t length;
+    string *dest = nullptr, path;
+    unique_lock<mutex> ul(lock_uuid);
+
+    switch (which) {
+    case UUID_AGENT:
+        if (ndGC.uuid != ND_AGENT_UUID_NULL) {
+            uuid = ndGC.uuid;
+            return true;
+        }
+        dest = &ndGC.uuid;
+        path = ndGC.path_uuid;
+        length = ND_AGENT_UUID_LEN;
+        break;
+    case UUID_SITE:
+        if (ndGC.uuid_site != ND_SITE_UUID_NULL) {
+            uuid = ndGC.uuid_site;
+            return true;
+        }
+        dest = &ndGC.uuid_site;
+        path = ndGC.path_uuid_site;
+        length = ND_SITE_UUID_LEN;
+        break;
+    case UUID_SERIAL:
+        if (ndGC.uuid_serial != ND_AGENT_SERIAL_NULL) {
+            uuid = ndGC.uuid_serial;
+            return true;
+        }
+        dest = &ndGC.uuid;
+        path = ndGC.path_uuid_serial;
+        length = ND_AGENT_SERIAL_LEN;
+        break;
+    }
+
+    string _uuid;
+    if (nd_load_uuid(_uuid, path, length)) {
+        if (_uuid.empty()) return false;
+        *dest = _uuid; uuid = _uuid;
+        return true;
+    }
+
+    return false;
+}
+
+bool ndGlobalConfig::SaveUUID(UUID which, const string &uuid)
+{
+    size_t length;
+    string *dest = nullptr, path;
+    unique_lock<mutex> ul(lock_uuid);
+
+    switch (which) {
+    case UUID_AGENT:
+        dest = &ndGC.uuid;
+        path = ndGC.path_uuid;
+        length = ND_AGENT_UUID_LEN;
+        break;
+    case UUID_SITE:
+        dest = &ndGC.uuid_site;
+        path = ndGC.path_uuid_site;
+        length = ND_SITE_UUID_LEN;
+        break;
+    case UUID_SERIAL:
+        dest = &ndGC.uuid;
+        path = ndGC.path_uuid_serial;
+        length = ND_AGENT_SERIAL_LEN;
+        break;
+    }
+
+    if (uuid.size() != length)
+        return false;
+
+    if (nd_save_uuid(uuid, path, length)) {
+        *dest = uuid;
+        return true;
+    }
+
+    return false;
+}
+
+void ndGlobalConfig::GetUUID(UUID which, string &uuid)
+{
+    unique_lock<mutex> ul(lock_uuid);
 }
 
 bool ndGlobalConfig::ForceReset(void)
@@ -925,7 +1011,7 @@ bool ndGlobalConfig::AddPlugin(const string &filename)
             }
 
             string expanded;
-            nd_expand_variables(value, expanded);
+            nd_expand_variables(value, expanded, conf_vars);
             params.insert(make_pair(key, expanded));
         }
 
@@ -1095,6 +1181,34 @@ void ndGlobalConfig::UpdatePaths(void)
 
     path_plugins =
         path_state_persistent + "/" + ND_PLUGINS_BASE;
+
+    conf_vars.clear();
+
+    conf_vars.insert(
+        make_pair(
+            "${path_state_persistent}", path_state_persistent
+        )
+    );
+    conf_vars.insert(
+        make_pair(
+            "${path_state_volatile}", ndGC.path_state_volatile
+        )
+    );
+    conf_vars.insert(
+        make_pair(
+            "${path_app_config}", path_app_config
+        )
+    );
+    conf_vars.insert(
+        make_pair(
+            "${path_category_config}", path_cat_config
+        )
+    );
+    conf_vars.insert(
+        make_pair(
+            "${path_plugins}", path_plugins
+        )
+    );
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

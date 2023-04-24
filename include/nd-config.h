@@ -157,9 +157,6 @@ public:
     string path_uuid_serial;
     string path_uuid_site;
     string url_napi;
-    string uuid;
-    string uuid_serial;
-    string uuid_site;
     enum nd_dhc_save dhc_save;
     enum nd_fhc_save fhc_save;
     enum nd_capture_type capture_type;
@@ -206,6 +203,8 @@ public:
     map<string, set<string>> interface_addrs;
     map<string, string> interface_peers;
 
+    map<string, string> conf_vars;
+
     ndGlobalConfig(const ndGlobalConfig&) = delete;
     ndGlobalConfig& operator=(const ndGlobalConfig&) = delete;
 
@@ -218,7 +217,19 @@ public:
 
     bool Load(const string &filename);
 
+    enum UUID {
+        UUID_AGENT,
+        UUID_SITE,
+        UUID_SERIAL,
+    };
+
+    bool LoadUUID(UUID which, string &uuid);
+    bool SaveUUID(UUID which, const string &uuid);
+    void GetUUID(UUID which, string &uuid);
+
     bool ForceReset(void);
+
+    void UpdateConfVars(void);
 
     bool AddInterface(const string &iface, nd_interface_role role,
         nd_capture_type type = ndCT_NONE, void *config = nullptr);
@@ -230,6 +241,11 @@ public:
 
 protected:
     void *reader;
+    mutex lock_uuid;
+
+    string uuid;
+    string uuid_serial;
+    string uuid_site;
 
     bool AddInterfaces(void);
 #ifdef _ND_USE_PLUGINS

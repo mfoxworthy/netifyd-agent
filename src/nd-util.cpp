@@ -1287,13 +1287,9 @@ void nd_set_hostname(char *dst,
     for (--i; i > -1 && dst[i] == '.'; i--) dst[i] = '\0';
 }
 
-void nd_expand_variables(const string &input, string &output)
+void nd_expand_variables(
+    const string &input, string &output, map<string, string> &vars)
 {
-    map<string, string> vars = {
-        { "${path_state_persistent}", ndGC.path_state_persistent },
-        { "${path_state_volatile}", ndGC.path_state_volatile },
-    };
-
     output = input;
 
     for (auto &var : vars) {

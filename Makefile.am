@@ -26,6 +26,12 @@ DISTCHECK_CONFIGURE_FLAGS = \
 
 pkgconfig_DATA = lib@PACKAGE_TARNAME@.pc
 
+install-data-local:
+	$(MKDIR_P) $(DESTDIR)$(volatilestatedir)
+
+uninstall-local:
+	rmdir $(DESTDIR)$(volatilestatedir)
+
 dist-git:
 	rm -f $(PACKAGE)-$(VERSION).tar*
 	git archive --prefix=$(PACKAGE)-$(VERSION)/ --output=$(PACKAGE)-$(VERSION).tar HEAD

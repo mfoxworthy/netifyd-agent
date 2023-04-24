@@ -271,28 +271,15 @@ ndNetifyApiThread::ndNetifyApiThread()
 
     header.str("");
 
-    if (ndGC.uuid != ND_AGENT_UUID_NULL)
-        header << "X-UUID: " << ndGC.uuid;
-    else {
-        string uuid;
-        if (nd_load_uuid(uuid, ndGC.path_uuid, ND_AGENT_UUID_LEN))
-            header << "X-UUID: " << uuid;
-        else
-            header << "X-UUID: " << ndGC.uuid;
-    }
+    string uuid;
+    ndGC.LoadUUID(ndGlobalConfig::UUID_AGENT, uuid);
+    header << "X-UUID: " << uuid;
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
     header.str("");
 
-    if (ndGC.uuid_serial != ND_AGENT_SERIAL_NULL)
-        header << "X-UUID-Serial: " << ndGC.uuid_serial;
-    else {
-        string uuid;
-        if (nd_load_uuid(uuid, ndGC.path_uuid_serial, ND_AGENT_SERIAL_LEN))
-            header << "X-UUID-Serial: " << uuid;
-        else
-            header << "X-UUID-Serial: " << ndGC.uuid_serial;
-    }
+    ndGC.LoadUUID(ndGlobalConfig::UUID_SERIAL, uuid);
+    header << "X-UUID-Serial: " << uuid;
 
     headers_tx = curl_slist_append(headers_tx, header.str().c_str());
 
