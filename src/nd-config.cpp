@@ -134,6 +134,7 @@ ndGlobalConfig::ndGlobalConfig() :
     path_config(ND_CONF_FILE_NAME),
     path_legacy_config(ND_CONF_LEGACY_PATH),
     path_pid_file(ND_PID_FILE_NAME),
+    path_plugins(ND_PLUGINS_PATH),
     path_state_persistent(ND_PERSISTENT_STATEDIR),
     path_state_volatile(ND_VOLATILE_STATEDIR),
     path_uuid(ND_AGENT_UUID_PATH),
@@ -292,6 +293,11 @@ bool ndGlobalConfig::Load(const string &filename)
         "netifyd", "path_pid_file",
         path_state_volatile + "/" + ND_PID_FILE_BASE);
     nd_expand_variables(value, path_pid_file);
+
+    value = r->Get(
+        "netifyd", "path_plugins",
+        path_state_persistent + "/" + ND_PLUGINS_BASE);
+    nd_expand_variables(value, path_plugins);
 
     path_uuid = r->Get(
         "netifyd", "path_uuid",
@@ -528,7 +534,12 @@ bool ndGlobalConfig::Load(const string &filename)
     if (! AddInterfaces()) return false;
 #ifdef _ND_USE_PLUGINS
     // Add plugins
-    if (! AddPlugins()) return false;
+    vector<string> files;
+    if (nd_scan_dotd(path_plugins, files)) {
+        for (auto &f : files) {
+            if (! AddPlugin(path_plugins + "/" + f)) return false;
+        }
+    }
 #endif
 
     return true;
@@ -837,12 +848,29 @@ bool ndGlobalConfig::AddInterfaces(void)
 }
 
 #ifdef _ND_USE_PLUGINS
-bool ndGlobalConfig::AddPlugins(void)
+bool ndGlobalConfig::AddPlugin(const string &filename)
 {
-    INIReader *r = static_cast<INIReader *>(reader);
+    INIReader r = INIReader(filename);
+
+    int rc = r.ParseError();
+
+    switch (rc) {
+    case -1:
+        fprintf(stderr, "Error opening plugin configuration file: %s: %s\n",
+            filename.c_str(), strerror(errno));
+        return false;
+    case 0:
+        break;
+    default:
+        fprintf(stderr,
+            "Error while parsing line #%d of plugin configuration file: %s\n",
+            rc, filename.c_str()
+        );
+        return false;
+    }
 
     set<string> sections;
-    r->GetSections(sections);
+    r.GetSections(sections);
 
     for (auto &tag : sections) {
         size_t p = string::npos;
@@ -860,10 +888,10 @@ bool ndGlobalConfig::AddPlugins(void)
 
         if (mpi == nullptr || p != 0)
             continue;
-        if (! r->GetBoolean(tag, "enable", true))
+        if (! r.GetBoolean(tag, "enable", true))
             continue;
 
-        string so_name = r->Get(tag, "plugin_library", "");
+        string so_name = r.Get(tag, "plugin_library", "");
 
         if (so_name.empty()) {
             fprintf(stderr, "Plugin library not set: %s\n",
@@ -879,7 +907,7 @@ bool ndGlobalConfig::AddPlugins(void)
         ndPlugin::Params params;
 
         for (auto &key : keys) {
-            string value = r->Get(tag, key, "");
+            string value = r.Get(tag, key, "");
             if (value.empty()) continue;
             switch (type) {
 #if 0
@@ -1064,6 +1092,9 @@ void ndGlobalConfig::UpdatePaths(void)
 
     path_agent_status =
         path_state_volatile + "/" + ND_AGENT_STATUS_BASE;
+
+    path_plugins =
+        path_state_persistent + "/" + ND_PLUGINS_BASE;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

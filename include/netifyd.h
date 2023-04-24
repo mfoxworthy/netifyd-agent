@@ -100,6 +100,9 @@
 #define ND_PID_FILE_BASE        "netifyd.pid"
 #define ND_PID_FILE_PATH        ND_VOLATILE_STATEDIR "/" ND_PID_FILE_BASE
 
+#define ND_PLUGINS_BASE         "plugins.d"
+#define ND_PLUGINS_PATH         ND_PERSISTENT_STATEDIR "/" ND_PLUGINS_BASE
+
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 
@@ -130,8 +133,6 @@
 #define ND_SITE_UUID_PATH       ND_PERSISTENT_STATEDIR "/" ND_SITE_UUID_BASE
 #define ND_SITE_UUID_NULL       "-"
 #define ND_SITE_UUID_LEN        36
-
-#define ND_ETHERS_FILE_NAME     "/etc/ethers"
 
 // Compress data if it's over this size (bytes)
 #define ND_COMPRESS_SIZE       (1024 * 10)

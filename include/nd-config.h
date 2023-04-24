@@ -150,6 +150,7 @@ public:
     string path_export_json;
     string path_legacy_config;
     string path_pid_file;
+    string path_plugins;
     string path_state_persistent;
     string path_state_volatile;
     string path_uuid;
@@ -232,7 +233,7 @@ protected:
 
     bool AddInterfaces(void);
 #ifdef _ND_USE_PLUGINS
-    bool AddPlugins(void);
+    bool AddPlugin(const string &filename);
 #endif
     enum nd_capture_type LoadCaptureType(
         const string &section, const string &key);

@@ -3,9 +3,11 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 datarootdir=@datarootdir@
+persistentstatedir=@persistentstatedir@
+volatilestatedir=@volatilestatedir@
 
-Name: @PACKAGE_STRING@ API Library
-Description: @PACKAGE_NAME@ API for plugin development
+Name: @PACKAGE_STRING@ Development Files
+Description: @PACKAGE_NAME@ development files
 URL: @PACKAGE_URL@
 Version: @VERSION@
 Libs: -L${libdir} -l@PACKAGE_TARNAME@
