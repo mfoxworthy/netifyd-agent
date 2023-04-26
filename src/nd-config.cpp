@@ -547,7 +547,7 @@ bool ndGlobalConfig::Load(const string &filename)
 
 bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
 {
-    size_t length;
+    size_t length = 0;
     string *dest = nullptr, path;
     unique_lock<mutex> ul(lock_uuid);
 
@@ -581,11 +581,13 @@ bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
         break;
     }
 
-    string _uuid;
-    if (nd_load_uuid(_uuid, path, length)) {
-        if (_uuid.empty()) return false;
-        *dest = _uuid; uuid = _uuid;
-        return true;
+    if (length > 0) {
+        string _uuid;
+        if (nd_load_uuid(_uuid, path, length)) {
+            if (_uuid.empty()) return false;
+            *dest = _uuid; uuid = _uuid;
+            return true;
+        }
     }
 
     return false;
@@ -593,7 +595,7 @@ bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
 
 bool ndGlobalConfig::SaveUUID(UUID which, const string &uuid)
 {
-    size_t length;
+    size_t length = 0;
     string *dest = nullptr, path;
     unique_lock<mutex> ul(lock_uuid);
 
@@ -615,12 +617,14 @@ bool ndGlobalConfig::SaveUUID(UUID which, const string &uuid)
         break;
     }
 
-    if (uuid.size() != length)
-        return false;
+    if (length > 0) {
+        if (uuid.size() != length)
+            return false;
 
-    if (nd_save_uuid(uuid, path, length)) {
-        *dest = uuid;
-        return true;
+        if (nd_save_uuid(uuid, path, length)) {
+            *dest = uuid;
+            return true;
+        }
     }
 
     return false;
