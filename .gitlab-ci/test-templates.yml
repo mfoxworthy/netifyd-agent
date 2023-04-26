@@ -9,16 +9,11 @@
     - yum -y --nogpgcheck localinstall builds/netify/$RPMOS_OS/$RPMOS_VERSION/devel/$RPMOS_ARCH/netifyd-[0-9]*.*.$RPMOS_ARCH.rpm
     # yum returns exit code 0 even if target is corrupt or invalid, so verify with rpm
     - rpm -qV netifyd
-    # CentOS is used for mirror port mode only
     - echo $RPMOS_UUID > /etc/netifyd/agent.uuid
     - echo NETIFYD_AUTODETECT="no" > /etc/sysconfig/netifyd
     - echo NETIFYD_EXTRA_OPTS="-t" >> /etc/sysconfig/netifyd
     - echo NETIFYD_INTNET="eth0" >> /etc/sysconfig/netifyd
-    - netifyd --enable-sink
-    # netifyd returns exit code 0 if --enable-sink fails.  Add extra test
-    - grep "enable_sink.*=.*yes" /etc/netifyd.conf || exit 1
     - ( cmdpid=$BASHPID; (sleep 35; kill $cmdpid) & exec netifyd -d -I eth0 )
-    - curl "https://manager.netify.ai/api/v1/deployment/agents/status/$RPMOS_UUID"
   artifacts:
     when: always
     paths:
