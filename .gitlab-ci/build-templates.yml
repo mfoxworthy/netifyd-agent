@@ -6,6 +6,7 @@
   image: $OS_IMAGE
   before_script:
     # Manually pull in submodules, the GIT_SUBMODULE_STRATEGY variable in GitLab is quirky
+    - setenforce 0
     - apt update
     - env DEBIAN_FRONTEND=noninteractive apt install -y git
     - git submodule sync --recursive

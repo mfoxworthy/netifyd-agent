@@ -40,38 +40,4 @@ all=include
 # Valid types include: pcap, tpv3
 capture_type = pcap
 
-# Processor Plugins
-##############################################################################
-[proc-legacy]
-enable = yes
-plugin_library = @libdir@/libnetify-proc-post-legacy.so
-conf_filename = ${path_state_persistent}/netify-proc-post-legacy.json
-
-[proc-socket]
-enable = yes
-plugin_library = @libdir@/libnetify-proc-socket-legacy.so
-conf_filename = ${path_state_persistent}/netify-proc-socket-legacy.json
-
-# Sink Plugins
-##############################################################################
-[sink-legacy]
-enable = no
-plugin_library = @libdir@/libnetify-sink-post.so
-conf_filename = ${path_state_persistent}/netify-sink-legacy.json
-
-[sink-mqtt]
-enable = no
-plugin_library = @libdir@/libnetify-sink-mqtt.so
-conf_filename = ${path_state_persistent}/netify-sink-mqtt.json
-
-[sink-file]
-enable = no
-plugin_library = @libdir@/libnetify-sink-file.so
-conf_filename = ${path_state_persistent}/netify-sink-file.json
-
-[sink-socket]
-enable = yes
-plugin_library = @libdir@/libnetify-sink-socket.so
-conf_filename = ${path_state_persistent}/netify-sink-socket.json
-
 # vim: set ft=dosini :
