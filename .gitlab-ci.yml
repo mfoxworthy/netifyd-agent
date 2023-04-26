@@ -36,6 +36,8 @@ debian 9 build:
     OS_VERSION: "9.0"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "byacc flex"
+  before_script:
+    echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 
 debian 10 build:
   extends: .debian_build
@@ -50,20 +52,6 @@ debian 10 build:
     OS_VERSION: "10"
     OS_ARCH: "amd64"
     OS_EXTRA_PACKAGES: "flex"
-
-debian 10 i386 build:
-  extends: .debian_build
-  tags:
-    - docker
-  only:
-    - tags
-    - web
-  variables:
-    OS_IMAGE: "i386/debian:10"
-    OS_NAME: "debian"
-    OS_VERSION: "10"
-    OS_ARCH: "i386"
-    OS_EXTRA_PACKAGES: "byacc flex"
 
 debian 11 build:
   extends: .debian_build
