@@ -144,7 +144,7 @@ ndInstanceStatus::ndInstanceStatus() :
     flows_expiring(0),
     flows_expired(0),
     flows_active(0),
-    flows_locked(0),
+    flows_in_use(0),
     cpu_user(0),
     cpu_user_prev(0),
     cpu_system(0),
@@ -1248,24 +1248,24 @@ bool ndInstance::DisplayAgentStatus(void)
             color, flow_utilization, ND_C_RESET
         );
 
-        unsigned long flows_locked = (unsigned long)jstatus[
-            "flows_locked"
+        unsigned long flows_in_use = (unsigned long)jstatus[
+            "flows_in_use"
         ].get<unsigned>();
 
-        if (flows_locked) {
-            icon = ND_I_WARN;
-            color = ND_C_YELLOW;
-        }
-        else {
+//        if (flows_in_use) {
+//            icon = ND_I_WARN;
+//            color = ND_C_YELLOW;
+//        }
+//        else {
             icon = ND_I_INFO;
             color = ND_C_RESET;
-        }
+//        }
 
         fprintf(stderr,
-            "%s%s%s flows purged: %lu, locked: %s%lu%s\n",
+            "%s%s%s flows purged: %lu, in-use: %s%lu%s\n",
             color, icon, ND_C_RESET,
             (unsigned long)jstatus["flows_purged"].get<unsigned>(),
-            color, flows_locked, ND_C_RESET
+            color, flows_in_use, ND_C_RESET
         );
 
         fprintf(stderr,
@@ -2179,7 +2179,7 @@ void ndInstance::ProcessFlows(void)
     status.flows_expiring = 0;
     status.flows_expired = 0;
     status.flows_active = 0;
-    status.flows_locked = 0;
+    status.flows_in_use = 0;
 
     //flow_buckets->DumpBucketStats();
 
@@ -2203,7 +2203,7 @@ void ndInstance::ProcessFlows(void)
                 i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
 #endif
             if (i->second.use_count() > 1)
-                status.flows_locked++;
+                status.flows_in_use++;
 
             if (i->second->flags.expired.load() == false) {
 
@@ -2252,12 +2252,12 @@ void ndInstance::ProcessFlows(void)
 
     nd_dprintf(
         "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
-        "idle: %lu, locked: %lu\n", tag.c_str(),
+        "idle: %lu, in_use: %lu\n", tag.c_str(),
         status.flows_purged, status.flows.load(),
         status.flows_active, status.flows_expiring,
         status.flows_expired,
         status.flows.load() - status.flows_active,
-        status.flows_locked
+        status.flows_in_use
     );
 #ifdef _ND_PROCESS_FLOW_DEBUG
     nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu\n",

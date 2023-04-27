@@ -31,7 +31,7 @@ public:
     size_t flows_expiring;
     size_t flows_expired;
     size_t flows_active;
-    size_t flows_locked;
+    size_t flows_in_use;
     double cpu_user;
     double cpu_user_prev;
     double cpu_system;
@@ -66,7 +66,7 @@ public:
         serialize(output, { "flows_expiring" }, flows_expiring);
         serialize(output, { "flows_expired" }, flows_expired);
         serialize(output, { "flows_active" }, flows_active);
-        serialize(output, { "flows_locked" }, flows_locked);
+        serialize(output, { "flows_in_use" }, flows_in_use);
         serialize(output, { "maxrss_kb" }, maxrss_kb);
         serialize(output, { "maxrss_kb_prev" }, maxrss_kb_prev);
 #if (defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H))

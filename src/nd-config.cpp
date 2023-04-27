@@ -551,6 +551,8 @@ bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
     string *dest = nullptr, path;
     unique_lock<mutex> ul(lock_uuid);
 
+    uuid.clear();
+
     switch (which) {
     case UUID_AGENT:
         if (ndGC.uuid != ND_AGENT_UUID_NULL) {
@@ -575,7 +577,7 @@ bool ndGlobalConfig::LoadUUID(UUID which, string &uuid)
             uuid = ndGC.uuid_serial;
             return true;
         }
-        dest = &ndGC.uuid;
+        dest = &ndGC.uuid_serial;
         path = ndGC.path_uuid_serial;
         length = ND_AGENT_SERIAL_LEN;
         break;
@@ -611,7 +613,7 @@ bool ndGlobalConfig::SaveUUID(UUID which, const string &uuid)
         length = ND_SITE_UUID_LEN;
         break;
     case UUID_SERIAL:
-        dest = &ndGC.uuid;
+        dest = &ndGC.uuid_serial;
         path = ndGC.path_uuid_serial;
         length = ND_AGENT_SERIAL_LEN;
         break;
@@ -633,6 +635,21 @@ bool ndGlobalConfig::SaveUUID(UUID which, const string &uuid)
 void ndGlobalConfig::GetUUID(UUID which, string &uuid)
 {
     unique_lock<mutex> ul(lock_uuid);
+
+    switch (which) {
+    case UUID_AGENT:
+        uuid = ndGC.uuid;
+        break;
+    case UUID_SITE:
+        uuid = ndGC.uuid_site;
+        break;
+    case UUID_SERIAL:
+        uuid = ndGC.uuid_serial;
+        break;
+    default:
+        uuid.clear();
+        break;
+    }
 }
 
 bool ndGlobalConfig::ForceReset(void)
