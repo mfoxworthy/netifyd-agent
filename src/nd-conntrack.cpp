@@ -515,7 +515,7 @@ void ndConntrackThread::PrintFlow(
     text = os.str();
 }
 
-void ndConntrackThread::PrintFlow(ndFlow *flow, string &text)
+void ndConntrackThread::PrintFlow(nd_flow_ptr& flow, string &text)
 {
     ostringstream os;
     char buffer[1024];
@@ -539,7 +539,7 @@ void ndConntrackThread::PrintFlow(ndFlow *flow, string &text)
     text = os.str();
 }
 
-void ndConntrackThread::UpdateFlow(ndFlow *flow)
+void ndConntrackThread::UpdateFlow(nd_flow_ptr& flow)
 {
     sha1 ctx;
     string digest;

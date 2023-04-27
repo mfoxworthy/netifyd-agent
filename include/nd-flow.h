@@ -60,8 +60,8 @@ public:
     tcp_seq tcp_last_seq;
 
     uint64_t ts_first_seen;
-    uint64_t ts_first_update;
-    uint64_t ts_last_seen;
+    atomic<uint64_t> ts_first_update;
+    atomic<uint64_t> ts_last_seen;
 
     enum {
         LOWER_UNKNOWN = 0x00,
@@ -96,15 +96,15 @@ public:
 
     uint8_t tunnel_type;
 
-    uint64_t lower_bytes;
-    uint64_t upper_bytes;
-    uint64_t total_bytes;
+    atomic<uint64_t> lower_bytes;
+    atomic<uint64_t> upper_bytes;
+    atomic<uint64_t> total_bytes;
 
-    uint32_t lower_packets;
-    uint32_t upper_packets;
-    uint32_t total_packets;
+    atomic<uint32_t> lower_packets;
+    atomic<uint32_t> upper_packets;
+    atomic<uint32_t> total_packets;
 
-    atomic_uchar detection_packets;
+    atomic<uint8_t> detection_packets;
 
     nd_proto_id_t detected_protocol;
     nd_app_id_t detected_application;
@@ -229,8 +229,6 @@ public:
         atomic_uchar tcp_fin_ack;
     } flags;
 
-    atomic_uint tickets;
-
     union {
         struct {
             uint8_t version;
@@ -255,38 +253,38 @@ public:
     ndFlow(const ndFlow &flow);
     virtual ~ndFlow();
 
-    void hash(const string &device, bool hash_mdata = false,
+    void Hash(const string &device, bool hash_mdata = false,
         const uint8_t *key = NULL, size_t key_length = 0);
 
-    void reset(bool full_reset = false);
+    void Reset(bool full_reset = false);
 
-    void release(void);
+    void Release(void);
 
-    nd_proto_id_t master_protocol(void) const;
+    nd_proto_id_t GetMasterProtocol(void) const;
 
-    bool has_dhcp_fingerprint(void) const;
-    bool has_dhcp_class_ident(void) const;
-    bool has_http_user_agent(void) const;
-    bool has_http_url(void) const;
-    bool has_ssh_client_agent(void) const;
-    bool has_ssh_server_agent(void) const;
-    bool has_ssl_client_sni(void) const;
-    bool has_ssl_server_cn(void) const;
-    bool has_ssl_issuer_dn(void) const;
-    bool has_ssl_subject_dn(void) const;
-    bool has_ssl_client_ja3(void) const;
-    bool has_ssl_server_ja3(void) const;
-    bool has_bt_info_hash(void) const;
-    bool has_ssdp_headers(void) const;
+    bool HasDhcpFingerprint(void) const;
+    bool HasDhcpClassIdent(void) const;
+    bool HasHttpUserAgent(void) const;
+    bool HasHttpURL(void) const;
+    bool HasSSHClientAgent(void) const;
+    bool HasSSHServerAgent(void) const;
+    bool HasSSLClientSNI(void) const;
+    bool HasTLSServerCN(void) const;
+    bool HasTLSIssuerDN(void) const;
+    bool HasTLSSubjectDN(void) const;
+    bool HasTLSClientJA3(void) const;
+    bool HasTLSServerJA3(void) const;
+    bool HasBTInfoHash(void) const;
+    bool HasSSDPHeaders(void) const;
 #if 0
-    bool has_mining_variant(void) const;
+    bool HasMiningVariant(void) const;
 #endif
-    bool has_mdns_domain_name(void) const;
+    bool HasMDNSDomainName(void) const;
 
-    void print(void) const;
+    void Print(void) const;
 
-    void update_lower_maps(void);
-    void get_lower_map(
+    void UpdateLowerMaps(void);
+    void GetLowerMap(
         ndAddr::Type lt,
         ndAddr::Type ut,
         uint8_t &lm, uint8_t &ot
@@ -301,7 +299,7 @@ public:
     };
 
     template <class T>
-    void encode(T &output, uint8_t encode_includes = ENCODE_ALL) const {
+    void Encode(T &output, uint8_t encode_includes = ENCODE_ALL) const {
         string _other_type = "unknown";
         string _lower_mac = "local_mac", _upper_mac = "other_mac";
         string _lower_ip = "local_ip", _upper_ip = "other_ip";
@@ -322,7 +320,7 @@ public:
             serialize(output, { "digest" }, digest);
         }
 
-        serialize(output, { "last_seen_at" }, ts_last_seen);
+        serialize(output, { "last_seen_at" }, ts_last_seen.load());
 
         switch (lower_map) {
         case LOWER_LOCAL:
@@ -451,33 +449,33 @@ public:
             if (host_server_name[0] != '\0')
                 serialize(output, { "host_server_name" }, host_server_name);
 
-            if (has_http_user_agent() || has_http_url()) {
+            if (HasHttpUserAgent() || HasHttpURL()) {
 
-                if (has_http_user_agent())
+                if (HasHttpUserAgent())
                     serialize(output, { "http", "user_agent" }, http.user_agent);
-                if (has_http_url())
+                if (HasHttpURL())
                     serialize(output, { "http", "url" }, http.url);
             }
 
-            if (has_dhcp_fingerprint() || has_dhcp_class_ident()) {
+            if (HasDhcpFingerprint() || HasDhcpClassIdent()) {
 
-                if (has_dhcp_fingerprint())
+                if (HasDhcpFingerprint())
                     serialize(output, { "dhcp", "fingerprint" }, dhcp.fingerprint);
 
-                if (has_dhcp_class_ident())
+                if (HasDhcpClassIdent())
                     serialize(output, { "dhcp", "class_ident" }, dhcp.class_ident);
             }
 
-            if (has_ssh_client_agent() || has_ssh_server_agent()) {
+            if (HasSSHClientAgent() || HasSSHServerAgent()) {
 
-                if (has_ssh_client_agent())
+                if (HasSSHClientAgent())
                     serialize(output, { "ssh", "client" }, ssh.client_agent);
 
-                if (has_ssh_server_agent())
+                if (HasSSHServerAgent())
                     serialize(output, { "ssh", "server" }, ssh.server_agent);
             }
 
-            if (master_protocol() == ND_PROTO_TLS
+            if (GetMasterProtocol() == ND_PROTO_TLS
                 || detected_protocol == ND_PROTO_QUIC) {
 
                 char tohex[7];
@@ -488,22 +486,22 @@ public:
                 sprintf(tohex, "0x%04hx", ssl.cipher_suite);
                 serialize(output, { "ssl", "cipher_suite" }, tohex);
 
-                if (has_ssl_client_sni())
+                if (HasSSLClientSNI())
                     serialize(output, { "ssl", "client_sni" }, ssl.client_sni);
 
-                if (has_ssl_server_cn())
+                if (HasTLSServerCN())
                     serialize(output, { "ssl", "server_cn" }, ssl.server_cn);
 
-                if (has_ssl_issuer_dn())
+                if (HasTLSIssuerDN())
                     serialize(output, { "ssl", "issuer_dn" }, ssl.issuer_dn);
 
-                if (has_ssl_subject_dn())
+                if (HasTLSSubjectDN())
                     serialize(output, { "ssl", "subject_dn" }, ssl.subject_dn);
 
-                if (has_ssl_client_ja3())
+                if (HasTLSClientJA3())
                     serialize(output, { "ssl", "client_ja3" }, ssl.client_ja3);
 
-                if (has_ssl_server_ja3())
+                if (HasTLSServerJA3())
                     serialize(output, { "ssl", "server_ja3" }, ssl.server_ja3);
 
                 if (ssl.cert_fingerprint_found) {
@@ -515,22 +513,22 @@ public:
                 serialize(output, { "ssl", "alpn_server" }, tls_alpn_server);
             }
 
-            if (has_bt_info_hash()) {
+            if (HasBTInfoHash()) {
                 nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
                 serialize(output, { "bt", "info_hash" }, digest);
             }
 
-            if (has_ssdp_headers())
+            if (HasSSDPHeaders())
                 serialize(output, { "ssdp" }, ssdp.headers);
 #if 0
-            if (has_mining_variant())
+            if (HasMiningVariant())
                 serialize(output, { "mining", "variant" }, mining.variant);
 #endif
-            if (has_mdns_domain_name())
+            if (HasMDNSDomainName())
                 serialize(output, { "mdns", "answer" }, mdns.domain_name);
 
             serialize(output, { "first_seen_at" }, ts_first_seen);
-            serialize(output, { "first_update_at" }, ts_first_update);
+            serialize(output, { "first_update_at" }, ts_first_update.load());
 
             serialize(output, { "risks", "risks" }, risks);
             serialize(output, { "risks", "ndpi_risk_score" }, ndpi_risk_score);
@@ -593,12 +591,12 @@ public:
         }
 
         if (encode_includes & ENCODE_STATS) {
-            serialize(output, { _lower_bytes }, lower_bytes);
-            serialize(output, { _upper_bytes }, upper_bytes);
-            serialize(output, { _lower_packets }, lower_packets);
-            serialize(output, { _upper_packets }, upper_packets);
-            serialize(output, { "total_packets" }, total_packets);
-            serialize(output, { "total_bytes" }, total_bytes);
+            serialize(output, { _lower_bytes }, lower_bytes.load());
+            serialize(output, { _upper_bytes }, upper_bytes.load());
+            serialize(output, { _lower_packets }, lower_packets.load());
+            serialize(output, { _upper_packets }, upper_packets.load());
+            serialize(output, { "total_packets" }, total_packets.load());
+            serialize(output, { "total_bytes" }, total_bytes.load());
             serialize(output, { "detection_packets" }, detection_packets.load());
         }
     }
@@ -609,33 +607,21 @@ public:
 
     inline ndFlow& operator+=(const ndFlow &f)
     {
-        this->lower_bytes += f.lower_bytes;
-        this->upper_bytes += f.upper_bytes;
-        this->total_bytes += f.total_bytes;
-        this->lower_packets += f.lower_packets;
-        this->upper_packets += f.upper_packets;
-        this->total_packets += f.total_packets;
+        this->lower_bytes += f.lower_bytes.load();
+        this->upper_bytes += f.upper_bytes.load();
+        this->total_bytes += f.total_bytes.load();
+        this->lower_packets += f.lower_packets.load();
+        this->upper_packets += f.upper_packets.load();
+        this->total_packets += f.total_packets.load();
         return *this;
     }
 };
 
-typedef unordered_map<string, ndFlow *> nd_flow_map;
+typedef shared_ptr<ndFlow> nd_flow_ptr;
+typedef unordered_map<string, nd_flow_ptr> nd_flow_map;
 typedef map<string, nd_flow_map *> nd_flows;
-typedef pair<string, ndFlow *> nd_flow_pair;
+typedef pair<string, nd_flow_ptr> nd_flow_pair;
 typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
-
-class ndFlowTicket
-{
-public:
-    ndFlowTicket(ndFlow *flow = nullptr);
-
-    virtual ~ndFlowTicket();
-
-    void Take(ndFlow *flow = nullptr, bool increment = true);
-
-protected:
-    ndFlow *flow;
-};
 
 #endif // _ND_FLOW_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -303,6 +303,18 @@ ndCaptureThread::ndCaptureThread(
 
     nd_iface_name(iface.ifname, tag);
 
+    string pcap_file;
+    nd_capture_filename(iface.ifname, pcap_file);
+    if (! pcap_file.size() && ndGC_REPLAY_DELAY) {
+        nd_printf(
+            "%s: WARNING: replay delay enabled for offline capture!",
+            tag.c_str()
+        );
+        nd_dprintf("%s: disabling replay delay.\n", tag.c_str());
+
+        ndGC_SetFlag(ndGF_REPLAY_DELAY, false);
+    }
+
     private_addrs.first.ss_family = AF_INET;
     nd_private_ipaddr(private_addr, private_addrs.first);
 
@@ -312,8 +324,8 @@ ndCaptureThread::ndCaptureThread(
 
 const ndPacket *ndCaptureThread::ProcessPacket(const ndPacket *packet)
 {
-    ndFlowTicket ticket;
-    ndFlow *nf, flow(iface);
+    nd_flow_ptr nf;
+    ndFlow flow(iface);
 
     const struct ether_header *hdr_eth = NULL;
     const struct sll_header *hdr_sll = NULL;
@@ -914,16 +926,14 @@ nd_process_ip:
         break;
     }
 
-    flow.hash(tag);
+    flow.Hash(tag);
     flow_digest.assign((const char *)flow.digest_lower, SHA1_DIGEST_LENGTH);
 
     nf = ndi.flow_buckets->Lookup(flow_digest, true);
 
-    if (nf != NULL) {
+    if (nf) {
         // Flow exists in map.
-        ticket.Take(nf, false);
-
-        if (addr_cmp != nf->direction) {
+        if (nf->direction != addr_cmp) {
 #if _ND_DISSECT_GTP
             if (hdr_gtpv1 != NULL && hdr_gtpv1->flags.version == 1) {
                 if (nf->tunnel_type == ndFlow::TUNNEL_GTP) {
@@ -982,18 +992,16 @@ nd_process_ip:
             return packet;
         }
 
-        nf = new ndFlow(flow);
-        if (nf == NULL) throw ndCaptureThreadException(strerror(ENOMEM));
+        nf = make_shared<ndFlow>(flow);
+        if (! nf) throw ndCaptureThreadException(strerror(ENOMEM));
 
         nf->direction = addr_cmp;
 
-        if (ndi.flow_buckets->InsertUnlocked(flow_digest, nf) != NULL) {
+        if (! ndi.flow_buckets->InsertUnlocked(flow_digest, nf)) {
             ndi.flow_buckets->Release(flow_digest);
             // Flow exists in map!  Impossible!
             throw ndCaptureThreadException(strerror(EINVAL));
         }
-
-        ticket.Take(nf, false);
 
         ndi.status.flows++;
 
@@ -1082,7 +1090,7 @@ nd_process_ip:
     }
 
     nf->ts_last_seen = ts_pkt;
-    if (! nf->ts_first_update)
+    if (! nf->ts_first_update.load())
         nf->ts_first_update = ts_pkt;
 
     if (nf->ip_protocol == IPPROTO_TCP) {
@@ -1121,12 +1129,12 @@ nd_process_ip:
                 // Reset flow in case we have another query from the
                 // same client and server, using the same local and
                 // remote ports.
-                nf->reset(true);
-                nf->lower_bytes = flow.lower_bytes;
-                nf->upper_bytes = flow.upper_bytes;
-                nf->lower_packets = flow.lower_packets;
-                nf->upper_packets = flow.upper_packets;
-                nf->total_packets = flow.total_packets;
+                nf->Reset(true);
+                nf->lower_bytes = flow.lower_bytes.load();
+                nf->upper_bytes = flow.upper_bytes.load();
+                nf->lower_packets = flow.lower_packets.load();
+                nf->upper_packets = flow.upper_packets.load();
+                nf->total_packets = flow.total_packets.load();
 #ifdef _ND_LOG_DHC
                 nd_dprintf("%s: Reset DNS flow.\n", tag.c_str());
 #endif
@@ -1164,7 +1172,7 @@ nd_process_ip:
     return packet;
 }
 
-bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_t pkt_len, uint16_t proto)
+bool ndCaptureThread::ProcessDNSPacket(nd_flow_ptr& flow, const uint8_t *pkt, uint16_t pkt_len, uint16_t proto)
 {
     ns_rr rr;
     const char *host = NULL;
@@ -1258,7 +1266,7 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
                 continue;
             }
 
-            if (flow->has_mdns_domain_name() != false) {
+            if (flow->HasMDNSDomainName() != false) {
 #ifdef _ND_LOG_DHC
                 nd_dprintf("%s: mDNS domain name already set...\n", tag.c_str());
 #endif
@@ -1293,7 +1301,7 @@ bool ndCaptureThread::ProcessDNSPacket(ndFlow *flow, const uint8_t *pkt, uint16_
                 );
             }
 #ifdef _ND_LOG_DHC
-            if (flow->has_mdns_domain_name() == false) continue;
+            if (flow->HasMDNSDomainName() == false) continue;
             nd_dprintf("%s: parsing mDNS PTR RR: ttl: %d, data len: %d: %s\n",
                 tag.c_str(), ns_rr_ttl(rr), ns_rr_rdlen(rr), flow->mdns.domain_name
             );

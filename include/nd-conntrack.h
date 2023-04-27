@@ -97,7 +97,7 @@ public:
     void ProcessConntrackEvent(
         enum nf_conntrack_msg_type type, struct nf_conntrack *ct);
 
-    void UpdateFlow(ndFlow *flow);
+    void UpdateFlow(nd_flow_ptr &flow);
     void PurgeFlows(void);
 
 #ifdef _ND_DEBUG_CONNTRACK
@@ -107,7 +107,7 @@ public:
 protected:
     void DumpConntrackTable(void);
 
-    void PrintFlow(ndFlow *flow, string &text);
+    void PrintFlow(nd_flow_ptr &flow, string &text);
     void PrintFlow(ndConntrackFlow *flow, string &text,
         bool reorder = false, bool withreply = false);
 

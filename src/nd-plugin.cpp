@@ -695,7 +695,7 @@ void ndPluginManager::BroadcastProcessorEvent(
 }
 
 void ndPluginManager::BroadcastProcessorEvent(
-    ndPluginProcessor::Event event, ndFlow *flow)
+    ndPluginProcessor::Event event, nd_flow_ptr& flow)
 {
     unique_lock<mutex> ul(lock);
 

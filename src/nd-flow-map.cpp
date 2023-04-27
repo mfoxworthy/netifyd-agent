@@ -105,9 +105,6 @@ ndFlowMap::~ndFlowMap()
     for (size_t i = 0; i < buckets; i++) {
         pthread_mutex_lock(bucket_lock[i]);
 
-        for (auto it = bucket[i]->begin(); it != bucket[i]->end(); it++)
-            delete it->second;
-
         delete bucket[i];
 
         pthread_mutex_unlock(bucket_lock[i]);
@@ -120,19 +117,17 @@ ndFlowMap::~ndFlowMap()
     bucket_lock.clear();
 }
 
-ndFlow *ndFlowMap::Lookup(const string &digest, bool acquire_lock)
+nd_flow_ptr ndFlowMap::Lookup(const string &digest, bool acquire_lock)
 {
-    ndFlow *f = NULL;
+    nd_flow_ptr f;
     size_t b = HashToBucket(digest);
     int rc = pthread_mutex_lock(bucket_lock[b]);
     if (rc != 0)
         throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_lock", rc);
 
     auto fi = bucket[b]->find(digest);
-    if (fi != bucket[b]->end()) {
-        fi->second->tickets++;
+    if (fi != bucket[b]->end())
         f = fi->second;
-    }
 
     if (! acquire_lock) {
         if ((rc = pthread_mutex_unlock(bucket_lock[b])) != 0)
@@ -142,10 +137,10 @@ ndFlow *ndFlowMap::Lookup(const string &digest, bool acquire_lock)
     return f;
 }
 
-ndFlow *ndFlowMap::Insert(const string &digest, ndFlow *flow, bool unlocked)
+bool ndFlowMap::Insert(const string &digest, nd_flow_ptr &flow, bool unlocked)
 {
     int rc;
-    ndFlow *f = NULL;
+    bool result = false;
     size_t b = HashToBucket(digest);
 
     if (! unlocked) {
@@ -156,17 +151,14 @@ ndFlow *ndFlowMap::Insert(const string &digest, ndFlow *flow, bool unlocked)
     nd_flow_pair fp(digest, flow);
     nd_flow_insert fi = bucket[b]->insert(fp);
 
-    if (fi.second == false)
-        f = fi.first->second;
-    else
-        fi.first->second->tickets++;
+    result = fi.second;
 
     if (! unlocked) {
         if ((rc = pthread_mutex_unlock(bucket_lock[b])) != 0)
             throw ndSystemException(__PRETTY_FUNCTION__, "pthread_mutex_unlock", rc);
     }
 
-    return f;
+    return result;
 }
 
 bool ndFlowMap::Delete(const string &digest)

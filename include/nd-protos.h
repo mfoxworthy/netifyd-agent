@@ -970,7 +970,8 @@ const nd_ndpi_portmap_t nd_ndpi_portmap = {
 };
 
 class ndFlow;
-const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow);
+typedef shared_ptr<ndFlow> nd_flow_ptr;
+const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, nd_flow_ptr const& flow);
 const uint16_t nd_ndpi_proto_find(unsigned id);
 
 #endif // _ND_PROTOS_H

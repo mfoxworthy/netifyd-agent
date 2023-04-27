@@ -1466,7 +1466,7 @@ ndFlowParser::~ndFlowParser()
     yylex_destroy((yyscan_t)scanner);
 }
 
-bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
+bool ndFlowParser::Parse(nd_flow_ptr const& flow, const string &expr)
 {
     this->flow = flow;
     expr_result = false;
@@ -1516,6 +1516,7 @@ bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
         break;
     default:
         //nd_dprintf("Bad lower map: %u\n", flow->lower_map);
+        this->flow.reset();
         return false;
     }
 
@@ -1534,11 +1535,14 @@ bool ndFlowParser::Parse(const ndFlow *flow, const string &expr)
     try {
         rc = yyparse((yyscan_t)scanner);
     } catch (...) {
+        this->flow.reset();
         yy_delete_buffer(flow_expr_scan_buffer, scanner);
         throw;
     }
 
     yy_delete_buffer(flow_expr_scan_buffer, scanner);
+
+    this->flow.reset();
 
     return (rc == 0) ? expr_result : false;
 }

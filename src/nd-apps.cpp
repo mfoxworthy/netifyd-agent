@@ -582,7 +582,7 @@ bool ndApplications::AddSoftDissector(
 }
 
 bool ndApplications::SoftDissectorMatch(
-    const ndFlow *flow, ndFlowParser *parser, ndSoftDissector &match)
+    nd_flow_ptr const& flow, ndFlowParser *parser, ndSoftDissector &match)
 {
     unique_lock<mutex> ul(lock);
 

@@ -218,7 +218,7 @@ void ndDetectionThread::Reload(void)
 }
 
 void ndDetectionThread::QueuePacket(
-    ndFlow *flow, const ndPacket *packet,
+    nd_flow_ptr& flow, const ndPacket *packet,
     const uint8_t *data, uint16_t length)
 {
     ndDetectionQueueEntry *entry = new ndDetectionQueueEntry(
@@ -294,8 +294,9 @@ void ndDetectionThread::ProcessPacketQueue(void)
 
             if (ndEF->detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
-                (ndEF->flags.expiring.load() == false ||
-                    ndEF->tickets.load() > 1) &&
+                ndEF->flags.expiring.load() == false &&
+//               (ndEF->flags.expiring.load() == false ||
+//                   ndEF->tickets.load() > 1) &&
                 ndEF->detection_packets.load() < ndGC.max_detection_pkts
             )) {
 
@@ -328,7 +329,7 @@ void ndDetectionThread::ProcessPacketQueue(void)
             }
 
             if (ndEF->flags.detection_complete.load())
-                ndEF->release();
+                ndEF->Release();
 
             delete entry;
         }
@@ -355,7 +356,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         ndEFNF,
         entry->data,
         entry->length,
-        ndEF->ts_last_seen,
+        ndEF->ts_last_seen.load(),
         NULL
     );
 
@@ -432,7 +433,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
         // Flows with extra packet processing...
         ndEF->flags.detection_updated = false;
 
-        switch (ndEF->master_protocol()) {
+        switch (ndEF->GetMasterProtocol()) {
 
         case ND_PROTO_TLS:
         case ND_PROTO_QUIC:
@@ -520,7 +521,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
             //nd_dprintf("DNS flow updated.\n");
             break;
         case ND_PROTO_MDNS:
-            if (ndEF->has_mdns_domain_name()) {
+            if (ndEF->HasMDNSDomainName()) {
                 flow_update = true;
                 ndEF->flags.detection_updated = true;
             }
@@ -606,7 +607,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     ndi.addr_types.Classify(ndEF->lower_type, ndEF->lower_addr);
     ndi.addr_types.Classify(ndEF->upper_type, ndEF->upper_addr);
 
-    if (dhc != NULL && ndEF->master_protocol() != ND_PROTO_DNS) {
+    if (dhc != NULL && ndEF->GetMasterProtocol() != ND_PROTO_DNS) {
         string hostname;
 
         if (ndEF->lower_type == ndAddr::atOTHER)
@@ -713,7 +714,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
     // Determine application by network CIDR if still unknown.
     // DNS flows excluded...
-    if (ndEF->master_protocol() != ND_PROTO_DNS &&
+    if (ndEF->GetMasterProtocol() != ND_PROTO_DNS &&
         ndEF->detected_application == ND_APP_UNKNOWN) {
 
         if (ndEF->lower_type == ndAddr::atOTHER) {
@@ -731,7 +732,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
     }
 
     // Additional protocol-specific processing...
-    switch (ndEF->master_protocol()) {
+    switch (ndEF->GetMasterProtocol()) {
 
     case ND_PROTO_TLS:
     case ND_PROTO_QUIC:
@@ -846,7 +847,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 
         if (! fhc->Pop(flow_digest, flow_digest_mdata)) {
 
-            ndEF->hash(tag, true);
+            ndEF->Hash(tag, true);
 
             flow_digest_mdata.assign(
                 (const char *)ndEF->digest_mdata, SHA1_DIGEST_LENGTH
@@ -868,7 +869,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
             }
         }
     }
-    else ndEF->hash(tag, true);
+    else ndEF->Hash(tag, true);
 
     for (int t = ndFlow::TYPE_LOWER; t < ndFlow::TYPE_MAX; t++) {
         const ndAddr *mac, *ip;
@@ -938,7 +939,7 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
 #endif
     }
 
-    ndEF->update_lower_maps();
+    ndEF->UpdateLowerMaps();
 
     for (vector<uint8_t *>::const_iterator i =
         ndGC.privacy_filter_mac.begin();
@@ -1074,7 +1075,7 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
     }
 
     if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
-        ndEF->print();
+        ndEF->Print();
 
 #ifdef _ND_USE_PLUGINS
     ndi.plugins.BroadcastProcessorEvent(

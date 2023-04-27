@@ -88,7 +88,7 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 
-const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, const ndFlow *flow)
+const nd_proto_id_t nd_ndpi_proto_find(uint16_t id, nd_flow_ptr const& flow)
 {
     if (id == NDPI_PROTOCOL_UNKNOWN) return ND_PROTO_UNKNOWN;
 

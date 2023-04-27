@@ -20,7 +20,10 @@
 #define ND_APP_UNKNOWN      0
 #define ND_APP_UNKNOWN_TAG  "netify.unclassified"
 
+class ndFlow;
+
 typedef uint32_t nd_app_id_t;
+typedef shared_ptr<ndFlow> nd_flow_ptr;
 
 class ndApplication
 {
@@ -86,7 +89,7 @@ public:
     void Get(nd_apps_t &apps_copy);
 
     bool SoftDissectorMatch(
-        const ndFlow *flow, ndFlowParser *parser, ndSoftDissector &match);
+        nd_flow_ptr const& flow, ndFlowParser *parser, ndSoftDissector &match);
 
     template <class T>
     void Encode(T &output) const {

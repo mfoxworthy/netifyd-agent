@@ -182,10 +182,10 @@ public:
 
     enum Event {
         EVENT_FLOW_MAP, // ndFlowMap *
-        EVENT_FLOW_NEW, // ndFlow *
-        EVENT_FLOW_UPDATED, // ndFlow *
-        EVENT_FLOW_EXPIRING, // ndFlow *
-        EVENT_FLOW_EXPIRED, // ndFlow *
+        EVENT_FLOW_NEW, // nd_flow_ptr
+        EVENT_FLOW_UPDATED, // nd_flow_ptr
+        EVENT_FLOW_EXPIRING, // nd_flow_ptr
+        EVENT_FLOW_EXPIRED, // nd_flow_ptr
         EVENT_INTERFACES, // ndInterfaces
         EVENT_PKT_CAPTURE_STATS, // string, ndPacketStats *
         EVENT_PKT_GLOBAL_STATS, // ndPacketStats *
@@ -201,7 +201,7 @@ public:
     virtual void DispatchProcessorEvent(Event event,
         ndFlowMap *flow_map) { }
     virtual void DispatchProcessorEvent(Event event,
-        ndFlow *flow) { }
+        nd_flow_ptr& flow) { }
     virtual void DispatchProcessorEvent(Event event,
         ndInterfaces *interfaces) { }
     virtual void DispatchProcessorEvent(Event event,
@@ -300,7 +300,7 @@ public:
     void BroadcastProcessorEvent(ndPluginProcessor::Event event,
         ndFlowMap *flow_map);
     void BroadcastProcessorEvent(ndPluginProcessor::Event event,
-        ndFlow *flow);
+        nd_flow_ptr& flow);
     void BroadcastProcessorEvent(ndPluginProcessor::Event event,
         ndInterfaces *interfaces);
     void BroadcastProcessorEvent(ndPluginProcessor::Event event,

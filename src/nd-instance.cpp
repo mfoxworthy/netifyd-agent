@@ -1771,9 +1771,8 @@ void *ndInstance::ndInstance::Entry(void)
         //nd_dprintf("%s: tick\n", tag.c_str());
     }
     while (
-        (terminate_force.load() == false &&
-            ShouldTerminate() && status.flows.load() > 0) ||
-        ShouldTerminate() == false
+        (terminate_force.load() == false && ShouldTerminate() &&
+        status.flows_active > 0) || ShouldTerminate() == false
     );
 
 ndInstance_EntryReturn:
@@ -1955,8 +1954,8 @@ void ndInstance::DestroyCaptureThreads(
         for (auto &it : fm) {
             if (it.second->flags.expired.load() == false &&
                 it.second->flags.expiring.load() == false) {
-                if (ExpireFlow(it.second)) count++;
                 total++;
+                if (ExpireFlow(it.second)) count++;
             }
         }
 
@@ -2071,7 +2070,7 @@ void ndInstance::DisplayDebugScoreboard(void)
 {
 }
 
-bool ndInstance::ExpireFlow(ndFlow *flow)
+bool ndInstance::ExpireFlow(nd_flow_ptr& flow)
 {
     if (flow->flags.detection_complete.load() == true)
         flow->flags.expired = true;
@@ -2174,7 +2173,7 @@ void ndInstance::ProcessFlows(void)
     size_t buckets = flow_buckets->GetBuckets();
 #ifdef _ND_PROCESS_FLOW_DEBUG
     size_t tcp = 0, tcp_fin = 0,
-        tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0, tickets = 0;
+        tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0;
 #endif
     status.flows_purged = 0;
     status.flows_expiring = 0;
@@ -2187,11 +2186,11 @@ void ndInstance::ProcessFlows(void)
     for (size_t b = 0; b < buckets; b++) {
 
         auto &fm = flow_buckets->Acquire(b);
-        auto i = fm.cbegin();
+        auto i = fm.begin();
 
         status.flows += fm.size();
 
-        while (i != fm.cend()) {
+        while (i != fm.end()) {
 #ifdef _ND_PROCESS_FLOW_DEBUG
             if (i->second->ip_protocol == IPPROTO_TCP) tcp++;
             if (i->second->ip_protocol == IPPROTO_TCP &&
@@ -2202,8 +2201,10 @@ void ndInstance::ProcessFlows(void)
             if (i->second->ip_protocol == IPPROTO_TCP &&
                 i->second->flags.tcp_fin.load() &&
                 i->second->flags.tcp_fin_ack.load() >= 2) tcp_fin_ack_gt2++;
-            if (i->second->tickets.load() > 0) tickets++;
 #endif
+            if (i->second.use_count() > 1)
+                status.flows_locked++;
+
             if (i->second->flags.expired.load() == false) {
 
                 time_t ttl = ((i->second->ip_protocol != IPPROTO_TCP) ?
@@ -2213,7 +2214,7 @@ void ndInstance::ProcessFlows(void)
                     )
                 );
 
-                if (((time_t)(i->second->ts_last_seen / 1000) + ttl) < now)
+                if (((time_t)(i->second->ts_last_seen.load() / 1000) + ttl) < now)
                     if (ExpireFlow(i->second)) status.flows_expiring++;
             }
 
@@ -2221,35 +2222,23 @@ void ndInstance::ProcessFlows(void)
 
                 status.flows_expired++;
 
-                if (i->second->tickets.load() == 0) {
+                if (i->second.use_count() == 1) {
 #ifdef _ND_USE_PLUGINS
                     plugins.BroadcastProcessorEvent(
                         ndPluginProcessor::EVENT_FLOW_EXPIRED,
                         i->second
                     );
 #endif
-                    delete i->second;
                     i = fm.erase(i);
-
                     status.flows_purged++;
 
                     continue;
-                }
-                else {
-                    if (status.flows_locked == 0) {
-                        nd_dprintf(
-                            "%s: flow purge blocked by locked tickets.\n",
-                            i->second->iface.ifname.c_str()
-                        );
-                    }
-
-                    status.flows_locked++;
                 }
             }
             else {
                 if (i->second->flags.detection_init.load()) {
 
-                    i->second->reset();
+                    i->second->Reset();
 
                     status.flows_active++;
                 }
@@ -2261,8 +2250,6 @@ void ndInstance::ProcessFlows(void)
         flow_buckets->Release(b);
     }
 
-    status.flows -= status.flows_purged;
-
     nd_dprintf(
         "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
         "idle: %lu, locked: %lu\n", tag.c_str(),
@@ -2273,8 +2260,8 @@ void ndInstance::ProcessFlows(void)
         status.flows_locked
     );
 #ifdef _ND_PROCESS_FLOW_DEBUG
-    nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu, tickets: %lu\n",
-        tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2, tickets
+    nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu\n",
+        tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2
     );
 #endif
 }

@@ -17,10 +17,12 @@
 #ifndef _ND_FLOW_MAP_H
 #define _ND_FLOW_MAP_H
 
-typedef unordered_map<string, ndFlow *> nd_flow_map;
+typedef shared_ptr<ndFlow> nd_flow_ptr;
+typedef unordered_map<string, nd_flow_ptr> nd_flow_map;
 typedef vector<nd_flow_map *> nd_flow_bucket;
 typedef vector<pthread_mutex_t *> nd_flow_bucket_lock;
-typedef pair<string, ndFlow *> nd_flow_pair;
+typedef map<string, nd_flow_map *> nd_flows;
+typedef pair<string, nd_flow_ptr> nd_flow_pair;
 typedef pair<nd_flow_map::iterator, bool> nd_flow_insert;
 
 class ndFlowMap
@@ -29,9 +31,9 @@ public:
     ndFlowMap(size_t buckets = ND_FLOW_MAP_BUCKETS);
     virtual ~ndFlowMap();
 
-    ndFlow *Lookup(const string &digest, bool acquire_lock = false);
-    ndFlow *Insert(const string &digest, ndFlow *flow, bool unlocked = false);
-    inline ndFlow *InsertUnlocked(const string &digest, ndFlow *flow) {
+    nd_flow_ptr Lookup(const string &digest, bool acquire_lock = false);
+    bool Insert(const string &digest, nd_flow_ptr& flow, bool unlocked = false);
+    inline bool InsertUnlocked(const string &digest, nd_flow_ptr &flow) {
         return Insert(digest, flow, true);
     }
 

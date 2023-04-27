@@ -100,8 +100,10 @@ ndFlow::ndFlow(ndInterface &iface)
     ct_id(0), ct_mark(0),
 #endif
     lower_type(ndAddr::atNONE), upper_type(ndAddr::atNONE),
-    flags{}, tickets(0), gtp{},
-    risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
+    flags{},
+    gtp{},
+    risks{},
+    ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     gtp.version = 0xFF;
 }
@@ -110,8 +112,8 @@ ndFlow::ndFlow(const ndFlow &flow)
     : iface(flow.iface), dpi_thread_id(-1),
     ip_version(flow.ip_version), ip_protocol(flow.ip_protocol),
     vlan_id(flow.vlan_id), tcp_last_seq(flow.tcp_last_seq),
-    ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update),
-    ts_last_seen(flow.ts_last_seen),
+    ts_first_seen(flow.ts_first_seen), ts_first_update(flow.ts_first_update.load()),
+    ts_last_seen(flow.ts_last_seen.load()),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
     lower_mac(flow.lower_mac), upper_mac(flow.upper_mac),
     lower_addr(flow.lower_addr), upper_addr(flow.upper_addr),
@@ -131,8 +133,10 @@ ndFlow::ndFlow(const ndFlow &flow)
     ct_id(0), ct_mark(0),
 #endif
     lower_type(ndAddr::atNONE), upper_type(ndAddr::atNONE),
-    flags{}, tickets(0), gtp(flow.gtp),
-    risks{}, ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
+    flags{},
+    gtp(flow.gtp),
+    risks{},
+    ndpi_risk_score(0), ndpi_risk_score_client(0), ndpi_risk_score_server(0)
 {
     memcpy(digest_lower, flow.digest_lower, SHA1_DIGEST_LENGTH);
     memset(digest_mdata, 0, SHA1_DIGEST_LENGTH);
@@ -140,25 +144,25 @@ ndFlow::ndFlow(const ndFlow &flow)
 
 ndFlow::~ndFlow()
 {
-    release();
+    Release();
 
     if (detected_application_name != NULL) {
         free(detected_application_name);
         detected_application_name = NULL;
     }
 
-    if (has_ssl_issuer_dn()) {
+    if (HasTLSIssuerDN()) {
         free(ssl.issuer_dn);
         ssl.issuer_dn = NULL;
     }
 
-    if (has_ssl_subject_dn()) {
+    if (HasTLSSubjectDN()) {
         free(ssl.subject_dn);
         ssl.subject_dn = NULL;
     }
 }
 
-void ndFlow::hash(const string &device,
+void ndFlow::Hash(const string &device,
     bool hash_mdata, const uint8_t *key, size_t key_length)
 {
     sha1 ctx;
@@ -207,11 +211,11 @@ void ndFlow::hash(const string &device,
             sha1_write(&ctx,
                 host_server_name, strnlen(host_server_name, ND_FLOW_HOSTNAME));
         }
-        if (has_ssl_client_sni()) {
+        if (HasSSLClientSNI()) {
             sha1_write(&ctx,
                 ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_HOSTNAME));
         }
-        if (has_bt_info_hash()) {
+        if (HasBTInfoHash()) {
             sha1_write(&ctx, bt.info_hash, ND_FLOW_BTIHASH_LEN);
         }
     }
@@ -225,11 +229,14 @@ void ndFlow::hash(const string &device,
         sha1_result(&ctx, digest_mdata);
 }
 
-void ndFlow::reset(bool full_reset)
+void ndFlow::Reset(bool full_reset)
 {
     ts_first_update = 0;
-    lower_bytes = upper_bytes = 0;
-    lower_packets = upper_packets = 0;
+
+    lower_bytes = 0;
+    upper_bytes = 0;
+    lower_packets = 0;
+    upper_packets = 0;
 
     if (full_reset) {
         detection_packets = 0;
@@ -248,7 +255,7 @@ void ndFlow::reset(bool full_reset)
     }
 }
 
-void ndFlow::release(void)
+void ndFlow::Release(void)
 {
     if (ndpi_flow != NULL) {
         ndpi_free_flow(ndpi_flow);
@@ -256,7 +263,7 @@ void ndFlow::release(void)
     }
 }
 
-nd_proto_id_t ndFlow::master_protocol(void) const
+nd_proto_id_t ndFlow::GetMasterProtocol(void) const
 {
     switch (detected_protocol) {
     case ND_PROTO_HTTPS:
@@ -292,7 +299,7 @@ nd_proto_id_t ndFlow::master_protocol(void) const
     return detected_protocol;
 }
 
-bool ndFlow::has_dhcp_fingerprint(void) const
+bool ndFlow::HasDhcpFingerprint(void) const
 {
     return (
         detected_protocol == ND_PROTO_DHCP &&
@@ -300,7 +307,7 @@ bool ndFlow::has_dhcp_fingerprint(void) const
     );
 }
 
-bool ndFlow::has_dhcp_class_ident(void) const
+bool ndFlow::HasDhcpClassIdent(void) const
 {
     return (
         detected_protocol == ND_PROTO_DHCP &&
@@ -308,22 +315,22 @@ bool ndFlow::has_dhcp_class_ident(void) const
     );
 }
 
-bool ndFlow::has_http_user_agent(void) const
+bool ndFlow::HasHttpUserAgent(void) const
 {
     return (
-        master_protocol() == ND_PROTO_HTTP &&
+        GetMasterProtocol() == ND_PROTO_HTTP &&
         http.user_agent[0] != '\0'
     );
 }
 
-bool ndFlow::has_http_url(void) const
+bool ndFlow::HasHttpURL(void) const
 {
     return (
         http.url[0] != '\0'
     );
 }
 
-bool ndFlow::has_ssh_client_agent(void) const
+bool ndFlow::HasSSHClientAgent(void) const
 {
     return (
         detected_protocol == ND_PROTO_SSH &&
@@ -331,7 +338,7 @@ bool ndFlow::has_ssh_client_agent(void) const
     );
 }
 
-bool ndFlow::has_ssh_server_agent(void) const
+bool ndFlow::HasSSHServerAgent(void) const
 {
     return (
         detected_protocol == ND_PROTO_SSH &&
@@ -339,55 +346,55 @@ bool ndFlow::has_ssh_server_agent(void) const
     );
 }
 
-bool ndFlow::has_ssl_client_sni(void) const
+bool ndFlow::HasSSLClientSNI(void) const
 {
     return (
-        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
+        (GetMasterProtocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.client_sni != NULL && ssl.client_sni[0] != '\0'
     );
 }
 
-bool ndFlow::has_ssl_server_cn(void) const
+bool ndFlow::HasTLSServerCN(void) const
 {
     return (
-        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
+        (GetMasterProtocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.server_cn[0] != '\0'
     );
 }
 
-bool ndFlow::has_ssl_issuer_dn(void) const
+bool ndFlow::HasTLSIssuerDN(void) const
 {
     return (
-        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
+        (GetMasterProtocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.issuer_dn != NULL
     );
 }
 
-bool ndFlow::has_ssl_subject_dn(void) const
+bool ndFlow::HasTLSSubjectDN(void) const
 {
     return (
-        (master_protocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
+        (GetMasterProtocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
         ssl.subject_dn != NULL
     );
 }
 
-bool ndFlow::has_ssl_client_ja3(void) const
+bool ndFlow::HasTLSClientJA3(void) const
 {
     return (
-        master_protocol() == ND_PROTO_TLS &&
+        GetMasterProtocol() == ND_PROTO_TLS &&
         ssl.client_ja3[0] != '\0'
     );
 }
 
-bool ndFlow::has_ssl_server_ja3(void) const
+bool ndFlow::HasTLSServerJA3(void) const
 {
     return (
-        master_protocol() == ND_PROTO_TLS &&
+        GetMasterProtocol() == ND_PROTO_TLS &&
         ssl.server_ja3[0] != '\0'
     );
 }
 
-bool ndFlow::has_bt_info_hash(void) const
+bool ndFlow::HasBTInfoHash(void) const
 {
     return (
         detected_protocol == ND_PROTO_BITTORRENT &&
@@ -395,7 +402,7 @@ bool ndFlow::has_bt_info_hash(void) const
     );
 }
 
-bool ndFlow::has_ssdp_headers(void) const
+bool ndFlow::HasSSDPHeaders(void) const
 {
     return (
         detected_protocol == ND_PROTO_SSDP &&
@@ -403,7 +410,7 @@ bool ndFlow::has_ssdp_headers(void) const
     );
 }
 #if 0
-bool ndFlow::has_mining_variant(void) const
+bool ndFlow::HasMiningVariant(void) const
 {
     return (
         detected_protocol == ND_PROTO_MINING &&
@@ -411,7 +418,7 @@ bool ndFlow::has_mining_variant(void) const
     );
 }
 #endif
-bool ndFlow::has_mdns_domain_name(void) const
+bool ndFlow::HasMDNSDomainName(void) const
 {
     return (
         detected_protocol == ND_PROTO_MDNS &&
@@ -419,7 +426,7 @@ bool ndFlow::has_mdns_domain_name(void) const
     );
 }
 
-void ndFlow::print(void) const
+void ndFlow::Print(void) const
 {
     string iface_name;
     nd_iface_name(iface.ifname, iface_name);
@@ -457,11 +464,11 @@ void ndFlow::print(void) const
         (host_server_name[0] != '\0') ? host_server_name : (
             (dns_host_name[0] != '\0') ? dns_host_name : ""
         ),
-        (has_ssl_client_sni()) ? " SSL" : "",
-        (has_ssl_client_sni()) ? " C: " : "",
-        (has_ssl_client_sni()) ? ssl.client_sni : "",
-        (has_bt_info_hash()) ? " BT-IH: " : "",
-        (has_bt_info_hash()) ? digest.c_str() : ""
+        (HasSSLClientSNI()) ? " SSL" : "",
+        (HasSSLClientSNI()) ? " C: " : "",
+        (HasSSLClientSNI()) ? ssl.client_sni : "",
+        (HasBTInfoHash()) ? " BT-IH: " : "",
+        (HasBTInfoHash()) ? digest.c_str() : ""
     );
 #if 0
     if (ndGC_DEBUG &&
@@ -472,15 +479,15 @@ void ndFlow::print(void) const
 #endif
 }
 
-void ndFlow::update_lower_maps(void)
+void ndFlow::UpdateLowerMaps(void)
 {
     if (lower_map == LOWER_UNKNOWN)
-        get_lower_map(lower_type, upper_type, lower_map, other_type);
+        GetLowerMap(lower_type, upper_type, lower_map, other_type);
 
     switch (tunnel_type) {
     case TUNNEL_GTP:
         if (gtp.lower_map == LOWER_UNKNOWN) {
-            get_lower_map(
+            GetLowerMap(
                 gtp.lower_type, gtp.upper_type, gtp.lower_map, gtp.other_type
             );
         }
@@ -488,7 +495,7 @@ void ndFlow::update_lower_maps(void)
     }
 }
 
-void ndFlow::get_lower_map(
+void ndFlow::GetLowerMap(
     ndAddr::Type lt,
     ndAddr::Type ut,
     uint8_t &lm, uint8_t &ot)
@@ -588,28 +595,6 @@ void ndFlow::get_lower_map(
 #if 0
     nd_dprintf("lower map: %u, other type: %u\n", lm, ot);
 #endif
-}
-
-ndFlowTicket::ndFlowTicket(ndFlow *flow)
-    : flow(flow)
-{
-    if (flow != nullptr) flow->tickets++;
-}
-
-ndFlowTicket::~ndFlowTicket()
-{
-    if (flow != nullptr) flow->tickets--;
-}
-
-void ndFlowTicket::Take(ndFlow *flow, bool increment)
-{
-    if (flow != nullptr) {
-        if (increment) flow->tickets++;
-        if (this->flow != nullptr) this->flow->tickets--;
-        this->flow = flow;
-    }
-    else if(this->flow != nullptr && increment)
-        this->flow->tickets++;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -76,7 +76,7 @@ protected:
 
     const ndPacket *ProcessPacket(const ndPacket *packet);
 
-    bool ProcessDNSPacket(ndFlow *flow,
+    bool ProcessDNSPacket(nd_flow_ptr &flow,
         const uint8_t *pkt, uint16_t pkt_len, uint16_t proto);
 };
 

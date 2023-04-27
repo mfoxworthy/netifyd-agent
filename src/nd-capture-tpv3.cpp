@@ -654,10 +654,7 @@ void *ndCaptureTPv3::Entry(void)
 //    int sd_max = max(fd_ipc[0], _ring->GetDescriptor());
 
     int rc = 0;
-#if 0
-    size_t max_queued = 0;
-    size_t packets = 0, total_packets = 0;
-#endif
+
     vector<ndPacket *> pkt_queue;
     pkt_queue.reserve(iface.config.tpv3->rb_blocks);
 

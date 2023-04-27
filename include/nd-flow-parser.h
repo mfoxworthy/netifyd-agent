@@ -59,10 +59,10 @@ public:
     virtual ~ndFlowParser();
 
     bool Parse(
-        const ndFlow *flow, const string &expr
+        nd_flow_ptr const& flow, const string &expr
     );
 
-    const ndFlow *flow;
+    nd_flow_ptr flow;
     const char *local_mac;
     const char *other_mac;
     const char *local_ip;

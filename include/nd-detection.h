@@ -29,18 +29,16 @@ public:
 class ndDetectionQueueEntry
 {
 public:
-    ndDetectionQueueEntry(ndFlow *flow, const ndPacket *packet,
+    ndDetectionQueueEntry(nd_flow_ptr &flow, const ndPacket *packet,
         const uint8_t *data, uint16_t length)
-    : packet(packet), flow(flow), ticket(flow),
-    data(data), length(length) { }
+    : packet(packet), flow(flow), data(data), length(length) { }
 
     virtual ~ndDetectionQueueEntry() {
         if (packet != nullptr) delete packet;
     }
 
     const ndPacket *packet;
-    ndFlow *flow;
-    ndFlowTicket ticket;
+    nd_flow_ptr flow;
     const uint8_t *data;
     uint16_t length;
 };
@@ -70,7 +68,7 @@ public:
     virtual void Reload(void);
 
     void QueuePacket(
-        ndFlow *flow, const ndPacket *packet = nullptr,
+        nd_flow_ptr &flow, const ndPacket *packet = nullptr,
         const uint8_t *data = nullptr, uint16_t length = 0);
 
     struct ndpi_detection_module_struct *GetDetectionModule(void) {
