@@ -38,6 +38,7 @@ BuildRoot: /var/tmp/%{name}-%{version}
 BuildRequires: autoconf >= 2.63
 BuildRequires: automake
 BuildRequires: bc
+BuildRequires: findutils
 BuildRequires: libcurl-devel
 #BuildRequires: gperftools-devel
 BuildRequires: libmnl-devel

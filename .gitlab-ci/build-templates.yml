@@ -57,7 +57,7 @@
     - yum -y install wget
     - wget --no-check-certificate https://dl.fedoraproject.org/pub/epel/epel-release-latest-${RPMOS_VERSION}.noarch.rpm
     - yum -y install epel-release-latest-${RPMOS_VERSION}.noarch.rpm
-    - yum -y install make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync bc git
+    - yum -y install findutils make rpm-build which expect yum-utils sudo autoconf gcc gcc-c++ automake libtool rsync bc git
     - yum -y install $RPMOS_REPOS curl-devel libmnl-devel libnetfilter_conntrack-devel libpcap-devel zlib-devel
     # Build packages
     - ./autogen.sh
