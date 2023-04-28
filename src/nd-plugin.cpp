@@ -106,7 +106,6 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
-#include "nd-flow-parser.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
@@ -115,6 +114,7 @@ class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
+#include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
@@ -358,7 +358,7 @@ void ndPluginProcessor::DispatchSinkPayload(
     const string &target, const ndPlugin::Channels &channels,
     size_t length, const uint8_t *payload)
 {
-    static ndInstance& ndi = ndInstance::GetInstance();
+    ndInstance& ndi = ndInstance::GetInstance();
 
     ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
         length, payload, channels
@@ -374,15 +374,53 @@ void ndPluginProcessor::DispatchSinkPayload(
 
 void ndPluginProcessor::DispatchSinkPayload(
     const string &target, const ndPlugin::Channels &channels,
-    const json &j)
+    const json &j, uint8_t flags)
 {
-    string output;
-    nd_json_to_string(j, output, ndGC_DEBUG);
+    if ((flags & DF_FORMAT_MSGPACK)) {
+        vector<uint8_t> output;
+        output = json::to_msgpack(j);
 
-    DispatchSinkPayload(
-        target, channels,
-        output.size(), (const uint8_t *)output.c_str()
-    );
+        if ((flags & DF_ADD_HEADER)) {
+            json jheader;
+            jheader["length"] = output.size();
+
+            vector<uint8_t> header;
+            header = json::to_msgpack(jheader);
+
+            DispatchSinkPayload(
+                target, channels, header
+            );
+        }
+
+        DispatchSinkPayload(
+            target, channels, output
+        );
+    }
+    else {
+        string output;
+        nd_json_to_string(j, output, ndGC_DEBUG);
+
+        if ((flags & DF_ADD_HEADER)) {
+            output.append("\n");
+
+            json jheader;
+            jheader["length"] = output.size();
+
+            string header;
+            nd_json_to_string(jheader, header, ndGC_DEBUG);
+            header.append("\n");
+
+            DispatchSinkPayload(
+                target, channels,
+                header.size(), (const uint8_t *)header.c_str()
+            );
+        }
+
+        DispatchSinkPayload(
+            target, channels,
+            output.size(), (const uint8_t *)output.c_str()
+        );
+    }
 }
 
 ndPluginLoader::ndPluginLoader(

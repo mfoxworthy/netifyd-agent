@@ -102,7 +102,6 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
-#include "nd-flow-parser.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
@@ -111,6 +110,7 @@ class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
+#include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif

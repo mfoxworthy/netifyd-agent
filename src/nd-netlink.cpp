@@ -107,7 +107,6 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
-#include "nd-flow-parser.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
@@ -116,6 +115,7 @@ class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
+#include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
@@ -326,13 +326,14 @@ bool ndNetlink::AddRemoveNetwork(struct nlmsghdr *nlh, bool add)
     }
 
     if (addr.IsValid() && ifname[0] != '\0') {
+        ndInstance& ndi = ndInstance::GetInstance();
         if (add) {
-            return ndInstance::GetInstance().addr_types.AddAddress(
+            return ndi.addr_types.AddAddress(
                 ndAddr::atLOCAL, addr, ifname
             );
         }
         else {
-            return ndInstance::GetInstance().addr_types.RemoveAddress(
+            return ndi.addr_types.RemoveAddress(
                 addr, ifname
             );
         }
@@ -371,10 +372,11 @@ bool ndNetlink::AddRemoveAddress(struct nlmsghdr *nlh, bool add)
     }
 
     if (addr.IsValid() && ifname[0] != '\0') {
+        ndInstance& ndi = ndInstance::GetInstance();
         if (add)
-            return ndInstance::GetInstance().addr_types.AddAddress(type, addr, ifname);
+            return ndi.addr_types.AddAddress(type, addr, ifname);
         else
-            return ndInstance::GetInstance().addr_types.RemoveAddress(addr, ifname);
+            return ndi.addr_types.RemoveAddress(addr, ifname);
     }
 
     return false;

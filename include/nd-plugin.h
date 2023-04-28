@@ -217,9 +217,23 @@ protected:
         const string &target, const ndPlugin::Channels &channels,
         size_t length, const uint8_t *payload);
 
+    inline void DispatchSinkPayload(
+        const string &target, const ndPlugin::Channels &channels,
+        const vector<uint8_t> &payload) {
+        DispatchSinkPayload(
+            target, channels, payload.size(), &payload[0]
+        );
+    }
+
+    enum DispatchFlags {
+        DF_NONE,
+        DF_ADD_HEADER = 0x01,
+        DF_FORMAT_MSGPACK = 0x02,
+    };
+
     virtual void DispatchSinkPayload(
         const string &target, const ndPlugin::Channels &channels,
-        const json &j);
+        const json &j, uint8_t flags = DF_NONE);
 };
 
 #define _ND_PLQ_DEFAULT_MAX_SIZE    2097152

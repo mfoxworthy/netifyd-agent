@@ -345,7 +345,6 @@ class ndInstanceClient
 public:
     ndInstanceClient() : ndi(ndInstance::GetInstance()) { }
 
-protected:
     ndInstance& ndi;
 };
 

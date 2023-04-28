@@ -147,6 +147,7 @@ public:
     string path_app_config;
     string path_cat_config;
     string path_config;
+    string path_domains;
     string path_export_json;
     string path_legacy_config;
     string path_pid_file;

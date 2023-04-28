@@ -103,6 +103,9 @@
 #define ND_PLUGINS_BASE         "plugins.d"
 #define ND_PLUGINS_PATH         ND_PERSISTENT_STATEDIR "/" ND_PLUGINS_BASE
 
+#define ND_DOMAINS_BASE         "domains.d"
+#define ND_DOMAINS_PATH         ND_PERSISTENT_STATEDIR "/" ND_DOMAINS_BASE
+
 #define ND_JSON_DATA_CHUNKSIZ   4096
 #define ND_JSON_INDENT          4
 

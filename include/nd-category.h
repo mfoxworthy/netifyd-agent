@@ -93,9 +93,7 @@ protected:
 class ndDomains
 {
 public:
-    ndDomains();
-
-    bool Load(void);
+    bool Load(const string &path_domains);
     nd_cat_id_t Lookup(const string &domain);
 
 protected:
@@ -103,7 +101,6 @@ protected:
     ndCategory::index_tag index_tag;
     typedef unordered_map<nd_cat_id_t, unordered_set<string>> cat_domain_map;
     cat_domain_map domains;
-    string path_domains;
 };
 
 #endif // _ND_CATEGORY_H

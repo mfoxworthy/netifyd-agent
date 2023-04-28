@@ -103,7 +103,6 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
-#include "nd-flow-parser.h"
 #include "nd-fhc.h"
 #include "nd-dhc.h"
 #include "nd-thread.h"
@@ -112,6 +111,7 @@ class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
+#include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
@@ -582,11 +582,13 @@ bool ndDetectionThread::ProcessALPN(ndDetectionQueueEntry *entry, bool client)
             if (nd_alpn_proto_map[i].proto_id == ndEF->detected_protocol)
                 continue;
 
-            nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
-                tag.c_str(), detected_alpn,
-                ndEF->detected_protocol_name,
-                nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
-            );
+            if ((ndGC_DEBUG && ndGC_VERBOSE)) {
+                nd_dprintf("%s: TLS ALPN: refined: %s: %s -> %s\n",
+                    tag.c_str(), detected_alpn,
+                    ndEF->detected_protocol_name,
+                    nd_proto_get_name(nd_alpn_proto_map[i].proto_id)
+                );
+            }
 
             ndEF->detected_protocol = nd_alpn_proto_map[i].proto_id;
             ndEF->detected_protocol_name = nd_proto_get_name(

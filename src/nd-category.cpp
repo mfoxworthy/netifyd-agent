@@ -74,9 +74,6 @@ using namespace std;
 
 //#define _ND_LOG_DOMAINS   1
 
-ndCategories *nd_categories = NULL;
-ndDomains *nd_domains = NULL;
-
 bool ndCategories::Load(void)
 {
     unique_lock<mutex> ul(lock);
@@ -385,19 +382,15 @@ nd_cat_id_t ndCategories::ResolveTag(ndCategoryType type, unsigned id, string& t
     return cat_id;
 }
 
-ndDomains::ndDomains()
-{
-    path_domains = ndGC.path_state_persistent + "/domains.d";
-}
-
-bool ndDomains::Load(void)
+bool ndDomains::Load(const string &path_domains)
 {
     unique_lock<mutex> ul(lock);
 
     ndCategories categories;
     categories.Load();
 
-    if (! categories.GetTagIndex(ndCAT_TYPE_APP, index_tag)) return false;
+    if (! categories.GetTagIndex(ndCAT_TYPE_APP, index_tag))
+        return false;
 
     vector<string> files;
     if (! nd_scan_dotd(path_domains, files)) return true;

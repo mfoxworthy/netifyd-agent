@@ -43,6 +43,7 @@
 #define _NDFP_other_port         ((ndFlowParser *)yyget_extra(scanner))->other_port
 #define _NDFP_origin             ((ndFlowParser *)yyget_extra(scanner))->origin
 #define _NDFP_result             ((ndFlowParser *)yyget_extra(scanner))->expr_result
+#define _NDFP_categories         ((ndFlowParser *)yyget_extra(scanner))->ndi.categories
 
 #if 0
 #define _NDFP_debugf(f, ...)     nd_dprintf(f, __VA_ARGS__)
@@ -52,7 +53,7 @@
 
 #if defined __cplusplus
 
-class ndFlowParser
+class ndFlowParser : public ndInstanceClient
 {
 public:
     ndFlowParser();

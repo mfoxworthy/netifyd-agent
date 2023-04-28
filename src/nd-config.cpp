@@ -107,7 +107,6 @@ using namespace std;
 #include "nd-category.h"
 #include "nd-flow.h"
 #include "nd-flow-map.h"
-#include "nd-flow-parser.h"
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
@@ -116,6 +115,7 @@ class ndInstanceStatus;
 #include "nd-plugin.h"
 #endif
 #include "nd-instance.h"
+#include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"
 #endif
@@ -130,6 +130,7 @@ ndGlobalConfig::ndGlobalConfig() :
     path_app_config(ND_CONF_APP_PATH),
     path_cat_config(ND_CONF_CAT_PATH),
     path_config(ND_CONF_FILE_NAME),
+    path_domains(ND_DOMAINS_PATH),
     path_legacy_config(ND_CONF_LEGACY_PATH),
     path_pid_file(ND_PID_FILE_NAME),
     path_plugins(ND_PLUGINS_PATH),
@@ -296,6 +297,11 @@ bool ndGlobalConfig::Load(const string &filename)
         "netifyd", "path_plugins",
         path_state_persistent + "/" + ND_PLUGINS_BASE);
     nd_expand_variables(value, path_plugins, conf_vars);
+
+    value = r->Get(
+        "netifyd", "path_domains",
+        path_state_persistent + "/" + ND_DOMAINS_BASE);
+    nd_expand_variables(value, path_domains, conf_vars);
 
     path_uuid = r->Get(
         "netifyd", "path_uuid",
@@ -1201,6 +1207,9 @@ void ndGlobalConfig::UpdatePaths(void)
     path_plugins =
         path_state_persistent + "/" + ND_PLUGINS_BASE;
 
+    path_domains =
+        path_state_persistent + "/" + ND_DOMAINS_BASE;
+
     conf_vars.clear();
 
     conf_vars.insert(
@@ -1226,6 +1235,11 @@ void ndGlobalConfig::UpdatePaths(void)
     conf_vars.insert(
         make_pair(
             "${path_plugins}", path_plugins
+        )
+    );
+    conf_vars.insert(
+        make_pair(
+            "${path_domains}", path_domains
         )
     );
 }

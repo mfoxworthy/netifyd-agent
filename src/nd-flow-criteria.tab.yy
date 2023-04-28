@@ -23,40 +23,69 @@
 #include "config.h"
 #endif
 
-#include <stdexcept>
-#include <cstring>
-#include <map>
-#include <list>
-#include <vector>
+#include <iomanip>
+#include <iostream>
 #include <set>
-#include <atomic>
+#include <map>
+#include <queue>
+#include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include <sstream>
+#include <list>
+#include <vector>
+#include <locale>
+#include <atomic>
 #include <regex>
 #include <mutex>
-#include <bitset>
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 
-#define __FAVOR_BSD 1
-#include <netinet/tcp.h>
-#undef __FAVOR_BSD
-
+#include <stdlib.h>
+#include <string.h>
 #include <errno.h>
+#include <getopt.h>
+#include <signal.h>
+#include <time.h>
+#include <unistd.h>
+#include <locale.h>
+#include <syslog.h>
+#include <fcntl.h>
 
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+#include <netdb.h>
+#include <netinet/in.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <linux/if_packet.h>
 
+#define __FAVOR_BSD 1
+#include <netinet/tcp.h>
+#undef __FAVOR_BSD
+
+#include <curl/curl.h>
 #include <pcap/pcap.h>
+#include <pthread.h>
+#include <resolv.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+#ifdef _ND_USE_CONNTRACK
+#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
+#endif
+
+#if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
+#include <gperftools/malloc_extension.h>
+#elif defined(HAVE_MALLOC_TRIM)
+#include <malloc.h>
+#endif
 
 #include <radix/radix_tree.hpp>
 
@@ -65,6 +94,7 @@ using namespace std;
 #include "netifyd.h"
 
 #include "nd-config.h"
+#include "nd-signal.h"
 #include "nd-ndpi.h"
 #include "nd-risks.h"
 #include "nd-serializer.h"
@@ -76,11 +106,35 @@ using namespace std;
 #include "nd-netlink.h"
 #endif
 #include "nd-apps.h"
-#include "nd-category.h"
 #include "nd-protos.h"
+#include "nd-category.h"
 #include "nd-flow.h"
-
+#include "nd-flow-map.h"
+#include "nd-dhc.h"
+#include "nd-fhc.h"
+#include "nd-thread.h"
+#ifdef _ND_USE_PLUGINS
+class ndInstanceStatus;
+#include "nd-plugin.h"
+#endif
+#include "nd-instance.h"
+#ifdef _ND_USE_CONNTRACK
+#include "nd-conntrack.h"
+#endif
 #include "nd-flow-parser.h"
+#include "nd-detection.h"
+#include "nd-capture.h"
+#ifdef _ND_USE_LIBPCAP
+#include "nd-capture-pcap.h"
+#endif
+#ifdef _ND_USE_TPACKETV3
+#include "nd-capture-tpv3.h"
+#endif
+#ifdef _ND_USE_NFQUEUE
+#include "nd-capture-nfq.h"
+#endif
+#include "nd-base64.h"
+#include "nd-napi.h"
 #include "nd-flow-criteria.tab.hh"
 
 extern "C" {
@@ -93,9 +147,6 @@ void yyerror(YYLTYPE *yyllocp, yyscan_t scanner, const char *message)
 {
     throw string(message);
 }
-
-extern ndCategories *nd_categories;
-extern ndDomains *nd_domains;
 }
 
 %code requires {
@@ -814,7 +865,7 @@ expr_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) == _NDFP_flow->category.application
             )
         );
@@ -822,7 +873,7 @@ expr_category:
         if (! _NDFP_result) {
             _NDFP_result = (
                 $$ = (
-                    nd_categories->LookupTag(
+                    _NDFP_categories.LookupTag(
                         ndCAT_TYPE_APP, category) == _NDFP_flow->category.domain
                 )
             );
@@ -839,7 +890,7 @@ expr_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) != _NDFP_flow->category.application
             )
         );
@@ -847,7 +898,7 @@ expr_category:
         if (! _NDFP_result) {
             _NDFP_result = (
                 $$ = (
-                    nd_categories->LookupTag(
+                    _NDFP_categories.LookupTag(
                         ndCAT_TYPE_APP, category) != _NDFP_flow->category.domain
                 )
             );
@@ -1020,7 +1071,7 @@ expr_app_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) == _NDFP_flow->category.application
             )
         );
@@ -1036,7 +1087,7 @@ expr_app_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) != _NDFP_flow->category.application
             )
         );
@@ -1055,7 +1106,7 @@ expr_domain_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) == _NDFP_flow->category.domain
             )
         );
@@ -1071,7 +1122,7 @@ expr_domain_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_APP, category) != _NDFP_flow->category.domain
             )
         );
@@ -1161,7 +1212,7 @@ expr_proto_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_PROTO, category) == _NDFP_flow->category.protocol
             )
         );
@@ -1178,7 +1229,7 @@ expr_proto_category:
 
         _NDFP_result = (
             $$ = (
-                nd_categories->LookupTag(
+                _NDFP_categories.LookupTag(
                     ndCAT_TYPE_PROTO, category) != _NDFP_flow->category.protocol
             )
         );
