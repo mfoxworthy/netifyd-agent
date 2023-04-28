@@ -186,6 +186,20 @@ centos 7 build:
     RPMOS_ARCH: "x86_64"
     RPMOS_REPOS: ""
 
+rockylinux 8 build:
+  extends: .rpmos_build
+  tags:
+    - docker
+  only:
+    - tags
+    - web
+  variables:
+    RPMOS_IMAGE: "rockylinux:8"
+    RPMOS_OS: "rockylinux"
+    RPMOS_VERSION: "8"
+    RPMOS_ARCH: "x86_64"
+    RPMOS_REPOS: "--enablerepo=powertools,epel"
+
 almalinux 8 build:
   extends: .rpmos_build
   tags:
