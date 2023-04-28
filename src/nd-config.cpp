@@ -124,8 +124,6 @@ class ndInstanceStatus;
 #include "nd-base64.h"
 #include "nd-napi.h"
 
-extern ndInterfaces nd_interfaces;
-
 ndGlobalConfig::ndGlobalConfig() :
     napi_vendor(ND_API_VENDOR),
     path_agent_status(ND_AGENT_STATUS_PATH),
