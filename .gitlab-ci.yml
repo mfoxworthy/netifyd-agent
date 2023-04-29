@@ -94,7 +94,7 @@ debian 11 armel build:
     OS_NAME: "debian"
     OS_VERSION: "11"
     OS_ARCH: "armel"
-    OS_EXTRA_PACKAGES: "byacc flex libatomic"
+    OS_EXTRA_PACKAGES: "byacc flex libatomic1"
 
 debian 11 armhf build:
   extends: .debian_build
