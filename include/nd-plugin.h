@@ -94,6 +94,14 @@ public:
 
     Type GetType(void) { return type; };
 
+    enum DispatchFlags {
+        DF_NONE,
+        DF_FORMAT_JSON = 0x01,
+        DF_FORMAT_MSGPACK = 0x02,
+        DF_ADD_HEADER = 0x04,
+        DF_GZ_DEFLATE = 0x08,
+    };
+
 protected:
     Type type;
     string conf_filename;
@@ -102,51 +110,43 @@ protected:
 class ndPluginSinkPayload
 {
 public:
-    inline static ndPluginSinkPayload *Create(
+    static ndPluginSinkPayload *Create(
         size_t length, const uint8_t *data,
-        const ndPlugin::Channels &channels) {
-
-        ndPluginSinkPayload *p = new ndPluginSinkPayload(
-            length, data, channels
-        );
-
-        if (p == nullptr) {
-            throw ndSystemException(__PRETTY_FUNCTION__,
-                "new sink payload", ENOMEM
-            );
-        }
-
-        return p;
-    }
+        const ndPlugin::Channels &channels,
+        uint8_t flags = ndPlugin::DF_NONE);
 
     inline static ndPluginSinkPayload *Create(
-        const ndPluginSinkPayload &payload) {
-        return Create(
-            payload.length, payload.data, payload.channels
+        const ndPluginSinkPayload &payload,
+        uint8_t flags = ndPlugin::DF_NONE) {
+        return Create(payload.length,
+            payload.data, payload.channels, flags
         );
     }
 
     inline static ndPluginSinkPayload *Create(
-        const ndPluginSinkPayload *payload) {
-        return Create(
-            payload->length, payload->data, payload->channels
+        const ndPluginSinkPayload *payload,
+        uint8_t flags = ndPlugin::DF_NONE) {
+        return Create(payload->length,
+            payload->data, payload->channels, flags
         );
     }
 
     inline static ndPluginSinkPayload *Create(const json &j,
-        const ndPlugin::Channels &channels) {
+        const ndPlugin::Channels &channels,
+        uint8_t flags = ndPlugin::DF_NONE) {
         string output;
         nd_json_to_string(j, output, ndGC_DEBUG);
-
         return Create(output.size(),
-            (const uint8_t *)output.c_str(), channels);
+            (const uint8_t *)output.c_str(), channels, flags);
     }
 
-    ndPluginSinkPayload() : length(0), data(nullptr) { }
+    ndPluginSinkPayload() : length(0), data(nullptr),
+        flags(ndPlugin::DF_NONE) { }
 
     ndPluginSinkPayload(size_t length, const uint8_t *data,
-        const ndPlugin::Channels &channels)
-        : length(length), data(nullptr), channels(channels) {
+        const ndPlugin::Channels &channels, uint8_t flags)
+        : length(length), data(nullptr), channels(channels),
+        flags(flags) {
 
         this->data = new uint8_t[length];
 
@@ -171,6 +171,7 @@ public:
     size_t length;
     uint8_t *data;
     ndPlugin::Channels channels;
+    uint8_t flags;
 };
 
 class ndPluginProcessor : public ndPlugin
@@ -215,21 +216,16 @@ public:
 protected:
     virtual void DispatchSinkPayload(
         const string &target, const ndPlugin::Channels &channels,
-        size_t length, const uint8_t *payload);
+        size_t length, const uint8_t *payload,
+        uint8_t flags = DF_NONE);
 
     inline void DispatchSinkPayload(
         const string &target, const ndPlugin::Channels &channels,
-        const vector<uint8_t> &payload) {
+        const vector<uint8_t> &payload, uint8_t flags = DF_NONE) {
         DispatchSinkPayload(
-            target, channels, payload.size(), &payload[0]
+            target, channels, payload.size(), &payload[0], flags
         );
     }
-
-    enum DispatchFlags {
-        DF_NONE,
-        DF_ADD_HEADER = 0x01,
-        DF_FORMAT_MSGPACK = 0x02,
-    };
 
     virtual void DispatchSinkPayload(
         const string &target, const ndPlugin::Channels &channels,

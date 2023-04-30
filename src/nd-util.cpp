@@ -72,6 +72,7 @@
 
 #include <net/if.h>
 
+#include <zlib.h>
 #include <pcap/pcap.h>
 
 #include <nlohmann/json.hpp>
@@ -1311,6 +1312,65 @@ void nd_expand_variables(
             }
         }
     }
+}
+
+void nd_gz_deflate(
+    size_t length, const uint8_t *data, vector<uint8_t> &output)
+{
+    int rc;
+    z_stream zs;
+    uint8_t chunk[ND_ZLIB_CHUNK_SIZE];
+
+    output.clear();
+
+    zs.zalloc = Z_NULL;
+    zs.zfree = Z_NULL;
+    zs.opaque = Z_NULL;
+
+    if (deflateInit2(
+        &zs,
+        Z_DEFAULT_COMPRESSION,
+        Z_DEFLATED,
+        15 /* window bits */ | 16 /* enable GZIP format */,
+        8,
+        Z_DEFAULT_STRATEGY
+    ) != Z_OK) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "deflateInit2", EINVAL
+        );
+    }
+
+    zs.next_in = (uint8_t *)data;
+    zs.avail_in = length;
+
+    do {
+        zs.avail_out = ND_ZLIB_CHUNK_SIZE;
+        zs.next_out = chunk;
+        if ((rc = deflate(&zs, Z_FINISH)) == Z_STREAM_ERROR) {
+            throw ndSystemException(
+                __PRETTY_FUNCTION__, "deflate", EINVAL
+            );
+        }
+        for (size_t i = 0;
+            i < ND_ZLIB_CHUNK_SIZE - zs.avail_out; i++) {
+            output.push_back(chunk[i]);
+        }
+    } while (zs.avail_out == 0);
+
+    deflateEnd(&zs);
+
+    if (rc != Z_STREAM_END) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "deflate", EINVAL
+        );
+    }
+#if 0
+    nd_dprintf(
+        "%s: payload compressed: %lu -> %lu: %.1f%%\n",
+        __PRETTY_FUNCTION__, length, output.size(),
+        100.0f - ((float)output.size() * 100.0f / (float)length)
+    );
+#endif
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

@@ -195,6 +195,31 @@ ndPluginSink::~ndPluginSink()
 #endif
 }
 
+ndPluginSinkPayload *ndPluginSinkPayload::Create(
+    size_t length, const uint8_t *data,
+    const ndPlugin::Channels &channels, uint8_t flags)
+{
+    ndPluginSinkPayload *p = nullptr;
+
+    if (! (flags & ndPlugin::DF_GZ_DEFLATE))
+        p = new ndPluginSinkPayload(length, data, channels, flags);
+    else {
+        vector<uint8_t> buffer;
+        nd_gz_deflate(length, data, buffer);
+        p = new ndPluginSinkPayload(
+            buffer.size(), &buffer[0], channels, flags
+        );
+    }
+
+    if (p == nullptr) {
+        throw ndSystemException(__PRETTY_FUNCTION__,
+            "new sink payload", ENOMEM
+        );
+    }
+
+    return p;
+}
+
 void ndPluginSink::QueuePayload(ndPluginSinkPayload *payload)
 {
     Lock();
@@ -356,12 +381,12 @@ ndPluginProcessor::~ndPluginProcessor()
 
 void ndPluginProcessor::DispatchSinkPayload(
     const string &target, const ndPlugin::Channels &channels,
-    size_t length, const uint8_t *payload)
+    size_t length, const uint8_t *payload, uint8_t flags)
 {
     ndInstance& ndi = ndInstance::GetInstance();
 
     ndPluginSinkPayload *sp = ndPluginSinkPayload::Create(
-        length, payload, channels
+        length, payload, channels, flags
     );
 
     if (ndi.plugins.DispatchSinkPayload(target, sp))
@@ -376,11 +401,11 @@ void ndPluginProcessor::DispatchSinkPayload(
     const string &target, const ndPlugin::Channels &channels,
     const json &j, uint8_t flags)
 {
-    if ((flags & DF_FORMAT_MSGPACK)) {
+    if ((flags & ndPlugin::DF_FORMAT_MSGPACK)) {
         vector<uint8_t> output;
         output = json::to_msgpack(j);
 
-        if ((flags & DF_ADD_HEADER)) {
+        if ((flags & ndPlugin::DF_ADD_HEADER)) {
             json jheader;
             jheader["length"] = output.size();
 
@@ -388,19 +413,21 @@ void ndPluginProcessor::DispatchSinkPayload(
             header = json::to_msgpack(jheader);
 
             DispatchSinkPayload(
-                target, channels, header
+                target, channels, header, flags
             );
         }
 
         DispatchSinkPayload(
-            target, channels, output
+            target, channels, output, flags
         );
     }
     else {
         string output;
         nd_json_to_string(j, output, ndGC_DEBUG);
 
-        if ((flags & DF_ADD_HEADER)) {
+        flags |= ndPlugin::DF_FORMAT_JSON;
+
+        if ((flags & ndPlugin::DF_ADD_HEADER)) {
             output.append("\n");
 
             json jheader;
@@ -411,14 +438,14 @@ void ndPluginProcessor::DispatchSinkPayload(
             header.append("\n");
 
             DispatchSinkPayload(
-                target, channels,
-                header.size(), (const uint8_t *)header.c_str()
+                target, channels, header.size(),
+                (const uint8_t *)header.c_str(), flags
             );
         }
 
         DispatchSinkPayload(
             target, channels,
-            output.size(), (const uint8_t *)output.c_str()
+            output.size(), (const uint8_t *)output.c_str(), flags
         );
     }
 }
