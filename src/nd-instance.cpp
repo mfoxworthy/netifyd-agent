@@ -2122,6 +2122,9 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 
     ndInterface::UpdateAddrs(interfaces);
 
+    for (auto &it : interfaces)
+        it.second.NextEndpointSnapshot();
+
 #ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_INTERFACES, &interfaces
