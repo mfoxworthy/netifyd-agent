@@ -1097,7 +1097,7 @@ ndLogDirectory::~ndLogDirectory()
     Close();
 }
 
-FILE *ndLogDirectory::Open(void)
+FILE *ndLogDirectory::Open(const string &ext)
 {
     if (hf_cur != NULL) {
         nd_dprintf("Log file already open; close or discard first: %s\n",
@@ -1115,10 +1115,10 @@ FILE *ndLogDirectory::Open(void)
         char stamp[_ND_LOG_FILE_STAMP_SIZE];
         strftime(stamp, _ND_LOG_FILE_STAMP_SIZE, _ND_LOG_FILE_STAMP, &tm_now);
 
-        filename = prefix + stamp + suffix;
+        filename = prefix + stamp + suffix + ext;
     }
     else
-        filename = prefix + suffix;
+        filename = prefix + suffix + ext;
 
     string full_path = path + "/." + filename;
 

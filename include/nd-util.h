@@ -140,7 +140,7 @@ public:
     );
     virtual ~ndLogDirectory();
 
-    FILE *Open(void);
+    FILE *Open(const string &ext = "");
     void Close(void);
     void Discard(void);
 
