@@ -145,6 +145,37 @@ public:
         stats += (*this);
         Reset();
     }
+
+    template <class T>
+    void Encode(T &output) const {
+        serialize(output, { "raw" }, pkt.raw);
+        serialize(output, { "ethernet" }, pkt.eth);
+        serialize(output, { "mpls" }, pkt.mpls);
+        serialize(output, { "pppoe" }, pkt.pppoe);
+        serialize(output, { "vlan" }, pkt.vlan);
+        serialize(output, { "fragmented" }, pkt.frags);
+        serialize(output, { "discarded" }, pkt.discard);
+        serialize(output, { "discarded_bytes" }, pkt.discard_bytes);
+        serialize(output, { "largest_bytes" }, pkt.maxlen);
+        serialize(output, { "ip" }, pkt.ip);
+        serialize(output, { "tcp" }, pkt.tcp);
+        serialize(output, { "tcp_seq_error" }, pkt.tcp_seq_error);
+        serialize(output, { "tcp_resets" }, pkt.tcp_resets);
+        serialize(output, { "udp" }, pkt.udp);
+        serialize(output, { "icmp" }, pkt.icmp);
+        serialize(output, { "igmp" }, pkt.igmp);
+        serialize(output, { "ip_bytes" }, pkt.ip_bytes);
+        serialize(output, { "wire_bytes" }, pkt.wire_bytes);
+        serialize(output, { "flow_dropped" }, flow.dropped);
+        serialize(output, { "queue_dropped" }, pkt.queue_dropped);
+        serialize(output, { "capture_dropped" }, pkt.capture_dropped);
+        serialize(output, { "capture_filtered" }, pkt.capture_filtered);
+
+        // XXX: Deprecated
+        serialize(output, { "pcap_recv" }, pkt.raw);
+        serialize(output, { "pcap_drop" }, pkt.capture_dropped);
+        serialize(output, { "pcap_ifdrop" }, (uint32_t)0);
+    }
 };
 
 #endif // _ND_H
