@@ -39,7 +39,7 @@ libnetifyd_la_SOURCES = nd-addr.cpp nd-apps.cpp nd-base64.cpp nd-capture.cpp \
 	nd-risks.cpp nd-sha1.c nd-thread.cpp nd-util.cpp
 
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-libnetifyd_la_LDFLAGS = -version-info 2:1:0
+libnetifyd_la_LDFLAGS = -version-info $(LIBNETIFY_VERSION)
 libnetifyd_la_LIBADD = $(top_srcdir)/libs/ndpi/src/lib/libndpi.a $(LIBCURL_LIBS) $(ZLIB_LIBS)
 
 if USE_NETLINK

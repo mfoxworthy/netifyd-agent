@@ -10,5 +10,5 @@ Name: @PACKAGE_STRING@ Development Files
 Description: @PACKAGE_NAME@ development files
 URL: @PACKAGE_URL@
 Version: @VERSION@
-Libs: -L${libdir} -l@PACKAGE_TARNAME@
+Libs: -L${libdir} -l@PACKAGE_TARNAME@.@LIBNETIFY_VERSION_SO@
 Cflags: @ND_DEFINES@ -I${includedir}/@PACKAGE_TARNAME@ -I${includedir}/ndpi

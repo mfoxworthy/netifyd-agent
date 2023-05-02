@@ -137,9 +137,7 @@
 #define ND_SITE_UUID_NULL       "-"
 #define ND_SITE_UUID_LEN        36
 
-// Compress data if it's over this size (bytes)
-#define ND_COMPRESS_SIZE       (1024 * 10)
-#define ND_ZLIB_CHUNK_SIZE      16384   // Compress this many bytes at a time
+#define ND_ZLIB_CHUNK_SIZE      16384
 
 #define ND_SOCKET_PORT          "7150"
 #define ND_SOCKET_PATH_MODE     0640

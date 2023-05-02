@@ -6,7 +6,7 @@ m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.68])
-AC_INIT([Netify Agent], [4.5.3],
+AC_INIT([Netify Agent], [4.5.4],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
     [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
@@ -17,6 +17,20 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
 AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED([_ND_HOST_CPU], ["${host_cpu}"], [Defines the canonical host.])
+
+# Library version
+# https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+m4_define([lnv_current], [3])
+m4_define([lnv_revision], [0])
+m4_define([lnv_age], [0])
+lt_version="lnv_current:lnv_revision:lnv_age"
+AC_SUBST([LIBNETIFY_VERSION], [$lt_version])
+
+# Shared object filename: (CURRENT - AGE).AGE.REVISION
+m4_define([lnv_so], m4_eval(lnv_current - lnv_age))
+#m4_define([lnv_so], [m4_eval([lnv_current] - [lnv_age])])
+so_version="so.lnv_so"
+AC_SUBST([LIBNETIFY_VERSION_SO], [$so_version])
 
 # Checks for programs.
 AC_PROG_CC
