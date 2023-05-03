@@ -175,8 +175,6 @@ ndInstance::ndInstance(const string &tag)
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(nullptr),
 #endif
-    sig_update(-1), sig_update_napi(-1),
-    timer_update(nullptr), timer_update_napi(nullptr),
     tag(tag.empty() ? PACKAGE_TARNAME : tag),
     self(PACKAGE_TARNAME), self_pid(-1),
     conf_filename(ND_CONF_FILE_NAME)
@@ -189,11 +187,6 @@ ndInstance::~ndInstance()
     if (! ShouldTerminate()) Terminate();
 
     Join();
-
-    if (timer_update != nullptr)
-        timer_delete(timer_update);
-    if (ndGC_USE_NAPI && timer_update_napi != nullptr)
-        timer_delete(timer_update_napi);
 
     for (unsigned p = 0; p < 2; p++) {
         if (thread_napi) {
@@ -775,38 +768,19 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
 bool ndInstance::InitializeTimers(
     int sig_update, int sig_update_napi)
 {
-    this->sig_update = sig_update;
-    this->sig_update_napi = sig_update_napi;
-
-    struct sigevent sigev;
-    memset(&sigev, 0, sizeof(struct sigevent));
-    sigev.sigev_notify = SIGEV_SIGNAL;
-    sigev.sigev_signo = sig_update;
-
-    if (timer_create(CLOCK_MONOTONIC, &sigev, &timer_update) < 0) {
-        nd_printf("%s: Error creating update timer: %s\n",
-            tag.c_str(), strerror(errno)
-        );
-        return false;
+    try {
+        timer_update.Create(sig_update);
+        if (ndGC_USE_NAPI)
+            timer_update_napi.Create(sig_update_napi);
     }
+    catch (exception &e) {
+        nd_printf("%s: Error creating timer(s): %s\n",
+            tag.c_str(), e.what()
+        );
 
-    if (ndGC_USE_NAPI) {
-        memset(&sigev, 0, sizeof(struct sigevent));
-        sigev.sigev_notify = SIGEV_SIGNAL;
-        sigev.sigev_signo = sig_update_napi;
+        exit_code = EXIT_FAILURE;
 
-        if (timer_create(
-            CLOCK_MONOTONIC, &sigev, &timer_update_napi) < 0) {
-            nd_printf("%s: Error creating API update timer: %s\n",
-                tag.c_str(), strerror(errno)
-            );
-            exit_code = EXIT_FAILURE;
-
-            timer_delete(timer_update);
-            timer_update = nullptr;
-
-            return false;
-        }
+        return false;
     }
 
     return true;
@@ -1669,33 +1643,40 @@ void *ndInstance::ndInstance::Entry(void)
         goto ndInstance_EntryReturn;
     }
 
-    if (timer_update != nullptr) {
+    try {
         struct itimerspec itspec;
         itspec.it_value.tv_sec = ndGC.update_interval;
         itspec.it_value.tv_nsec = 0;
         itspec.it_interval.tv_sec = ndGC.update_interval;
         itspec.it_interval.tv_nsec = 0;
 
-        timer_settime(timer_update, 0, &itspec, nullptr);
-    }
+        timer_update.Set(itspec);
 
-    if (ndGC_USE_NAPI && timer_update_napi != nullptr) {
-        time_t ttl = 3; // Delay first signal...
-        if (categories.GetLastUpdate() > 0) {
-            time_t age = time(NULL) - categories.GetLastUpdate();
-            if (age < ndGC.ttl_napi_update)
-                ttl = ndGC.ttl_napi_update - age;
-            else if (age == ndGC.ttl_napi_update)
-                ttl = ndGC.ttl_napi_update;
+        if (ndGC_USE_NAPI) {
+            time_t ttl = 3; // Delay first signal...
+            if (categories.GetLastUpdate() > 0) {
+                time_t age = time(NULL) - categories.GetLastUpdate();
+                if (age < ndGC.ttl_napi_update)
+                    ttl = ndGC.ttl_napi_update - age;
+                else if (age == ndGC.ttl_napi_update)
+                    ttl = ndGC.ttl_napi_update;
+            }
+
+            itspec.it_value.tv_sec = ttl;
+            itspec.it_value.tv_nsec = 0;
+            itspec.it_interval.tv_sec = ndGC.ttl_napi_update;
+            itspec.it_interval.tv_nsec = 0;
+
+            timer_update_napi.Set(itspec);
         }
-
-        struct itimerspec itspec;
-        itspec.it_value.tv_sec = ttl;
-        itspec.it_value.tv_nsec = 0;
-        itspec.it_interval.tv_sec = ndGC.ttl_napi_update;
-        itspec.it_interval.tv_nsec = 0;
-
-        timer_settime(timer_update_napi, 0, &itspec, nullptr);
+    }
+    catch (exception &e) {
+        nd_printf(
+            "%s: Exception while starting timer(s): %s\n",
+            tag.c_str(), e.what()
+        );
+        exit_code = EXIT_FAILURE;
+        goto ndInstance_EntryReturn;
     }
 
     do {

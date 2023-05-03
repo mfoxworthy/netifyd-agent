@@ -1373,4 +1373,51 @@ void nd_gz_deflate(
 #endif
 }
 
+void ndTimer::Create(int sig)
+{
+    this->sig = sig;
+
+    if (valid) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "timer_create", EEXIST
+        );
+    }
+
+    struct sigevent sigev;
+    memset(&sigev, 0, sizeof(struct sigevent));
+    sigev.sigev_notify = SIGEV_SIGNAL;
+    sigev.sigev_signo = sig;
+
+    if (timer_create(CLOCK_MONOTONIC, &sigev, &id) < 0) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "timer_create", errno
+        );
+    }
+
+    valid = true;
+}
+
+void ndTimer::Reset(void)
+{
+    if (valid) {
+        timer_delete(id);
+        valid = false;
+    }
+}
+
+void ndTimer::Set(const struct itimerspec &itspec)
+{
+    if (! valid) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "timer_settime", EINVAL
+        );
+    }
+
+    if (timer_settime(id, 0, &itspec, nullptr) != 0) {
+        throw ndSystemException(
+            __PRETTY_FUNCTION__, "timer_settime", errno
+        );
+    }
+}
+
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

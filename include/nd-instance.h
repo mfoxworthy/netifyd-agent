@@ -265,9 +265,11 @@ public:
             ndThread::SendIPC((uint32_t)ndIPC_TERMINATE);
             break;
         default:
-            if (sig_update >= 0 && sig == sig_update)
+            if (timer_update.GetSignal() >= 0 &&
+                sig == timer_update.GetSignal())
                 ndThread::SendIPC((uint32_t)ndIPC_UPDATE);
-            else if (sig_update_napi >= 0 && sig == sig_update_napi)
+            else if (timer_update_napi.GetSignal() >= 0 &&
+                sig == timer_update_napi.GetSignal())
                 ndThread::SendIPC((uint32_t)ndIPC_UPDATE_NAPI);
             break;
         }
@@ -323,8 +325,7 @@ protected:
 
     void ProcessFlows(void);
 
-    int sig_update, sig_update_napi;
-    timer_t timer_update, timer_update_napi;
+    ndTimer timer_update, timer_update_napi;
 
     string tag;
     string self;

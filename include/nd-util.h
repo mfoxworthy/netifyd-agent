@@ -168,5 +168,25 @@ void nd_expand_variables(
 void nd_gz_deflate(
     size_t length, const uint8_t *data, vector<uint8_t> &output);
 
+class ndTimer
+{
+public:
+    ndTimer(void) : sig(-1), valid(false), id(nullptr) { }
+    virtual ~ndTimer() { Reset(); }
+
+    void Create(int sig);
+    void Reset(void);
+
+    void Set(const struct itimerspec &itspec);
+
+    inline bool IsValid(void) const { return valid; }
+    inline int GetSignal(void) const { return sig; }
+
+protected:
+    int sig;
+    bool valid;
+    timer_t id;
+};
+
 #endif // _ND_UTIL_H
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
