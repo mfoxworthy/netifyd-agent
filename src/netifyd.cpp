@@ -475,10 +475,11 @@ int main(int argc, char *argv[])
     if (ndCR_Result(result) != ndInstance::ndCR_OK)
         return ndCR_Code(result);
 
-    if (instance.InitializeTimers() == false)
+    if (instance.Daemonize() == false)
         return 1;
 
-    instance.Daemonize();
+    if (instance.InitializeTimers() == false)
+        return 1;
 
     rc = instance.Run();
 

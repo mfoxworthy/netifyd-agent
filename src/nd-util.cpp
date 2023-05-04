@@ -1379,7 +1379,7 @@ void ndTimer::Create(int sig)
 
     if (valid) {
         throw ndSystemException(
-            __PRETTY_FUNCTION__, "timer_create", EEXIST
+            __PRETTY_FUNCTION__, "invalid timer", EEXIST
         );
     }
 
@@ -1409,7 +1409,7 @@ void ndTimer::Set(const struct itimerspec &itspec)
 {
     if (! valid) {
         throw ndSystemException(
-            __PRETTY_FUNCTION__, "timer_settime", EINVAL
+            __PRETTY_FUNCTION__, "invalid timer", EINVAL
         );
     }
 
