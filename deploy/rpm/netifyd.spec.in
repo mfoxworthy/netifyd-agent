@@ -190,6 +190,8 @@ exit 0
 %defattr(-,root,root)
 %dir %{_localstatedir}/run/%{name}
 %dir %attr(750,root,root) %{statedir_pdata}
+%dir %attr(750,root,root) %{statedir_pdata}/plugins.d
+%dir %attr(750,root,root) %{statedir_pdata}/domains.d
 %dir %attr(750,root,root) %{statedir_vdata}
 %attr(755,root,root) %{_datadir}/%{name}/
 %attr(755,root,root) %{_sysconfdir}/init.d/%{name}
