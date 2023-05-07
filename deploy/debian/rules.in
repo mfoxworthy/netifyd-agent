@@ -14,6 +14,8 @@ export DESTDIR=debian/@PACKAGE_TARNAME@
 %:
 	dh $@ --parallel
 
+#override_dh_auto_configure:
+#	dh_auto_configure -- --disable-libtcmalloc
 
 override_dh_auto_test:
 	DEB_BUILD_OPTIONS=nocheck dh_auto_test
