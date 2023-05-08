@@ -75,8 +75,8 @@ using namespace std;
 #include "nd-protos.h"
 #include "nd-flow.h"
 
-// Enable flow hash cache debug logging
-//#define _ND_DEBUG_FHC 1
+// Enable lower map debug output
+//#define _ND_DEBUG_LOWER_MAP	1
 
 ndFlow::ndFlow(ndInterface &iface)
     : iface(iface), dpi_thread_id(-1),
@@ -500,12 +500,6 @@ void ndFlow::GetLowerMap(
     ndAddr::Type ut,
     uint8_t &lm, uint8_t &ot)
 {
-#if 0
-    nd_dprintf("lower type: %s: %u, upper_type: %s: %u\n",
-        lower_addr.GetString().c_str(), lt,
-        upper_addr.GetString().c_str(), ut
-    );
-#endif
     if (lt == ndAddr::atERROR ||
         ut == ndAddr::atERROR) {
         ot = OTHER_ERROR;
@@ -556,13 +550,11 @@ void ndFlow::GetLowerMap(
         lm = LOWER_LOCAL;
         ot = OTHER_LOCAL;
     }
-#if 0
     // TODO: Further investigation required!
     // This appears to catch corrupted IPv6 headers.
     // Spend some time to figure out if there are any
     // possible over-matches for different methods of
     // deployment (gateway/port mirror modes).
-#endif
     else if (ip_version != 6 &&
         lt == ndAddr::atRESERVED &&
         ut == ndAddr::atRESERVED) {
@@ -592,8 +584,35 @@ void ndFlow::GetLowerMap(
         lm = LOWER_LOCAL;
         ot = OTHER_REMOTE;
     }
-#if 0
-    nd_dprintf("lower map: %u, other type: %u\n", lm, ot);
+#if _ND_DEBUG_LOWER_MAP
+    const static vector<string> lower_maps = {
+        "LOWER_UNKNOWN", "LOWER_LOCAL", "LOWER_OTHER"
+    };
+    const static vector<string> other_types = {
+        "OTHER_UNKNOWN", "OTHER_UNSUPPORTED", "OTHER_LOCAL",
+        "OTHER_MULTICAST", "OTHER_BROADCAST", "OTHER_REMOTE",
+        "OTHER_ERROR"
+    };
+    const static vector<string> at = {
+        "atNONE",
+        "atLOCAL",
+        "atLOCALNET",
+        "atRESERVED",
+        "atMULTICAST",
+        "atBROADCAST",
+        "atOTHER"
+    };
+
+    if (lm == LOWER_UNKNOWN) {
+       nd_dprintf("lower map: %s, other type: %s\n",
+           lower_maps[lm].c_str(), other_types[ot].c_str());
+        nd_dprintf("lower type: %s: %s, upper_type: %s: %s\n",
+            lower_addr.GetString().c_str(),
+                (lt == ndAddr::atERROR) ? "atERROR" : at[lt].c_str(),
+            upper_addr.GetString().c_str(),
+                (ut == ndAddr::atERROR) ? "atERROR" : at[ut].c_str()
+       );
+    }
 #endif
 }
 
