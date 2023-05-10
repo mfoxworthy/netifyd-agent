@@ -1139,6 +1139,7 @@ bool ndInstance::SaveAgentStatus(const nd_interface_stats &stats)
         json_string.append("\n");
 
         nd_file_save(ndGC.path_agent_status, json_string);
+
         return true;
     }
     catch (exception &e) {
@@ -1413,9 +1414,10 @@ bool ndInstance::DisplayAgentStatus(void)
                 catch (...) { }
 
                 fprintf(stderr,
-                    "%s%s%s %s [%s/%s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
+                    "%s%s%s %s [%s %s %s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
                     color, icon, ND_C_RESET, iface.c_str(),
                     j["role"].get<string>().c_str(),
+                    ND_I_RARROW,
                     j["capture_type"].get<string>().c_str(),
                     colors[0], state.c_str(), ND_C_RESET,
                     colors[1], dropped_percent, ND_C_RESET
@@ -2286,6 +2288,9 @@ void ndInstance::ProcessFlows(void)
         flow_buckets->Release(b);
     }
 
+    status.flows_prev = status.flows.load();
+    status.flows -= status.flows_purged;
+
     nd_dprintf(
         "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
         "idle: %lu, in_use: %lu\n", tag.c_str(),
@@ -2300,8 +2305,6 @@ void ndInstance::ProcessFlows(void)
         tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2
     );
 #endif
-    status.flows_prev = status.flows.load();
-    status.flows -= status.flows_purged;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

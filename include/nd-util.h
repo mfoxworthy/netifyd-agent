@@ -29,6 +29,7 @@
 #define ND_I_WARN           "!"
 #define ND_I_FAIL           "✗"
 #define ND_I_NOTE           "↪"
+#define ND_I_RARROW         "→"
 
 void *nd_mem_alloc(size_t size);
 

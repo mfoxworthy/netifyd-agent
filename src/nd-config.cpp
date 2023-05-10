@@ -385,8 +385,9 @@ bool ndGlobalConfig::Load(const string &filename)
     }
 
     // TPv3 capture defaults section
+    nd_capture_type ct = ndCT_TPV3;
     if (! LoadCaptureSettings("capture-defaults-tpv3",
-        ndCT_TPV3, static_cast<void *>(&tpv3_defaults)))
+        ct, static_cast<void *>(&tpv3_defaults)))
         return false;
 
     // Flow Hash Cache section
@@ -1117,7 +1118,7 @@ enum nd_capture_type ndGlobalConfig::LoadCaptureType(
 }
 
 bool ndGlobalConfig::LoadCaptureSettings(
-    const string &section, nd_capture_type type, void *config)
+    const string &section, nd_capture_type &type, void *config)
 {
     INIReader *r = static_cast<INIReader *>(reader);
 

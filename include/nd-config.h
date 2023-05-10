@@ -256,7 +256,7 @@ protected:
     enum nd_capture_type LoadCaptureType(
         const string &section, const string &key);
     bool LoadCaptureSettings(
-        const string &section, nd_capture_type type, void *config);
+        const string &section, nd_capture_type &type, void *config);
 
     void UpdatePaths(void);
 
