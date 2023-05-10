@@ -32,6 +32,7 @@ enum nd_fhc_save {
 enum nd_capture_type {
     ndCT_NONE,
     ndCT_PCAP,
+    ndCT_PCAP_OFFLINE,
     ndCT_TPV3,
     ndCT_NFQ,
 };
@@ -120,7 +121,7 @@ enum nd_global_flags {
 
 typedef struct
 {
-    char *capture_filename;
+    string capture_filename;
 } nd_config_pcap;
 
 typedef struct
@@ -254,7 +255,7 @@ protected:
 #endif
     enum nd_capture_type LoadCaptureType(
         const string &section, const string &key);
-    void LoadCaptureSettings(
+    bool LoadCaptureSettings(
         const string &section, nd_capture_type type, void *config);
 
     void UpdatePaths(void);

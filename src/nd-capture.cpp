@@ -301,13 +301,10 @@ ndCaptureThread::ndCaptureThread(
 {
     capture_state = STATE_INIT;
 
-    nd_iface_name(iface.ifname, tag);
-
-    string pcap_file;
-    nd_capture_filename(iface.ifname, pcap_file);
-    if (! pcap_file.size() && ndGC_REPLAY_DELAY) {
+    if (ndGC_REPLAY_DELAY &&
+        iface.capture_type != ndCT_PCAP_OFFLINE) {
         nd_printf(
-            "%s: WARNING: replay delay enabled for offline capture!",
+            "%s: WARNING: replay delay enabled for online capture!",
             tag.c_str()
         );
         nd_dprintf("%s: disabling replay delay.\n", tag.c_str());

@@ -833,6 +833,11 @@ public:
         case ndCT_PCAP:
             serialize(output, { "capture_type" }, "PCAP");
             break;
+        case ndCT_PCAP_OFFLINE:
+            serialize(output, { "capture_type" },
+                config.pcap->capture_filename
+            );
+            break;
         case ndCT_TPV3:
             serialize(output, { "capture_type" }, "TPv3");
             break;

@@ -428,9 +428,6 @@ bool ndFlow::HasMDNSDomainName(void) const
 
 void ndFlow::Print(void) const
 {
-    string iface_name;
-    nd_iface_name(iface.ifname, iface_name);
-
     const char
         *lower_name = lower_addr.GetString().c_str(),
         *upper_name = upper_addr.GetString().c_str();
@@ -440,7 +437,7 @@ void ndFlow::Print(void) const
 
     nd_flow_printf(
         "%s: [%c%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
-        iface_name.c_str(),
+        iface.ifname.c_str(),
         (iface.role == ndIR_LAN) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
         flags.ip_nat.load() ? 'n' : '-',

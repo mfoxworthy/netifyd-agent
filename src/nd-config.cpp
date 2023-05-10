@@ -385,9 +385,9 @@ bool ndGlobalConfig::Load(const string &filename)
     }
 
     // TPv3 capture defaults section
-    LoadCaptureSettings("capture-defaults-tpv3",
-        ndCT_TPV3, static_cast<void *>(&tpv3_defaults)
-    );
+    if (! LoadCaptureSettings("capture-defaults-tpv3",
+        ndCT_TPV3, static_cast<void *>(&tpv3_defaults)))
+        return false;
 
     // Flow Hash Cache section
     ndGC_SetFlag(ndGF_USE_FHC,
@@ -734,6 +734,7 @@ bool ndGlobalConfig::AddInterface(const string &iface,
     if (config == nullptr) {
         switch (type) {
         case ndCT_PCAP:
+        case ndCT_PCAP_OFFLINE:
             config = static_cast<void *>(new nd_config_pcap);
             if (config == nullptr) {
                 throw ndSystemException(__PRETTY_FUNCTION__,
@@ -772,6 +773,7 @@ bool ndGlobalConfig::AddInterface(const string &iface,
     if (! result.second) {
         switch (type) {
         case ndCT_PCAP:
+        case ndCT_PCAP_OFFLINE:
             delete static_cast<nd_config_pcap *>(config);
             break;
         case ndCT_TPV3:
@@ -904,12 +906,14 @@ bool ndGlobalConfig::AddInterfaces(void)
         switch (type) {
         case ndCT_PCAP:
             config = static_cast<void *>(new nd_config_pcap);
-            LoadCaptureSettings(s, type, config);
+            if (! LoadCaptureSettings(s, type, config))
+                return false;
             break;
         case ndCT_TPV3:
             config = static_cast<void *>(new nd_config_tpv3);
             memcpy(config, &tpv3_defaults, sizeof(nd_config_tpv3));
-            LoadCaptureSettings(s, type, config);
+            if (! LoadCaptureSettings(s, type, config))
+                return false;
             break;
         case ndCT_NFQ:
             p = iface.find_first_of("0123456789");
@@ -921,7 +925,8 @@ bool ndGlobalConfig::AddInterfaces(void)
                 return false;
             }
             config = static_cast<void *>(new nd_config_nfq);
-            LoadCaptureSettings(s, type, config);
+            if (! LoadCaptureSettings(s, type, config))
+                return false;
             static_cast<nd_config_nfq *>(
                 config
             )->queue_id = (unsigned)strtol(
@@ -1111,13 +1116,28 @@ enum nd_capture_type ndGlobalConfig::LoadCaptureType(
     return ct;
 }
 
-void ndGlobalConfig::LoadCaptureSettings(
+bool ndGlobalConfig::LoadCaptureSettings(
     const string &section, nd_capture_type type, void *config)
 {
     INIReader *r = static_cast<INIReader *>(reader);
 
     if (type == ndCT_PCAP) {
-        nd_config_pcap *pcap __attribute__((unused)) = static_cast<nd_config_pcap *>(config);
+        nd_config_pcap *pcap = static_cast<nd_config_pcap *>(config);
+        string capture_filename = r->Get(
+            section, "filename", ""
+        );
+
+        if (! capture_filename.empty()) {
+            if (! nd_file_exists(capture_filename)) {
+                fprintf(stderr, "Capture file not found: %s\n",
+                    capture_filename.c_str()
+                );
+                return false;
+            }
+
+            type = ndCT_PCAP_OFFLINE;
+            pcap->capture_filename = capture_filename;
+        }
     }
     else if (type == ndCT_TPV3) {
         nd_config_tpv3 *tpv3 = static_cast<nd_config_tpv3 *>(config);
@@ -1161,6 +1181,7 @@ void ndGlobalConfig::LoadCaptureSettings(
                     fprintf(stderr, "Invalid fanout flag: %s\n",
                         flag.c_str()
                     );
+                    return false;
                 }
             }
         }
@@ -1188,6 +1209,8 @@ void ndGlobalConfig::LoadCaptureSettings(
         nfq->instances = (unsigned)r->GetInteger(
             section, "queue_instances", 1);
     }
+
+    return true;
 }
 
 void ndGlobalConfig::UpdatePaths(void)

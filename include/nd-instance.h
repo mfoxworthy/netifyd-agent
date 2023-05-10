@@ -90,6 +90,7 @@ class ndConntrackThread;
 
 typedef map<int16_t, ndDetectionThread *> nd_detection_threads;
 typedef map<string, vector<ndCaptureThread *>> nd_capture_threads;
+typedef map<string, pair<uint8_t, ndPacketStats>> nd_interface_stats;
 
 class ndInstance : public ndThread, public ndSerializer
 {
@@ -123,6 +124,7 @@ public:
         ndCR_FORCE_RESULT,
         ndCR_GENERATE_UUID,
         ndCR_HASH_TEST,
+        ndCR_INVALID_INTERFACE,
         ndCR_INVALID_INTERFACES,
         ndCR_INVALID_OPTION,
         ndCR_INVALID_VALUE,
@@ -130,8 +132,8 @@ public:
         ndCR_LOAD_FAILURE,
         ndCR_LOOKUP_ADDR,
         ndCR_PROVISION_UUID,
-        ndCR_USAGE_OR_VERSION,
         ndCR_SAVE_UUID_FAILURE,
+        ndCR_USAGE_OR_VERSION,
     };
 
 #define ndCR_Pack(r, c) ((c << 16) + (r & 0x0000ffff))
@@ -184,9 +186,12 @@ public:
 
     void CommandLineHelp(bool version_only = false);
 
+    bool AddInterface(const string &ifname,
+        nd_interface_role role, nd_capture_type type);
+
     bool CheckAgentUUID(void);
 
-    bool SaveAgentStatus(void);
+    bool SaveAgentStatus(const nd_interface_stats &stats);
     bool DisplayAgentStatus(void);
 
     int Run(void);

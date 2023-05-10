@@ -116,16 +116,18 @@ ndCapturePcap::ndCapturePcap(
     ndDNSHintCache *dhc,
     uint8_t private_addr)
     : ndCaptureThread(
-        ndCT_PCAP,
+        iface.capture_type,
         cpu, iface, threads_dpi, dhc, private_addr
     ),
-    pcap(NULL), pcap_fd(-1),
-    pkt_header(NULL), pkt_data(NULL),
+    pcap(nullptr), pcap_fd(-1),
+    pkt_header(nullptr), pkt_data(nullptr),
     pcs_last{0}
 {
-    nd_capture_filename(iface.ifname, pcap_file);
-    if (pcap_file.size())
-        nd_dprintf("%s: capture file: %s\n", tag.c_str(), pcap_file.c_str());
+    if (iface.capture_type == ndCT_PCAP_OFFLINE) {
+        nd_dprintf("%s: capture file: %s\n",
+            tag.c_str(), iface.config.pcap->capture_filename.c_str()
+        );
+    }
 
     nd_dprintf("%s: PCAP capture thread created.\n", tag.c_str());
 }
@@ -134,7 +136,7 @@ ndCapturePcap::~ndCapturePcap()
 {
     Join();
 
-    if (pcap != NULL) { pcap_close(pcap); pcap = NULL; }
+    if (pcap != nullptr) { pcap_close(pcap); pcap = nullptr; }
 
     nd_dprintf("%s: PCAP capture thread destroyed.\n", tag.c_str());
 }
@@ -152,14 +154,14 @@ void *ndCapturePcap::Entry(void)
 
     while (! ShouldTerminate()) {
 
-        if (pcap != NULL) {
+        if (pcap != nullptr) {
 
             FD_ZERO(&fds_read);
 //            FD_SET(fd_ipc[0], &fds_read);
             FD_SET(pcap_fd, &fds_read);
 
             tv.tv_sec = 1; tv.tv_usec = 0;
-            rc = select(sd_max + 1, &fds_read, NULL, NULL, &tv);
+            rc = select(sd_max + 1, &fds_read, nullptr, nullptr, &tv);
 
             if (rc == 0) continue;
             else if (rc == -1)
@@ -208,26 +210,26 @@ void *ndCapturePcap::Entry(void)
 
                 if (rc == -1) {
                     nd_printf("%s: %s.\n", tag.c_str(), pcap_geterr(pcap));
-                    if (pcap_file.size())
+                    if (iface.capture_type == ndCT_PCAP_OFFLINE)
                         Terminate();
                     else {
                         pcap_close(pcap);
-                        pcap = NULL;
+                        pcap = nullptr;
                         sleep(1);
                     }
                 }
                 else if (rc == -2) {
-                    nd_dprintf(
-                        "%s: end of capture file: %s\n",
-                        tag.c_str(), pcap_file.c_str());
-
+                    nd_dprintf("%s: end of capture file: %s\n", tag.c_str(),
+                        iface.config.pcap->capture_filename.c_str()
+                    );
                     Terminate();
                 }
             }
         }
         else if (! ShouldTerminate()) {
-            if (nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
-                ! (ifr.ifr_flags & IFF_UP)) {
+            if (iface.capture_type != ndCT_PCAP_OFFLINE && (
+                nd_ifreq(tag, SIOCGIFFLAGS, &ifr) == -1 ||
+                ! (ifr.ifr_flags & IFF_UP))) {
 
                 capture_state = STATE_OFFLINE;
 
@@ -242,7 +244,7 @@ void *ndCapturePcap::Entry(void)
 
             warnings = true;
 
-            if ((pcap = OpenCapture()) == NULL) {
+            if ((pcap = OpenCapture()) == nullptr) {
                 capture_state = STATE_OFFLINE;
                 sleep(1);
                 continue;
@@ -262,20 +264,21 @@ void *ndCapturePcap::Entry(void)
     nd_dprintf(
         "%s: PCAP capture ended on CPU: %lu\n", tag.c_str(), cpu >= 0 ? cpu : 0);
 
-    return NULL;
+    return nullptr;
 }
 
 pcap_t *ndCapturePcap::OpenCapture(void)
 {
-    pcap_t *pcap_new = NULL;
+    pcap_t *pcap_new = nullptr;
 
     memset(pcap_errbuf, 0, PCAP_ERRBUF_SIZE);
 
-    if (pcap_file.size()) {
-        if ((pcap_new = pcap_open_offline(pcap_file.c_str(), pcap_errbuf)) != NULL) {
-            tv_epoch = time(NULL);
+    if (iface.capture_type == ndCT_PCAP_OFFLINE) {
+        if ((pcap_new = pcap_open_offline(
+            iface.config.pcap->capture_filename.c_str(), pcap_errbuf)) != nullptr) {
+            tv_epoch = time(nullptr);
             nd_dprintf("%s: reading from capture file: %s: v%d.%d\n",
-                tag.c_str(), pcap_file.c_str(),
+                tag.c_str(), iface.config.pcap->capture_filename.c_str(),
                 pcap_major_version(pcap_new), pcap_minor_version(pcap_new));
         }
     }
@@ -287,7 +290,7 @@ pcap_t *ndCapturePcap::OpenCapture(void)
         );
 
 #if 0
-        if (pcap_new != NULL) {
+        if (pcap_new != nullptr) {
             bool adapter = false;
             int *pcap_tstamp_types, count;
             if ((count = pcap_list_tstamp_types(pcap_new, &pcap_tstamp_types)) > 0) {
@@ -311,12 +314,12 @@ pcap_t *ndCapturePcap::OpenCapture(void)
 #endif
     }
 
-    if (pcap_new == NULL)
+    if (pcap_new == nullptr)
         nd_printf("%s: pcap_open: %s\n", tag.c_str(), pcap_errbuf);
     else {
         capture_state = STATE_ONLINE;
 
-        if (pcap_file.empty()) {
+        if (iface.capture_type != ndCT_PCAP_OFFLINE) {
             if (pcap_setnonblock(pcap_new, 1, pcap_errbuf) == PCAP_ERROR)
                 nd_printf("%s: pcap_setnonblock: %s\n", tag.c_str(), pcap_errbuf);
         }
@@ -333,14 +336,14 @@ pcap_t *ndCapturePcap::OpenCapture(void)
                 nd_printf("%s: pcap_compile: %s\n",
                     tag.c_str(), pcap_geterr(pcap_new));
                 pcap_close(pcap_new);
-                return NULL;
+                return nullptr;
             }
 
             if (pcap_setfilter(pcap_new, &pcap_filter) < 0) {
                 nd_printf("%s: pcap_setfilter: %s\n",
                     tag.c_str(), pcap_geterr(pcap_new));
                 pcap_close(pcap_new);
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -350,7 +353,9 @@ pcap_t *ndCapturePcap::OpenCapture(void)
 
 void ndCapturePcap::GetCaptureStats(ndPacketStats &stats)
 {
-    if (! pcap_file.size() && pcap != NULL) {
+    if (pcap != nullptr &&
+        iface.capture_type != ndCT_PCAP_OFFLINE) {
+
         struct pcap_stat pcs;
         memset(&pcs, 0, sizeof(struct pcap_stat));
 

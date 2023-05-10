@@ -534,7 +534,8 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         case 'c':
             break;
         case 'E':
-            ndGC.AddInterface(optarg, ndIR_WAN, ndCT_PCAP);
+            if (! AddInterface(optarg, ndIR_WAN, ndCT_PCAP))
+                return ndCR_INVALID_INTERFACE;
             last_iface = optarg;
             break;
         case 'F':
@@ -553,7 +554,8 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             CommandLineHelp();
             return ndCR_USAGE_OR_VERSION;
         case 'I':
-            ndGC.AddInterface(optarg, ndIR_LAN, ndCT_PCAP);
+            if (! AddInterface(optarg, ndIR_LAN, ndCT_PCAP))
+                return ndCR_INVALID_INTERFACE;
             last_iface = optarg;
             break;
         case 'i':
@@ -679,6 +681,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             if (result.second) {
                 switch (i.second.first) {
                 case ndCT_PCAP:
+                case ndCT_PCAP_OFFLINE:
                     result.first->second.SetConfig(
                         static_cast<nd_config_pcap *>(
                             i.second.second
@@ -1029,8 +1032,8 @@ void ndInstance::CommandLineHelp(bool version_only)
             "  --dump-risks\n    Dump flow security risks.\n"
             "  --lookup-ip <addr>\n    Perform application query by IP address.\n"
             "\nCapture options:\n"
-            "  -I, --internal <interface>\n    Specify an internal (LAN) interface to capture from.\n"
-            "  -E, --external <interface>\n    Specify an external (WAN) interface to capture from.\n"
+            "  -I, --internal [<interface>|<file>]\n    Specify an internal (LAN) interface, or file, to capture from.\n"
+            "  -E, --external [<interface>|<file>]\n    Specify an external (WAN) interface, or file, to capture from.\n"
             "  -A, --device-address <address>\n    Interface/device option: consider address is assigned to interface.\n"
             "  -F, --device-filter <BPF expression>\n    Interface/device option: attach a BPF filter expression to interface.\n"
             "  -N, --device-peer <interface>\n    Interface/device option: associate interface with a peer (ex: PPPoE interface, pppX).\n"
@@ -1051,6 +1054,33 @@ void ndInstance::CommandLineHelp(bool version_only)
             ndGC.path_uuid_site.c_str()
         );
     }
+}
+
+bool ndInstance::AddInterface(const string &ifname,
+    nd_interface_role role, nd_capture_type type)
+{
+    static unsigned pcap_id = 0;
+
+    if ((type == ndCT_PCAP || type == ndCT_NONE) &&
+        nd_file_exists(ifname)) {
+
+        nd_config_pcap *pcap = new nd_config_pcap;
+        if (pcap == nullptr) {
+            throw ndSystemException(__PRETTY_FUNCTION__,
+                "new nd_config_pcap", ENOMEM
+            );
+        }
+
+        pcap->capture_filename = ifname;
+        string iface("offline");
+        iface.append(to_string(pcap_id++));
+
+        return ndGC.AddInterface(iface, role, ndCT_PCAP_OFFLINE,
+            static_cast<void *>(pcap)
+        );
+    }
+
+    return ndGC.AddInterface(ifname, role, type);
 }
 
 bool ndInstance::CheckAgentUUID(void)
@@ -1076,7 +1106,7 @@ bool ndInstance::CheckAgentUUID(void)
     return (! uuid.empty());
 }
 
-bool ndInstance::SaveAgentStatus(void)
+bool ndInstance::SaveAgentStatus(const nd_interface_stats &stats)
 {
     json jstatus;
 
@@ -1089,6 +1119,20 @@ bool ndInstance::SaveAgentStatus(void)
         plugins.Encode(jstatus);
 #endif
         status.Encode(jstatus);
+
+        for (auto &i : stats) {
+            json jstats;
+            i.second.second.Encode(jstats);
+            jstatus["stats"][i.first] = jstats;
+
+            auto ifa = interfaces.find(i.first);
+            if (ifa != interfaces.end()) {
+                json jiface;
+                ifa->second.Encode(jiface);
+                jstatus["interfaces"][i.first] = jiface;
+            }
+            jstatus["interfaces"][i.first]["state"] = i.second.first;
+        }
 
         string json_string;
         nd_json_to_string(jstatus, json_string);
@@ -1302,78 +1346,81 @@ bool ndInstance::DisplayAgentStatus(void)
             jstatus["maxrss_kb"].get<unsigned>()
         );
 
-        for (auto& i : jstatus["interfaces"].items()) {
-            const json& j = i.value();
-            const string &iface = i.key();
-            double dropped_percent = 0;
+        if (jstatus.find("interfaces") != jstatus.end()) {
 
-            icon = ND_I_FAIL;
-            color = ND_C_RED;
-            string state = "unknown";
+            for (auto& i : jstatus["interfaces"].items()) {
+                const json& j = i.value();
+                const string &iface = i.key();
+                double dropped_percent = 0;
 
-            const char *colors[2] = {
-                ND_C_RED, ND_C_RESET
-            };
+                icon = ND_I_FAIL;
+                color = ND_C_RED;
+                string state = "unknown";
 
-            try {
-                auto jstate = j.find("state");
+                const char *colors[2] = {
+                    ND_C_RED, ND_C_RESET
+                };
 
-                if (jstate != j.end()) {
-                    switch (jstate->get<unsigned>()) {
-                    case ndCaptureThread::STATE_INIT:
-                        icon = ND_I_WARN;
-                        colors[0] = color = ND_C_YELLOW;
-                        state = "initializing";
-                        break;
-                    case ndCaptureThread::STATE_ONLINE:
-                        icon = ND_I_OK;
-                        colors[0] = color = ND_C_GREEN;
-                        state = "online";
-                        break;
-                    case ndCaptureThread::STATE_OFFLINE:
-                        state = "offline";
-                        break;
-                    default:
-                        state = "invalid";
-                        break;
+                try {
+                    auto jstate = j.find("state");
+
+                    if (jstate != j.end()) {
+                        switch (jstate->get<unsigned>()) {
+                        case ndCaptureThread::STATE_INIT:
+                            icon = ND_I_WARN;
+                            colors[0] = color = ND_C_YELLOW;
+                            state = "initializing";
+                            break;
+                        case ndCaptureThread::STATE_ONLINE:
+                            icon = ND_I_OK;
+                            colors[0] = color = ND_C_GREEN;
+                            state = "online";
+                            break;
+                        case ndCaptureThread::STATE_OFFLINE:
+                            state = "offline";
+                            break;
+                        default:
+                            state = "invalid";
+                            break;
+                        }
                     }
-                }
 
-                unsigned pkts = 0, dropped = 0;
+                    unsigned pkts = 0, dropped = 0;
 
-                pkts = jstatus["stats"][iface]["raw"].get<unsigned>();
-                dropped = jstatus["stats"][iface]["capture_dropped"].get<unsigned>();
-                dropped += jstatus["stats"][iface]["queue_dropped"].get<unsigned>();
+                    pkts = jstatus["stats"][iface]["raw"].get<unsigned>();
+                    dropped = jstatus["stats"][iface]["capture_dropped"].get<unsigned>();
+                    dropped += jstatus["stats"][iface]["queue_dropped"].get<unsigned>();
 
-                if (pkts == 0) {
-                    icon = ND_I_WARN;
-                    colors[1] = color = ND_C_YELLOW;
-                }
-                else {
-                    dropped_percent =
-                        (double)dropped * 100 /
-                        (double)pkts;
-
-                    if (dropped_percent > 0.0) {
+                    if (pkts == 0) {
                         icon = ND_I_WARN;
                         colors[1] = color = ND_C_YELLOW;
                     }
-                    else if (dropped_percent > 5.0) {
-                        icon = ND_I_FAIL;
-                        colors[1] = color = ND_C_RED;
+                    else {
+                        dropped_percent =
+                            (double)dropped * 100 /
+                            (double)pkts;
+
+                        if (dropped_percent > 0.0) {
+                            icon = ND_I_WARN;
+                            colors[1] = color = ND_C_YELLOW;
+                        }
+                        else if (dropped_percent > 5.0) {
+                            icon = ND_I_FAIL;
+                            colors[1] = color = ND_C_RED;
+                        }
                     }
                 }
-            }
-            catch (...) { }
+                catch (...) { }
 
-            fprintf(stderr,
-                "%s%s%s %s [%s/%s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
-                color, icon, ND_C_RESET, iface.c_str(),
-                j["role"].get<string>().c_str(),
-                j["capture_type"].get<string>().c_str(),
-                colors[0], state.c_str(), ND_C_RESET,
-                colors[1], dropped_percent, ND_C_RESET
-            );
+                fprintf(stderr,
+                    "%s%s%s %s [%s/%s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
+                    color, icon, ND_C_RESET, iface.c_str(),
+                    j["role"].get<string>().c_str(),
+                    j["capture_type"].get<string>().c_str(),
+                    colors[0], state.c_str(), ND_C_RESET,
+                    colors[1], dropped_percent, ND_C_RESET
+                );
+            }
         }
 
         json jsig = jstatus["signatures"];
@@ -1713,8 +1760,6 @@ void *ndInstance::ndInstance::Entry(void)
                 tag.c_str(), ipc, "Update");
             ReapCaptureThreads(thread_capture);
             ProcessUpdate(thread_capture);
-            ProcessFlows();
-            SaveAgentStatus();
             break;
         case ndIPC_UPDATE_NAPI:
             nd_dprintf(
@@ -1824,6 +1869,7 @@ bool ndInstance::CreateCaptureThreads(nd_capture_threads &threads)
 
         switch (it.second.capture_type) {
         case ndCT_PCAP:
+        case ndCT_PCAP_OFFLINE:
         {
             ndCapturePcap *thread = new ndCapturePcap(
                 (interfaces.size() > 1) ? cpu++ : -1,
@@ -2035,9 +2081,6 @@ void ndInstance::UpdateStatus(void)
     status.maxrss_kb_prev = status.maxrss_kb;
     status.maxrss_kb = rusage_data.ru_maxrss;
 
-    status.flows_prev = status.flows.load();
-    status.flows = 0;
-
     if (clock_gettime(CLOCK_MONOTONIC_RAW, &status.ts_now) != 0)
         memcpy(&status.ts_now, &status.ts_epoch, sizeof(struct timespec));
 
@@ -2080,13 +2123,13 @@ bool ndInstance::ExpireFlow(nd_flow_ptr& flow)
 
 void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 {
-    UpdateStatus();
+    ProcessFlows();
 
+    UpdateStatus();
 #if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
     // Attempt to release heap back to OS when supported
     malloc_trim(0);
 #endif
-
     if (ndGC_USE_DHC && dns_hint_cache != nullptr)
         dns_hint_cache->Purge();
 
@@ -2111,12 +2154,12 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         ndPluginProcessor::EVENT_INTERFACES, &interfaces
     );
 #endif
+    nd_interface_stats pkt_stats_ifaces;
+
     for (auto &it : threads) {
 
-        string iface_name;
-        nd_iface_name(it.first, iface_name);
-
         ndPacketStats pkt_stats;
+        uint8_t state = it.second[0]->capture_state.load();
 
         for (auto &it_instance : it.second) {
 
@@ -2128,14 +2171,21 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         }
 
         pkt_stats_global += pkt_stats;
-
+        pkt_stats_ifaces.insert(
+            make_pair(
+                it.first,
+                    make_pair(state, pkt_stats)
+            )
+        );
 #ifdef _ND_USE_PLUGINS
         plugins.BroadcastProcessorEvent(
             ndPluginProcessor::EVENT_PKT_CAPTURE_STATS,
-            iface_name, &pkt_stats
+            it.first, &pkt_stats
         );
 #endif
     }
+
+    SaveAgentStatus(pkt_stats_ifaces);
 
 #ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
@@ -2250,6 +2300,8 @@ void ndInstance::ProcessFlows(void)
         tcp, tcp_fin, tcp_fin_ack_1, tcp_fin_ack_gt2
     );
 #endif
+    status.flows_prev = status.flows.load();
+    status.flows -= status.flows_purged;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4

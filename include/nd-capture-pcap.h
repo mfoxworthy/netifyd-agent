@@ -36,7 +36,6 @@ public:
 protected:
     pcap_t *pcap;
     int pcap_fd;
-    string pcap_file;
     struct bpf_program pcap_filter;
     char pcap_errbuf[PCAP_ERRBUF_SIZE];
     int pcap_snaplen;
