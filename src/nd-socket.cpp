@@ -76,7 +76,7 @@
 #include <net/if_arp.h>
 #if defined(__linux__)
 #include <linux/if_packet.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
@@ -163,7 +163,7 @@ ndSocketLocal::~ndSocketLocal()
         unlink(base->node.c_str());
 }
 
-#ifdef BSD4_4
+#ifdef __FreeBSD__
 int ndSocketLocal::IsValid(void)
 {
     // TODO: Need a "BSD-way" to achieve the same...

@@ -48,7 +48,7 @@
 #include <net/if_arp.h>
 #if defined(__linux__)
 #include <linux/if_packet.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
@@ -188,7 +188,17 @@ void ndFlow::Hash(const string &device,
         if (lower_addr.addr.in.sin_addr.s_addr == 0 &&
             upper_addr.addr.in.sin_addr.s_addr == 0xffffffff) {
             // XXX: Hash in lower MAC for ethernet broadcasts (DHCPv4).
-            sha1_write(&ctx, (const char *)&lower_mac.addr.ll.sll_addr, ETH_ALEN);
+#if defined(__linux__)
+            sha1_write(&ctx,
+                (const char *)lower_mac.addr.ll.sll_addr,
+                ETH_ALEN
+            );
+#elif defined(__FreeBSD__)
+            sha1_write(&ctx,
+                (const char *)LLADDR(&lower_mac.addr.dl),
+                ETH_ALEN
+            );
+#endif
         }
 
         break;

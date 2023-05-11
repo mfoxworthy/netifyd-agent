@@ -53,7 +53,7 @@
 #include <net/if_arp.h>
 #if defined(__linux__)
 #include <linux/if_packet.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
@@ -952,10 +952,17 @@ void ndDetectionThread::ProcessFlow(ndDetectionQueueEntry *entry)
         i != ndGC.privacy_filter_mac.end() &&
             ndEF->privacy_mask !=
             (ndFlow::PRIVATE_LOWER | ndFlow::PRIVATE_UPPER); i++) {
+#if defined(__linux__)
         if (! memcmp((*i), ndEF->lower_mac.addr.ll.sll_addr, ETH_ALEN))
             ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
         if (! memcmp((*i), ndEF->upper_mac.addr.ll.sll_addr, ETH_ALEN))
             ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
+#elif defined(__FreeBSD__)
+        if (! memcmp((*i), LLADDR(&ndEF->lower_mac.addr.dl), ETH_ALEN))
+            ndEF->privacy_mask |= ndFlow::PRIVATE_LOWER;
+        if (! memcmp((*i), LLADDR(&ndEF->upper_mac.addr.dl), ETH_ALEN))
+            ndEF->privacy_mask |= ndFlow::PRIVATE_UPPER;
+#endif
     }
 
     for (vector<struct sockaddr *>::const_iterator i =

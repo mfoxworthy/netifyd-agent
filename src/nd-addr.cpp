@@ -52,7 +52,7 @@
 #include <net/if_arp.h>
 #if defined(__linux__)
 #include <linux/if_packet.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
@@ -170,11 +170,18 @@ bool ndAddr::Create(ndAddr &a,
 {
     switch (length) {
     case ETH_ALEN:
+#if defined(__linux__)
         a.addr.ss.ss_family = AF_PACKET;
         a.addr.ll.sll_hatype = ARPHRD_ETHER;
         a.addr.ll.sll_halen = ETH_ALEN;
         memcpy(a.addr.ll.sll_addr, hw_addr, ETH_ALEN);
-
+#elif defined(__FreeBSD__)
+        a.addr.ss.ss_family = AF_LINK;
+        a.addr.dl.sdl_type = ARPHRD_ETHER;
+        a.addr.dl.sdl_nlen = 0;
+        a.addr.dl.sdl_alen = ETH_ALEN;
+        memcpy(a.addr.dl.sdl_data, hw_addr, ETH_ALEN);
+#endif
         return ndAddr::MakeString(a, a.cached_addr, mfNONE);
 
     default:
@@ -372,6 +379,7 @@ bool ndAddr::MakeString(const ndAddr &a, string &result, uint8_t flags)
     char sa[INET6_ADDRSTRLEN + 4] = { 0 };
 
     switch (a.addr.ss.ss_family) {
+#if defined(__linux__)
     case AF_PACKET:
         switch (a.addr.ll.sll_hatype) {
         case ARPHRD_ETHER:
@@ -395,7 +403,32 @@ bool ndAddr::MakeString(const ndAddr &a, string &result, uint8_t flags)
             return true;
         }
         break;
+#elif defined(__FreeBSD__)
+    case AF_LINK:
+        switch (a.addr.dl.sdl_type) {
+        case ARPHRD_ETHER:
+            {
+                char *p = sa;
+                for (unsigned i = 0; i < a.addr.dl.sdl_alen
+                    && (sa - p) < (INET6_ADDRSTRLEN - 1); i++) {
+                    sprintf(p, "%02hhx",
+                        a.addr.dl.sdl_data[a.addr.dl.sdl_nlen + i]);
+                    p += 2;
 
+                    if (i < (unsigned)(a.addr.dl.sdl_alen - 1)
+                        && (sa - p) < (INET6_ADDRSTRLEN - 1)) {
+                        *p = ':';
+                        p++;
+                    }
+                }
+            }
+
+            result = sa;
+
+            return true;
+        }
+        break;
+#endif
     case AF_INET:
         inet_ntop(AF_INET,
             (const void *)&a.addr.in.sin_addr.s_addr,
@@ -613,12 +646,18 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
 
     if (addr.IsEthernet()) {
         for (uint8_t i = 0x01; i <= 0x0f; i += 0x02) {
+#if defined(__linux__)
             if ((i & addr.addr.ll.sll_addr[0]) != i)
                 continue;
+#elif defined(__FreeBSD__)
+            if ((i & addr.addr.dl.sdl_data[addr.addr.dl.sdl_nlen]) != i)
+                continue;
+#endif
             type = ndAddr::atMULTICAST;
             return;
         }
 
+#if defined(__linux__)
         uint8_t sll_addr[sizeof(addr.addr.ll.sll_addr)];
 
         memset(sll_addr, 0xff, addr.addr.ll.sll_halen);
@@ -634,7 +673,25 @@ void ndAddrType::Classify(ndAddr::Type &type, const ndAddr &addr)
             type = ndAddr::atNONE;
             return;
         }
+#elif defined(__FreeBSD__)
+        uint8_t sll_addr[sizeof(addr.addr.dl.sdl_data)];
 
+        memset(sll_addr, 0xff, addr.addr.dl.sdl_alen);
+        if (memcmp(
+            &addr.addr.dl.sdl_data[addr.addr.dl.sdl_nlen],
+            sll_addr, addr.addr.dl.sdl_alen) == 0) {
+            type = ndAddr::atBROADCAST;
+            return;
+        }
+
+        memset(sll_addr, 0, addr.addr.dl.sdl_alen);
+        if (memcmp(
+            &addr.addr.dl.sdl_data[addr.addr.dl.sdl_nlen],
+            sll_addr, addr.addr.dl.sdl_alen) == 0) {
+            type = ndAddr::atNONE;
+            return;
+        }
+#endif
         if (ether_reserved.size()) {
             unique_lock<mutex> ul(lock);
 
@@ -755,8 +812,8 @@ size_t ndInterface::UpdateAddrs(const struct ifaddrs *if_addrs)
     const struct ifaddrs *ifa_addr = if_addrs;
 #if defined(__linux__)
     struct sockaddr_ll *sa_ll;
-#elif defined(BSD4_4)
-    struct sockaddr_dl *sa_ll;
+#elif defined(__FreeBSD__)
+    struct sockaddr_dl *sa_dl;
 #endif
     const uint8_t *mac_addr = nullptr;
 
@@ -773,9 +830,10 @@ size_t ndInterface::UpdateAddrs(const struct ifaddrs *if_addrs)
 #if defined(__linux__)
             sa_ll = (struct sockaddr_ll *)ifa_addr->ifa_addr;
             mac_addr = sa_ll->sll_addr;
-#elif defined(BSD4_4)
-            sa_ll = (struct sockaddr_dl *)ifa->ifa_addr;
-            mac_addr = sa_ll->sdl_data + sdl_nlen;
+#elif defined(__FreeBSD__)
+            sa_dl = (struct sockaddr_dl *)ifa_addr->ifa_addr;
+            mac_addr = (const uint8_t *)sa_dl->sdl_data +
+                sa_dl->sdl_nlen;
 #endif
             if (mac_addr != nullptr) {
                 ndAddr::Create(addr, mac_addr, ETH_ALEN);

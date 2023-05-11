@@ -134,7 +134,7 @@ public:
             addr.ss.ss_family == AF_PACKET
             && addr.ll.sll_hatype == ARPHRD_ETHER
             && addr.ll.sll_halen == ETH_ALEN
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
             addr.ss.ss_family == AF_LINK
             && addr.dl.sdl_type == ARPHRD_ETHER
             && addr.dl.sdl_alen == ETH_ALEN
@@ -194,7 +194,7 @@ public:
             if (! (comparison_flags & cfADDR)) return true;
             return (memcmp(&addr.ll,
                 &a.addr.ll, sizeof(struct sockaddr_ll)) == 0);
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
         case AF_LINK:
             if (! (comparison_flags & cfADDR)) return true;
             return (memcmp(&addr.dl,
@@ -251,7 +251,7 @@ public:
                     );
                 }
                 break;
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
             case AF_LINK:
                for (int i = 0; i < ETH_ALEN; i++) {
                     hash_combine<uint8_t>(
@@ -307,7 +307,7 @@ public:
                     );
                 }
                 break;
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
             case AF_LINK:
                 for (int i = 0; i < ETH_ALEN; i++) {
                     hash_combine<uint8_t>(
@@ -358,7 +358,7 @@ public:
                 return (memcmp(&a1.addr.ll,
                     &a2.addr.ll, sizeof(struct sockaddr_ll)) == 0);
                 break;
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
             case AF_LINK:
                 return (memcmp(&a1.addr.dl,
                     &a2.addr.dl, sizeof(struct sockaddr_dl)) == 0);
@@ -392,7 +392,7 @@ public:
         struct sockaddr_storage ss;
 #if defined(__linux__)
         struct sockaddr_ll ll;
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
         struct sockaddr_dl dl;
 #endif
         struct sockaddr_in in;
@@ -897,7 +897,7 @@ public:
         ndAddr mac;
 #if defined(__linux__)
         if (addrs.FindFirstOf(AF_PACKET, mac))
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
         if (addrs.FindFirstOf(AF_LINK, mac))
 #endif
             serialize(output, { "mac" }, mac.GetString());

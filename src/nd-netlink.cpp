@@ -62,7 +62,7 @@
 #include <linux/if_packet.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
