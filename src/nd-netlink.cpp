@@ -58,9 +58,13 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#elif defined(BSD4_4)
+#include <net/if_dl.h>
+#endif
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>

@@ -62,7 +62,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(BSD4_4)
+#include <net/if_dl.h>
+#endif
 #include <net/ethernet.h>
 #if HAVE_NET_PPP_DEFS_H
 #include <net/ppp_defs.h>

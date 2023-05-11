@@ -43,8 +43,10 @@
 #include <string.h>
 #include <time.h>
 #include <arpa/inet.h>
+#if defined(__linux__)
 #ifdef _ND_USE_NETLINK
 #include <linux/netlink.h>
+#endif
 #endif
 
 #define __FAVOR_BSD 1
@@ -53,8 +55,12 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
+#elif defined(BSD4_4)
+#include <net/if_dl.h>
+#endif
 
 #include <pcap/pcap.h>
 

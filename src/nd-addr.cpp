@@ -50,7 +50,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(BSD4_4)
+#include <net/if_dl.h>
+#endif
 
 #include <pcap/pcap.h>
 
