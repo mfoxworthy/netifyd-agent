@@ -207,15 +207,6 @@ public:
     inline const string& GetVersion() const { return version; }
     inline const ndInstanceStatus& GetStatus() const { return status; }
 
-    inline bool IsNetlinkDescriptor(int fd) {
-#ifdef _ND_USE_NETLINK
-        if (ndGC_USE_NETLINK && netlink != nullptr &&
-            netlink->GetDescriptor() == fd)
-            return true;
-#endif
-        return false;
-    }
-
     template <class T>
     void EncodeApplications(T &output) {
         nd_apps_t entries;
@@ -254,30 +245,41 @@ public:
     inline void SendIPC(enum ndIPCMessage id) {
         ndThread::SendIPC((uint32_t)id);
     }
-    inline void SendSignal(int sig) {
-        switch (sig) {
+    inline bool SendSignal(const siginfo_t &si) {
+        switch (si.si_signo) {
+#ifdef _ND_USE_NETLINK
         case SIGIO:
-            ndThread::SendIPC((uint32_t)ndIPC_NETLINK_IO);
+            if (ndGC_USE_NETLINK && netlink != nullptr &&
+                netlink->GetDescriptor() == si.si_fd) {
+                ndThread::SendIPC((uint32_t)ndIPC_NETLINK_IO);
+                return true;
+            }
             break;
+#endif
         case SIGHUP:
             ndThread::SendIPC((uint32_t)ndIPC_RELOAD);
-            break;
+            return true;
         case SIGINT:
         case SIGTERM:
 #ifdef SIGPWR
         case SIGPWR:
 #endif
             ndThread::SendIPC((uint32_t)ndIPC_TERMINATE);
-            break;
+            return true;
         default:
             if (timer_update.GetSignal() >= 0 &&
-                sig == timer_update.GetSignal())
+                si.si_signo == timer_update.GetSignal()) {
                 ndThread::SendIPC((uint32_t)ndIPC_UPDATE);
+                return true;
+            }
             else if (timer_update_napi.GetSignal() >= 0 &&
-                sig == timer_update_napi.GetSignal())
+                si.si_signo == timer_update_napi.GetSignal()) {
                 ndThread::SendIPC((uint32_t)ndIPC_UPDATE_NAPI);
+                return true;
+            }
             break;
         }
+        return false;
     }
 
     int exit_code;

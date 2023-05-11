@@ -2063,10 +2063,10 @@ void ndInstance::UpdateStatus(void)
 #if defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_GPERFTOOLS_MALLOC_EXTENSION_H)
     size_t tcm_alloc_bytes = 0;
 
-    // Force tcmalloc to free unused memory
     MallocExtension::instance()->ReleaseFreeMemory();
-    MallocExtension::instance()->
-        GetNumericProperty("generic.current_allocated_bytes", &tcm_alloc_bytes);
+    MallocExtension::instance()->GetNumericProperty(
+        "generic.current_allocated_bytes", &tcm_alloc_bytes
+    );
     status.tcm_alloc_kb_prev = status.tcm_alloc_kb;
     status.tcm_alloc_kb = tcm_alloc_bytes / 1024;
 #endif
@@ -2083,8 +2083,11 @@ void ndInstance::UpdateStatus(void)
     status.maxrss_kb_prev = status.maxrss_kb;
     status.maxrss_kb = rusage_data.ru_maxrss;
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &status.ts_now) != 0)
-        memcpy(&status.ts_now, &status.ts_epoch, sizeof(struct timespec));
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &status.ts_now) != 0) {
+        memcpy(&status.ts_now,
+            &status.ts_epoch, sizeof(struct timespec)
+        );
+    }
 
     if (ndGC_USE_DHC) {
         status.dhc_status = true;
