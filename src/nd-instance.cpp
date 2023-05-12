@@ -759,12 +759,16 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     }
 
     // Hash config file
-    nd_sha1_file(
-        ndGC.path_app_config, ndGC.digest_app_config
-    );
-    nd_sha1_file(
-        ndGC.path_legacy_config, ndGC.digest_legacy_config
-    );
+    if (nd_file_exists(ndGC.path_app_config)) {
+        nd_sha1_file(
+            ndGC.path_app_config, ndGC.digest_app_config
+        );
+    }
+    else if (nd_file_exists(ndGC.path_legacy_config)) {
+        nd_sha1_file(
+            ndGC.path_legacy_config, ndGC.digest_legacy_config
+        );
+    }
 
     // Configuration is valid when version is set
     version = nd_get_version_and_features();

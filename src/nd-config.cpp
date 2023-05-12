@@ -720,7 +720,7 @@ bool ndGlobalConfig::AddInterface(const string &iface,
                 "WARNING: interface already configured: %s\n",
                 iface.c_str()
             );
-            return false;
+            return true;
         }
     }
 
