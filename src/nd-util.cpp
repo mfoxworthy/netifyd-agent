@@ -652,8 +652,8 @@ string nd_get_version_and_features(void)
     nd_os_detect(os);
 
     ostringstream ident;
-    ident <<
-        PACKAGE_NAME << "/" << GIT_RELEASE << " (" << os << "; " << _ND_HOST_CPU;
+    ident << PACKAGE_NAME << "/" << GIT_RELEASE
+        << " (" << os << "; " << _ND_HOST_OS << "; " << _ND_HOST_CPU;
 
     if (ndGC_USE_CONNTRACK) ident << "; conntrack";
     if (ndGC_USE_NETLINK) ident << "; netlink";
