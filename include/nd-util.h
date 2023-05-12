@@ -35,6 +35,7 @@ void *nd_mem_alloc(size_t size);
 
 void nd_mem_free(void *ptr);
 
+#ifndef __FreeBSD__
 class ndLogBuffer : public streambuf
 {
 public:
@@ -54,6 +55,7 @@ public:
         delete rdbuf();
     }
 };
+#endif
 
 void nd_printf(const char *format, ...);
 void nd_printf(const char *format, va_list ap);

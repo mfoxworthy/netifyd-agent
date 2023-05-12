@@ -44,22 +44,26 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
 #include <netdb.h>
-#include <resolv.h>
 #include <ctype.h>
-
-#define __FAVOR_BSD 1
-#include <netinet/tcp.h>
-#undef __FAVOR_BSD
-
 #include <errno.h>
 
 #include <arpa/inet.h>
+
+#define __FAVOR_BSD 1
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+
+#include <resolv.h>
 
 #ifdef _ND_USE_CONNTRACK
 #include <libnetfilter_conntrack/libnetfilter_conntrack.h>

@@ -129,9 +129,16 @@ public:
         return (addr.ss.ss_family == AF_INET6 && prefix != _ND_ADDR_BITSv6);
     }
     inline bool IsEthernet(void) const {
-        return (addr.ss.ss_family == AF_PACKET
+        return (
+#if defined(__linux__)
+            addr.ss.ss_family == AF_PACKET
             && addr.ll.sll_hatype == ARPHRD_ETHER
             && addr.ll.sll_halen == ETH_ALEN
+#elif defined(__FreeBSD__)
+            addr.ss.ss_family == AF_LINK
+            && addr.dl.sdl_type == ARPHRD_ETHER
+            && addr.dl.sdl_alen == ETH_ALEN
+#endif
         );
     }
     inline bool IsIP(void) const {
@@ -182,10 +189,17 @@ public:
             return false;
 
         switch (addr.ss.ss_family) {
+#if defined(__linux__)
         case AF_PACKET:
             if (! (comparison_flags & cfADDR)) return true;
             return (memcmp(&addr.ll,
                 &a.addr.ll, sizeof(struct sockaddr_ll)) == 0);
+#elif defined(__FreeBSD__)
+        case AF_LINK:
+            if (! (comparison_flags & cfADDR)) return true;
+            return (memcmp(&addr.dl,
+                &a.addr.dl, sizeof(struct sockaddr_dl)) == 0);
+#endif
         case AF_INET:
             if ((comparison_flags & cfADDR) &&
                 (comparison_flags & cfPORT)) {
@@ -229,6 +243,7 @@ public:
             size_t ss_hash = 0;
 
             switch (a.addr.ss.ss_family) {
+#if defined(__linux__)
             case AF_PACKET:
                for (int i = 0; i < ETH_ALEN; i++) {
                     hash_combine<uint8_t>(
@@ -236,6 +251,15 @@ public:
                     );
                 }
                 break;
+#elif defined(__FreeBSD__)
+            case AF_LINK:
+               for (int i = 0; i < ETH_ALEN; i++) {
+                    hash_combine<uint8_t>(
+                        ss_hash, LLADDR(&a.addr.dl)[i]
+                    );
+                }
+                break;
+#endif
             case AF_INET:
                 hash_combine<uint32_t>(
                     ss_hash, a.addr.in.sin_addr.s_addr
@@ -275,6 +299,7 @@ public:
             hash_combine<uint16_t>(ss_hash, a.addr.ss.ss_family);
 
             switch (a.addr.ss.ss_family) {
+#if defined(__linux__)
             case AF_PACKET:
                 for (int i = 0; i < ETH_ALEN; i++) {
                     hash_combine<uint8_t>(
@@ -282,6 +307,15 @@ public:
                     );
                 }
                 break;
+#elif defined(__FreeBSD__)
+            case AF_LINK:
+                for (int i = 0; i < ETH_ALEN; i++) {
+                    hash_combine<uint8_t>(
+                        ss_hash, LLADDR(&a.addr.dl)[i]
+                    );
+                }
+                break;
+#endif
             case AF_INET:
                 hash_combine<uint16_t>(
                     ss_hash, a.addr.in.sin_port
@@ -319,10 +353,17 @@ public:
                 return false;
 
             switch (a1.addr.ss.ss_family) {
+#if defined(__linux__)
             case AF_PACKET:
                 return (memcmp(&a1.addr.ll,
                     &a2.addr.ll, sizeof(struct sockaddr_ll)) == 0);
                 break;
+#elif defined(__FreeBSD__)
+            case AF_LINK:
+                return (memcmp(&a1.addr.dl,
+                    &a2.addr.dl, sizeof(struct sockaddr_dl)) == 0);
+                break;
+#endif
             case AF_INET:
                 return (memcmp(
                     &a1.addr.in.sin_addr,
@@ -349,7 +390,11 @@ public:
 
     union {
         struct sockaddr_storage ss;
+#if defined(__linux__)
         struct sockaddr_ll ll;
+#elif defined(__FreeBSD__)
+        struct sockaddr_dl dl;
+#endif
         struct sockaddr_in in;
         struct sockaddr_in6 in6;
     } addr;
@@ -850,7 +895,11 @@ public:
         }
 
         ndAddr mac;
+#if defined(__linux__)
         if (addrs.FindFirstOf(AF_PACKET, mac))
+#elif defined(__FreeBSD__)
+        if (addrs.FindFirstOf(AF_LINK, mac))
+#endif
             serialize(output, { "mac" }, mac.GetString());
         else
             serialize(output, { "mac" }, "00:00:00:00:00:00");

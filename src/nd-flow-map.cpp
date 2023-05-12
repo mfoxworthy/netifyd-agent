@@ -46,7 +46,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #include <pcap/pcap.h>
 

@@ -58,7 +58,11 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
@@ -716,7 +720,7 @@ bool ndGlobalConfig::AddInterface(const string &iface,
                 "WARNING: interface already configured: %s\n",
                 iface.c_str()
             );
-            return false;
+            return true;
         }
     }
 

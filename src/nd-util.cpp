@@ -42,7 +42,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
-#if defined(BSD4_4)
+#if defined(__FreeBSD__)
 #include <sys/user.h>
 #include <sys/sysctl.h>
 #endif
@@ -52,7 +52,7 @@
 
 #if defined(__linux__)
 #include <linux/if_packet.h>
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 #include <net/if_dl.h>
 #endif
 
@@ -216,6 +216,7 @@ void nd_ndpi_debug_printf(uint32_t protocol, void *ndpi,
 }
 #endif // NDPI_ENABLE_DEBUG_MESSAGES
 
+#ifndef __FreeBSD__
 int ndLogBuffer::overflow(int ch)
 {
     if (ch != EOF)
@@ -235,6 +236,7 @@ int ndLogBuffer::sync()
 
     return 0;
 }
+#endif
 
 void nd_print_address(const struct sockaddr_storage *addr)
 {
@@ -650,8 +652,8 @@ string nd_get_version_and_features(void)
     nd_os_detect(os);
 
     ostringstream ident;
-    ident <<
-        PACKAGE_NAME << "/" << GIT_RELEASE << " (" << os << "; " << _ND_HOST_CPU;
+    ident << PACKAGE_NAME << "/" << GIT_RELEASE
+        << " (" << os << "; " << _ND_HOST_OS << "; " << _ND_HOST_CPU;
 
     if (ndGC_USE_CONNTRACK) ident << "; conntrack";
     if (ndGC_USE_NETLINK) ident << "; netlink";
@@ -877,7 +879,7 @@ pid_t nd_is_running(pid_t pid, const string &exe_base)
 
     return rc;
 }
-#elif defined(BSD4_4)
+#elif defined(__FreeBSD__)
 pid_t nd_is_running(pid_t pid, const string &exe_base)
 {
     int mib[4];
@@ -1224,9 +1226,9 @@ bool nd_scan_dotd(const string &path, vector<string> &files)
                 result->d_type != DT_LNK &&
                 result->d_type != DT_REG &&
                 result->d_type != DT_UNKNOWN
-            )
+            ) ||
 #endif
-            || ! isdigit(result->d_name[0])) continue;
+            ! isdigit(result->d_name[0])) continue;
         files.push_back(result->d_name);
     }
 

@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -33,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -40,11 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
-#define YYBISON 1
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30802
 
-/* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.8.2"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -59,7 +64,7 @@
 #define YYPULL 1
 
 /* "%code top" blocks.  */
-#line 5 "nd-flow-criteria.tab.yy" /* yacc.c:316  */
+#line 5 "nd-flow-criteria.tab.yy"
 
 // Netify Agent
 // Copyright (C) 2015-2022 eGloo Incorporated <http://www.egloo.ca>
@@ -121,7 +126,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
@@ -206,242 +215,233 @@ void yyerror(YYLTYPE *yyllocp, yyscan_t scanner, const char *message)
     throw string(message);
 }
 
-#line 210 "nd-flow-criteria.tab.cc" /* yacc.c:316  */
+#line 219 "nd-flow-criteria.tab.cc"
 
 
 
-/* Copy the first part of user declarations.  */
 
-#line 216 "nd-flow-criteria.tab.cc" /* yacc.c:339  */
-
-# ifndef YY_NULLPTR
-#  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+# ifndef YY_CAST
+#  ifdef __cplusplus
+#   define YY_CAST(Type, Val) static_cast<Type> (Val)
+#   define YY_REINTERPRET_CAST(Type, Val) reinterpret_cast<Type> (Val)
 #  else
-#   define YY_NULLPTR 0
+#   define YY_CAST(Type, Val) ((Type) (Val))
+#   define YY_REINTERPRET_CAST(Type, Val) ((Type) (Val))
+#  endif
+# endif
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* In a future release of Bison, this section will be replaced
-   by #include "y.tab.h".  */
-#ifndef YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED
-# define YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-/* "%code requires" blocks.  */
-#line 152 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
-
-typedef void* yyscan_t;
-
-#line 250 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
-
-/* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    FLOW_IP_PROTO = 258,
-    FLOW_IP_VERSION = 259,
-    FLOW_IP_NAT = 260,
-    FLOW_VLAN_ID = 261,
-    FLOW_OTHER_TYPE = 262,
-    FLOW_LOCAL_MAC = 263,
-    FLOW_OTHER_MAC = 264,
-    FLOW_LOCAL_IP = 265,
-    FLOW_OTHER_IP = 266,
-    FLOW_LOCAL_PORT = 267,
-    FLOW_OTHER_PORT = 268,
-    FLOW_TUNNEL_TYPE = 269,
-    FLOW_DETECTION_GUESSED = 270,
-    FLOW_DETECTION_UPDATED = 271,
-    FLOW_CATEGORY = 272,
-    FLOW_RISKS = 273,
-    FLOW_NDPI_RISK_SCORE = 274,
-    FLOW_NDPI_RISK_SCORE_CLIENT = 275,
-    FLOW_NDPI_RISK_SCORE_SERVER = 276,
-    FLOW_DOMAIN_CATEGORY = 277,
-    FLOW_APPLICATION = 278,
-    FLOW_APPLICATION_CATEGORY = 279,
-    FLOW_PROTOCOL = 280,
-    FLOW_PROTOCOL_CATEGORY = 281,
-    FLOW_DETECTED_HOSTNAME = 282,
-    FLOW_SSL_VERSION = 283,
-    FLOW_SSL_CIPHER = 284,
-    FLOW_ORIGIN = 285,
-    FLOW_CT_MARK = 286,
-    FLOW_OTHER_UNKNOWN = 287,
-    FLOW_OTHER_UNSUPPORTED = 288,
-    FLOW_OTHER_LOCAL = 289,
-    FLOW_OTHER_MULTICAST = 290,
-    FLOW_OTHER_BROADCAST = 291,
-    FLOW_OTHER_REMOTE = 292,
-    FLOW_OTHER_ERROR = 293,
-    FLOW_ORIGIN_LOCAL = 294,
-    FLOW_ORIGIN_OTHER = 295,
-    FLOW_ORIGIN_UNKNOWN = 296,
-    FLOW_TUNNEL_NONE = 297,
-    FLOW_TUNNEL_GTP = 298,
-    CMP_EQUAL = 299,
-    CMP_NOTEQUAL = 300,
-    CMP_GTHANEQUAL = 301,
-    CMP_LTHANEQUAL = 302,
-    BOOL_AND = 303,
-    BOOL_OR = 304,
-    VALUE_ADDR_IPMASK = 305,
-    VALUE_TRUE = 306,
-    VALUE_FALSE = 307,
-    VALUE_ADDR_MAC = 308,
-    VALUE_ADDR_IPV4 = 309,
-    VALUE_ADDR_IPV6 = 310,
-    VALUE_NAME = 311,
-    VALUE_REGEX = 312,
-    VALUE_NUMBER = 313
-  };
-#endif
-/* Tokens.  */
-#define FLOW_IP_PROTO 258
-#define FLOW_IP_VERSION 259
-#define FLOW_IP_NAT 260
-#define FLOW_VLAN_ID 261
-#define FLOW_OTHER_TYPE 262
-#define FLOW_LOCAL_MAC 263
-#define FLOW_OTHER_MAC 264
-#define FLOW_LOCAL_IP 265
-#define FLOW_OTHER_IP 266
-#define FLOW_LOCAL_PORT 267
-#define FLOW_OTHER_PORT 268
-#define FLOW_TUNNEL_TYPE 269
-#define FLOW_DETECTION_GUESSED 270
-#define FLOW_DETECTION_UPDATED 271
-#define FLOW_CATEGORY 272
-#define FLOW_RISKS 273
-#define FLOW_NDPI_RISK_SCORE 274
-#define FLOW_NDPI_RISK_SCORE_CLIENT 275
-#define FLOW_NDPI_RISK_SCORE_SERVER 276
-#define FLOW_DOMAIN_CATEGORY 277
-#define FLOW_APPLICATION 278
-#define FLOW_APPLICATION_CATEGORY 279
-#define FLOW_PROTOCOL 280
-#define FLOW_PROTOCOL_CATEGORY 281
-#define FLOW_DETECTED_HOSTNAME 282
-#define FLOW_SSL_VERSION 283
-#define FLOW_SSL_CIPHER 284
-#define FLOW_ORIGIN 285
-#define FLOW_CT_MARK 286
-#define FLOW_OTHER_UNKNOWN 287
-#define FLOW_OTHER_UNSUPPORTED 288
-#define FLOW_OTHER_LOCAL 289
-#define FLOW_OTHER_MULTICAST 290
-#define FLOW_OTHER_BROADCAST 291
-#define FLOW_OTHER_REMOTE 292
-#define FLOW_OTHER_ERROR 293
-#define FLOW_ORIGIN_LOCAL 294
-#define FLOW_ORIGIN_OTHER 295
-#define FLOW_ORIGIN_UNKNOWN 296
-#define FLOW_TUNNEL_NONE 297
-#define FLOW_TUNNEL_GTP 298
-#define CMP_EQUAL 299
-#define CMP_NOTEQUAL 300
-#define CMP_GTHANEQUAL 301
-#define CMP_LTHANEQUAL 302
-#define BOOL_AND 303
-#define BOOL_OR 304
-#define VALUE_ADDR_IPMASK 305
-#define VALUE_TRUE 306
-#define VALUE_FALSE 307
-#define VALUE_ADDR_MAC 308
-#define VALUE_ADDR_IPV4 309
-#define VALUE_ADDR_IPV6 310
-#define VALUE_NAME 311
-#define VALUE_REGEX 312
-#define VALUE_NUMBER 313
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
-union YYSTYPE
+#include "nd-flow-criteria.tab.hh"
+/* Symbol kind.  */
+enum yysymbol_kind_t
 {
-#line 159 "nd-flow-criteria.tab.yy" /* yacc.c:355  */
-
-    char string[_NDFP_MAX_NAMELEN];
-
-    bool bool_number;
-    unsigned short us_number;
-    unsigned long ul_number;
-
-    bool bool_result;
-
-#line 388 "nd-flow-criteria.tab.cc" /* yacc.c:355  */
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_FLOW_IP_PROTO = 3,              /* FLOW_IP_PROTO  */
+  YYSYMBOL_FLOW_IP_VERSION = 4,            /* FLOW_IP_VERSION  */
+  YYSYMBOL_FLOW_IP_NAT = 5,                /* FLOW_IP_NAT  */
+  YYSYMBOL_FLOW_VLAN_ID = 6,               /* FLOW_VLAN_ID  */
+  YYSYMBOL_FLOW_OTHER_TYPE = 7,            /* FLOW_OTHER_TYPE  */
+  YYSYMBOL_FLOW_LOCAL_MAC = 8,             /* FLOW_LOCAL_MAC  */
+  YYSYMBOL_FLOW_OTHER_MAC = 9,             /* FLOW_OTHER_MAC  */
+  YYSYMBOL_FLOW_LOCAL_IP = 10,             /* FLOW_LOCAL_IP  */
+  YYSYMBOL_FLOW_OTHER_IP = 11,             /* FLOW_OTHER_IP  */
+  YYSYMBOL_FLOW_LOCAL_PORT = 12,           /* FLOW_LOCAL_PORT  */
+  YYSYMBOL_FLOW_OTHER_PORT = 13,           /* FLOW_OTHER_PORT  */
+  YYSYMBOL_FLOW_TUNNEL_TYPE = 14,          /* FLOW_TUNNEL_TYPE  */
+  YYSYMBOL_FLOW_DETECTION_GUESSED = 15,    /* FLOW_DETECTION_GUESSED  */
+  YYSYMBOL_FLOW_DETECTION_UPDATED = 16,    /* FLOW_DETECTION_UPDATED  */
+  YYSYMBOL_FLOW_CATEGORY = 17,             /* FLOW_CATEGORY  */
+  YYSYMBOL_FLOW_RISKS = 18,                /* FLOW_RISKS  */
+  YYSYMBOL_FLOW_NDPI_RISK_SCORE = 19,      /* FLOW_NDPI_RISK_SCORE  */
+  YYSYMBOL_FLOW_NDPI_RISK_SCORE_CLIENT = 20, /* FLOW_NDPI_RISK_SCORE_CLIENT  */
+  YYSYMBOL_FLOW_NDPI_RISK_SCORE_SERVER = 21, /* FLOW_NDPI_RISK_SCORE_SERVER  */
+  YYSYMBOL_FLOW_DOMAIN_CATEGORY = 22,      /* FLOW_DOMAIN_CATEGORY  */
+  YYSYMBOL_FLOW_APPLICATION = 23,          /* FLOW_APPLICATION  */
+  YYSYMBOL_FLOW_APPLICATION_CATEGORY = 24, /* FLOW_APPLICATION_CATEGORY  */
+  YYSYMBOL_FLOW_PROTOCOL = 25,             /* FLOW_PROTOCOL  */
+  YYSYMBOL_FLOW_PROTOCOL_CATEGORY = 26,    /* FLOW_PROTOCOL_CATEGORY  */
+  YYSYMBOL_FLOW_DETECTED_HOSTNAME = 27,    /* FLOW_DETECTED_HOSTNAME  */
+  YYSYMBOL_FLOW_SSL_VERSION = 28,          /* FLOW_SSL_VERSION  */
+  YYSYMBOL_FLOW_SSL_CIPHER = 29,           /* FLOW_SSL_CIPHER  */
+  YYSYMBOL_FLOW_ORIGIN = 30,               /* FLOW_ORIGIN  */
+  YYSYMBOL_FLOW_CT_MARK = 31,              /* FLOW_CT_MARK  */
+  YYSYMBOL_FLOW_OTHER_UNKNOWN = 32,        /* FLOW_OTHER_UNKNOWN  */
+  YYSYMBOL_FLOW_OTHER_UNSUPPORTED = 33,    /* FLOW_OTHER_UNSUPPORTED  */
+  YYSYMBOL_FLOW_OTHER_LOCAL = 34,          /* FLOW_OTHER_LOCAL  */
+  YYSYMBOL_FLOW_OTHER_MULTICAST = 35,      /* FLOW_OTHER_MULTICAST  */
+  YYSYMBOL_FLOW_OTHER_BROADCAST = 36,      /* FLOW_OTHER_BROADCAST  */
+  YYSYMBOL_FLOW_OTHER_REMOTE = 37,         /* FLOW_OTHER_REMOTE  */
+  YYSYMBOL_FLOW_OTHER_ERROR = 38,          /* FLOW_OTHER_ERROR  */
+  YYSYMBOL_FLOW_ORIGIN_LOCAL = 39,         /* FLOW_ORIGIN_LOCAL  */
+  YYSYMBOL_FLOW_ORIGIN_OTHER = 40,         /* FLOW_ORIGIN_OTHER  */
+  YYSYMBOL_FLOW_ORIGIN_UNKNOWN = 41,       /* FLOW_ORIGIN_UNKNOWN  */
+  YYSYMBOL_FLOW_TUNNEL_NONE = 42,          /* FLOW_TUNNEL_NONE  */
+  YYSYMBOL_FLOW_TUNNEL_GTP = 43,           /* FLOW_TUNNEL_GTP  */
+  YYSYMBOL_CMP_EQUAL = 44,                 /* CMP_EQUAL  */
+  YYSYMBOL_CMP_NOTEQUAL = 45,              /* CMP_NOTEQUAL  */
+  YYSYMBOL_CMP_GTHANEQUAL = 46,            /* CMP_GTHANEQUAL  */
+  YYSYMBOL_CMP_LTHANEQUAL = 47,            /* CMP_LTHANEQUAL  */
+  YYSYMBOL_BOOL_AND = 48,                  /* BOOL_AND  */
+  YYSYMBOL_BOOL_OR = 49,                   /* BOOL_OR  */
+  YYSYMBOL_VALUE_ADDR_IPMASK = 50,         /* VALUE_ADDR_IPMASK  */
+  YYSYMBOL_VALUE_TRUE = 51,                /* VALUE_TRUE  */
+  YYSYMBOL_VALUE_FALSE = 52,               /* VALUE_FALSE  */
+  YYSYMBOL_VALUE_ADDR_MAC = 53,            /* VALUE_ADDR_MAC  */
+  YYSYMBOL_VALUE_ADDR_IPV4 = 54,           /* VALUE_ADDR_IPV4  */
+  YYSYMBOL_VALUE_ADDR_IPV6 = 55,           /* VALUE_ADDR_IPV6  */
+  YYSYMBOL_VALUE_NAME = 56,                /* VALUE_NAME  */
+  YYSYMBOL_VALUE_REGEX = 57,               /* VALUE_REGEX  */
+  YYSYMBOL_VALUE_NUMBER = 58,              /* VALUE_NUMBER  */
+  YYSYMBOL_59_ = 59,                       /* ';'  */
+  YYSYMBOL_60_ = 60,                       /* '('  */
+  YYSYMBOL_61_ = 61,                       /* ')'  */
+  YYSYMBOL_62_ = 62,                       /* '!'  */
+  YYSYMBOL_63_ = 63,                       /* '>'  */
+  YYSYMBOL_64_ = 64,                       /* '<'  */
+  YYSYMBOL_YYACCEPT = 65,                  /* $accept  */
+  YYSYMBOL_exprs = 66,                     /* exprs  */
+  YYSYMBOL_expr = 67,                      /* expr  */
+  YYSYMBOL_expr_ip_proto = 68,             /* expr_ip_proto  */
+  YYSYMBOL_expr_ip_version = 69,           /* expr_ip_version  */
+  YYSYMBOL_expr_ip_nat = 70,               /* expr_ip_nat  */
+  YYSYMBOL_expr_vlan_id = 71,              /* expr_vlan_id  */
+  YYSYMBOL_expr_other_type = 72,           /* expr_other_type  */
+  YYSYMBOL_value_other_type = 73,          /* value_other_type  */
+  YYSYMBOL_expr_local_mac = 74,            /* expr_local_mac  */
+  YYSYMBOL_expr_other_mac = 75,            /* expr_other_mac  */
+  YYSYMBOL_expr_local_ip = 76,             /* expr_local_ip  */
+  YYSYMBOL_expr_other_ip = 77,             /* expr_other_ip  */
+  YYSYMBOL_value_addr_ip = 78,             /* value_addr_ip  */
+  YYSYMBOL_expr_local_port = 79,           /* expr_local_port  */
+  YYSYMBOL_expr_other_port = 80,           /* expr_other_port  */
+  YYSYMBOL_expr_tunnel_type = 81,          /* expr_tunnel_type  */
+  YYSYMBOL_value_tunnel_type = 82,         /* value_tunnel_type  */
+  YYSYMBOL_expr_detection_guessed = 83,    /* expr_detection_guessed  */
+  YYSYMBOL_expr_detection_updated = 84,    /* expr_detection_updated  */
+  YYSYMBOL_expr_app = 85,                  /* expr_app  */
+  YYSYMBOL_expr_app_id = 86,               /* expr_app_id  */
+  YYSYMBOL_expr_app_name = 87,             /* expr_app_name  */
+  YYSYMBOL_expr_category = 88,             /* expr_category  */
+  YYSYMBOL_expr_risks = 89,                /* expr_risks  */
+  YYSYMBOL_expr_ndpi_risk_score = 90,      /* expr_ndpi_risk_score  */
+  YYSYMBOL_expr_ndpi_risk_score_client = 91, /* expr_ndpi_risk_score_client  */
+  YYSYMBOL_expr_ndpi_risk_score_server = 92, /* expr_ndpi_risk_score_server  */
+  YYSYMBOL_expr_app_category = 93,         /* expr_app_category  */
+  YYSYMBOL_expr_domain_category = 94,      /* expr_domain_category  */
+  YYSYMBOL_expr_proto = 95,                /* expr_proto  */
+  YYSYMBOL_expr_proto_id = 96,             /* expr_proto_id  */
+  YYSYMBOL_expr_proto_name = 97,           /* expr_proto_name  */
+  YYSYMBOL_expr_proto_category = 98,       /* expr_proto_category  */
+  YYSYMBOL_expr_detected_hostname = 99,    /* expr_detected_hostname  */
+  YYSYMBOL_expr_fwmark = 100,              /* expr_fwmark  */
+  YYSYMBOL_expr_ssl_version = 101,         /* expr_ssl_version  */
+  YYSYMBOL_expr_ssl_cipher = 102,          /* expr_ssl_cipher  */
+  YYSYMBOL_expr_origin = 103,              /* expr_origin  */
+  YYSYMBOL_value_origin_type = 104         /* value_origin_type  */
 };
-
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
-
-/* Location type.  */
-#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
-typedef struct YYLTYPE YYLTYPE;
-struct YYLTYPE
-{
-  int first_line;
-  int first_column;
-  int last_line;
-  int last_column;
-};
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
-#endif
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 
-int yyparse (yyscan_t scanner);
-
-#endif /* !YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED  */
-
-/* Copy the second part of user declarations.  */
-
-#line 418 "nd-flow-criteria.tab.cc" /* yacc.c:358  */
 
 #ifdef short
 # undef short
 #endif
 
-#ifdef YYTYPE_UINT8
-typedef YYTYPE_UINT8 yytype_uint8;
-#else
-typedef unsigned char yytype_uint8;
+/* On compilers that do not define __PTRDIFF_MAX__ etc., make sure
+   <limits.h> and (if available) <stdint.h> are included
+   so that the code can choose integer types of a good width.  */
+
+#ifndef __PTRDIFF_MAX__
+# include <limits.h> /* INFRINGES ON USER NAME SPACE */
+# if defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
+#  include <stdint.h> /* INFRINGES ON USER NAME SPACE */
+#  define YY_STDINT_H
+# endif
 #endif
 
-#ifdef YYTYPE_INT8
-typedef YYTYPE_INT8 yytype_int8;
+/* Narrow types that promote to a signed type and that can represent a
+   signed or unsigned integer of at least N bits.  In tables they can
+   save space and decrease cache pressure.  Promoting to a signed type
+   helps avoid bugs in integer arithmetic.  */
+
+#ifdef __INT_LEAST8_MAX__
+typedef __INT_LEAST8_TYPE__ yytype_int8;
+#elif defined YY_STDINT_H
+typedef int_least8_t yytype_int8;
 #else
 typedef signed char yytype_int8;
 #endif
 
-#ifdef YYTYPE_UINT16
-typedef YYTYPE_UINT16 yytype_uint16;
+#ifdef __INT_LEAST16_MAX__
+typedef __INT_LEAST16_TYPE__ yytype_int16;
+#elif defined YY_STDINT_H
+typedef int_least16_t yytype_int16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef short yytype_int16;
 #endif
 
-#ifdef YYTYPE_INT16
-typedef YYTYPE_INT16 yytype_int16;
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
+#endif
+
+#if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST8_TYPE__ yytype_uint8;
+#elif (!defined __UINT_LEAST8_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST8_MAX <= INT_MAX)
+typedef uint_least8_t yytype_uint8;
+#elif !defined __UINT_LEAST8_MAX__ && UCHAR_MAX <= INT_MAX
+typedef unsigned char yytype_uint8;
 #else
-typedef short int yytype_int16;
+typedef short yytype_uint8;
+#endif
+
+#if defined __UINT_LEAST16_MAX__ && __UINT_LEAST16_MAX__ <= __INT_MAX__
+typedef __UINT_LEAST16_TYPE__ yytype_uint16;
+#elif (!defined __UINT_LEAST16_MAX__ && defined YY_STDINT_H \
+       && UINT_LEAST16_MAX <= INT_MAX)
+typedef uint_least16_t yytype_uint16;
+#elif !defined __UINT_LEAST16_MAX__ && USHRT_MAX <= INT_MAX
+typedef unsigned short yytype_uint16;
+#else
+typedef int yytype_uint16;
+#endif
+
+#ifndef YYPTRDIFF_T
+# if defined __PTRDIFF_TYPE__ && defined __PTRDIFF_MAX__
+#  define YYPTRDIFF_T __PTRDIFF_TYPE__
+#  define YYPTRDIFF_MAXIMUM __PTRDIFF_MAX__
+# elif defined PTRDIFF_MAX
+#  ifndef ptrdiff_t
+#   include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  endif
+#  define YYPTRDIFF_T ptrdiff_t
+#  define YYPTRDIFF_MAXIMUM PTRDIFF_MAX
+# else
+#  define YYPTRDIFF_T long
+#  define YYPTRDIFF_MAXIMUM LONG_MAX
+# endif
 #endif
 
 #ifndef YYSIZE_T
@@ -449,15 +449,28 @@ typedef short int yytype_int16;
 #  define YYSIZE_T __SIZE_TYPE__
 # elif defined size_t
 #  define YYSIZE_T size_t
-# elif ! defined YYSIZE_T
+# elif defined __STDC_VERSION__ && 199901 <= __STDC_VERSION__
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+#define YYSIZE_MAXIMUM                                  \
+  YY_CAST (YYPTRDIFF_T,                                 \
+           (YYPTRDIFF_MAXIMUM < YY_CAST (YYSIZE_T, -1)  \
+            ? YYPTRDIFF_MAXIMUM                         \
+            : YY_CAST (YYSIZE_T, -1)))
+
+#define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
+
+
+/* Stored state numbers (used for stacks). */
+typedef yytype_int16 yy_state_t;
+
+/* State numbers in computations.  */
+typedef int yy_state_fast_t;
 
 #ifndef YY_
 # if defined YYENABLE_NLS && YYENABLE_NLS
@@ -471,47 +484,43 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE
-# if (defined __GNUC__                                               \
-      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
-     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
-#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
+
+#ifndef YY_ATTRIBUTE_PURE
+# if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_PURE __attribute__ ((__pure__))
 # else
-#  define YY_ATTRIBUTE(Spec) /* empty */
+#  define YY_ATTRIBUTE_PURE
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE_PURE
-# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
-#endif
-
 #ifndef YY_ATTRIBUTE_UNUSED
-# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
-#endif
-
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
+# if defined __GNUC__ && 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 # else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
+#  define YY_ATTRIBUTE_UNUSED
 # endif
 #endif
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
-    _Pragma ("GCC diagnostic push") \
-    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")\
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
-# define YY_IGNORE_MAYBE_UNINITIALIZED_END \
+# endif
+# define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
 # define YY_INITIAL_VALUE(Value) Value
@@ -524,8 +533,22 @@ typedef short int yytype_int16;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+#if defined __cplusplus && defined __GNUC__ && ! defined __ICC && 6 <= __GNUC__
+# define YY_IGNORE_USELESS_CAST_BEGIN                          \
+    _Pragma ("GCC diagnostic push")                            \
+    _Pragma ("GCC diagnostic ignored \"-Wuseless-cast\"")
+# define YY_IGNORE_USELESS_CAST_END            \
+    _Pragma ("GCC diagnostic pop")
+#endif
+#ifndef YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_BEGIN
+# define YY_IGNORE_USELESS_CAST_END
+#endif
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+
+#define YY_ASSERT(E) ((void) (0 && (E)))
+
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -590,8 +613,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -601,18 +623,19 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss_alloc;
+  yy_state_t yyss_alloc;
   YYSTYPE yyvs_alloc;
   YYLTYPE yyls_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
-# define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
+# define YYSTACK_GAP_MAXIMUM (YYSIZEOF (union yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+     ((N) * (YYSIZEOF (yy_state_t) + YYSIZEOF (YYSTYPE) \
+             + YYSIZEOF (YYLTYPE)) \
       + 2 * YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
@@ -625,11 +648,11 @@ union yyalloc
 # define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
     do                                                                  \
       {                                                                 \
-        YYSIZE_T yynewbytes;                                            \
+        YYPTRDIFF_T yynewbytes;                                         \
         YYCOPY (&yyptr->Stack_alloc, Stack, yysize);                    \
         Stack = &yyptr->Stack_alloc;                                    \
-        yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-        yyptr += yynewbytes / sizeof (*yyptr);                          \
+        yynewbytes = yystacksize * YYSIZEOF (*Stack) + YYSTACK_GAP_MAXIMUM; \
+        yyptr += yynewbytes / YYSIZEOF (*yyptr);                        \
       }                                                                 \
     while (0)
 
@@ -641,12 +664,12 @@ union yyalloc
 # ifndef YYCOPY
 #  if defined __GNUC__ && 1 < __GNUC__
 #   define YYCOPY(Dst, Src, Count) \
-      __builtin_memcpy (Dst, Src, (Count) * sizeof (*(Src)))
+      __builtin_memcpy (Dst, Src, YY_CAST (YYSIZE_T, (Count)) * sizeof (*(Src)))
 #  else
 #   define YYCOPY(Dst, Src, Count)              \
       do                                        \
         {                                       \
-          YYSIZE_T yyi;                         \
+          YYPTRDIFF_T yyi;                      \
           for (yyi = 0; yyi < (Count); yyi++)   \
             (Dst)[yyi] = (Src)[yyi];            \
         }                                       \
@@ -669,17 +692,20 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  317
 
-/* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
-   by yylex, with out-of-bounds checking.  */
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   313
 
-#define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+
+/* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, with out-of-bounds checking.  */
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
-   as returned by yylex, without out-of-bounds checking.  */
-static const yytype_uint8 yytranslate[] =
+   as returned by yylex.  */
+static const yytype_int8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -716,44 +742,51 @@ static const yytype_uint8 yytranslate[] =
 };
 
 #if YYDEBUG
-  /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
+/* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
+static const yytype_int16 yyrline[] =
 {
-       0,   216,   216,   218,   222,   223,   224,   225,   226,   227,
-     228,   229,   230,   231,   232,   233,   234,   235,   236,   237,
-     238,   239,   240,   241,   242,   243,   244,   245,   246,   247,
-     248,   249,   250,   251,   255,   259,   263,   268,   272,   276,
-     280,   284,   288,   292,   299,   303,   310,   314,   318,   322,
-     326,   330,   337,   341,   345,   349,   353,   357,   361,   365,
-     372,   378,   384,   428,   475,   476,   477,   478,   479,   480,
-     481,   485,   491,   500,   506,   515,   521,   530,   536,   545,
-     546,   550,   554,   558,   562,   566,   570,   574,   578,   585,
-     589,   593,   597,   601,   605,   609,   613,   620,   626,   632,
-     651,   673,   674,   677,   681,   687,   695,   703,   711,   722,
-     726,   732,   740,   748,   756,   767,   773,   781,   782,   785,
-     794,   806,   831,   859,   884,   912,   916,   920,   938,   960,
-     964,   968,   972,   976,   980,   984,   988,   995,   999,  1003,
-    1007,  1011,  1015,  1019,  1023,  1030,  1034,  1038,  1042,  1046,
-    1050,  1054,  1058,  1065,  1081,  1100,  1116,  1135,  1141,  1147,
-    1148,  1151,  1157,  1166,  1185,  1206,  1223,  1243,  1250,  1257,
-    1275,  1293,  1330,  1339,  1347,  1355,  1363,  1371,  1379,  1387,
-    1395,  1406,  1410,  1414,  1418,  1422,  1426,  1430,  1434,  1441,
-    1445,  1449,  1453,  1457,  1461,  1465,  1469,  1476,  1480,  1484,
-    1488,  1495,  1496,  1497
+       0,   220,   220,   222,   226,   227,   228,   229,   230,   231,
+     232,   233,   234,   235,   236,   237,   238,   239,   240,   241,
+     242,   243,   244,   245,   246,   247,   248,   249,   250,   251,
+     252,   253,   254,   255,   259,   263,   267,   272,   276,   280,
+     284,   288,   292,   296,   303,   307,   314,   318,   322,   326,
+     330,   334,   341,   345,   349,   353,   357,   361,   365,   369,
+     376,   382,   388,   432,   479,   480,   481,   482,   483,   484,
+     485,   489,   495,   504,   510,   519,   525,   534,   540,   549,
+     550,   554,   558,   562,   566,   570,   574,   578,   582,   589,
+     593,   597,   601,   605,   609,   613,   617,   624,   630,   636,
+     655,   677,   678,   681,   685,   691,   699,   707,   715,   726,
+     730,   736,   744,   752,   760,   771,   777,   785,   786,   789,
+     798,   810,   835,   863,   888,   916,   920,   924,   942,   964,
+     968,   972,   976,   980,   984,   988,   992,   999,  1003,  1007,
+    1011,  1015,  1019,  1023,  1027,  1034,  1038,  1042,  1046,  1050,
+    1054,  1058,  1062,  1069,  1085,  1104,  1120,  1139,  1145,  1151,
+    1152,  1155,  1161,  1170,  1189,  1210,  1227,  1247,  1254,  1261,
+    1279,  1297,  1334,  1343,  1351,  1359,  1367,  1375,  1383,  1391,
+    1399,  1410,  1414,  1418,  1422,  1426,  1430,  1434,  1438,  1445,
+    1449,  1453,  1457,  1461,  1465,  1469,  1473,  1480,  1484,  1488,
+    1492,  1499,  1500,  1501
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if YYDEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "FLOW_IP_PROTO", "FLOW_IP_VERSION",
-  "FLOW_IP_NAT", "FLOW_VLAN_ID", "FLOW_OTHER_TYPE", "FLOW_LOCAL_MAC",
-  "FLOW_OTHER_MAC", "FLOW_LOCAL_IP", "FLOW_OTHER_IP", "FLOW_LOCAL_PORT",
-  "FLOW_OTHER_PORT", "FLOW_TUNNEL_TYPE", "FLOW_DETECTION_GUESSED",
-  "FLOW_DETECTION_UPDATED", "FLOW_CATEGORY", "FLOW_RISKS",
-  "FLOW_NDPI_RISK_SCORE", "FLOW_NDPI_RISK_SCORE_CLIENT",
+  "\"end of file\"", "error", "\"invalid token\"", "FLOW_IP_PROTO",
+  "FLOW_IP_VERSION", "FLOW_IP_NAT", "FLOW_VLAN_ID", "FLOW_OTHER_TYPE",
+  "FLOW_LOCAL_MAC", "FLOW_OTHER_MAC", "FLOW_LOCAL_IP", "FLOW_OTHER_IP",
+  "FLOW_LOCAL_PORT", "FLOW_OTHER_PORT", "FLOW_TUNNEL_TYPE",
+  "FLOW_DETECTION_GUESSED", "FLOW_DETECTION_UPDATED", "FLOW_CATEGORY",
+  "FLOW_RISKS", "FLOW_NDPI_RISK_SCORE", "FLOW_NDPI_RISK_SCORE_CLIENT",
   "FLOW_NDPI_RISK_SCORE_SERVER", "FLOW_DOMAIN_CATEGORY",
   "FLOW_APPLICATION", "FLOW_APPLICATION_CATEGORY", "FLOW_PROTOCOL",
   "FLOW_PROTOCOL_CATEGORY", "FLOW_DETECTED_HOSTNAME", "FLOW_SSL_VERSION",
@@ -779,35 +812,26 @@ static const char *const yytname[] =
   "expr_ssl_version", "expr_ssl_cipher", "expr_origin",
   "value_origin_type", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
-/* YYTOKNUM[NUM] -- (External) token number corresponding to the
-   (internal) symbol number NUM (which must be that of a token).  */
-static const yytype_uint16 yytoknum[] =
-{
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308,   309,   310,   311,   312,   313,    59,
-      40,    41,    33,    62,    60
-};
-# endif
+#define YYPACT_NINF (-50)
 
-#define YYPACT_NINF -50
+#define yypact_value_is_default(Yyn) \
+  ((Yyn) == YYPACT_NINF)
 
-#define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-50)))
+#define YYTABLE_NINF (-1)
 
-#define YYTABLE_NINF -1
-
-#define yytable_value_is_error(Yytable_value) \
+#define yytable_value_is_error(Yyn) \
   0
 
-  /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
-     STATE-NUM.  */
+/* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+   STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
      -50,     1,   -50,   -11,    62,   102,    -7,   106,   115,   135,
@@ -844,9 +868,9 @@ static const yytype_int16 yypact[] =
      -50,   -50,   -50,   -50,   -50,   193,   193
 };
 
-  /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
-     Performed when YYTABLE does not specify something else to do.  Zero
-     means the default is an error.  */
+/* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+   Performed when YYTABLE does not specify something else to do.  Zero
+   means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
        2,     0,     1,    36,     0,    46,    52,    60,     0,     0,
@@ -883,7 +907,7 @@ static const yytype_uint8 yydefact[] =
      177,   178,   179,   180,    35,    34,    33
 };
 
-  /* YYPGOTO[NTERM-NUM].  */
+/* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
      -50,   -50,   -32,   -50,   -50,   -50,   -50,   -50,   162,   -50,
@@ -892,19 +916,19 @@ static const yytype_int16 yypgoto[] =
      -50,   -50,   -50,   -50,   -50,   -50,   -50,   -50,   -50,   111
 };
 
-  /* YYDEFGOTO[NTERM-NUM].  */
+/* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,     1,    34,    35,    36,    37,    38,    39,   215,    40,
+       0,     1,    34,    35,    36,    37,    38,    39,   215,    40,
       41,    42,    43,   223,    44,    45,    46,   241,    47,    48,
       49,    50,    51,    52,    53,    54,    55,    56,    57,    58,
       59,    60,    61,    62,    63,    64,    65,    66,    67,   306
 };
 
-  /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
-     positive, shift that token.  If negative, reduce the rule whose
-     number is the opposite.  If YYTABLE_NINF, syntax error.  */
-static const yytype_uint16 yytable[] =
+/* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+   positive, shift that token.  If negative, reduce the rule whose
+   number is the opposite.  If YYTABLE_NINF, syntax error.  */
+static const yytype_int16 yytable[] =
 {
      166,     2,   198,   199,     3,     4,     5,     6,     7,     8,
        9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
@@ -976,9 +1000,9 @@ static const yytype_int16 yycheck[] =
       58,    58,    58,    58,    58,    58
 };
 
-  /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-     symbol of state STATE-NUM.  */
-static const yytype_uint8 yystos[] =
+/* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+   state STATE-NUM.  */
+static const yytype_int8 yystos[] =
 {
        0,    66,     0,     3,     4,     5,     6,     7,     8,     9,
       10,    11,    12,    13,    14,    15,    16,    17,    18,    19,
@@ -1014,8 +1038,8 @@ static const yytype_uint8 yystos[] =
       58,    58,    58,    58,    61,    67,    67
 };
 
-  /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const yytype_uint8 yyr1[] =
+/* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
+static const yytype_int8 yyr1[] =
 {
        0,    65,    66,    66,    67,    67,    67,    67,    67,    67,
       67,    67,    67,    67,    67,    67,    67,    67,    67,    67,
@@ -1040,8 +1064,8 @@ static const yytype_uint8 yyr1[] =
      103,   104,   104,   104
 };
 
-  /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
-static const yytype_uint8 yyr2[] =
+/* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
+static const yytype_int8 yyr2[] =
 {
        0,     2,     0,     3,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
@@ -1067,39 +1091,39 @@ static const yytype_uint8 yyr2[] =
 };
 
 
+enum { YYENOMEM = -2 };
+
 #define yyerrok         (yyerrstatus = 0)
 #define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
 #define YYERROR         goto yyerrorlab
+#define YYNOMEM         goto yyexhaustedlab
 
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)                                  \
-do                                                              \
-  if (yychar == YYEMPTY)                                        \
-    {                                                           \
-      yychar = (Token);                                         \
-      yylval = (Value);                                         \
-      YYPOPSTACK (yylen);                                       \
-      yystate = *yyssp;                                         \
-      goto yybackup;                                            \
-    }                                                           \
-  else                                                          \
-    {                                                           \
-      yyerror (&yylloc, scanner, YY_("syntax error: cannot back up")); \
-      YYERROR;                                                  \
-    }                                                           \
-while (0)
+#define YYBACKUP(Token, Value)                                    \
+  do                                                              \
+    if (yychar == YYEMPTY)                                        \
+      {                                                           \
+        yychar = (Token);                                         \
+        yylval = (Value);                                         \
+        YYPOPSTACK (yylen);                                       \
+        yystate = *yyssp;                                         \
+        goto yybackup;                                            \
+      }                                                           \
+    else                                                          \
+      {                                                           \
+        yyerror (&yylloc, scanner, YY_("syntax error: cannot back up")); \
+        YYERROR;                                                  \
+      }                                                           \
+  while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use YYerror or YYUNDEF. */
+#define YYERRCODE YYUNDEF
 
 /* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
    If N is 0, then set CURRENT to the empty location which ends
@@ -1143,20 +1167,27 @@ do {                                            \
 } while (0)
 
 
-/* YY_LOCATION_PRINT -- Print the location on the stream.
+/* YYLOCATION_PRINT -- Print the location on the stream.
    This macro was not mandated originally: define only if we know
    we won't break user code: when these are the locations we know.  */
 
-#ifndef YY_LOCATION_PRINT
-# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+# ifndef YYLOCATION_PRINT
+
+#  if defined YY_LOCATION_PRINT
+
+   /* Temporary convenience wrapper in case some people defined the
+      undocumented and private YY_LOCATION_PRINT macros.  */
+#   define YYLOCATION_PRINT(File, Loc)  YY_LOCATION_PRINT(File, *(Loc))
+
+#  elif defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 
 /* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
 
 YY_ATTRIBUTE_UNUSED
-static unsigned
+static int
 yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
 {
-  unsigned res = 0;
+  int res = 0;
   int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
   if (0 <= yylocp->first_line)
     {
@@ -1176,64 +1207,72 @@ yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
         res += YYFPRINTF (yyo, "-%d", end_col);
     }
   return res;
- }
+}
 
-#  define YY_LOCATION_PRINT(File, Loc)          \
-  yy_location_print_ (File, &(Loc))
+#   define YYLOCATION_PRINT  yy_location_print_
 
-# else
-#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-# endif
-#endif
+    /* Temporary convenience wrapper in case some people defined the
+       undocumented and private YY_LOCATION_PRINT macros.  */
+#   define YY_LOCATION_PRINT(File, Loc)  YYLOCATION_PRINT(File, &(Loc))
+
+#  else
+
+#   define YYLOCATION_PRINT(File, Loc) ((void) 0)
+    /* Temporary convenience wrapper in case some people defined the
+       undocumented and private YY_LOCATION_PRINT macros.  */
+#   define YY_LOCATION_PRINT  YYLOCATION_PRINT
+
+#  endif
+# endif /* !defined YYLOCATION_PRINT */
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, Location, scanner); \
+                  Kind, Value, Location, scanner); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
 
 
-/*----------------------------------------.
-| Print this symbol's value on YYOUTPUT.  |
-`----------------------------------------*/
+/*-----------------------------------.
+| Print this symbol's value on YYO.  |
+`-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, yyscan_t scanner)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, yyscan_t scanner)
 {
-  FILE *yyo = yyoutput;
-  YYUSE (yyo);
-  YYUSE (yylocationp);
-  YYUSE (scanner);
+  FILE *yyoutput = yyo;
+  YY_USE (yyoutput);
+  YY_USE (yylocationp);
+  YY_USE (scanner);
   if (!yyvaluep)
     return;
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# endif
-  YYUSE (yytype);
+  YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
+  YY_USE (yykind);
+  YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+/*---------------------------.
+| Print this symbol on YYO.  |
+`---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, yyscan_t scanner)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, yyscan_t scanner)
 {
-  YYFPRINTF (yyoutput, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+  YYFPRINTF (yyo, "%s %s (",
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  YY_LOCATION_PRINT (yyoutput, *yylocationp);
-  YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner);
-  YYFPRINTF (yyoutput, ")");
+  YYLOCATION_PRINT (yyo, yylocationp);
+  YYFPRINTF (yyo, ": ");
+  yy_symbol_value_print (yyo, yykind, yyvaluep, yylocationp, scanner);
+  YYFPRINTF (yyo, ")");
 }
 
 /*------------------------------------------------------------------.
@@ -1242,7 +1281,7 @@ yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYL
 `------------------------------------------------------------------*/
 
 static void
-yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
+yy_stack_print (yy_state_t *yybottom, yy_state_t *yytop)
 {
   YYFPRINTF (stderr, "Stack now");
   for (; yybottom <= yytop; yybottom++)
@@ -1265,21 +1304,22 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, yyscan_t scanner)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp,
+                 int yyrule, yyscan_t scanner)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %d):\n",
              yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[yyssp[yyi + 1 - yynrhs]],
-                       &(yyvsp[(yyi + 1) - (yynrhs)])
-                       , &(yylsp[(yyi + 1) - (yynrhs)])                       , scanner);
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)],
+                       &(yylsp[(yyi + 1) - (yynrhs)]), scanner);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1294,8 +1334,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1318,246 +1358,31 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen strlen
-#  else
-/* Return the length of YYSTR.  */
-static YYSIZE_T
-yystrlen (const char *yystr)
-{
-  YYSIZE_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYSIZE_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYSIZE_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-        switch (*++yyp)
-          {
-          case '\'':
-          case ',':
-            goto do_not_strip_quotes;
-
-          case '\\':
-            if (*++yyp != '\\')
-              goto do_not_strip_quotes;
-            /* Fall through.  */
-          default:
-            if (yyres)
-              yyres[yyn] = *yyp;
-            yyn++;
-            break;
-
-          case '"':
-            if (yyres)
-              yyres[yyn] = '\0';
-            return yyn;
-          }
-    do_not_strip_quotes: ;
-    }
-
-  if (! yyres)
-    return yystrlen (yystr);
-
-  return yystpcpy (yyres, yystr) - yyres;
-}
-# endif
-
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
-
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
-static int
-yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
-                yytype_int16 *yyssp, int yytoken)
-{
-  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-  YYSIZE_T yysize = yysize0;
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat. */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Number of reported tokens (one for the "unexpected", one per
-     "expected"). */
-  int yycount = 0;
-
-  /* There are many possibilities here to consider:
-     - If this state is a consistent state with a default action, then
-       the only way this function was invoked is if the default action
-       is an error action.  In that case, don't check for expected
-       tokens because there are none.
-     - The only way there can be no lookahead present (in yychar) is if
-       this state is a consistent state with a default action.  Thus,
-       detecting the absence of a lookahead is sufficient to determine
-       that there is no unexpected or expected token to report.  In that
-       case, just report a simple "syntax error".
-     - Don't assume there isn't a lookahead just because this state is a
-       consistent state with a default action.  There might have been a
-       previous inconsistent state, consistent state with a non-default
-       action, or user semantic action that manipulated yychar.
-     - Of course, the expected token list depends on states to have
-       correct lookahead information, and it depends on the parser not
-       to perform extra reductions after fetching a lookahead from the
-       scanner and before detecting a syntax error.  Thus, state merging
-       (from LALR or IELR) and default reductions corrupt the expected
-       token list.  However, the list is correct for canonical LR with
-       one exception: it will still contain any token that will not be
-       accepted due to an error action in a later state.
-  */
-  if (yytoken != YYEMPTY)
-    {
-      int yyn = yypact[*yyssp];
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (! (yysize <= yysize1
-                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
-                    return 2;
-                  yysize = yysize1;
-                }
-              }
-        }
-    }
-
-  switch (yycount)
-    {
-# define YYCASE_(N, S)                      \
-      case N:                               \
-        yyformat = S;                       \
-      break
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
-    }
-
-  {
-    YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
-    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
-      return 2;
-    yysize = yysize1;
-  }
-
-  if (*yymsg_alloc < yysize)
-    {
-      *yymsg_alloc = 2 * yysize;
-      if (! (yysize <= *yymsg_alloc
-             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
-        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
-    }
-
-  /* Avoid sprintf, as that infringes on the user's name space.
-     Don't have undefined behavior even if the translation
-     produced a string with the wrong number of "%s"s.  */
-  {
-    char *yyp = *yymsg;
-    int yyi = 0;
-    while ((*yyp = *yyformat) != '\0')
-      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
-        {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
-          yyformat += 2;
-        }
-      else
-        {
-          yyp++;
-          yyformat++;
-        }
-  }
-  return 0;
-}
-#endif /* YYERROR_VERBOSE */
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, yyscan_t scanner)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, yyscan_t scanner)
 {
-  YYUSE (yyvaluep);
-  YYUSE (yylocationp);
-  YYUSE (scanner);
+  YY_USE (yyvaluep);
+  YY_USE (yylocationp);
+  YY_USE (scanner);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
+
+
 
 
 
@@ -1569,7 +1394,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 int
 yyparse (yyscan_t scanner)
 {
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 
@@ -1588,55 +1413,47 @@ static YYLTYPE yyloc_default
 YYLTYPE yylloc = yyloc_default;
 
     /* Number of syntax errors so far.  */
-    int yynerrs;
+    int yynerrs = 0;
 
-    int yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-       'yyls': related to locations.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
-    yytype_int16 yyssa[YYINITDEPTH];
-    yytype_int16 *yyss;
-    yytype_int16 *yyssp;
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
 
-    /* The semantic value stack.  */
+    /* The state stack: array, bottom, top.  */
+    yy_state_t yyssa[YYINITDEPTH];
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
+
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
-    /* The location stack.  */
+    /* The location stack: array, bottom, top.  */
     YYLTYPE yylsa[YYINITDEPTH];
-    YYLTYPE *yyls;
-    YYLTYPE *yylsp;
-
-    /* The locations where the error started and ended.  */
-    YYLTYPE yyerror_range[3];
-
-    YYSIZE_T yystacksize;
+    YYLTYPE *yyls = yylsa;
+    YYLTYPE *yylsp = yyls;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
   YYLTYPE yyloc;
 
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
-#endif
+  /* The locations where the error started and ended.  */
+  YYLTYPE yyerror_range[3];
+
+
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
 
@@ -1644,43 +1461,49 @@ YYLTYPE yylloc = yyloc_default;
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yylsp = yyls = yylsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
+
   yylsp[0] = yylloc;
   goto yysetstate;
 
+
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- push a new state, which is found in yystate.  |
 `------------------------------------------------------------*/
- yynewstate:
+yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
- yysetstate:
-  *yyssp = yystate;
+
+/*--------------------------------------------------------------------.
+| yysetstate -- set current state (the top of the stack) to yystate.  |
+`--------------------------------------------------------------------*/
+yysetstate:
+  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+  YY_ASSERT (0 <= yystate && yystate < YYNSTATES);
+  YY_IGNORE_USELESS_CAST_BEGIN
+  *yyssp = YY_CAST (yy_state_t, yystate);
+  YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
+#if !defined yyoverflow && !defined YYSTACK_RELOCATE
+    YYNOMEM;
+#else
     {
       /* Get the current used size of the three stacks, in elements.  */
-      YYSIZE_T yysize = yyssp - yyss + 1;
+      YYPTRDIFF_T yysize = yyssp - yyss + 1;
 
-#ifdef yyoverflow
+# if defined yyoverflow
       {
         /* Give user a chance to reallocate the stack.  Use copies of
            these so that the &'s don't force the real ones into
            memory.  */
+        yy_state_t *yyss1 = yyss;
         YYSTYPE *yyvs1 = yyvs;
-        yytype_int16 *yyss1 = yyss;
         YYLTYPE *yyls1 = yyls;
 
         /* Each stack pointer address is followed by the size of the
@@ -1688,32 +1511,29 @@ YYLTYPE yylloc = yyloc_default;
            conditional around just the two extra args, but that might
            be undefined if yyoverflow is a macro.  */
         yyoverflow (YY_("memory exhausted"),
-                    &yyss1, yysize * sizeof (*yyssp),
-                    &yyvs1, yysize * sizeof (*yyvsp),
-                    &yyls1, yysize * sizeof (*yylsp),
+                    &yyss1, yysize * YYSIZEOF (*yyssp),
+                    &yyvs1, yysize * YYSIZEOF (*yyvsp),
+                    &yyls1, yysize * YYSIZEOF (*yylsp),
                     &yystacksize);
-
-        yyls = yyls1;
         yyss = yyss1;
         yyvs = yyvs1;
+        yyls = yyls1;
       }
-#else /* no yyoverflow */
-# ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
-# else
+# else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-        goto yyexhaustedlab;
+        YYNOMEM;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
         yystacksize = YYMAXDEPTH;
 
       {
-        yytype_int16 *yyss1 = yyss;
+        yy_state_t *yyss1 = yyss;
         union yyalloc *yyptr =
-          (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
+          YY_CAST (union yyalloc *,
+                   YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
-          goto yyexhaustedlab;
+          YYNOMEM;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
         YYSTACK_RELOCATE (yyls_alloc, yyls);
@@ -1722,31 +1542,32 @@ YYLTYPE yylloc = yyloc_default;
           YYSTACK_FREE (yyss1);
       }
 # endif
-#endif /* no yyoverflow */
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
       yylsp = yyls + yysize - 1;
 
-      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+      YY_IGNORE_USELESS_CAST_BEGIN
+      YYDPRINTF ((stderr, "Stack size increased to %ld\n",
+                  YY_CAST (long, yystacksize)));
+      YY_IGNORE_USELESS_CAST_END
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
     }
+#endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
 
-  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
   if (yystate == YYFINAL)
     YYACCEPT;
 
   goto yybackup;
 
+
 /*-----------.
 | yybackup.  |
 `-----------*/
 yybackup:
-
   /* Do appropriate processing given the current state.  Read a
      lookahead token if we need one and don't already have one.  */
 
@@ -1757,17 +1578,29 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
   if (yychar == YYEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex (&yylval, &yylloc, scanner);
     }
 
   if (yychar <= YYEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = YYEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == YYerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = YYUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      yyerror_range[1] = yylloc;
+      goto yyerrlab1;
     }
   else
     {
@@ -1796,15 +1629,14 @@ yybackup:
 
   /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the shifted token.  */
-  yychar = YYEMPTY;
-
   yystate = yyn;
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
   *++yylsp = yylloc;
+
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
   goto yynewstate;
 
 
@@ -1819,7 +1651,7 @@ yydefault:
 
 
 /*-----------------------------.
-| yyreduce -- Do a reduction.  |
+| yyreduce -- do a reduction.  |
 `-----------------------------*/
 yyreduce:
   /* yyn is the number of a rule to reduce with.  */
@@ -1835,277 +1667,278 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-  /* Default location.  */
+  /* Default location. */
   YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
+  yyerror_range[1] = yyloc;
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 33:
-#line 251 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 33: /* expr: expr BOOL_OR expr  */
+#line 255 "nd-flow-criteria.tab.yy"
+                        {
         _NDFP_result = ((yyval.bool_result) = ((yyvsp[-2].bool_result) || (yyvsp[0].bool_result)));
         _NDFP_debugf("OR (%d || %d == %d)\n", (yyvsp[-2].bool_result), (yyvsp[0].bool_result), (yyval.bool_result));
     }
-#line 1850 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1683 "nd-flow-criteria.tab.cc"
     break;
 
-  case 34:
-#line 255 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 34: /* expr: expr BOOL_AND expr  */
+#line 259 "nd-flow-criteria.tab.yy"
+                         {
         _NDFP_result = ((yyval.bool_result) = ((yyvsp[-2].bool_result) && (yyvsp[0].bool_result)));
         _NDFP_debugf("AND (%d && %d == %d)\n", (yyvsp[-2].bool_result), (yyvsp[0].bool_result), (yyval.bool_result));
     }
-#line 1859 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1692 "nd-flow-criteria.tab.cc"
     break;
 
-  case 35:
-#line 259 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { _NDFP_result = ((yyval.bool_result) = (yyvsp[-1].bool_result)); }
-#line 1865 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 35: /* expr: '(' expr ')'  */
+#line 263 "nd-flow-criteria.tab.yy"
+                   { _NDFP_result = ((yyval.bool_result) = (yyvsp[-1].bool_result)); }
+#line 1698 "nd-flow-criteria.tab.cc"
     break;
 
-  case 36:
-#line 263 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 36: /* expr_ip_proto: FLOW_IP_PROTO  */
+#line 267 "nd-flow-criteria.tab.yy"
+                    {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol != 0));
         _NDFP_debugf(
             "IP Protocol is non-zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1875 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1708 "nd-flow-criteria.tab.cc"
     break;
 
-  case 37:
-#line 268 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 37: /* expr_ip_proto: '!' FLOW_IP_PROTO  */
+#line 272 "nd-flow-criteria.tab.yy"
+                        {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol == 0));
         _NDFP_debugf("IP Protocol is zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1884 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1717 "nd-flow-criteria.tab.cc"
     break;
 
-  case 38:
-#line 272 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 38: /* expr_ip_proto: FLOW_IP_PROTO CMP_EQUAL VALUE_NUMBER  */
+#line 276 "nd-flow-criteria.tab.yy"
+                                           {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol == (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1893 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1726 "nd-flow-criteria.tab.cc"
     break;
 
-  case 39:
-#line 276 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 39: /* expr_ip_proto: FLOW_IP_PROTO CMP_NOTEQUAL VALUE_NUMBER  */
+#line 280 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol != (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1902 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1735 "nd-flow-criteria.tab.cc"
     break;
 
-  case 40:
-#line 280 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 40: /* expr_ip_proto: FLOW_IP_PROTO CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 284 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol >= (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1911 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1744 "nd-flow-criteria.tab.cc"
     break;
 
-  case 41:
-#line 284 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 41: /* expr_ip_proto: FLOW_IP_PROTO CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 288 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol <= (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1920 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1753 "nd-flow-criteria.tab.cc"
     break;
 
-  case 42:
-#line 288 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 42: /* expr_ip_proto: FLOW_IP_PROTO '>' VALUE_NUMBER  */
+#line 292 "nd-flow-criteria.tab.yy"
+                                     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol > (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1929 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1762 "nd-flow-criteria.tab.cc"
     break;
 
-  case 43:
-#line 292 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 43: /* expr_ip_proto: FLOW_IP_PROTO '<' VALUE_NUMBER  */
+#line 296 "nd-flow-criteria.tab.yy"
+                                     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_protocol < (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Protocol > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1938 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1771 "nd-flow-criteria.tab.cc"
     break;
 
-  case 44:
-#line 299 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 44: /* expr_ip_version: FLOW_IP_VERSION CMP_EQUAL VALUE_NUMBER  */
+#line 303 "nd-flow-criteria.tab.yy"
+                                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_version == (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Version == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1947 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1780 "nd-flow-criteria.tab.cc"
     break;
 
-  case 45:
-#line 303 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 45: /* expr_ip_version: FLOW_IP_VERSION CMP_NOTEQUAL VALUE_NUMBER  */
+#line 307 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ip_version != (yyvsp[0].ul_number)));
         _NDFP_debugf("IP Version != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 1956 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1789 "nd-flow-criteria.tab.cc"
     break;
 
-  case 46:
-#line 310 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 46: /* expr_ip_nat: FLOW_IP_NAT  */
+#line 314 "nd-flow-criteria.tab.yy"
+                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == true));
         _NDFP_debugf("IP NAT is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1965 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1798 "nd-flow-criteria.tab.cc"
     break;
 
-  case 47:
-#line 314 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 47: /* expr_ip_nat: '!' FLOW_IP_NAT  */
+#line 318 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == false));
         _NDFP_debugf("IP NAT is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1974 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1807 "nd-flow-criteria.tab.cc"
     break;
 
-  case 48:
-#line 318 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 48: /* expr_ip_nat: FLOW_IP_NAT CMP_EQUAL VALUE_TRUE  */
+#line 322 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == true));
         _NDFP_debugf("IP NAT == true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1983 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1816 "nd-flow-criteria.tab.cc"
     break;
 
-  case 49:
-#line 322 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 49: /* expr_ip_nat: FLOW_IP_NAT CMP_EQUAL VALUE_FALSE  */
+#line 326 "nd-flow-criteria.tab.yy"
+                                        {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() == false));
         _NDFP_debugf("IP NAT == false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 1992 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1825 "nd-flow-criteria.tab.cc"
     break;
 
-  case 50:
-#line 326 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 50: /* expr_ip_nat: FLOW_IP_NAT CMP_NOTEQUAL VALUE_TRUE  */
+#line 330 "nd-flow-criteria.tab.yy"
+                                          {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() != true));
         _NDFP_debugf("IP NAT != true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2001 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1834 "nd-flow-criteria.tab.cc"
     break;
 
-  case 51:
-#line 330 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 51: /* expr_ip_nat: FLOW_IP_NAT CMP_NOTEQUAL VALUE_FALSE  */
+#line 334 "nd-flow-criteria.tab.yy"
+                                           {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.ip_nat.load() != false));
         _NDFP_debugf("IP NAT != false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2010 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1843 "nd-flow-criteria.tab.cc"
     break;
 
-  case 52:
-#line 337 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 52: /* expr_vlan_id: FLOW_VLAN_ID  */
+#line 341 "nd-flow-criteria.tab.yy"
+                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id != 0));
         _NDFP_debugf("VLAN ID is non-zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2019 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1852 "nd-flow-criteria.tab.cc"
     break;
 
-  case 53:
-#line 341 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 53: /* expr_vlan_id: '!' FLOW_VLAN_ID  */
+#line 345 "nd-flow-criteria.tab.yy"
+                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id == 0));
         _NDFP_debugf("VLAN ID is zero? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2028 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1861 "nd-flow-criteria.tab.cc"
     break;
 
-  case 54:
-#line 345 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 54: /* expr_vlan_id: FLOW_VLAN_ID CMP_EQUAL VALUE_NUMBER  */
+#line 349 "nd-flow-criteria.tab.yy"
+                                          {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id == (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2037 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1870 "nd-flow-criteria.tab.cc"
     break;
 
-  case 55:
-#line 349 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 55: /* expr_vlan_id: FLOW_VLAN_ID CMP_NOTEQUAL VALUE_NUMBER  */
+#line 353 "nd-flow-criteria.tab.yy"
+                                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id != (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2046 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1879 "nd-flow-criteria.tab.cc"
     break;
 
-  case 56:
-#line 353 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 56: /* expr_vlan_id: FLOW_VLAN_ID CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 357 "nd-flow-criteria.tab.yy"
+                                               {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id >= (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2055 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1888 "nd-flow-criteria.tab.cc"
     break;
 
-  case 57:
-#line 357 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 57: /* expr_vlan_id: FLOW_VLAN_ID CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 361 "nd-flow-criteria.tab.yy"
+                                               {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id <= (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2064 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1897 "nd-flow-criteria.tab.cc"
     break;
 
-  case 58:
-#line 361 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 58: /* expr_vlan_id: FLOW_VLAN_ID '>' VALUE_NUMBER  */
+#line 365 "nd-flow-criteria.tab.yy"
+                                    {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id > (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2073 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1906 "nd-flow-criteria.tab.cc"
     break;
 
-  case 59:
-#line 365 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 59: /* expr_vlan_id: FLOW_VLAN_ID '<' VALUE_NUMBER  */
+#line 369 "nd-flow-criteria.tab.yy"
+                                    {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->vlan_id < (yyvsp[0].ul_number)));
         _NDFP_debugf("VLAN ID < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2082 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1915 "nd-flow-criteria.tab.cc"
     break;
 
-  case 60:
-#line 372 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 60: /* expr_other_type: FLOW_OTHER_TYPE  */
+#line 376 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->other_type != ndFlow::OTHER_UNKNOWN
         ));
         _NDFP_debugf("Other type known? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2093 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1926 "nd-flow-criteria.tab.cc"
     break;
 
-  case 61:
-#line 378 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 61: /* expr_other_type: '!' FLOW_OTHER_TYPE  */
+#line 382 "nd-flow-criteria.tab.yy"
+                          {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->other_type == ndFlow::OTHER_UNKNOWN
         ));
         _NDFP_debugf("Other type unknown? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2104 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1937 "nd-flow-criteria.tab.cc"
     break;
 
-  case 62:
-#line 384 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 62: /* expr_other_type: FLOW_OTHER_TYPE CMP_EQUAL value_other_type  */
+#line 388 "nd-flow-criteria.tab.yy"
+                                                 {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_OTHER_UNKNOWN:
             _NDFP_result = (
@@ -2149,12 +1982,12 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Other type == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2153 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 1986 "nd-flow-criteria.tab.cc"
     break;
 
-  case 63:
-#line 428 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 63: /* expr_other_type: FLOW_OTHER_TYPE CMP_NOTEQUAL value_other_type  */
+#line 432 "nd-flow-criteria.tab.yy"
+                                                    {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_OTHER_UNKNOWN:
             _NDFP_result = (
@@ -2198,320 +2031,320 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Other type != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2202 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2035 "nd-flow-criteria.tab.cc"
     break;
 
-  case 64:
-#line 475 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2208 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 64: /* value_other_type: FLOW_OTHER_UNKNOWN  */
+#line 479 "nd-flow-criteria.tab.yy"
+                         { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2041 "nd-flow-criteria.tab.cc"
     break;
 
-  case 65:
-#line 476 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2214 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 65: /* value_other_type: FLOW_OTHER_UNSUPPORTED  */
+#line 480 "nd-flow-criteria.tab.yy"
+                             { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2047 "nd-flow-criteria.tab.cc"
     break;
 
-  case 66:
-#line 477 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2220 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 66: /* value_other_type: FLOW_OTHER_LOCAL  */
+#line 481 "nd-flow-criteria.tab.yy"
+                       { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2053 "nd-flow-criteria.tab.cc"
     break;
 
-  case 67:
-#line 478 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2226 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 67: /* value_other_type: FLOW_OTHER_MULTICAST  */
+#line 482 "nd-flow-criteria.tab.yy"
+                           { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2059 "nd-flow-criteria.tab.cc"
     break;
 
-  case 68:
-#line 479 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2232 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 68: /* value_other_type: FLOW_OTHER_BROADCAST  */
+#line 483 "nd-flow-criteria.tab.yy"
+                           { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2065 "nd-flow-criteria.tab.cc"
     break;
 
-  case 69:
-#line 480 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2238 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 69: /* value_other_type: FLOW_OTHER_REMOTE  */
+#line 484 "nd-flow-criteria.tab.yy"
+                        { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2071 "nd-flow-criteria.tab.cc"
     break;
 
-  case 70:
-#line 481 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2244 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 70: /* value_other_type: FLOW_OTHER_ERROR  */
+#line 485 "nd-flow-criteria.tab.yy"
+                       { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2077 "nd-flow-criteria.tab.cc"
     break;
 
-  case 71:
-#line 485 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 71: /* expr_local_mac: FLOW_LOCAL_MAC CMP_EQUAL VALUE_ADDR_MAC  */
+#line 489 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_mac, (yyvsp[0].string), ND_STR_ETHALEN) == 0
         ));
         _NDFP_debugf("Local MAC == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2255 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2088 "nd-flow-criteria.tab.cc"
     break;
 
-  case 72:
-#line 491 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 72: /* expr_local_mac: FLOW_LOCAL_MAC CMP_NOTEQUAL VALUE_ADDR_MAC  */
+#line 495 "nd-flow-criteria.tab.yy"
+                                                 {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_mac, (yyvsp[0].string), ND_STR_ETHALEN) != 0
         ));
         _NDFP_debugf("Local MAC != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2266 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2099 "nd-flow-criteria.tab.cc"
     break;
 
-  case 73:
-#line 500 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 73: /* expr_other_mac: FLOW_OTHER_MAC CMP_EQUAL VALUE_ADDR_MAC  */
+#line 504 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_mac, (yyvsp[0].string), ND_STR_ETHALEN) == 0
         ));
         _NDFP_debugf("Other MAC == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2277 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2110 "nd-flow-criteria.tab.cc"
     break;
 
-  case 74:
-#line 506 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 74: /* expr_other_mac: FLOW_OTHER_MAC CMP_NOTEQUAL VALUE_ADDR_MAC  */
+#line 510 "nd-flow-criteria.tab.yy"
+                                                 {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_mac, (yyvsp[0].string), ND_STR_ETHALEN) != 0
         ));
         _NDFP_debugf("Other MAC != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2288 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2121 "nd-flow-criteria.tab.cc"
     break;
 
-  case 75:
-#line 515 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 75: /* expr_local_ip: FLOW_LOCAL_IP CMP_EQUAL value_addr_ip  */
+#line 519 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) == 0
         ));
         _NDFP_debugf("Local IP == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2299 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2132 "nd-flow-criteria.tab.cc"
     break;
 
-  case 76:
-#line 521 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 76: /* expr_local_ip: FLOW_LOCAL_IP CMP_NOTEQUAL value_addr_ip  */
+#line 525 "nd-flow-criteria.tab.yy"
+                                               {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_local_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) != 0
         ));
         _NDFP_debugf("Local IP != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2310 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2143 "nd-flow-criteria.tab.cc"
     break;
 
-  case 77:
-#line 530 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 77: /* expr_other_ip: FLOW_OTHER_IP CMP_EQUAL value_addr_ip  */
+#line 534 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) == 0
         ));
         _NDFP_debugf("Other IP == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2321 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2154 "nd-flow-criteria.tab.cc"
     break;
 
-  case 78:
-#line 536 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 78: /* expr_other_ip: FLOW_OTHER_IP CMP_NOTEQUAL value_addr_ip  */
+#line 540 "nd-flow-criteria.tab.yy"
+                                               {
         _NDFP_result = ((yyval.bool_result) = (
             strncasecmp(_NDFP_other_ip, (yyvsp[0].string), INET6_ADDRSTRLEN) != 0
         ));
         _NDFP_debugf("Other IP != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2332 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2165 "nd-flow-criteria.tab.cc"
     break;
 
-  case 79:
-#line 545 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
-#line 2338 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 79: /* value_addr_ip: VALUE_ADDR_IPV4  */
+#line 549 "nd-flow-criteria.tab.yy"
+                      { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
+#line 2171 "nd-flow-criteria.tab.cc"
     break;
 
-  case 80:
-#line 546 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
-#line 2344 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 80: /* value_addr_ip: VALUE_ADDR_IPV6  */
+#line 550 "nd-flow-criteria.tab.yy"
+                      { strncpy((yyval.string), (yyvsp[0].string), _NDFP_MAX_NAMELEN); }
+#line 2177 "nd-flow-criteria.tab.cc"
     break;
 
-  case 81:
-#line 550 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 81: /* expr_local_port: FLOW_LOCAL_PORT  */
+#line 554 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port != 0));
         _NDFP_debugf("Local port is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2353 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2186 "nd-flow-criteria.tab.cc"
     break;
 
-  case 82:
-#line 554 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 82: /* expr_local_port: '!' FLOW_LOCAL_PORT  */
+#line 558 "nd-flow-criteria.tab.yy"
+                          {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port == 0));
         _NDFP_debugf("Local port is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2362 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2195 "nd-flow-criteria.tab.cc"
     break;
 
-  case 83:
-#line 558 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 83: /* expr_local_port: FLOW_LOCAL_PORT CMP_EQUAL VALUE_NUMBER  */
+#line 562 "nd-flow-criteria.tab.yy"
+                                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port == (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2371 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2204 "nd-flow-criteria.tab.cc"
     break;
 
-  case 84:
-#line 562 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 84: /* expr_local_port: FLOW_LOCAL_PORT CMP_NOTEQUAL VALUE_NUMBER  */
+#line 566 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port != (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2380 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2213 "nd-flow-criteria.tab.cc"
     break;
 
-  case 85:
-#line 566 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 85: /* expr_local_port: FLOW_LOCAL_PORT CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 570 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port >= (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2389 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2222 "nd-flow-criteria.tab.cc"
     break;
 
-  case 86:
-#line 570 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 86: /* expr_local_port: FLOW_LOCAL_PORT CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 574 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port <= (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2398 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2231 "nd-flow-criteria.tab.cc"
     break;
 
-  case 87:
-#line 574 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 87: /* expr_local_port: FLOW_LOCAL_PORT '>' VALUE_NUMBER  */
+#line 578 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port > (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2407 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2240 "nd-flow-criteria.tab.cc"
     break;
 
-  case 88:
-#line 578 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 88: /* expr_local_port: FLOW_LOCAL_PORT '<' VALUE_NUMBER  */
+#line 582 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_local_port < (yyvsp[0].ul_number)));
         _NDFP_debugf("Local port > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2416 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2249 "nd-flow-criteria.tab.cc"
     break;
 
-  case 89:
-#line 585 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 89: /* expr_other_port: FLOW_OTHER_PORT  */
+#line 589 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port != 0));
         _NDFP_debugf("Other port is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2425 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2258 "nd-flow-criteria.tab.cc"
     break;
 
-  case 90:
-#line 589 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 90: /* expr_other_port: '!' FLOW_OTHER_PORT  */
+#line 593 "nd-flow-criteria.tab.yy"
+                          {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port == 0));
         _NDFP_debugf("Other port is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2434 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2267 "nd-flow-criteria.tab.cc"
     break;
 
-  case 91:
-#line 593 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 91: /* expr_other_port: FLOW_OTHER_PORT CMP_EQUAL VALUE_NUMBER  */
+#line 597 "nd-flow-criteria.tab.yy"
+                                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port == (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2443 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2276 "nd-flow-criteria.tab.cc"
     break;
 
-  case 92:
-#line 597 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 92: /* expr_other_port: FLOW_OTHER_PORT CMP_NOTEQUAL VALUE_NUMBER  */
+#line 601 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port != (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2452 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2285 "nd-flow-criteria.tab.cc"
     break;
 
-  case 93:
-#line 601 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 93: /* expr_other_port: FLOW_OTHER_PORT CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 605 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port >= (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2461 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2294 "nd-flow-criteria.tab.cc"
     break;
 
-  case 94:
-#line 605 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 94: /* expr_other_port: FLOW_OTHER_PORT CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 609 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port <= (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2470 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2303 "nd-flow-criteria.tab.cc"
     break;
 
-  case 95:
-#line 609 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 95: /* expr_other_port: FLOW_OTHER_PORT '>' VALUE_NUMBER  */
+#line 613 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port > (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2479 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2312 "nd-flow-criteria.tab.cc"
     break;
 
-  case 96:
-#line 613 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 96: /* expr_other_port: FLOW_OTHER_PORT '<' VALUE_NUMBER  */
+#line 617 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_other_port < (yyvsp[0].ul_number)));
         _NDFP_debugf("Other port > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2488 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2321 "nd-flow-criteria.tab.cc"
     break;
 
-  case 97:
-#line 620 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 97: /* expr_tunnel_type: FLOW_TUNNEL_TYPE  */
+#line 624 "nd-flow-criteria.tab.yy"
+                       {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->tunnel_type != ndFlow::TUNNEL_NONE
         ));
         _NDFP_debugf("Tunnel type set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2499 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2332 "nd-flow-criteria.tab.cc"
     break;
 
-  case 98:
-#line 626 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 98: /* expr_tunnel_type: '!' FLOW_TUNNEL_TYPE  */
+#line 630 "nd-flow-criteria.tab.yy"
+                           {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->tunnel_type == ndFlow::TUNNEL_NONE
         ));
         _NDFP_debugf("Tunnel type is none? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2510 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2343 "nd-flow-criteria.tab.cc"
     break;
 
-  case 99:
-#line 632 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 99: /* expr_tunnel_type: FLOW_TUNNEL_TYPE CMP_EQUAL value_tunnel_type  */
+#line 636 "nd-flow-criteria.tab.yy"
+                                                   {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_TUNNEL_NONE:
             _NDFP_result = (
@@ -2530,12 +2363,12 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Tunnel type == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2534 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2367 "nd-flow-criteria.tab.cc"
     break;
 
-  case 100:
-#line 651 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 100: /* expr_tunnel_type: FLOW_TUNNEL_TYPE CMP_NOTEQUAL value_tunnel_type  */
+#line 655 "nd-flow-criteria.tab.yy"
+                                                      {
         switch ((yyvsp[0].us_number)) {
         case _NDFP_TUNNEL_NONE:
             _NDFP_result = (
@@ -2554,44 +2387,44 @@ yyreduce:
         (yyval.bool_result) = _NDFP_result;
         _NDFP_debugf("Tunnel type != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2558 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2391 "nd-flow-criteria.tab.cc"
     break;
 
-  case 101:
-#line 673 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2564 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 101: /* value_tunnel_type: FLOW_TUNNEL_NONE  */
+#line 677 "nd-flow-criteria.tab.yy"
+                       { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2397 "nd-flow-criteria.tab.cc"
     break;
 
-  case 102:
-#line 674 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 2570 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 102: /* value_tunnel_type: FLOW_TUNNEL_GTP  */
+#line 678 "nd-flow-criteria.tab.yy"
+                      { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 2403 "nd-flow-criteria.tab.cc"
     break;
 
-  case 103:
-#line 677 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 103: /* expr_detection_guessed: FLOW_DETECTION_GUESSED  */
+#line 681 "nd-flow-criteria.tab.yy"
+                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.detection_guessed.load()));
         _NDFP_debugf("Detection was guessed? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2579 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2412 "nd-flow-criteria.tab.cc"
     break;
 
-  case 104:
-#line 681 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 104: /* expr_detection_guessed: '!' FLOW_DETECTION_GUESSED  */
+#line 685 "nd-flow-criteria.tab.yy"
+                                  {
         _NDFP_result = ((yyval.bool_result) = !(_NDFP_flow->flags.detection_guessed.load()));
         _NDFP_debugf(
             "Detection was not guessed? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2590 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2423 "nd-flow-criteria.tab.cc"
     break;
 
-  case 105:
-#line 687 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 105: /* expr_detection_guessed: FLOW_DETECTION_GUESSED CMP_EQUAL VALUE_TRUE  */
+#line 691 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() == true
         ));
@@ -2599,12 +2432,12 @@ yyreduce:
             "Detection guessed == true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2603 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2436 "nd-flow-criteria.tab.cc"
     break;
 
-  case 106:
-#line 695 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 106: /* expr_detection_guessed: FLOW_DETECTION_GUESSED CMP_EQUAL VALUE_FALSE  */
+#line 699 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() == false
         ));
@@ -2612,12 +2445,12 @@ yyreduce:
             "Detection guessed == false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2616 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2449 "nd-flow-criteria.tab.cc"
     break;
 
-  case 107:
-#line 703 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 107: /* expr_detection_guessed: FLOW_DETECTION_GUESSED CMP_NOTEQUAL VALUE_TRUE  */
+#line 707 "nd-flow-criteria.tab.yy"
+                                                     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() != true
         ));
@@ -2625,12 +2458,12 @@ yyreduce:
             "Detection guessed != true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2629 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2462 "nd-flow-criteria.tab.cc"
     break;
 
-  case 108:
-#line 711 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 108: /* expr_detection_guessed: FLOW_DETECTION_GUESSED CMP_NOTEQUAL VALUE_FALSE  */
+#line 715 "nd-flow-criteria.tab.yy"
+                                                      {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_guessed.load() != false
         ));
@@ -2638,32 +2471,32 @@ yyreduce:
             "Detection guessed != false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2642 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2475 "nd-flow-criteria.tab.cc"
     break;
 
-  case 109:
-#line 722 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 109: /* expr_detection_updated: FLOW_DETECTION_UPDATED  */
+#line 726 "nd-flow-criteria.tab.yy"
+                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->flags.detection_updated.load()));
         _NDFP_debugf("Detection was updated? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2651 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2484 "nd-flow-criteria.tab.cc"
     break;
 
-  case 110:
-#line 726 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 110: /* expr_detection_updated: '!' FLOW_DETECTION_UPDATED  */
+#line 730 "nd-flow-criteria.tab.yy"
+                                  {
         _NDFP_result = ((yyval.bool_result) = !(_NDFP_flow->flags.detection_updated.load()));
         _NDFP_debugf(
             "Detection was not updated? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2662 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2495 "nd-flow-criteria.tab.cc"
     break;
 
-  case 111:
-#line 732 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 111: /* expr_detection_updated: FLOW_DETECTION_UPDATED CMP_EQUAL VALUE_TRUE  */
+#line 736 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() == true
         ));
@@ -2671,12 +2504,12 @@ yyreduce:
             "Detection updated == true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2675 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2508 "nd-flow-criteria.tab.cc"
     break;
 
-  case 112:
-#line 740 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 112: /* expr_detection_updated: FLOW_DETECTION_UPDATED CMP_EQUAL VALUE_FALSE  */
+#line 744 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() == false
         ));
@@ -2684,12 +2517,12 @@ yyreduce:
             "Detection updated == false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2688 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2521 "nd-flow-criteria.tab.cc"
     break;
 
-  case 113:
-#line 748 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 113: /* expr_detection_updated: FLOW_DETECTION_UPDATED CMP_NOTEQUAL VALUE_TRUE  */
+#line 752 "nd-flow-criteria.tab.yy"
+                                                     {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() != true
         ));
@@ -2697,12 +2530,12 @@ yyreduce:
             "Detection updated != true? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2701 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2534 "nd-flow-criteria.tab.cc"
     break;
 
-  case 114:
-#line 756 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 114: /* expr_detection_updated: FLOW_DETECTION_UPDATED CMP_NOTEQUAL VALUE_FALSE  */
+#line 760 "nd-flow-criteria.tab.yy"
+                                                      {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->flags.detection_updated.load() != false
         ));
@@ -2710,23 +2543,23 @@ yyreduce:
             "Detection updated != false? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2714 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2547 "nd-flow-criteria.tab.cc"
     break;
 
-  case 115:
-#line 767 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 115: /* expr_app: FLOW_APPLICATION  */
+#line 771 "nd-flow-criteria.tab.yy"
+                       {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_application != 0
         ));
         _NDFP_debugf("Application detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2725 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2558 "nd-flow-criteria.tab.cc"
     break;
 
-  case 116:
-#line 773 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 116: /* expr_app: '!' FLOW_APPLICATION  */
+#line 777 "nd-flow-criteria.tab.yy"
+                           {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_application == 0
         ));
@@ -2734,12 +2567,12 @@ yyreduce:
             "Application not detected? %s\n", (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2738 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2571 "nd-flow-criteria.tab.cc"
     break;
 
-  case 119:
-#line 785 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 119: /* expr_app_id: FLOW_APPLICATION CMP_EQUAL VALUE_NUMBER  */
+#line 789 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = false);
         if ((yyvsp[0].ul_number) == _NDFP_flow->detected_application)
             _NDFP_result = ((yyval.bool_result) = true);
@@ -2748,12 +2581,12 @@ yyreduce:
             "Application ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2752 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2585 "nd-flow-criteria.tab.cc"
     break;
 
-  case 120:
-#line 794 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 120: /* expr_app_id: FLOW_APPLICATION CMP_NOTEQUAL VALUE_NUMBER  */
+#line 798 "nd-flow-criteria.tab.yy"
+                                                 {
         _NDFP_result = ((yyval.bool_result) = true);
         if ((yyvsp[0].ul_number) == _NDFP_flow->detected_application)
             _NDFP_result = ((yyval.bool_result) = false);
@@ -2762,12 +2595,12 @@ yyreduce:
             "Application ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2766 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2599 "nd-flow-criteria.tab.cc"
     break;
 
-  case 121:
-#line 806 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 121: /* expr_app_name: FLOW_APPLICATION CMP_EQUAL VALUE_NAME  */
+#line 810 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->detected_application_name != NULL) {
 
@@ -2792,12 +2625,12 @@ yyreduce:
             "Application name == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2796 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2629 "nd-flow-criteria.tab.cc"
     break;
 
-  case 122:
-#line 831 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 122: /* expr_app_name: FLOW_APPLICATION CMP_NOTEQUAL VALUE_NAME  */
+#line 835 "nd-flow-criteria.tab.yy"
+                                               {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->detected_application_name != NULL) {
 
@@ -2822,12 +2655,12 @@ yyreduce:
             "Application name != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 2826 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2659 "nd-flow-criteria.tab.cc"
     break;
 
-  case 123:
-#line 859 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 123: /* expr_category: FLOW_CATEGORY CMP_EQUAL VALUE_NAME  */
+#line 863 "nd-flow-criteria.tab.yy"
+                                         {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -2852,12 +2685,12 @@ yyreduce:
 
         _NDFP_debugf("App/domain category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2856 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2689 "nd-flow-criteria.tab.cc"
     break;
 
-  case 124:
-#line 884 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 124: /* expr_category: FLOW_CATEGORY CMP_NOTEQUAL VALUE_NAME  */
+#line 888 "nd-flow-criteria.tab.yy"
+                                            {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -2882,30 +2715,30 @@ yyreduce:
 
         _NDFP_debugf("App/domain category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 2886 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2719 "nd-flow-criteria.tab.cc"
     break;
 
-  case 125:
-#line 912 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 125: /* expr_risks: FLOW_RISKS  */
+#line 916 "nd-flow-criteria.tab.yy"
+                 {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->risks.size() != 0));
         _NDFP_debugf("Risks detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2895 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2728 "nd-flow-criteria.tab.cc"
     break;
 
-  case 126:
-#line 916 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 126: /* expr_risks: '!' FLOW_RISKS  */
+#line 920 "nd-flow-criteria.tab.yy"
+                     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->risks.size() == 0));
         _NDFP_debugf("Risks not detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2904 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2737 "nd-flow-criteria.tab.cc"
     break;
 
-  case 127:
-#line 920 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 127: /* expr_risks: FLOW_RISKS CMP_EQUAL VALUE_NAME  */
+#line 924 "nd-flow-criteria.tab.yy"
+                                      {
         size_t p;
         string risk((yyvsp[0].string));
 
@@ -2923,12 +2756,12 @@ yyreduce:
 
         _NDFP_debugf("Risks == %s %s\n", (yyvsp[0].string), risk.c_str(), (_NDFP_result) ? "yes" : "no");
     }
-#line 2927 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2760 "nd-flow-criteria.tab.cc"
     break;
 
-  case 128:
-#line 938 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 128: /* expr_risks: FLOW_RISKS CMP_NOTEQUAL VALUE_NAME  */
+#line 942 "nd-flow-criteria.tab.yy"
+                                         {
         size_t p;
         string risk((yyvsp[0].string));
 
@@ -2947,228 +2780,228 @@ yyreduce:
         _NDFP_result = !_NDFP_result;
         _NDFP_debugf("Risks != %s %s\n", (yyvsp[0].string), risk.c_str(), (_NDFP_result) ? "yes" : "no");
     }
-#line 2951 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2784 "nd-flow-criteria.tab.cc"
     break;
 
-  case 129:
-#line 960 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 129: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE  */
+#line 964 "nd-flow-criteria.tab.yy"
+                           {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score != 0));
         _NDFP_debugf("nDPI risk score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2960 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2793 "nd-flow-criteria.tab.cc"
     break;
 
-  case 130:
-#line 964 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 130: /* expr_ndpi_risk_score: '!' FLOW_NDPI_RISK_SCORE  */
+#line 968 "nd-flow-criteria.tab.yy"
+                               {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score == 0));
         _NDFP_debugf("nDPI risk score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 2969 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2802 "nd-flow-criteria.tab.cc"
     break;
 
-  case 131:
-#line 968 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 131: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE CMP_EQUAL VALUE_NUMBER  */
+#line 972 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2978 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2811 "nd-flow-criteria.tab.cc"
     break;
 
-  case 132:
-#line 972 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 132: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE CMP_NOTEQUAL VALUE_NUMBER  */
+#line 976 "nd-flow-criteria.tab.yy"
+                                                     {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2987 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2820 "nd-flow-criteria.tab.cc"
     break;
 
-  case 133:
-#line 976 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 133: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 980 "nd-flow-criteria.tab.yy"
+                                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 2996 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2829 "nd-flow-criteria.tab.cc"
     break;
 
-  case 134:
-#line 980 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 134: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 984 "nd-flow-criteria.tab.yy"
+                                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3005 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2838 "nd-flow-criteria.tab.cc"
     break;
 
-  case 135:
-#line 984 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 135: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE '>' VALUE_NUMBER  */
+#line 988 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3014 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2847 "nd-flow-criteria.tab.cc"
     break;
 
-  case 136:
-#line 988 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 136: /* expr_ndpi_risk_score: FLOW_NDPI_RISK_SCORE '<' VALUE_NUMBER  */
+#line 992 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3023 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2856 "nd-flow-criteria.tab.cc"
     break;
 
-  case 137:
-#line 995 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 137: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT  */
+#line 999 "nd-flow-criteria.tab.yy"
+                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client != 0));
         _NDFP_debugf("nDPI risk client score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3032 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2865 "nd-flow-criteria.tab.cc"
     break;
 
-  case 138:
-#line 999 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 138: /* expr_ndpi_risk_score_client: '!' FLOW_NDPI_RISK_SCORE_CLIENT  */
+#line 1003 "nd-flow-criteria.tab.yy"
+                                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client == 0));
         _NDFP_debugf("nDPI risk client score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3041 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2874 "nd-flow-criteria.tab.cc"
     break;
 
-  case 139:
-#line 1003 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 139: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT CMP_EQUAL VALUE_NUMBER  */
+#line 1007 "nd-flow-criteria.tab.yy"
+                                                         {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3050 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2883 "nd-flow-criteria.tab.cc"
     break;
 
-  case 140:
-#line 1007 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 140: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1011 "nd-flow-criteria.tab.yy"
+                                                            {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3059 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2892 "nd-flow-criteria.tab.cc"
     break;
 
-  case 141:
-#line 1011 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 141: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 1015 "nd-flow-criteria.tab.yy"
+                                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3068 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2901 "nd-flow-criteria.tab.cc"
     break;
 
-  case 142:
-#line 1015 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 142: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 1019 "nd-flow-criteria.tab.yy"
+                                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3077 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2910 "nd-flow-criteria.tab.cc"
     break;
 
-  case 143:
-#line 1019 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 143: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT '>' VALUE_NUMBER  */
+#line 1023 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3086 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2919 "nd-flow-criteria.tab.cc"
     break;
 
-  case 144:
-#line 1023 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 144: /* expr_ndpi_risk_score_client: FLOW_NDPI_RISK_SCORE_CLIENT '<' VALUE_NUMBER  */
+#line 1027 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_client < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk client score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3095 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2928 "nd-flow-criteria.tab.cc"
     break;
 
-  case 145:
-#line 1030 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 145: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER  */
+#line 1034 "nd-flow-criteria.tab.yy"
+                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server != 0));
         _NDFP_debugf("nDPI risk server score is true? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3104 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2937 "nd-flow-criteria.tab.cc"
     break;
 
-  case 146:
-#line 1034 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 146: /* expr_ndpi_risk_score_server: '!' FLOW_NDPI_RISK_SCORE_SERVER  */
+#line 1038 "nd-flow-criteria.tab.yy"
+                                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server == 0));
         _NDFP_debugf("nDPI risk server score is false? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3113 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2946 "nd-flow-criteria.tab.cc"
     break;
 
-  case 147:
-#line 1038 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 147: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER CMP_EQUAL VALUE_NUMBER  */
+#line 1042 "nd-flow-criteria.tab.yy"
+                                                         {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server == (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score == %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3122 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2955 "nd-flow-criteria.tab.cc"
     break;
 
-  case 148:
-#line 1042 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 148: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1046 "nd-flow-criteria.tab.yy"
+                                                            {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server != (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score != %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3131 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2964 "nd-flow-criteria.tab.cc"
     break;
 
-  case 149:
-#line 1046 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 149: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 1050 "nd-flow-criteria.tab.yy"
+                                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server >= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score >= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3140 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2973 "nd-flow-criteria.tab.cc"
     break;
 
-  case 150:
-#line 1050 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 150: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 1054 "nd-flow-criteria.tab.yy"
+                                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server <= (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score <= %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3149 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2982 "nd-flow-criteria.tab.cc"
     break;
 
-  case 151:
-#line 1054 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 151: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER '>' VALUE_NUMBER  */
+#line 1058 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server > (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3158 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 2991 "nd-flow-criteria.tab.cc"
     break;
 
-  case 152:
-#line 1058 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 152: /* expr_ndpi_risk_score_server: FLOW_NDPI_RISK_SCORE_SERVER '<' VALUE_NUMBER  */
+#line 1062 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ndpi_risk_score_server < (yyvsp[0].ul_number)));
         _NDFP_debugf("nDPI risk server score > %lu %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3167 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3000 "nd-flow-criteria.tab.cc"
     break;
 
-  case 153:
-#line 1065 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 153: /* expr_app_category: FLOW_APPLICATION_CATEGORY CMP_EQUAL VALUE_NAME  */
+#line 1069 "nd-flow-criteria.tab.yy"
+                                                     {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3184,12 +3017,12 @@ yyreduce:
 
         _NDFP_debugf("App category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3188 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3021 "nd-flow-criteria.tab.cc"
     break;
 
-  case 154:
-#line 1081 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 154: /* expr_app_category: FLOW_APPLICATION_CATEGORY CMP_NOTEQUAL VALUE_NAME  */
+#line 1085 "nd-flow-criteria.tab.yy"
+                                                        {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3205,12 +3038,12 @@ yyreduce:
 
         _NDFP_debugf("App category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3209 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3042 "nd-flow-criteria.tab.cc"
     break;
 
-  case 155:
-#line 1100 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 155: /* expr_domain_category: FLOW_DOMAIN_CATEGORY CMP_EQUAL VALUE_NAME  */
+#line 1104 "nd-flow-criteria.tab.yy"
+                                                {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3226,12 +3059,12 @@ yyreduce:
 
         _NDFP_debugf("Domain category == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3230 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3063 "nd-flow-criteria.tab.cc"
     break;
 
-  case 156:
-#line 1116 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 156: /* expr_domain_category: FLOW_DOMAIN_CATEGORY CMP_NOTEQUAL VALUE_NAME  */
+#line 1120 "nd-flow-criteria.tab.yy"
+                                                   {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3247,56 +3080,56 @@ yyreduce:
 
         _NDFP_debugf("Domain category != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3251 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3084 "nd-flow-criteria.tab.cc"
     break;
 
-  case 157:
-#line 1135 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 157: /* expr_proto: FLOW_PROTOCOL  */
+#line 1139 "nd-flow-criteria.tab.yy"
+                    {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol != 0
         ));
         _NDFP_debugf("Protocol detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3262 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3095 "nd-flow-criteria.tab.cc"
     break;
 
-  case 158:
-#line 1141 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 158: /* expr_proto: '!' FLOW_PROTOCOL  */
+#line 1145 "nd-flow-criteria.tab.yy"
+                        {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol == 0
         ));
         _NDFP_debugf("Protocol not detected? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3273 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3106 "nd-flow-criteria.tab.cc"
     break;
 
-  case 161:
-#line 1151 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 161: /* expr_proto_id: FLOW_PROTOCOL CMP_EQUAL VALUE_NUMBER  */
+#line 1155 "nd-flow-criteria.tab.yy"
+                                           {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol == (yyvsp[0].ul_number)
         ));
         _NDFP_debugf("Protocol ID == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3284 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3117 "nd-flow-criteria.tab.cc"
     break;
 
-  case 162:
-#line 1157 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 162: /* expr_proto_id: FLOW_PROTOCOL CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1161 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->detected_protocol != (yyvsp[0].ul_number)
         ));
         _NDFP_debugf("Protocol ID != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3295 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3128 "nd-flow-criteria.tab.cc"
     break;
 
-  case 163:
-#line 1166 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 163: /* expr_proto_name: FLOW_PROTOCOL CMP_EQUAL VALUE_NAME  */
+#line 1170 "nd-flow-criteria.tab.yy"
+                                         {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->detected_protocol_name != NULL) {
 
@@ -3315,12 +3148,12 @@ yyreduce:
             "Protocol name == %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 3319 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3152 "nd-flow-criteria.tab.cc"
     break;
 
-  case 164:
-#line 1185 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 164: /* expr_proto_name: FLOW_PROTOCOL CMP_NOTEQUAL VALUE_NAME  */
+#line 1189 "nd-flow-criteria.tab.yy"
+                                            {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->detected_protocol_name != NULL) {
 
@@ -3338,12 +3171,12 @@ yyreduce:
             "Protocol name != %s? %s\n", (yyvsp[0].string), (_NDFP_result) ? "yes" : "no"
         );
     }
-#line 3342 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3175 "nd-flow-criteria.tab.cc"
     break;
 
-  case 165:
-#line 1206 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 165: /* expr_proto_category: FLOW_PROTOCOL_CATEGORY CMP_EQUAL VALUE_NAME  */
+#line 1210 "nd-flow-criteria.tab.yy"
+                                                  {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3360,12 +3193,12 @@ yyreduce:
         _NDFP_debugf("Protocol category == %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3364 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3197 "nd-flow-criteria.tab.cc"
     break;
 
-  case 166:
-#line 1223 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 166: /* expr_proto_category: FLOW_PROTOCOL_CATEGORY CMP_NOTEQUAL VALUE_NAME  */
+#line 1227 "nd-flow-criteria.tab.yy"
+                                                     {
         size_t p;
         string category((yyvsp[0].string));
 
@@ -3382,36 +3215,36 @@ yyreduce:
         _NDFP_debugf("Protocol category != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3386 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3219 "nd-flow-criteria.tab.cc"
     break;
 
-  case 167:
-#line 1243 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 167: /* expr_detected_hostname: FLOW_DETECTED_HOSTNAME  */
+#line 1247 "nd-flow-criteria.tab.yy"
+                             {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->host_server_name[0] != '\0'
         ));
         _NDFP_debugf("Application hostname detected? %s\n",
             (_NDFP_result) ? "yes" : "no");
     }
-#line 3398 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3231 "nd-flow-criteria.tab.cc"
     break;
 
-  case 168:
-#line 1250 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 168: /* expr_detected_hostname: '!' FLOW_DETECTED_HOSTNAME  */
+#line 1254 "nd-flow-criteria.tab.yy"
+                                 {
         _NDFP_result = ((yyval.bool_result) = (
             _NDFP_flow->host_server_name[0] == '\0'
         ));
         _NDFP_debugf("Application hostname not detected? %s\n",
             (_NDFP_result) ? "yes" : "no");
     }
-#line 3410 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3243 "nd-flow-criteria.tab.cc"
     break;
 
-  case 169:
-#line 1257 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 169: /* expr_detected_hostname: FLOW_DETECTED_HOSTNAME CMP_EQUAL VALUE_NAME  */
+#line 1261 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = false);
         if (_NDFP_flow->host_server_name[0] != '\0') {
             size_t p;
@@ -3429,12 +3262,12 @@ yyreduce:
         _NDFP_debugf("Detected hostname == %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3433 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3266 "nd-flow-criteria.tab.cc"
     break;
 
-  case 170:
-#line 1275 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 170: /* expr_detected_hostname: FLOW_DETECTED_HOSTNAME CMP_NOTEQUAL VALUE_NAME  */
+#line 1279 "nd-flow-criteria.tab.yy"
+                                                     {
         _NDFP_result = ((yyval.bool_result) = true);
         if (_NDFP_flow->host_server_name[0] != '\0') {
             size_t p;
@@ -3452,12 +3285,12 @@ yyreduce:
         _NDFP_debugf("Detected hostname != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3456 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3289 "nd-flow-criteria.tab.cc"
     break;
 
-  case 171:
-#line 1293 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 171: /* expr_detected_hostname: FLOW_DETECTED_HOSTNAME CMP_EQUAL VALUE_REGEX  */
+#line 1297 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = false);
 #if HAVE_WORKING_REGEX
         if (_NDFP_flow->host_server_name[0] != '\0') {
@@ -3494,23 +3327,23 @@ yyreduce:
         _NDFP_debugf("Detected hostname == %s? Broken regex support.\n", (yyvsp[0].string));
 #endif
     }
-#line 3498 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3331 "nd-flow-criteria.tab.cc"
     break;
 
-  case 172:
-#line 1330 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 172: /* expr_detected_hostname: FLOW_DETECTED_HOSTNAME CMP_NOTEQUAL VALUE_REGEX  */
+#line 1334 "nd-flow-criteria.tab.yy"
+                                                      {
         _NDFP_result = ((yyval.bool_result) = true);
 
         _NDFP_debugf("Detected hostname != %s? %s\n",
             (yyvsp[0].string), (_NDFP_result) ? "yes" : "no");
     }
-#line 3509 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3342 "nd-flow-criteria.tab.cc"
     break;
 
-  case 173:
-#line 1339 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 173: /* expr_fwmark: FLOW_CT_MARK  */
+#line 1343 "nd-flow-criteria.tab.yy"
+                   {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark != 0));
         _NDFP_debugf("FWMARK set? %s\n", (_NDFP_result) ? "yes" : "no");
@@ -3518,12 +3351,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3522 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3355 "nd-flow-criteria.tab.cc"
     break;
 
-  case 174:
-#line 1347 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 174: /* expr_fwmark: '!' FLOW_CT_MARK  */
+#line 1351 "nd-flow-criteria.tab.yy"
+                       {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark == 0));
         _NDFP_debugf("FWMARK not set? %s\n", (_NDFP_result) ? "yes" : "no");
@@ -3531,12 +3364,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3535 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3368 "nd-flow-criteria.tab.cc"
     break;
 
-  case 175:
-#line 1355 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 175: /* expr_fwmark: FLOW_CT_MARK CMP_EQUAL VALUE_NUMBER  */
+#line 1359 "nd-flow-criteria.tab.yy"
+                                          {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark == (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3544,12 +3377,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3548 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3381 "nd-flow-criteria.tab.cc"
     break;
 
-  case 176:
-#line 1363 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 176: /* expr_fwmark: FLOW_CT_MARK CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1367 "nd-flow-criteria.tab.yy"
+                                             {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark != (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3557,12 +3390,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3561 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3394 "nd-flow-criteria.tab.cc"
     break;
 
-  case 177:
-#line 1371 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 177: /* expr_fwmark: FLOW_CT_MARK CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 1375 "nd-flow-criteria.tab.yy"
+                                               {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark >= (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3570,12 +3403,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3574 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3407 "nd-flow-criteria.tab.cc"
     break;
 
-  case 178:
-#line 1379 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 178: /* expr_fwmark: FLOW_CT_MARK CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 1383 "nd-flow-criteria.tab.yy"
+                                               {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark <= (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3583,12 +3416,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3587 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3420 "nd-flow-criteria.tab.cc"
     break;
 
-  case 179:
-#line 1387 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 179: /* expr_fwmark: FLOW_CT_MARK '>' VALUE_NUMBER  */
+#line 1391 "nd-flow-criteria.tab.yy"
+                                    {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark > (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3596,12 +3429,12 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3600 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3433 "nd-flow-criteria.tab.cc"
     break;
 
-  case 180:
-#line 1395 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 180: /* expr_fwmark: FLOW_CT_MARK '<' VALUE_NUMBER  */
+#line 1399 "nd-flow-criteria.tab.yy"
+                                    {
 #if defined(_ND_USE_CONNTRACK) && defined(_ND_WITH_CONNTRACK_MDATA)
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ct_mark < (yyvsp[0].ul_number)));
         _NDFP_debugf("FWMARK < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
@@ -3609,209 +3442,210 @@ yyreduce:
         _NDFP_result = ((yyval.bool_result) = (false));
 #endif
     }
-#line 3613 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3446 "nd-flow-criteria.tab.cc"
     break;
 
-  case 181:
-#line 1406 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 181: /* expr_ssl_version: FLOW_SSL_VERSION  */
+#line 1410 "nd-flow-criteria.tab.yy"
+                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version != 0));
         _NDFP_debugf("SSL version set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3622 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3455 "nd-flow-criteria.tab.cc"
     break;
 
-  case 182:
-#line 1410 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 182: /* expr_ssl_version: '!' FLOW_SSL_VERSION  */
+#line 1414 "nd-flow-criteria.tab.yy"
+                           {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version == 0));
         _NDFP_debugf("SSL version not set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3631 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3464 "nd-flow-criteria.tab.cc"
     break;
 
-  case 183:
-#line 1414 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 183: /* expr_ssl_version: FLOW_SSL_VERSION CMP_EQUAL VALUE_NUMBER  */
+#line 1418 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version == (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3640 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3473 "nd-flow-criteria.tab.cc"
     break;
 
-  case 184:
-#line 1418 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 184: /* expr_ssl_version: FLOW_SSL_VERSION CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1422 "nd-flow-criteria.tab.yy"
+                                                 {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version != (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3649 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3482 "nd-flow-criteria.tab.cc"
     break;
 
-  case 185:
-#line 1422 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 185: /* expr_ssl_version: FLOW_SSL_VERSION CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 1426 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version >= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3658 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3491 "nd-flow-criteria.tab.cc"
     break;
 
-  case 186:
-#line 1426 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 186: /* expr_ssl_version: FLOW_SSL_VERSION CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 1430 "nd-flow-criteria.tab.yy"
+                                                   {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version <= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3667 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3500 "nd-flow-criteria.tab.cc"
     break;
 
-  case 187:
-#line 1430 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 187: /* expr_ssl_version: FLOW_SSL_VERSION '>' VALUE_NUMBER  */
+#line 1434 "nd-flow-criteria.tab.yy"
+                                        {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version > (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3676 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3509 "nd-flow-criteria.tab.cc"
     break;
 
-  case 188:
-#line 1434 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 188: /* expr_ssl_version: FLOW_SSL_VERSION '<' VALUE_NUMBER  */
+#line 1438 "nd-flow-criteria.tab.yy"
+                                        {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.version < (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL version < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3685 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3518 "nd-flow-criteria.tab.cc"
     break;
 
-  case 189:
-#line 1441 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 189: /* expr_ssl_cipher: FLOW_SSL_CIPHER  */
+#line 1445 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite != 0));
         _NDFP_debugf("SSL cipher suite set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3694 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3527 "nd-flow-criteria.tab.cc"
     break;
 
-  case 190:
-#line 1445 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 190: /* expr_ssl_cipher: '!' FLOW_SSL_CIPHER  */
+#line 1449 "nd-flow-criteria.tab.yy"
+                          {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite == 0));
         _NDFP_debugf("SSL cipher suite not set? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3703 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3536 "nd-flow-criteria.tab.cc"
     break;
 
-  case 191:
-#line 1449 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 191: /* expr_ssl_cipher: FLOW_SSL_CIPHER CMP_EQUAL VALUE_NUMBER  */
+#line 1453 "nd-flow-criteria.tab.yy"
+                                             {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite == (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite == %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3712 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3545 "nd-flow-criteria.tab.cc"
     break;
 
-  case 192:
-#line 1453 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 192: /* expr_ssl_cipher: FLOW_SSL_CIPHER CMP_NOTEQUAL VALUE_NUMBER  */
+#line 1457 "nd-flow-criteria.tab.yy"
+                                                {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite != (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite != %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3721 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3554 "nd-flow-criteria.tab.cc"
     break;
 
-  case 193:
-#line 1457 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 193: /* expr_ssl_cipher: FLOW_SSL_CIPHER CMP_GTHANEQUAL VALUE_NUMBER  */
+#line 1461 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite >= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite >= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3730 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3563 "nd-flow-criteria.tab.cc"
     break;
 
-  case 194:
-#line 1461 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 194: /* expr_ssl_cipher: FLOW_SSL_CIPHER CMP_LTHANEQUAL VALUE_NUMBER  */
+#line 1465 "nd-flow-criteria.tab.yy"
+                                                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite <= (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite <= %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3739 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3572 "nd-flow-criteria.tab.cc"
     break;
 
-  case 195:
-#line 1465 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 195: /* expr_ssl_cipher: FLOW_SSL_CIPHER '>' VALUE_NUMBER  */
+#line 1469 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite > (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite > %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3748 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3581 "nd-flow-criteria.tab.cc"
     break;
 
-  case 196:
-#line 1469 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 196: /* expr_ssl_cipher: FLOW_SSL_CIPHER '<' VALUE_NUMBER  */
+#line 1473 "nd-flow-criteria.tab.yy"
+                                       {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_flow->ssl.cipher_suite < (yyvsp[0].ul_number)));
         _NDFP_debugf("SSL cipher suite < %lu? %s\n", (yyvsp[0].ul_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3757 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3590 "nd-flow-criteria.tab.cc"
     break;
 
-  case 197:
-#line 1476 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 197: /* expr_origin: FLOW_ORIGIN  */
+#line 1480 "nd-flow-criteria.tab.yy"
+                  {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin != _NDFP_ORIGIN_UNKNOWN));
         _NDFP_debugf("Flow origin known? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3766 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3599 "nd-flow-criteria.tab.cc"
     break;
 
-  case 198:
-#line 1480 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 198: /* expr_origin: '!' FLOW_ORIGIN  */
+#line 1484 "nd-flow-criteria.tab.yy"
+                      {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin == _NDFP_ORIGIN_UNKNOWN));
         _NDFP_debugf("Flow origin unknown? %s\n", (_NDFP_result) ? "yes" : "no");
     }
-#line 3775 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3608 "nd-flow-criteria.tab.cc"
     break;
 
-  case 199:
-#line 1484 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 199: /* expr_origin: FLOW_ORIGIN CMP_EQUAL value_origin_type  */
+#line 1488 "nd-flow-criteria.tab.yy"
+                                              {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin == (yyvsp[0].us_number)));
         _NDFP_debugf("Flow origin == %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3784 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3617 "nd-flow-criteria.tab.cc"
     break;
 
-  case 200:
-#line 1488 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    {
+  case 200: /* expr_origin: FLOW_ORIGIN CMP_NOTEQUAL value_origin_type  */
+#line 1492 "nd-flow-criteria.tab.yy"
+                                                 {
         _NDFP_result = ((yyval.bool_result) = (_NDFP_origin != (yyvsp[0].us_number)));
         _NDFP_debugf("Flow origin != %hu? %s\n", (yyvsp[0].us_number), (_NDFP_result) ? "yes" : "no");
     }
-#line 3793 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3626 "nd-flow-criteria.tab.cc"
     break;
 
-  case 201:
-#line 1495 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3799 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 201: /* value_origin_type: FLOW_ORIGIN_LOCAL  */
+#line 1499 "nd-flow-criteria.tab.yy"
+                        { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 3632 "nd-flow-criteria.tab.cc"
     break;
 
-  case 202:
-#line 1496 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3805 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 202: /* value_origin_type: FLOW_ORIGIN_OTHER  */
+#line 1500 "nd-flow-criteria.tab.yy"
+                        { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 3638 "nd-flow-criteria.tab.cc"
     break;
 
-  case 203:
-#line 1497 "nd-flow-criteria.tab.yy" /* yacc.c:1646  */
-    { (yyval.us_number) = (yyvsp[0].us_number); }
-#line 3811 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+  case 203: /* value_origin_type: FLOW_ORIGIN_UNKNOWN  */
+#line 1501 "nd-flow-criteria.tab.yy"
+                          { (yyval.us_number) = (yyvsp[0].us_number); }
+#line 3644 "nd-flow-criteria.tab.cc"
     break;
 
 
-#line 3815 "nd-flow-criteria.tab.cc" /* yacc.c:1646  */
+#line 3648 "nd-flow-criteria.tab.cc"
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3825,11 +3659,10 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
   *++yylsp = yyloc;
@@ -3837,14 +3670,13 @@ yyreduce:
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
-
-  yyn = yyr1[yyn];
-
-  yystate = yypgoto[yyn - YYNTOKENS] + *yyssp;
-  if (0 <= yystate && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTOKENS];
+  {
+    const int yylhs = yyr1[yyn] - YYNTOKENS;
+    const int yyi = yypgoto[yylhs] + *yyssp;
+    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+               ? yytable[yyi]
+               : yydefgoto[yylhs]);
+  }
 
   goto yynewstate;
 
@@ -3855,50 +3687,15 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == YYEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
       yyerror (&yylloc, scanner, YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
-      {
-        char const *yymsgp = YY_("syntax error");
-        int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
-        if (yysyntax_error_status == 0)
-          yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
-          {
-            if (yymsg != yymsgbuf)
-              YYSTACK_FREE (yymsg);
-            yymsg = (char *) YYSTACK_ALLOC (yymsg_alloc);
-            if (!yymsg)
-              {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
-              }
-            else
-              {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
-              }
-          }
-        yyerror (&yylloc, scanner, yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
-      }
-# undef YYSYNTAX_ERROR
-#endif
     }
 
   yyerror_range[1] = yylloc;
-
   if (yyerrstatus == 3)
     {
       /* If just tried and failed to reuse lookahead token after an
@@ -3927,14 +3724,12 @@ yyerrlab:
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
 yyerrorlab:
+  /* Pacify compilers when the user code never invokes YYERROR and the
+     label yyerrorlab therefore never appears in user code.  */
+  if (0)
+    YYERROR;
+  ++yynerrs;
 
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
-  if (/*CONSTCOND*/ 0)
-     goto yyerrorlab;
-
-  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -3950,13 +3745,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -3970,7 +3766,7 @@ yyerrlab1:
 
       yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, yylsp, scanner);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, yylsp, scanner);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -3981,13 +3777,11 @@ yyerrlab1:
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
   yyerror_range[2] = yylloc;
-  /* Using YYLLOC is tempting, but would change the location of
-     the lookahead.  YYLOC is available though.  */
-  YYLLOC_DEFAULT (yyloc, yyerror_range, 2);
-  *++yylsp = yyloc;
+  ++yylsp;
+  YYLLOC_DEFAULT (*yylsp, yyerror_range, 2);
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -3998,26 +3792,30 @@ yyerrlab1:
 `-------------------------------------*/
 yyacceptlab:
   yyresult = 0;
-  goto yyreturn;
+  goto yyreturnlab;
+
 
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
-  goto yyreturn;
+  goto yyreturnlab;
 
-#if !defined yyoverflow || YYERROR_VERBOSE
-/*-------------------------------------------------.
-| yyexhaustedlab -- memory exhaustion comes here.  |
-`-------------------------------------------------*/
+
+/*-----------------------------------------------------------.
+| yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
+`-----------------------------------------------------------*/
 yyexhaustedlab:
   yyerror (&yylloc, scanner, YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
-#endif
+  goto yyreturnlab;
 
-yyreturn:
+
+/*----------------------------------------------------------.
+| yyreturnlab -- parsing is finished, clean up and return.  |
+`----------------------------------------------------------*/
+yyreturnlab:
   if (yychar != YYEMPTY)
     {
       /* Make sure we have latest lookahead translation.  See comments at
@@ -4033,20 +3831,18 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, yylsp, scanner);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, yylsp, scanner);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
+
   return yyresult;
 }
-#line 1499 "nd-flow-criteria.tab.yy" /* yacc.c:1906  */
+
+#line 1503 "nd-flow-criteria.tab.yy"
 
 
 ndFlowParser::ndFlowParser()

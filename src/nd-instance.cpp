@@ -58,7 +58,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #define __FAVOR_BSD 1
 #include <netinet/tcp.h>
@@ -755,12 +759,16 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     }
 
     // Hash config file
-    nd_sha1_file(
-        ndGC.path_app_config, ndGC.digest_app_config
-    );
-    nd_sha1_file(
-        ndGC.path_legacy_config, ndGC.digest_legacy_config
-    );
+    if (nd_file_exists(ndGC.path_app_config)) {
+        nd_sha1_file(
+            ndGC.path_app_config, ndGC.digest_app_config
+        );
+    }
+    else if (nd_file_exists(ndGC.path_legacy_config)) {
+        nd_sha1_file(
+            ndGC.path_legacy_config, ndGC.digest_legacy_config
+        );
+    }
 
     // Configuration is valid when version is set
     version = nd_get_version_and_features();
@@ -2229,8 +2237,6 @@ void ndInstance::ProcessFlows(void)
         auto &fm = flow_buckets->Acquire(b);
         auto i = fm.begin();
 
-        status.flows += fm.size();
-
         while (i != fm.end()) {
 #ifdef _ND_PROCESS_FLOW_DEBUG
             if (i->second->ip_protocol == IPPROTO_TCP) tcp++;
@@ -2297,7 +2303,7 @@ void ndInstance::ProcessFlows(void)
     nd_dprintf(
         "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
         "idle: %lu, in_use: %lu\n", tag.c_str(),
-        status.flows_purged, status.flows.load(),
+        status.flows_purged, status.flows_prev,
         status.flows_active, status.flows_expiring,
         status.flows_expired,
         status.flows.load() - status.flows_active,

@@ -46,7 +46,11 @@
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#if defined(__linux__)
 #include <linux/if_packet.h>
+#elif defined(__FreeBSD__)
+#include <net/if_dl.h>
+#endif
 
 #include <pcap/pcap.h>
 
@@ -184,7 +188,17 @@ void ndFlow::Hash(const string &device,
         if (lower_addr.addr.in.sin_addr.s_addr == 0 &&
             upper_addr.addr.in.sin_addr.s_addr == 0xffffffff) {
             // XXX: Hash in lower MAC for ethernet broadcasts (DHCPv4).
-            sha1_write(&ctx, (const char *)&lower_mac.addr.ll.sll_addr, ETH_ALEN);
+#if defined(__linux__)
+            sha1_write(&ctx,
+                (const char *)lower_mac.addr.ll.sll_addr,
+                ETH_ALEN
+            );
+#elif defined(__FreeBSD__)
+            sha1_write(&ctx,
+                (const char *)LLADDR(&lower_mac.addr.dl),
+                ETH_ALEN
+            );
+#endif
         }
 
         break;
@@ -428,15 +442,11 @@ bool ndFlow::HasMDNSDomainName(void) const
 
 void ndFlow::Print(void) const
 {
-    const char
-        *lower_name = lower_addr.GetString().c_str(),
-        *upper_name = upper_addr.GetString().c_str();
-
     string digest;
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
 
     nd_flow_printf(
-        "%s: [%c%c%c%c%c%c%c%c] %s%s%s %s:%hu %c%c%c %s:%hu%s%s%s%s%s%s%s\n",
+        "%s: [%c%c%c%c%c%c%c%c] %s%s%s %s %s:%hu %c%c%c %s %s:%hu%s%s%s%s%s%s%s\n",
         iface.ifname.c_str(),
         (iface.role == ndIR_LAN) ? 'i' : 'e',
         (ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-',
@@ -452,11 +462,13 @@ void ndFlow::Print(void) const
         detected_protocol_name,
         (detected_application_name != NULL) ? "." : "",
         (detected_application_name != NULL) ? detected_application_name : "",
-        lower_name, lower_addr.GetPort(),
+        lower_mac.GetString().c_str(),
+        lower_addr.GetString().c_str(), lower_addr.GetPort(),
         (origin == ORIGIN_LOWER || origin == ORIGIN_UNKNOWN) ? '-' : '<',
         (origin == ORIGIN_UNKNOWN) ? '?' : '-',
         (origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ? '-' : '>',
-        upper_name, upper_addr.GetPort(),
+        upper_mac.GetString().c_str(),
+        upper_addr.GetString().c_str(), upper_addr.GetPort(),
         (dns_host_name[0] != '\0' || host_server_name[0] != '\0') ? " H: " : "",
         (host_server_name[0] != '\0') ? host_server_name : (
             (dns_host_name[0] != '\0') ? dns_host_name : ""
