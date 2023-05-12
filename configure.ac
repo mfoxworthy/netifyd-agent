@@ -36,6 +36,7 @@ AC_PROG_INSTALL
 AM_PROG_LEX
 AC_PROG_YACC
 AC_PROG_LEX
+AC_PROG_EGREP
 AC_CHECK_TOOL([STRIP], [strip])
 LT_INIT
 PKG_PROG_PKG_CONFIG([0.23])
@@ -327,9 +328,6 @@ AS_IF([test "x$enable_ndpi_debug" = "xyes"], [
 ])
 
 # Checks for required header files.
-AC_CHECK_INCLUDES_DEFAULT
-AC_PROG_EGREP
-
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h net/ethernet.h stdint.h stdlib.h string.h sys/file.h sys/ioctl.h sys/socket.h sys/types.h sys/time.h sys/un.h syslog.h unistd.h], [], AC_MSG_ERROR([required header(s) not found.]))
 AC_CHECK_HEADERS([netinet/in.h netinet/ip.h netinet/tcp.h netinet/udp.h], [], AC_MSG_ERROR([required netinet header(s) not found.]),
 [[#ifdef HAVE_SYS_TYPES_H
