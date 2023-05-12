@@ -166,12 +166,12 @@ case "${host_os}" in
         ])
         ;;
 
-	*)
+    *)
             AM_CONDITIONAL(USE_CONNTRACK, false)
             AM_CONDITIONAL(USE_NETLINK, false)
             AM_CONDITIONAL(USE_NFQUEUE, false)
             AM_CONDITIONAL(USE_TPACKETV3, false)
-	;;
+    ;;
 esac
 
 AC_ARG_ENABLE([instance-support],
@@ -376,10 +376,10 @@ if test -e ".git"; then :
     case "${host_os}" in
         linux*)
             GIT_LAST_COMMIT_DATE=`date -d "${GIT_DATE_UNIX}" '+%F'`
-	    ;;
-	*)
+        ;;
+    *)
             GIT_LAST_COMMIT_DATE=`date -r "${GIT_DATE_UNIX}" '+%F'`
-	    ;;
+        ;;
     esac
 
     AC_SUBST([GIT_LAST_COMMIT_HASH], [$GIT_LAST_COMMIT_HASH])
@@ -409,23 +409,23 @@ AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
 # Output files
 AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init \
-	deploy/openwrt/files/netifyd.config])
+    deploy/openwrt/files/netifyd.config])
 AC_CONFIG_FILES([libnetifyd.pc])
 AC_CONFIG_FILES(
-	[Makefile src/Makefile include/Makefile doc/Makefile \
-	 tests/Makefile deploy/Makefile])
+    [Makefile src/Makefile include/Makefile doc/Makefile \
+     tests/Makefile deploy/Makefile])
 AC_CONFIG_FILES([deploy/buildroot/package/netifyd/netifyd.mk])
 AC_CONFIG_FILES([deploy/debian/Makefile])
 AC_CONFIG_FILES([deploy/edgeos/Makefile])
 AC_CONFIG_FILES(
-	[deploy/freebsd/Makefile-10x deploy/freebsd/Makefile-11x \
-	 deploy/freebsd/Makefile-11x-debug deploy/freebsd/Makefile-12x])
+    [deploy/freebsd/Makefile-10x deploy/freebsd/Makefile-11x \
+     deploy/freebsd/Makefile-11x-debug deploy/freebsd/Makefile-12x])
 AC_CONFIG_FILES([deploy/pfsense/Makefile])
 AC_CONFIG_FILES([deploy/rpm/Makefile])
 AC_CONFIG_FILES([deploy/systemd/Makefile])
 AC_CONFIG_FILES([deploy/ubios/Makefile])
 AC_CONFIG_FILES([doc/netifyd.8 doc/netifyd.conf.5])
 AC_CONFIG_FILES([util/generate-protocol-csv.sh],
-	[chmod +x util/generate-protocol-csv.sh])
+    [chmod +x util/generate-protocol-csv.sh])
 
 AC_OUTPUT
