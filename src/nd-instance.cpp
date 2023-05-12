@@ -2299,7 +2299,7 @@ void ndInstance::ProcessFlows(void)
     nd_dprintf(
         "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
         "idle: %lu, in_use: %lu\n", tag.c_str(),
-        status.flows_purged, status.flows.load(),
+        status.flows_purged, status.flows_prev,
         status.flows_active, status.flows_expiring,
         status.flows_expired,
         status.flows.load() - status.flows_active,
