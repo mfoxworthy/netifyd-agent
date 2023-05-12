@@ -2,7 +2,6 @@
 # GNU Autoconf configuration
 
 m4_include([m4/ax_pkg_installdir.m4])
-m4_include([m4/ax_cxx_compile_stdcxx_0x.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.71])
@@ -57,10 +56,9 @@ AM_CONDITIONAL([HAVE_OSC], [test x$osc != x])
 # Defines we will pass to pkg-config:
 ND_DEFINES=""
 
-
-# Check compiler flags (gnu++11)
-AX_CXX_COMPILE_STDCXX_11([ext], [optional])
-AS_IF([test "$HAVE_CXX11" = "0"], [AX_CXX_COMPILE_STDCXX_0X])
+# Check compiler flags
+AX_CXX_COMPILE_STDCXX_11
+AS_VAR_APPEND([CXXFLAGS], [" -std=gnu++11"])
 
 # Checks for libraries.
 AC_CHECK_LIB([pthread],
