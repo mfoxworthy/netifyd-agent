@@ -2233,8 +2233,6 @@ void ndInstance::ProcessFlows(void)
         auto &fm = flow_buckets->Acquire(b);
         auto i = fm.begin();
 
-        status.flows += fm.size();
-
         while (i != fm.end()) {
 #ifdef _ND_PROCESS_FLOW_DEBUG
             if (i->second->ip_protocol == IPPROTO_TCP) tcp++;
