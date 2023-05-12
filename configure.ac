@@ -42,18 +42,22 @@ AC_CHECK_TOOL([STRIP], [strip])
 LT_INIT
 PKG_PROG_PKG_CONFIG([0.23])
 AX_PKG_INSTALLDIR
+
 AC_PATH_PROG([bash], [bash], [false])
 AS_IF([test "x$ac_cv_path_bash" != "xfalse"], [
     AC_SUBST([ND_PATH_BASH], [$ac_cv_path_bash])
 ], [
     AC_MSG_ERROR([bash not found.])
 ])
-AC_PATH_PROG([osc], [osc])
-AC_PATH_PROG([gmake], [gmake], [false])
-AS_IF([test "x$ac_cv_path_gmake" == "xfalse"], [
-    AC_MSG_ERROR([gmake not found.])
-])
-AM_CONDITIONAL([HAVE_OSC], [test x$osc != x])
+
+case "${host_os}" in
+    freebsd*)
+    AC_PATH_PROG([gmake], [gmake], [false])
+    AS_IF([test "x$ac_cv_path_gmake" == "xfalse"], [
+        AC_MSG_ERROR([gmake not found.])
+    ])
+    ;;
+esac
 
 # Defines we will pass to pkg-config:
 ND_DEFINES=""
