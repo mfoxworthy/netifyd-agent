@@ -67,13 +67,12 @@ AC_CHECK_LIB([pthread],
 AC_CHECK_LIB([rt],
     [timer_create], [], [AC_MSG_ERROR([librt/timer_create() not found.])])
 
-AC_CHECK_LIB([pcap], [pcap_open_live])
-
 AC_CHECK_LIB([atomic], [__atomic_load_8])
+
+AC_CHECK_LIB([pcap], [pcap_open_live])
 
 AS_IF([test "$ac_cv_lib_pcap_pcap_open_live" = "yes"], [
     AC_DEFINE([_ND_USE_LIBPCAP], [1], [Define if libpcap is available.])
-#    ND_DEFINES+=" -D_ND_USE_LIBPCAP=1"
     AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_LIBPCAP=1"])
     AM_CONDITIONAL(USE_LIBPCAP, true)
 ])
@@ -95,7 +94,6 @@ case "${host_os}" in
                 [Define to enable connection tracking support.])
             PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
             PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.4])
-            #ND_DEFINES+=" -D_ND_USE_CONNTRACK=1"
             AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_CONNTRACK=1"])
             AM_CONDITIONAL(USE_CONNTRACK, true)
         ], [
@@ -111,7 +109,7 @@ case "${host_os}" in
 
         AS_IF([test "x$enable_conntrack_mdata" = "xyes"], [
             AC_DEFINE([_ND_WITH_CONNTRACK_MDATA], [1], [Enable to extract conntrack metadata.])
-            ND_DEFINES+=" -D_ND_WITH_CONNTRACK_MDATA=1"
+            AS_VAR_APPEND([ND_DEFINES], [" -D_ND_WITH_CONNTRACK_MDATA=1"])
         ])
 
         dnl NETLINK support
@@ -125,7 +123,7 @@ case "${host_os}" in
             AC_DEFINE([_ND_USE_NETLINK], [1],
                 [Define to enable Netlink socket support.])
             AM_CONDITIONAL(USE_NETLINK, true)
-            ND_DEFINES+=" -D_ND_USE_NETLINK=1"
+            AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_NETLINK=1"])
         ], [
             AM_CONDITIONAL(USE_NETLINK, false)
         ])
@@ -143,8 +141,8 @@ case "${host_os}" in
             )
             AC_DEFINE([_ND_USE_TPACKETV3], [1],
                 [Define to enable TPACKETv3 capture support.])
-            ND_DEFINES+=" -D_ND_USE_TPACKETV3=1"
             AM_CONDITIONAL(USE_TPACKETV3, true)
+            AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_TPACKETV3=1"])
         ], [
             AM_CONDITIONAL(USE_TPACKETV3, false)
         ])
@@ -160,8 +158,8 @@ case "${host_os}" in
             PKG_CHECK_MODULES([LIBNETFILTER_QUEUE], [libnetfilter_queue >= 1.0.4])
             AC_DEFINE([_ND_USE_NFQUEUE], [1],
                 [Define to enable NFQUEUE capture support.])
-            ND_DEFINES+=" -D_ND_USE_NFQUEUE=1"
             AM_CONDITIONAL(USE_NFQUEUE, true)
+            AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_NFQUEUE=1"])
         ], [
             AM_CONDITIONAL(USE_NFQUEUE, false)
         ])
@@ -218,7 +216,6 @@ AC_ARG_WITH([libcurl-zlib],
      [with_libcurl_zlib=yes])
 
 AS_IF([test "x$with_libcurl_zlib" != "xno"], [
-    #ND_DEFINES+=" -D_ND_WITH_LIBCURL_ZLIB=1"
     AS_VAR_APPEND([ND_DEFINES], [" -D_ND_WITH_LIBCURL_ZLIB=1"])
     AC_DEFINE([_ND_WITH_LIBCURL_ZLIB], [1], [Define if libcurl is GZIP capable.])
 ])
@@ -249,7 +246,6 @@ AC_ARG_ENABLE([plugins],
 AS_IF([test "x$enable_plugins" = "xyes"], [
     AC_DEFINE([_ND_USE_PLUGINS], [1],
         [Define to enable Netify Plugin support.])
-    #ND_DEFINES+=" -D_ND_USE_PLUGINS=1"
     AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_PLUGINS=1"])
     AC_CHECK_HEADERS([dlfcn.h], [], AC_MSG_ERROR([dlfcn.h header(s) not found.]))
     case "${host_os}" in
@@ -275,7 +271,6 @@ AS_IF([test "x$enable_libtcmalloc" = "xyes"], [
 
     AC_DEFINE([_ND_USE_LIBTCMALLOC], [1],
         [Define to enable Thread Caching malloc support.])
-    #ND_DEFINES+=" -D_ND_USE_LIBTCMALLOC=1"
     AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_LIBTCMALLOC=1"])
 
     PKG_CHECK_MODULES([LIBTCMALLOC], [libtcmalloc_minimal], [
@@ -308,7 +303,6 @@ AC_ARG_ENABLE([lean-and-mean],
 AS_IF([test "x$enable_lean_and_mean" = "xyes"], [
     AC_DEFINE([_ND_LEAN_AND_MEAN], [1],
         [Define to build smallest possible binary.])
-    #ND_DEFINES+=" -D_ND_LEAN_AND_MEAN=1"
     AS_VAR_APPEND([ND_DEFINES], [" -D_ND_LEAN_AND_MEAN=1"])
     AM_CONDITIONAL(ENABLE_LEAN_AND_MEAN, true)
 ], [
@@ -323,7 +317,6 @@ AC_ARG_ENABLE([ndpi-debug],
 AS_IF([test "x$enable_ndpi_debug" = "xyes"], [
     AC_DEFINE([NDPI_ENABLE_DEBUG_MESSAGES], [1],
         [Define to enable nDPI debug messages.])
-    #ND_DEFINES+=" -DNDPI_ENABLE_DEBUG_MESSAGES=1"
     AS_VAR_APPEND([ND_DEFINES], [" -DNDPI_ENABLE_DEBUG_MESSAGES=1"])
 ])
 
@@ -405,12 +398,6 @@ AC_DEFINE_UNQUOTED(GIT_DATE, "${GIT_DATE}", [Last GIT change])
 AC_SUBST([GIT_SOURCE_URL], [https://gitlab.com/netify.ai/public/netify-agent.git])
 
 # Defines substitution for pkg-config
-#ND_DEFINES+=" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"
-#ND_DEFINES+=" -D'ND_DATADIR=\"$datadir/$PACKAGE_TARNAME\"'"
-#ND_DEFINES+=" -D'ND_PERSISTENT_STATEDIR=\"$persistentstatedir\"'"
-#ND_DEFINES+=" -D'ND_PID_FILE_NAME=\"$volatilestatedir/$PACKAGE_TARNAME.pid\"'"
-#ND_DEFINES+=" -D'ND_VOLATILE_STATEDIR=\"$volatilestatedir\"'"
-
 AS_VAR_APPEND([ND_DEFINES], [" -D'ND_CONF_FILE_NAME=\"$sysconfdir/$PACKAGE_TARNAME.conf\"'"])
 AS_VAR_APPEND([ND_DEFINES], [" -D'ND_DATADIR=\"$datadir/$PACKAGE_TARNAME\"'"])
 AS_VAR_APPEND([ND_DEFINES], [" -D'ND_PERSISTENT_STATEDIR=\"$persistentstatedir\"'"])
@@ -420,18 +407,24 @@ AS_VAR_APPEND([ND_DEFINES], [" -D'ND_VOLATILE_STATEDIR=\"$volatilestatedir\"'"])
 AC_SUBST([ND_DEFINES], [$ND_DEFINES])
 
 # Output files
-AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init deploy/openwrt/files/netifyd.config])
+AC_CONFIG_FILES([deploy/openwrt/Makefile deploy/openwrt/files/netifyd.init \
+	deploy/openwrt/files/netifyd.config])
 AC_CONFIG_FILES([libnetifyd.pc])
-AC_CONFIG_FILES([Makefile src/Makefile include/Makefile doc/Makefile tests/Makefile deploy/Makefile])
+AC_CONFIG_FILES(
+	[Makefile src/Makefile include/Makefile doc/Makefile \
+	 tests/Makefile deploy/Makefile])
 AC_CONFIG_FILES([deploy/buildroot/package/netifyd/netifyd.mk])
 AC_CONFIG_FILES([deploy/debian/Makefile])
 AC_CONFIG_FILES([deploy/edgeos/Makefile])
-AC_CONFIG_FILES([deploy/freebsd/Makefile-10x deploy/freebsd/Makefile-11x deploy/freebsd/Makefile-11x-debug deploy/freebsd/Makefile-12x])
+AC_CONFIG_FILES(
+	[deploy/freebsd/Makefile-10x deploy/freebsd/Makefile-11x \
+	 deploy/freebsd/Makefile-11x-debug deploy/freebsd/Makefile-12x])
 AC_CONFIG_FILES([deploy/pfsense/Makefile])
 AC_CONFIG_FILES([deploy/rpm/Makefile])
 AC_CONFIG_FILES([deploy/systemd/Makefile])
 AC_CONFIG_FILES([deploy/ubios/Makefile])
 AC_CONFIG_FILES([doc/netifyd.8 doc/netifyd.conf.5])
-AC_CONFIG_FILES([util/generate-protocol-csv.sh], [chmod +x util/generate-protocol-csv.sh])
+AC_CONFIG_FILES([util/generate-protocol-csv.sh],
+	[chmod +x util/generate-protocol-csv.sh])
 
 AC_OUTPUT
