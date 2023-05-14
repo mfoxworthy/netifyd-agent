@@ -879,7 +879,8 @@ public:
             serialize(output, { "capture_type" }, "PCAP");
             break;
         case ndCT_PCAP_OFFLINE:
-            serialize(output, { "capture_type" },
+            serialize(output, { "capture_type" }, "PCAP");
+            serialize(output, { "capture_file" },
                 config.pcap->capture_filename
             );
             break;

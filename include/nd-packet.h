@@ -170,11 +170,6 @@ public:
         serialize(output, { "queue_dropped" }, pkt.queue_dropped);
         serialize(output, { "capture_dropped" }, pkt.capture_dropped);
         serialize(output, { "capture_filtered" }, pkt.capture_filtered);
-
-        // XXX: Deprecated
-        serialize(output, { "pcap_recv" }, pkt.raw);
-        serialize(output, { "pcap_drop" }, pkt.capture_dropped);
-        serialize(output, { "pcap_ifdrop" }, (uint32_t)0);
     }
 };
 

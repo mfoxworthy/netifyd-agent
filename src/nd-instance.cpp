@@ -1409,7 +1409,7 @@ bool ndInstance::DisplayAgentStatus(void)
                             (double)dropped * 100 /
                             (double)pkts;
 
-                        if (dropped_percent > 0.0) {
+                        if (dropped_percent > 0.001) {
                             icon = ND_I_WARN;
                             colors[1] = color = ND_C_YELLOW;
                         }
@@ -1422,7 +1422,7 @@ bool ndInstance::DisplayAgentStatus(void)
                 catch (...) { }
 
                 fprintf(stderr,
-                    "%s%s%s %s [%s %s %s]: %s%s%s: packets dropped: %s%.01lf%%%s\n",
+                    "%s%s%s %s [%s %s %s]: %s%s%s: packets dropped: %s%.03lf%%%s\n",
                     color, icon, ND_C_RESET, iface.c_str(),
                     j["role"].get<string>().c_str(),
                     ND_I_RARROW,
@@ -1430,6 +1430,13 @@ bool ndInstance::DisplayAgentStatus(void)
                     colors[0], state.c_str(), ND_C_RESET,
                     colors[1], dropped_percent, ND_C_RESET
                 );
+                auto jcapture_file = j.find("capture_file");
+                if (jcapture_file != j.end()) {
+                    fprintf(stderr,
+                        "  %s %s\n",
+                        ND_I_NOTE, jcapture_file->get<string>().c_str()
+                    );
+                }
             }
         }
 

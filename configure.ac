@@ -379,7 +379,7 @@ if test -e ".git"; then :
     GIT_LAST_COMMIT_HASH=`git log -1 --format=%H`
     case "${host_os}" in
         linux*)
-            GIT_LAST_COMMIT_DATE=`date -d "${GIT_DATE_UNIX}" '+%F'`
+            GIT_LAST_COMMIT_DATE=`date -d "@${GIT_DATE_UNIX}" '+%F'`
         ;;
     *)
             GIT_LAST_COMMIT_DATE=`date -r "${GIT_DATE_UNIX}" '+%F'`
