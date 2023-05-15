@@ -22,6 +22,7 @@ EXTRA_DIST = $(DEBFILES_IN)
 		-e 's|[@]PACKAGE_VERSION@|$(PACKAGE_VERSION)|g' \
 		-e 's|[@]sbindir@|$(sbindir)|g' \
 		-e 's|[@]sysconfdir@|$(sysconfdir)|g' \
+		-e 's|[@]persistentstatedir@|$(persistentstatedir)|g' \
 		-e 's|[@]volatilestatedir@|$(volatilestatedir)|g' \
 		< "$<" > "$@"
 
