@@ -2143,8 +2143,6 @@ bool ndInstance::ExpireFlow(nd_flow_ptr& flow)
 
 void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 {
-    ProcessFlows();
-
     UpdateStatus();
 #if !defined(_ND_USE_LIBTCMALLOC) && defined(HAVE_MALLOC_TRIM)
     // Attempt to release heap back to OS when supported
@@ -2204,6 +2202,8 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         );
 #endif
     }
+
+    ProcessFlows();
 
     SaveAgentStatus(pkt_stats_ifaces);
 
