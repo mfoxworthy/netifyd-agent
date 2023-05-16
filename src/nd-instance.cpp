@@ -1784,7 +1784,7 @@ void *ndInstance::ndInstance::Entry(void)
                 tag.c_str(), ipc, "Netify API update"
             );
             if (ndGC_USE_NAPI && thread_napi == NULL) {
-                thread_napi = new ndNetifyApiThread();
+                thread_napi = new ndNetifyApiRefreshCategories();
                 thread_napi->Create();
             }
             break;

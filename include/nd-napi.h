@@ -25,7 +25,7 @@ public:
     ndNetifyApiThread();
     virtual ~ndNetifyApiThread();
 
-    virtual void *Entry(void);
+    virtual void *Entry(void) = 0;
 
     void AppendData(const char *data, size_t length)
     {
@@ -45,7 +45,16 @@ protected:
     struct curl_slist *headers_tx;
     map<string, string> headers_rx;
     string body_data;
+};
 
+class ndNetifyApiRefreshCategories : public ndNetifyApiThread
+{
+public:
+    ndNetifyApiRefreshCategories() : ndNetifyApiThread() { }
+
+    virtual void *Entry(void);
+
+protected:
     ndCategories categories;
 };
 

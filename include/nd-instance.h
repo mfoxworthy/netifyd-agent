@@ -83,7 +83,7 @@ public:
 
 class ndCaptureThread;
 class ndDetectionThread;
-class ndNetifyApiThread;
+class ndNetifyApiRefreshCategories;
 #ifdef _ND_USE_CONNTRACK
 class ndConntrackThread;
 #endif
@@ -297,7 +297,7 @@ public:
 #ifdef _ND_USE_NETLINK
     ndNetlink *netlink;
 #endif
-    ndNetifyApiThread *thread_napi;
+    ndNetifyApiRefreshCategories *thread_napi;
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack;
 #endif

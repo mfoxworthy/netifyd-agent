@@ -307,7 +307,73 @@ ndNetifyApiThread::~ndNetifyApiThread()
     }
 }
 
-void *ndNetifyApiThread::Entry(void)
+void ndNetifyApiThread::ParseHeader(const string &header_raw)
+{
+    string key, value;
+    size_t p = string::npos;
+    if ((p = header_raw.find_first_of(":")) != string::npos) {
+        key = header_raw.substr(0, p);
+        value = header_raw.substr(p + 1);
+    }
+
+    if (! key.empty() && ! value.empty()) {
+
+        transform(key.begin(), key.end(), key.begin(),
+            [](unsigned char c){ return tolower(c); }
+        );
+
+        nd_trim(key);
+        nd_trim(value);
+
+        if (headers_rx.find(key) == headers_rx.end()) {
+            headers_rx[key] = value;
+            if (_ND_DEBUG_CURL) {
+                nd_dprintf("%s: header: %s: %s\n",
+                    tag.c_str(), key.c_str(), value.c_str());
+            }
+        }
+    }
+}
+
+unsigned ndNetifyApiThread::Get(const string &url)
+{
+    CURLcode curl_rc;
+
+    curl_easy_setopt(ch, CURLOPT_URL, url.c_str());
+
+    body_data.clear();
+    headers_rx.clear();
+
+    nd_dprintf("%s: GET: %s\n", tag.c_str(), url.c_str());
+
+    if ((curl_rc = curl_easy_perform(ch)) != CURLE_OK)
+        throw curl_rc;
+
+    long http_rc = 0;
+    if ((curl_rc = curl_easy_getinfo(ch,
+        CURLINFO_RESPONSE_CODE, &http_rc)) != CURLE_OK)
+        throw curl_rc;
+
+    char *content_type = NULL;
+    curl_easy_getinfo(ch, CURLINFO_CONTENT_TYPE, &content_type);
+
+    double content_length = 0.0f;
+#if (LIBCURL_VERSION_NUM < 0x075500)
+    curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
+#else
+    curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_length);
+#endif
+
+    if (http_rc == 200) {
+        if (content_type == NULL) throw string("Content-type is NULL");
+
+        if (content_length == 0.0f) throw string("Zero-length content length");
+    }
+
+    return (unsigned)http_rc;
+}
+
+void *ndNetifyApiRefreshCategories::Entry(void)
 {
     unsigned page = 0, pages = 1;
 
@@ -431,72 +497,6 @@ void *ndNetifyApiThread::Entry(void)
     }
 
     return NULL;
-}
-
-void ndNetifyApiThread::ParseHeader(const string &header_raw)
-{
-    string key, value;
-    size_t p = string::npos;
-    if ((p = header_raw.find_first_of(":")) != string::npos) {
-        key = header_raw.substr(0, p);
-        value = header_raw.substr(p + 1);
-    }
-
-    if (! key.empty() && ! value.empty()) {
-
-        transform(key.begin(), key.end(), key.begin(),
-            [](unsigned char c){ return tolower(c); }
-        );
-
-        nd_trim(key);
-        nd_trim(value);
-
-        if (headers_rx.find(key) == headers_rx.end()) {
-            headers_rx[key] = value;
-            if (_ND_DEBUG_CURL) {
-                nd_dprintf("%s: header: %s: %s\n",
-                    tag.c_str(), key.c_str(), value.c_str());
-            }
-        }
-    }
-}
-
-unsigned ndNetifyApiThread::Get(const string &url)
-{
-    CURLcode curl_rc;
-
-    curl_easy_setopt(ch, CURLOPT_URL, url.c_str());
-
-    body_data.clear();
-    headers_rx.clear();
-
-    nd_dprintf("%s: GET: %s\n", tag.c_str(), url.c_str());
-
-    if ((curl_rc = curl_easy_perform(ch)) != CURLE_OK)
-        throw curl_rc;
-
-    long http_rc = 0;
-    if ((curl_rc = curl_easy_getinfo(ch,
-        CURLINFO_RESPONSE_CODE, &http_rc)) != CURLE_OK)
-        throw curl_rc;
-
-    char *content_type = NULL;
-    curl_easy_getinfo(ch, CURLINFO_CONTENT_TYPE, &content_type);
-
-    double content_length = 0.0f;
-#if (LIBCURL_VERSION_NUM < 0x075500)
-    curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &content_length);
-#else
-    curl_easy_getinfo(ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &content_length);
-#endif
-
-    if (http_rc == 200) {
-        if (content_type == NULL) throw string("Content-type is NULL");
-
-        if (content_length == 0.0f) throw string("Zero-length content length");
-    }
-
-    return (unsigned)http_rc;
 }
 
 // vi: expandtab shiftwidth=4 softtabstop=4 tabstop=4
