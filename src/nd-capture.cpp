@@ -1078,16 +1078,16 @@ nd_process_ip:
         stats.pkt.ip6_bytes += packet->length;
     }
 
-    nf->total_packets++;
-    nf->total_bytes += packet->length;
+    nf->stats.total_packets++;
+    nf->stats.total_bytes += packet->length;
 
     if (addr_cmp < 0) {
-        nf->lower_packets++;
-        nf->lower_bytes += packet->length;
+        nf->stats.lower_packets++;
+        nf->stats.lower_bytes += packet->length;
     }
     else {
-        nf->upper_packets++;
-        nf->upper_bytes += packet->length;
+        nf->stats.upper_packets++;
+        nf->stats.upper_bytes += packet->length;
     }
 
     nf->ts_last_seen = ts_pkt;
@@ -1131,11 +1131,7 @@ nd_process_ip:
                 // same client and server, using the same local and
                 // remote ports.
                 nf->Reset(true);
-                nf->lower_bytes = flow.lower_bytes.load();
-                nf->upper_bytes = flow.upper_bytes.load();
-                nf->lower_packets = flow.lower_packets.load();
-                nf->upper_packets = flow.upper_packets.load();
-                nf->total_packets = flow.total_packets.load();
+                nf->stats = flow.stats;
 #ifdef _ND_LOG_DHC
                 nd_dprintf("%s: Reset DNS flow.\n", tag.c_str());
 #endif
@@ -1145,7 +1141,7 @@ nd_process_ip:
 
     if (nf->flags.detection_complete.load() == false &&
         nf->flags.expired.load() == false &&
-        nf->detection_packets.load() <= ndGC.max_detection_pkts) {
+        nf->stats.detection_packets.load() <= ndGC.max_detection_pkts) {
 
         if (nf->dpi_thread_id < 0) {
             nf->dpi_thread_id = dpi_thread_id;

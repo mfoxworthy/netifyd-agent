@@ -296,20 +296,20 @@ void ndDetectionThread::ProcessPacketQueue(void)
 
         if (entry != NULL) {
 
-            if (ndEF->detection_packets.load() == 0 || (
+            if (ndEF->stats.detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
                 ndEF->flags.expiring.load() == false &&
 //               (ndEF->flags.expiring.load() == false ||
 //                   ndEF->tickets.load() > 1) &&
-                ndEF->detection_packets.load() < ndGC.max_detection_pkts
+                ndEF->stats.detection_packets.load() < ndGC.max_detection_pkts
             )) {
 
-                ndEF->detection_packets++;
+                ndEF->stats.detection_packets++;
 
                 ProcessPacket(entry);
             }
 
-            if (ndEF->detection_packets.load() == ndGC.max_detection_pkts ||
+            if (ndEF->stats.detection_packets.load() == ndGC.max_detection_pkts ||
                 (ndEF->flags.expiring.load() &&
                     ndEF->flags.expired.load() == false)) {
 
@@ -542,7 +542,7 @@ void ndDetectionThread::ProcessPacket(ndDetectionQueueEntry *entry)
 #if 0
     if (ndEF->detected_protocol == ND_PROTO_MDNS) {
         nd_dprintf("mDNS flow updated: packets: %lu, check extra packets: %s.\n",
-            ndEF->detection_packets.load(), (check_extra_packets) ? "yes" : "no");
+            ndEF->stats.detection_packets.load(), (check_extra_packets) ? "yes" : "no");
     }
 #endif
     // Flow detection complete.

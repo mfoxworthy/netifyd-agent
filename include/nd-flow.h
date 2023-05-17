@@ -45,6 +45,66 @@
 
 typedef unordered_map<string, string> nd_flow_kvmap;
 
+class ndFlowStats
+{
+public:
+    ndFlowStats() :
+        lower_bytes(0), upper_bytes(0), total_bytes(0),
+        lower_packets(0), upper_packets(0), total_packets(0),
+        detection_packets(0) { }
+
+    ndFlowStats(const ndFlowStats &stats) :
+        lower_bytes(stats.lower_bytes.load()),
+        upper_bytes(stats.upper_bytes.load()),
+        total_bytes(stats.total_bytes.load()),
+        lower_packets(stats.lower_packets.load()),
+        upper_packets(stats.upper_packets.load()),
+        total_packets(stats.total_packets.load()),
+        detection_packets(stats.detection_packets.load()) { }
+
+    inline ndFlowStats &operator=(const ndFlowStats &fs) {
+        lower_bytes = fs.lower_bytes.load();
+        upper_bytes = fs.upper_bytes.load();
+        total_bytes = fs.total_bytes.load();
+        lower_packets = fs.lower_packets.load();
+        upper_packets = fs.upper_packets.load();
+        total_packets = fs.total_packets.load();
+        detection_packets = fs.detection_packets.load();
+        return *this;
+    };
+
+    inline ndFlowStats& operator+=(const ndFlowStats &fs)
+    {
+        lower_bytes += fs.lower_bytes.load();
+        upper_bytes += fs.upper_bytes.load();
+        total_bytes += fs.total_bytes.load();
+        lower_packets += fs.lower_packets.load();
+        upper_packets += fs.upper_packets.load();
+        total_packets += fs.total_packets.load();
+        return *this;
+    }
+
+    inline void Reset(bool full_reset = false)
+    {
+        lower_bytes = 0;
+        upper_bytes = 0;
+        lower_packets = 0;
+        upper_packets = 0;
+
+        if (full_reset) detection_packets = 0;
+    }
+
+    atomic<uint64_t> lower_bytes;
+    atomic<uint64_t> upper_bytes;
+    atomic<uint64_t> total_bytes;
+
+    atomic<uint32_t> lower_packets;
+    atomic<uint32_t> upper_packets;
+    atomic<uint32_t> total_packets;
+
+    atomic<uint8_t> detection_packets;
+};
+
 class ndFlow : public ndSerializer
 {
 public:
@@ -95,16 +155,6 @@ public:
     };
 
     uint8_t tunnel_type;
-
-    atomic<uint64_t> lower_bytes;
-    atomic<uint64_t> upper_bytes;
-    atomic<uint64_t> total_bytes;
-
-    atomic<uint32_t> lower_packets;
-    atomic<uint32_t> upper_packets;
-    atomic<uint32_t> total_packets;
-
-    atomic<uint8_t> detection_packets;
 
     nd_proto_id_t detected_protocol;
     nd_app_id_t detected_application;
@@ -591,30 +641,37 @@ public:
         }
 
         if (encode_includes & ENCODE_STATS) {
-            serialize(output, { _lower_bytes }, lower_bytes.load());
-            serialize(output, { _upper_bytes }, upper_bytes.load());
-            serialize(output, { _lower_packets }, lower_packets.load());
-            serialize(output, { _upper_packets }, upper_packets.load());
-            serialize(output, { "total_packets" }, total_packets.load());
-            serialize(output, { "total_bytes" }, total_bytes.load());
-            serialize(output, { "detection_packets" }, detection_packets.load());
+            serialize(output,
+                { _lower_bytes }, stats.lower_bytes.load());
+            serialize(output,
+                { _upper_bytes }, stats.upper_bytes.load());
+            serialize(output,
+                { _lower_packets }, stats.lower_packets.load());
+            serialize(output,
+                { _upper_packets }, stats.upper_packets.load());
+            serialize(output,
+                { "total_packets" }, stats.total_packets.load());
+            serialize(output,
+                { "total_bytes" }, stats.total_bytes.load());
+            serialize(output, { "detection_packets" },
+                stats.detection_packets.load());
         }
     }
 
     inline bool operator==(const ndFlow &f) const {
-        return (lower_addr == f.lower_addr && upper_addr == f.upper_addr);
+        return (
+            lower_addr == f.lower_addr &&
+            upper_addr == f.upper_addr
+        );
     }
 
     inline ndFlow& operator+=(const ndFlow &f)
     {
-        this->lower_bytes += f.lower_bytes.load();
-        this->upper_bytes += f.upper_bytes.load();
-        this->total_bytes += f.total_bytes.load();
-        this->lower_packets += f.lower_packets.load();
-        this->upper_packets += f.upper_packets.load();
-        this->total_packets += f.total_packets.load();
+        stats += f.stats;
         return *this;
     }
+
+    ndFlowStats stats;
 };
 
 typedef shared_ptr<ndFlow> nd_flow_ptr;

@@ -5,7 +5,9 @@ m4_include([m4/ax_pkg_installdir.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.69])
-AC_INIT([Netify Agent],[4.5.11],[https://gitlab.com/netify.ai/public/netify-agent/issues],[netifyd],[https://www.netify.ai/])
+AC_INIT([Netify Agent], [4.5.12],
+    [https://gitlab.com/netify.ai/public/netify-agent/issues],
+    [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
 AC_CONFIG_SRCDIR([src/netifyd.cpp])
 AC_CONFIG_SUBDIRS([libs/inih libs/ndpi])
@@ -18,7 +20,7 @@ AC_DEFINE_UNQUOTED([_ND_HOST_OS], ["${host_os}"], [Defines the canonical host OS
 
 # Library version
 # https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-m4_define([lnv_current], [3])
+m4_define([lnv_current], [4])
 m4_define([lnv_revision], [0])
 m4_define([lnv_age], [0])
 lt_version="lnv_current:lnv_revision:lnv_age"

@@ -88,9 +88,6 @@ ndFlow::ndFlow(ndInterface &iface)
     ts_first_seen(0), ts_first_update(0), ts_last_seen(0),
     lower_map(LOWER_UNKNOWN), other_type(OTHER_UNKNOWN),
     tunnel_type(TUNNEL_NONE),
-    lower_bytes(0), upper_bytes(0), total_bytes(0),
-    lower_packets(0), upper_packets(0), total_packets(0),
-    detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN),
     detected_application(ND_APP_UNKNOWN),
     detected_protocol_name("Unknown"),
@@ -122,9 +119,6 @@ ndFlow::ndFlow(const ndFlow &flow)
     lower_mac(flow.lower_mac), upper_mac(flow.upper_mac),
     lower_addr(flow.lower_addr), upper_addr(flow.upper_addr),
     tunnel_type(flow.tunnel_type),
-    lower_bytes(0), upper_bytes(0), total_bytes(0),
-    lower_packets(0), upper_packets(0), total_packets(0),
-    detection_packets(0),
     detected_protocol(ND_PROTO_UNKNOWN),
     detected_application(ND_APP_UNKNOWN),
     detected_protocol_name("Unknown"),
@@ -247,14 +241,9 @@ void ndFlow::Reset(bool full_reset)
 {
     ts_first_update = 0;
 
-    lower_bytes = 0;
-    upper_bytes = 0;
-    lower_packets = 0;
-    upper_packets = 0;
+    stats.Reset(full_reset);
 
     if (full_reset) {
-        detection_packets = 0;
-
         flags.detection_complete = false;
         flags.detection_guessed = false;
         flags.detection_init = false;

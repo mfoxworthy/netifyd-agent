@@ -2203,8 +2203,6 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
 #endif
     }
 
-    ProcessFlows();
-
     SaveAgentStatus(pkt_stats_ifaces);
 
 #ifdef _ND_USE_PLUGINS
@@ -2221,6 +2219,7 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
         ndPluginProcessor::EVENT_UPDATE_COMPLETE
     );
 #endif
+    ProcessFlows();
 }
 
 void ndInstance::ProcessFlows(void)
