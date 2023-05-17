@@ -114,10 +114,8 @@ using namespace std;
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
-#ifdef _ND_USE_PLUGINS
 class ndInstanceStatus;
 #include "nd-plugin.h"
-#endif
 #include "nd-instance.h"
 #include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
@@ -541,7 +539,7 @@ bool ndGlobalConfig::Load(const string &filename)
 
     // Add static (non-command-line) capture interfaces
     if (! AddInterfaces()) return false;
-#ifdef _ND_USE_PLUGINS
+
     // Add plugins
     vector<string> files;
     if (nd_scan_dotd(path_plugins, files)) {
@@ -549,7 +547,6 @@ bool ndGlobalConfig::Load(const string &filename)
             if (! AddPlugin(path_plugins + "/" + f)) return false;
         }
     }
-#endif
 
     return true;
 }
@@ -968,7 +965,6 @@ bool ndGlobalConfig::AddInterfaces(void)
     return true;
 }
 
-#ifdef _ND_USE_PLUGINS
 bool ndGlobalConfig::AddPlugin(const string &filename)
 {
     INIReader r = INIReader(filename);
@@ -1080,7 +1076,6 @@ bool ndGlobalConfig::AddPlugin(const string &filename)
 
     return true;
 }
-#endif
 
 enum nd_capture_type ndGlobalConfig::LoadCaptureType(
     const string &section, const string &key)

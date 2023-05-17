@@ -174,10 +174,6 @@ typedef map<string, string> nd_interface_filter;
 
 typedef map<string, string> nd_netlink_device;
 
-#ifdef _ND_USE_PLUGINS
-class ndPluginLoader;
-typedef map<string, ndPluginLoader *> nd_plugins;
-#endif
 typedef pair<struct sockaddr_storage, struct sockaddr_storage> nd_private_addr;
 
 void nd_json_agent_hello(string &json_string);

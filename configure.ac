@@ -5,7 +5,7 @@ m4_include([m4/ax_pkg_installdir.m4])
 m4_include([m4/ax_cxx_compile_stdcxx_11.m4])
 
 AC_PREREQ([2.69])
-AC_INIT([Netify Agent], [4.5.12],
+AC_INIT([Netify Agent], [4.5.13],
     [https://gitlab.com/netify.ai/public/netify-agent/issues],
     [netifyd], [https://www.netify.ai/])
 AM_INIT_AUTOMAKE([1.9 tar-pax])
@@ -244,27 +244,6 @@ AS_IF([test "x$with_volatilestatedir" = "xyes" -o "x$with_volatilestatedir" = "x
 )
 
 # Parameters: --enable/disable
-
-AC_ARG_ENABLE([plugins],
-    [AS_HELP_STRING([--enable-plugins], [Enable Netify Plugin support [default=yes]])],
-    [],
-    [enable_plugins=yes])
-
-AS_IF([test "x$enable_plugins" = "xyes"], [
-    AC_DEFINE([_ND_USE_PLUGINS], [1],
-        [Define to enable Netify Plugin support.])
-    AS_VAR_APPEND([ND_DEFINES], [" -D_ND_USE_PLUGINS=1"])
-    AC_CHECK_HEADERS([dlfcn.h], [], AC_MSG_ERROR([dlfcn.h header(s) not found.]))
-    case "${host_os}" in
-        linux*)
-            AC_CHECK_LIB([dl],
-                [dlopen], [], [AC_MSG_ERROR([libdl/dlopen() not found.])])
-            ;;
-    esac
-    AM_CONDITIONAL(USE_PLUGINS, true)
-], [
-    AM_CONDITIONAL(USE_PLUGINS, false)
-])
 
 AC_ARG_ENABLE([libtcmalloc],
     [AS_HELP_STRING([--enable-libtcmalloc], [Enable Thread Caching malloc support [default=yes]])],

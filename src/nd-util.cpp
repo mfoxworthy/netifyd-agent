@@ -664,9 +664,6 @@ string nd_get_version_and_features(void)
 #ifdef _ND_USE_NFQUEUE
     ident << "; nfqueue";
 #endif
-#ifdef _ND_USE_PLUGINS
-    ident << "; plugins";
-#endif
 #ifdef _ND_USE_LIBTCMALLOC
     ident << "; tcmalloc";
 #endif

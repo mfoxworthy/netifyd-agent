@@ -192,11 +192,9 @@ public:
     vector<uint8_t *> privacy_filter_mac;
     vector<pair<regex *, string> > privacy_regex;
     nd_interface_filter interface_filters;
-#ifdef _ND_USE_PLUGINS
     typedef map<string, pair<string, map<string, string>>> map_plugin;
     map_plugin plugin_processors;
     map_plugin plugin_sinks;
-#endif
     map<string, string> custom_headers;
     map<string, string> protocols;
 
@@ -250,9 +248,7 @@ protected:
     string uuid_site;
 
     bool AddInterfaces(void);
-#ifdef _ND_USE_PLUGINS
     bool AddPlugin(const string &filename);
-#endif
     enum nd_capture_type LoadCaptureType(
         const string &section, const string &key);
     bool LoadCaptureSettings(

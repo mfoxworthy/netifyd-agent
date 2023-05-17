@@ -117,10 +117,8 @@ using namespace std;
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
-#ifdef _ND_USE_PLUGINS
 class ndInstanceStatus;
 #include "nd-plugin.h"
-#endif
 #include "nd-instance.h"
 #ifdef _ND_USE_CONNTRACK
 #include "nd-conntrack.h"

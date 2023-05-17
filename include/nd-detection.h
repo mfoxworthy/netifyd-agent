@@ -55,9 +55,6 @@ public:
 #ifdef _ND_USE_CONNTRACK
         ndConntrackThread *thread_conntrack,
 #endif
-#ifdef _ND_USE_PLUGINS
-        nd_plugins *plugin_detections,
-#endif
         ndDNSHintCache *dhc = NULL,
         ndFlowHashCache *fhc = NULL,
         uint8_t private_addr = 0);
@@ -83,9 +80,6 @@ protected:
 #endif
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack;
-#endif
-#ifdef _ND_USE_PLUGINS
-    nd_plugins *plugins;
 #endif
     struct ndpi_detection_module_struct *ndpi;
     nd_private_addr private_addrs;

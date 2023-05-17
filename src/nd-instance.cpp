@@ -112,10 +112,8 @@ using namespace std;
 #include "nd-dhc.h"
 #include "nd-fhc.h"
 #include "nd-thread.h"
-#ifdef _ND_USE_PLUGINS
 class ndInstanceStatus;
 #include "nd-plugin.h"
-#endif
 #include "nd-instance.h"
 #include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
@@ -740,10 +738,10 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         ndGC_SetFlag(ndGF_REMAIN_IN_FOREGROUND, true);
 
         ndGC.update_interval = 1;
-#ifdef _ND_USE_PLUGINS
+
         ndGC.plugin_processors.clear();
         ndGC.plugin_sinks.clear();
-#endif
+
         ndGC.dhc_save = ndDHC_DISABLED;
         ndGC.fhc_save = ndFHC_DISABLED;
     }
@@ -985,7 +983,6 @@ void ndInstance::CommandLineHelp(bool version_only)
 #ifdef PACKAGE_BUGREPORT
         fprintf(stderr, "\nReport bugs to: %s\n", PACKAGE_BUGREPORT);
 #endif
-#ifdef _ND_USE_PLUGINS
         try {
             plugins.Load(ndPlugin::TYPE_BASE, false);
 
@@ -1004,7 +1001,6 @@ void ndInstance::CommandLineHelp(bool version_only)
                 "\nError while loading plugins: %s\n", e.what()
             );
         }
-#endif
     }
     else {
         fprintf(stderr,
@@ -1123,9 +1119,7 @@ bool ndInstance::SaveAgentStatus(const nd_interface_stats &stats)
         jstatus["agent_version"] = PACKAGE_VERSION;
 
         apps.Encode(jstatus);
-#ifdef _ND_USE_PLUGINS
         plugins.Encode(jstatus);
-#endif
         status.Encode(jstatus);
 
         for (auto &i : stats) {
@@ -1582,9 +1576,8 @@ int ndInstance::Run(void)
             thread_conntrack->Create();
         }
 #endif
-#ifdef _ND_USE_PLUGINS
         plugins.Load();
-#endif
+
         int16_t cpu = (
                 ndGC.ca_detection_base > -1 &&
                 ndGC.ca_detection_base < (int16_t)status.cpus
@@ -1605,9 +1598,6 @@ int ndInstance::Run(void)
 #ifdef _ND_USE_CONNTRACK
                 (! ndGC_USE_CONNTRACK) ? nullptr : thread_conntrack,
 #endif
-#ifdef _ND_USE_PLUGINS
-                nullptr, // TODO: &plugin_detections,
-#endif
                 dns_hint_cache,
                 flow_hash_cache,
                 (uint8_t)cpu
@@ -1626,14 +1616,12 @@ int ndInstance::Run(void)
         goto ndInstance_RunReturn;
     }
 #endif
-#ifdef _ND_USE_PLUGINS
     catch (ndPluginException &e) {
         nd_printf("%s: Fatal plugin exception: %s\n",
             tag.c_str(), e.what()
         );
         goto ndInstance_RunReturn;
     }
-#endif
     catch (ndThreadException &e) {
         nd_printf("%s: Fatal thread exception: %s\n",
             tag.c_str(), e.what()
@@ -1851,13 +1839,11 @@ bool ndInstance::Reload(bool broadcast)
         result = domains.Load(ndGC.path_domains);
     }
 
-#ifdef _ND_USE_PLUGINS
     if (broadcast) {
         plugins.BroadcastEvent(
             ndPlugin::TYPE_BASE, ndPlugin::EVENT_RELOAD
         );
     }
-#endif
 
     nd_dprintf("%s: configuration reloaded %s.\n", tag.c_str(),
         (result) ? "successfully" : "with errors");
@@ -2127,11 +2113,11 @@ bool ndInstance::ExpireFlow(nd_flow_ptr& flow)
         auto it = thread_detection.find(flow->dpi_thread_id);
         if (it != thread_detection.end()) {
             it->second->QueuePacket(flow);
-#ifdef _ND_USE_PLUGINS
+
             plugins.BroadcastProcessorEvent(
                 ndPluginProcessor::EVENT_FLOW_EXPIRING, flow
             );
-#endif
+
             return true;
         }
         else
@@ -2151,7 +2137,6 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     if (ndGC_USE_DHC && dns_hint_cache != nullptr)
         dns_hint_cache->Purge();
 
-#ifdef _ND_USE_PLUGINS
     plugins.BroadcastEvent(
         ndPlugin::TYPE_BASE,
         ndPlugin::EVENT_STATUS_UPDATE
@@ -2160,18 +2145,16 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_UPDATE_INIT, &status
     );
-#endif
 
     ndInterface::UpdateAddrs(interfaces);
 
     for (auto &it : interfaces)
         it.second.NextEndpointSnapshot();
 
-#ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_INTERFACES, &interfaces
     );
-#endif
+
     nd_interface_stats pkt_stats_ifaces;
 
     for (auto &it : threads) {
@@ -2195,17 +2178,15 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
                     make_pair(state, pkt_stats)
             )
         );
-#ifdef _ND_USE_PLUGINS
+
         plugins.BroadcastProcessorEvent(
             ndPluginProcessor::EVENT_PKT_CAPTURE_STATS,
             it.first, &pkt_stats
         );
-#endif
     }
 
     SaveAgentStatus(pkt_stats_ifaces);
 
-#ifdef _ND_USE_PLUGINS
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_PKT_GLOBAL_STATS,
         &pkt_stats_global
@@ -2218,7 +2199,7 @@ void ndInstance::ProcessUpdate(nd_capture_threads &threads)
     plugins.BroadcastProcessorEvent(
         ndPluginProcessor::EVENT_UPDATE_COMPLETE
     );
-#endif
+
     ProcessFlows();
 }
 
@@ -2276,12 +2257,11 @@ void ndInstance::ProcessFlows(void)
                 status.flows_expired++;
 
                 if (i->second.use_count() == 1) {
-#ifdef _ND_USE_PLUGINS
                     plugins.BroadcastProcessorEvent(
                         ndPluginProcessor::EVENT_FLOW_EXPIRED,
                         i->second
                     );
-#endif
+
                     i = fm.erase(i);
                     status.flows_purged++;
 

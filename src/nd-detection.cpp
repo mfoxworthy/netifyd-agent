@@ -110,10 +110,8 @@ using namespace std;
 #include "nd-fhc.h"
 #include "nd-dhc.h"
 #include "nd-thread.h"
-#ifdef _ND_USE_PLUGINS
 class ndInstanceStatus;
 #include "nd-plugin.h"
-#endif
 #include "nd-instance.h"
 #include "nd-flow-parser.h"
 #ifdef _ND_USE_CONNTRACK
@@ -146,9 +144,6 @@ ndDetectionThread::ndDetectionThread(
 #ifdef _ND_USE_CONNTRACK
     ndConntrackThread *thread_conntrack,
 #endif
-#ifdef _ND_USE_PLUGINS
-    nd_plugins *plugin_detections,
-#endif
     ndDNSHintCache *dhc,
     ndFlowHashCache *fhc,
     uint8_t private_addr)
@@ -159,9 +154,6 @@ ndDetectionThread::ndDetectionThread(
 #endif
 #ifdef _ND_USE_CONNTRACK
     thread_conntrack(thread_conntrack),
-#endif
-#ifdef _ND_USE_PLUGINS
-    plugins(plugin_detections),
 #endif
     ndpi(NULL),
     dhc(dhc), fhc(fhc),
@@ -299,8 +291,6 @@ void ndDetectionThread::ProcessPacketQueue(void)
             if (ndEF->stats.detection_packets.load() == 0 || (
                 ndEF->flags.detection_complete.load() == false &&
                 ndEF->flags.expiring.load() == false &&
-//               (ndEF->flags.expiring.load() == false ||
-//                   ndEF->tickets.load() > 1) &&
                 ndEF->stats.detection_packets.load() < ndGC.max_detection_pkts
             )) {
 
@@ -1090,14 +1080,12 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
     if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
         ndEF->Print();
 
-#ifdef _ND_USE_PLUGINS
     ndi.plugins.BroadcastProcessorEvent(
         (ndEF->flags.detection_updated.load()) ?
             ndPluginProcessor::EVENT_FLOW_UPDATED :
             ndPluginProcessor::EVENT_FLOW_NEW,
         ndEF
     );
-#endif
 }
 
 void ndDetectionThread::SetGuessedProtocol(ndDetectionQueueEntry *entry)

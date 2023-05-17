@@ -302,9 +302,7 @@ public:
     ndConntrackThread *thread_conntrack;
 #endif
     nd_detection_threads thread_detection;
-#ifdef _ND_USE_PLUGINS
     ndPluginManager plugins;
-#endif
 
 protected:
     friend class ndInstanceThread;
