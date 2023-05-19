@@ -2211,6 +2211,8 @@ void ndInstance::ProcessFlows(void)
     size_t tcp = 0, tcp_fin = 0,
         tcp_fin_ack_1 = 0, tcp_fin_ack_gt2 = 0;
 #endif
+    size_t flows_pre_init = 0, flows_total = 0;
+
     status.flows_purged = 0;
     status.flows_expiring = 0;
     status.flows_expired = 0;
@@ -2223,6 +2225,8 @@ void ndInstance::ProcessFlows(void)
 
         auto &fm = flow_buckets->Acquire(b);
         auto i = fm.begin();
+
+        flows_total += fm.size();
 
         while (i != fm.end()) {
 #ifdef _ND_PROCESS_FLOW_DEBUG
@@ -2271,9 +2275,15 @@ void ndInstance::ProcessFlows(void)
             else {
                 if (i->second->flags.detection_init.load()) {
 
-                    i->second->Reset();
-
-                    status.flows_active++;
+                    if (i->second->stats.lower_packets.load() ||
+                        i->second->stats.upper_packets.load()) {
+                        status.flows_active++;
+                        i->second->Reset();
+                    }
+                }
+                else {
+                    flows_pre_init++;
+                    //i->second->Print(ndFlow::PRINTF_ALL);
                 }
             }
 
@@ -2283,17 +2293,27 @@ void ndInstance::ProcessFlows(void)
         flow_buckets->Release(b);
     }
 
+    size_t flows_new = 0;
+
+    if (status.flows_prev < flows_total)
+        flows_new = flows_total - status.flows_prev;
+
     status.flows_prev = status.flows.load();
     status.flows -= status.flows_purged;
 
     nd_dprintf(
-        "%s: purged %lu of %lu flow(s), active: %lu, expiring: %lu, expired: %lu, "
-        "idle: %lu, in_use: %lu\n", tag.c_str(),
-        status.flows_purged, status.flows_prev,
-        status.flows_active, status.flows_expiring,
+        "%s: new: %lu, pre-dpi: %lu, in-use: %lu, purged %lu, active: %lu,"
+        " idle: %lu, expiring: %lu, expired: %lu, total: %lu\n", tag.c_str(),
+
+        flows_new,
+        flows_pre_init,
+        status.flows_in_use,
+        status.flows_purged,
+        status.flows_active,
+        flows_total - status.flows_active - flows_pre_init,
+        status.flows_expiring,
         status.flows_expired,
-        status.flows.load() - status.flows_active,
-        status.flows_in_use
+        flows_total
     );
 #ifdef _ND_PROCESS_FLOW_DEBUG
     nd_dprintf("TCP: %lu, TCP+FIN: %lu, TCP+FIN+ACK1: %lu, TCP+FIN+ACK>=2: %lu\n",

@@ -1111,8 +1111,8 @@ void ndDetectionThread::SetGuessedProtocol(ndDetectionQueueEntry *entry)
         }
     }
 
+    ndEF->flags.detection_init = true;
     ndEF->flags.detection_guessed = true;
-    //ndEF->flags.detection_guessed = guessed;
     ndEF->flags.detection_complete = true;
 }
 

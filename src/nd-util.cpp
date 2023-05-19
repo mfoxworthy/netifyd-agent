@@ -141,6 +141,16 @@ void nd_mem_free(void *ptr)
     free(ptr);
 }
 
+void nd_output_lock(void)
+{
+    nd_printf_mutex.lock();
+}
+
+void nd_output_unlock(void)
+{
+    nd_printf_mutex.unlock();
+}
+
 void nd_printf(const char *format, ...)
 {
     if (ndGC_QUIET) return;
@@ -231,6 +241,27 @@ int ndLogBuffer::sync()
 {
     if (! os.str().empty()) {
         nd_printf("%s", os.str().c_str());
+        os.str("");
+    }
+
+    return 0;
+}
+
+int ndDebugLogBuffer::sync()
+{
+    if (! os.str().empty()) {
+        nd_dprintf("%s", os.str().c_str());
+        os.str("");
+    }
+
+    return 0;
+}
+
+int ndDebugLogBufferUnlocked::sync()
+{
+    if (! os.str().empty()) {
+        if (ndGC_DEBUG)
+            fprintf(stderr, "%s", os.str().c_str());
         os.str("");
     }
 

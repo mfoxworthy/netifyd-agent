@@ -318,7 +318,7 @@ public:
     bool HasHttpURL(void) const;
     bool HasSSHClientAgent(void) const;
     bool HasSSHServerAgent(void) const;
-    bool HasSSLClientSNI(void) const;
+    bool HasTLSClientSNI(void) const;
     bool HasTLSServerCN(void) const;
     bool HasTLSIssuerDN(void) const;
     bool HasTLSSubjectDN(void) const;
@@ -331,7 +331,19 @@ public:
 #endif
     bool HasMDNSDomainName(void) const;
 
-    void Print(void) const;
+    enum PrintFlags {
+        PRINTF_NONE = 0x00,
+        PRINTF_HASHES = 0x01,
+        PRINTF_MACS = 0x02,
+        PRINTF_METADATA = 0x04,
+        PRINTF_STATS = 0x08,
+        PRINTF_ALL = (
+            PRINTF_HASHES | PRINTF_MACS | PRINTF_METADATA |
+            PRINTF_STATS
+        )
+    };
+
+    void Print(uint8_t pflags = PRINTF_METADATA) const;
 
     void UpdateLowerMaps(void);
     void GetLowerMap(
@@ -340,12 +352,14 @@ public:
         uint8_t &lm, uint8_t &ot
     );
 
-    enum ndEncodeIncludes {
+    enum EncodeFlags {
         ENCODE_NONE = 0x00,
         ENCODE_METADATA = 0x01,
         ENCODE_TUNNELS = 0x02,
         ENCODE_STATS = 0x04,
-        ENCODE_ALL = (ENCODE_METADATA | ENCODE_TUNNELS | ENCODE_STATS)
+        ENCODE_ALL = (
+            ENCODE_METADATA | ENCODE_TUNNELS | ENCODE_STATS
+        )
     };
 
     template <class T>
@@ -536,7 +550,7 @@ public:
                 sprintf(tohex, "0x%04hx", ssl.cipher_suite);
                 serialize(output, { "ssl", "cipher_suite" }, tohex);
 
-                if (HasSSLClientSNI())
+                if (HasTLSClientSNI())
                     serialize(output, { "ssl", "client_sni" }, ssl.client_sni);
 
                 if (HasTLSServerCN())

@@ -219,7 +219,7 @@ void ndFlow::Hash(const string &device,
             sha1_write(&ctx,
                 host_server_name, strnlen(host_server_name, ND_FLOW_HOSTNAME));
         }
-        if (HasSSLClientSNI()) {
+        if (HasTLSClientSNI()) {
             sha1_write(&ctx,
                 ssl.client_sni, strnlen(ssl.client_sni, ND_FLOW_HOSTNAME));
         }
@@ -349,7 +349,7 @@ bool ndFlow::HasSSHServerAgent(void) const
     );
 }
 
-bool ndFlow::HasSSLClientSNI(void) const
+bool ndFlow::HasTLSClientSNI(void) const
 {
     return (
         (GetMasterProtocol() == ND_PROTO_TLS || detected_protocol == ND_PROTO_QUIC) &&
@@ -429,7 +429,8 @@ bool ndFlow::HasMDNSDomainName(void) const
     );
 }
 
-void ndFlow::Print(void) const
+#ifdef __FreeBSD__
+void ndFlow::Print(uint8_t pflags) const
 {
     string digest;
     nd_sha1_to_string((const uint8_t *)bt.info_hash, digest);
@@ -451,20 +452,20 @@ void ndFlow::Print(void) const
         detected_protocol_name,
         (detected_application_name != NULL) ? "." : "",
         (detected_application_name != NULL) ? detected_application_name : "",
-        lower_mac.GetString().c_str(),
+        (pflags & PRINTF_MACS) ? lower_mac.GetString().c_str() : "",
         lower_addr.GetString().c_str(), lower_addr.GetPort(),
         (origin == ORIGIN_LOWER || origin == ORIGIN_UNKNOWN) ? '-' : '<',
         (origin == ORIGIN_UNKNOWN) ? '?' : '-',
         (origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ? '-' : '>',
-        upper_mac.GetString().c_str(),
+        (pflags & PRINTF_MACS) ? upper_mac.GetString().c_str() ? "",
         upper_addr.GetString().c_str(), upper_addr.GetPort(),
         (dns_host_name[0] != '\0' || host_server_name[0] != '\0') ? " H: " : "",
         (host_server_name[0] != '\0') ? host_server_name : (
             (dns_host_name[0] != '\0') ? dns_host_name : ""
         ),
-        (HasSSLClientSNI()) ? " SSL" : "",
-        (HasSSLClientSNI()) ? " C: " : "",
-        (HasSSLClientSNI()) ? ssl.client_sni : "",
+        (HasTLSClientSNI()) ? " SSL" : "",
+        (HasTLSClientSNI()) ? " C: " : "",
+        (HasTLSClientSNI()) ? ssl.client_sni : "",
         (HasBTInfoHash()) ? " BT-IH: " : "",
         (HasBTInfoHash()) ? digest.c_str() : ""
     );
@@ -476,6 +477,117 @@ void ndFlow::Print(void) const
     }
 #endif
 }
+#else
+void ndFlow::Print(uint8_t pflags) const
+{
+    ndDebugLogStream dls;
+    bool multiline = false;
+
+    nd_output_lock();
+
+    dls << iface.ifname.c_str() << ": ";
+
+    if ((pflags & PRINTF_HASHES)) {
+        for (unsigned i = 0; i < 5; i++) {
+            dls << setw(2) << setfill('0')
+                << hex << (int)digest_lower[i];
+        }
+        dls << ":";
+        for (unsigned i = 0; i < 5; i++) {
+            dls << setw(2) << setfill('0')
+                << hex << (int)digest_lower[i];
+        }
+        dls << " ";
+    }
+
+    dls << setfill(' ') << dec << "["
+        << ((iface.role == ndIR_LAN) ? 'i' : 'e')
+        << ((ip_version == 4) ? '4' : (ip_version == 6) ? '6' : '-')
+        << (flags.detection_init.load() ? 'p' : '-')
+        << (flags.detection_complete.load() ? 'c' : '-')
+        << (flags.detection_updated.load() ? 'u' : '-')
+        << (flags.detection_guessed.load() ? 'g' : '-')
+        << (flags.expiring.load() ? 'x' : '-')
+        << (flags.expired.load() ? 'X' : '-')
+        << (flags.dhc_hit.load() ? 'd' : '-')
+        << (flags.ip_nat.load() ? 'n' : '-')
+        << (flags.risk_checked.load() ? 'r' : '-')
+        << (flags.soft_dissector.load() ? 's' : '-')
+        << (flags.tcp_fin.load() ? 'f' : '-')
+        << (flags.tcp_fin_ack.load() ? 'a' : '-')
+        << ((privacy_mask & PRIVATE_LOWER) ? 'v' :
+            (privacy_mask & PRIVATE_UPPER) ? 'V' :
+            (privacy_mask & (PRIVATE_LOWER | PRIVATE_UPPER)) ? '?' :
+            '-')
+        << "] ";
+
+    if ((pflags & PRINTF_MACS))
+        dls << lower_mac.GetString() << " ";
+
+    dls << lower_addr.GetString() << ":"
+        << lower_addr.GetPort() << " "
+        << ((origin == ORIGIN_LOWER || origin == ORIGIN_UNKNOWN) ?
+            '-' : '<')
+        << ((origin == ORIGIN_UNKNOWN) ? '?' : '-')
+        << ((origin == ORIGIN_UPPER || origin == ORIGIN_UNKNOWN) ?
+            '-' : '>')
+        << " ";
+
+    if ((pflags & PRINTF_MACS))
+        dls << upper_mac.GetString() << " ";
+
+    dls << upper_addr.GetString() << ":"
+        << upper_addr.GetPort();
+
+    if ((pflags & PRINTF_METADATA) && flags.detection_init.load()) {
+        multiline = true;
+
+        dls << endl << setw(iface.ifname.size()) << " " << ": "
+            << detected_protocol_name
+            << ((detected_application_name != nullptr) ? "." : "")
+            << ((detected_application_name != nullptr) ?
+                detected_application_name : "");
+
+        if (dns_host_name[0] != '\0' ||
+            host_server_name[0] != '\0') {
+            dls << endl << setw(iface.ifname.size()) << " " << ":";
+            if (dns_host_name[0] != '\0')
+                dls << " D: " << dns_host_name;
+            if (host_server_name[0] != '\0' &&
+                strcasecmp(dns_host_name, host_server_name))
+                dls << " H: " << host_server_name;
+        }
+
+        if (HasTLSClientSNI() || HasTLSServerCN()) {
+            dls << endl << setw(iface.ifname.size()) << " " << ":";
+            if (HasTLSClientSNI())
+                dls << " SNI: " << ssl.client_sni;
+            if (HasTLSServerCN())
+                dls << " CN: " << ssl.server_cn;
+        }
+
+        if (HasTLSIssuerDN() || HasTLSSubjectDN()) {
+            dls << endl << setw(iface.ifname.size()) << " " << ":";
+            if (HasTLSIssuerDN())
+                dls << " IDN: " << ssl.issuer_dn;
+            if (HasTLSSubjectDN())
+                dls << " SDN: " << ssl.subject_dn;
+        }
+    }
+
+    if ((pflags & PRINTF_STATS)) {
+        multiline = true;
+
+        dls << endl << setw(iface.ifname.size()) << " " << ": "
+            << "DP: " << (int)stats.detection_packets.load();
+    }
+
+    if (multiline) dls << endl;
+    dls << endl;
+
+    nd_output_unlock();
+}
+#endif
 
 void ndFlow::UpdateLowerMaps(void)
 {

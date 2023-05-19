@@ -40,10 +40,22 @@ class ndLogBuffer : public streambuf
 {
 public:
     int overflow(int ch = EOF);
-    int sync();
+    virtual int sync();
 
-private:
+protected:
     ostringstream os;
+};
+
+class ndDebugLogBuffer : public ndLogBuffer
+{
+public:
+    virtual int sync();
+};
+
+class ndDebugLogBufferUnlocked : public ndLogBuffer
+{
+public:
+    virtual int sync();
 };
 
 class ndLogStream : public ostream
@@ -55,7 +67,23 @@ public:
         delete rdbuf();
     }
 };
+
+class ndDebugLogStream : public ostream
+{
+public:
+    ndDebugLogStream(bool unlocked = false) :
+        ostream((unlocked) ?
+            (streambuf *)new ndDebugLogBuffer :
+            (streambuf *)new ndDebugLogBufferUnlocked) { }
+
+    virtual ~ndDebugLogStream() {
+        delete rdbuf();
+    }
+};
 #endif
+
+void nd_output_lock(void);
+void nd_output_unlock(void);
 
 void nd_printf(const char *format, ...);
 void nd_printf(const char *format, va_list ap);
