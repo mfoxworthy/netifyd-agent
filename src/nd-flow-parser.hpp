@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_ND_FLOW_CRITERIA_TAB_TAB_HH_INCLUDED
-# define YY_YY_ND_FLOW_CRITERIA_TAB_TAB_HH_INCLUDED
+#ifndef YY_YY_ND_FLOW_PARSER_HPP_INCLUDED
+# define YY_YY_ND_FLOW_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -45,11 +45,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 156 "nd-flow-criteria.tab.yy"
+#line 156 "nd-flow-parser.ypp"
 
 typedef void* yyscan_t;
 
-#line 53 "nd-flow-criteria.tab.tab.hh"
+#line 53 "nd-flow-parser.hpp"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -119,12 +119,73 @@ typedef void* yyscan_t;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
+#define FLOW_IP_PROTO 258
+#define FLOW_IP_VERSION 259
+#define FLOW_IP_NAT 260
+#define FLOW_VLAN_ID 261
+#define FLOW_OTHER_TYPE 262
+#define FLOW_LOCAL_MAC 263
+#define FLOW_OTHER_MAC 264
+#define FLOW_LOCAL_IP 265
+#define FLOW_OTHER_IP 266
+#define FLOW_LOCAL_PORT 267
+#define FLOW_OTHER_PORT 268
+#define FLOW_TUNNEL_TYPE 269
+#define FLOW_DETECTION_GUESSED 270
+#define FLOW_DETECTION_UPDATED 271
+#define FLOW_CATEGORY 272
+#define FLOW_RISKS 273
+#define FLOW_NDPI_RISK_SCORE 274
+#define FLOW_NDPI_RISK_SCORE_CLIENT 275
+#define FLOW_NDPI_RISK_SCORE_SERVER 276
+#define FLOW_DOMAIN_CATEGORY 277
+#define FLOW_APPLICATION 278
+#define FLOW_APPLICATION_CATEGORY 279
+#define FLOW_PROTOCOL 280
+#define FLOW_PROTOCOL_CATEGORY 281
+#define FLOW_DETECTED_HOSTNAME 282
+#define FLOW_SSL_VERSION 283
+#define FLOW_SSL_CIPHER 284
+#define FLOW_ORIGIN 285
+#define FLOW_CT_MARK 286
+#define FLOW_OTHER_UNKNOWN 287
+#define FLOW_OTHER_UNSUPPORTED 288
+#define FLOW_OTHER_LOCAL 289
+#define FLOW_OTHER_MULTICAST 290
+#define FLOW_OTHER_BROADCAST 291
+#define FLOW_OTHER_REMOTE 292
+#define FLOW_OTHER_ERROR 293
+#define FLOW_ORIGIN_LOCAL 294
+#define FLOW_ORIGIN_OTHER 295
+#define FLOW_ORIGIN_UNKNOWN 296
+#define FLOW_TUNNEL_NONE 297
+#define FLOW_TUNNEL_GTP 298
+#define CMP_EQUAL 299
+#define CMP_NOTEQUAL 300
+#define CMP_GTHANEQUAL 301
+#define CMP_LTHANEQUAL 302
+#define BOOL_AND 303
+#define BOOL_OR 304
+#define VALUE_ADDR_IPMASK 305
+#define VALUE_TRUE 306
+#define VALUE_FALSE 307
+#define VALUE_ADDR_MAC 308
+#define VALUE_ADDR_IPV4 309
+#define VALUE_ADDR_IPV6 310
+#define VALUE_NAME 311
+#define VALUE_REGEX 312
+#define VALUE_NUMBER 313
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 163 "nd-flow-criteria.tab.yy"
+#line 163 "nd-flow-parser.ypp"
 
     char string[_NDFP_MAX_NAMELEN];
 
@@ -134,7 +195,7 @@ union YYSTYPE
 
     bool bool_result;
 
-#line 138 "nd-flow-criteria.tab.tab.hh"
+#line 199 "nd-flow-parser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -162,4 +223,4 @@ struct YYLTYPE
 int yyparse (yyscan_t scanner);
 
 
-#endif /* !YY_YY_ND_FLOW_CRITERIA_TAB_TAB_HH_INCLUDED  */
+#endif /* !YY_YY_ND_FLOW_PARSER_HPP_INCLUDED  */

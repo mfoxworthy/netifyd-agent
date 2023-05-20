@@ -1087,8 +1087,25 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
         }
     }
 
-    if ((ndGC_DEBUG && ndGC_VERBOSE) || ndGC.h_flow != stderr)
+    if (ndGC.h_flow != stderr)
         ndEF->Print();
+    else if (ndGC_DEBUG) {
+        if (ndGC_VERBOSE)
+            ndEF->Print();
+        else if (ndGC.debug_flow_print_exprs.size()) {
+            for (auto &it : ndGC.debug_flow_print_exprs) {
+                try {
+                    if (! parser.Parse(ndEF, it)) continue;
+                    ndEF->Print();
+                    break;
+                } catch (string &e) {
+                    nd_dprintf("%s: %s: %s\n",
+                        tag.c_str(), it.c_str(), e.c_str()
+                    );
+                }
+            }
+        }
+    }
 
 #ifdef _ND_USE_PLUGINS
     ndi.plugins.BroadcastProcessorEvent(

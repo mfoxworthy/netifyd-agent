@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "nd-flow-parser.h"
-#include "nd-flow-criteria.tab.hh"
+#include "nd-flow-parser.hpp"
 %}
 
 %%

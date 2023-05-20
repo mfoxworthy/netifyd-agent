@@ -139,7 +139,7 @@ class ndInstanceStatus;
 #endif
 #include "nd-base64.h"
 #include "nd-napi.h"
-#include "nd-flow-criteria.tab.hh"
+#include "nd-flow-parser.hpp"
 
 extern "C" {
     #include "nd-flow-criteria.h"

@@ -306,6 +306,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
         { "debug-ether-names", 0, 0, 'e' },
         { "debug-ndpi", 0, 0, 'n' },
         { "debug-curl", 0, 0, 'D' },
+        { "debug-flow-expression", 1, 0, 'x' },
         { "device-address", 1, 0, 'A' },
         { "device-filter", 1, 0, 'F' },
         { "device-peer", 1, 0, 'N' },
@@ -363,7 +364,7 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
     };
 
     static const char *flags = {
-        "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:stT:Uu:Vv"
+        "?A:c:DdE:eF:f:hI:i:j:lN:nPpRrS:stT:Uu:Vvx:"
     };
 
     int rc;
@@ -661,6 +662,9 @@ uint32_t ndInstance::InitializeConfig(int argc, char * const argv[])
             return ndCR_USAGE_OR_VERSION;
         case 'v':
             ndGC_SetFlag(ndGF_VERBOSE, true);
+            break;
+        case 'x':
+            ndGC.debug_flow_print_exprs.push_back(optarg);
             break;
         default:
             CommandLineHelp();

@@ -207,6 +207,8 @@ public:
 
     map<string, string> conf_vars;
 
+    vector<string> debug_flow_print_exprs;
+
     ndGlobalConfig(const ndGlobalConfig&) = delete;
     ndGlobalConfig& operator=(const ndGlobalConfig&) = delete;
 

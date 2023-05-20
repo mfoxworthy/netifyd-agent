@@ -787,7 +787,7 @@ static const flex_int32_t yy_rule_can_match_eol[74] =
 #include <string.h>
 
 #include "nd-flow-parser.h"
-#include "nd-flow-criteria.tab.hh"
+#include "nd-flow-parser.hpp"
 #line 791 "nd-flow-criteria.c"
 #line 792 "nd-flow-criteria.c"
 
