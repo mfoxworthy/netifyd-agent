@@ -30,8 +30,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED
-# define YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED
+#ifndef YY_YY_ND_FLOW_PARSER_HPP_INCLUDED
+# define YY_YY_ND_FLOW_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -40,11 +40,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 154 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
+#line 156 "nd-flow-parser.ypp" /* yacc.c:1909  */
 
 typedef void* yyscan_t;
 
-#line 48 "nd-flow-criteria.tab.hh" /* yacc.c:1909  */
+#line 48 "nd-flow-parser.hpp" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -172,7 +172,7 @@ typedef void* yyscan_t;
 
 union YYSTYPE
 {
-#line 161 "nd-flow-criteria.tab.yy" /* yacc.c:1909  */
+#line 163 "nd-flow-parser.ypp" /* yacc.c:1909  */
 
     char string[_NDFP_MAX_NAMELEN];
 
@@ -182,7 +182,7 @@ union YYSTYPE
 
     bool bool_result;
 
-#line 186 "nd-flow-criteria.tab.hh" /* yacc.c:1909  */
+#line 186 "nd-flow-parser.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -208,4 +208,4 @@ struct YYLTYPE
 
 int yyparse (yyscan_t scanner);
 
-#endif /* !YY_YY_ND_FLOW_CRITERIA_TAB_HH_INCLUDED  */
+#endif /* !YY_YY_ND_FLOW_PARSER_HPP_INCLUDED  */
