@@ -1086,7 +1086,10 @@ void ndDetectionThread::FlowUpdate(ndDetectionQueueEntry *entry)
             for (auto &it : ndGC.debug_flow_print_exprs) {
                 try {
                     if (! parser.Parse(ndEF, it)) continue;
-                    ndEF->Print();
+                    ndEF->Print(
+                        ndFlow::PRINTF_METADATA |
+                        ndFlow::PRINTF_STATS
+                    );
                     break;
                 } catch (string &e) {
                     nd_dprintf("%s: %s: %s\n",

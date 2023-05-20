@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 156 "nd-flow-parser.ypp" /* yacc.c:1909  */
+#line 154 "nd-flow-parser.ypp" /* yacc.c:1909  */
 
 typedef void* yyscan_t;
 
@@ -172,7 +172,7 @@ typedef void* yyscan_t;
 
 union YYSTYPE
 {
-#line 163 "nd-flow-parser.ypp" /* yacc.c:1909  */
+#line 161 "nd-flow-parser.ypp" /* yacc.c:1909  */
 
     char string[_NDFP_MAX_NAMELEN];
 
