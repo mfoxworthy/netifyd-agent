@@ -1399,7 +1399,7 @@ void ndTimer::Create(int sig)
 
     struct sigevent sigev;
     memset(&sigev, 0, sizeof(struct sigevent));
-    sigev.sigev_notify = SIGEV_SIGNAL;
+    sigev.sigev_notify = MSG_NOSIGNAL;
     sigev.sigev_signo = sig;
 
     if (timer_create(CLOCK_MONOTONIC, &sigev, &id) < 0) {
